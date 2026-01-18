@@ -1,10 +1,37 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, Navigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
-import { Zap } from 'lucide-react';
+import { Zap, Languages } from 'lucide-react';
+import { setLanguage, getCurrentLanguage, supportedLanguages } from '../../i18n';
 
 export const AuthLayout: React.FC = () => {
+  const { t } = useTranslation();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const [isLangOpen, setIsLangOpen] = useState(false);
+  const [currentLang, setCurrentLang] = useState(getCurrentLanguage());
+  const langRef = useRef<HTMLDivElement>(null);
+
+  const handleLanguageChange = async (langCode: string) => {
+    if (langCode === currentLang) {
+      setIsLangOpen(false);
+      return;
+    }
+    await setLanguage(langCode);
+    setCurrentLang(langCode);
+    setIsLangOpen(false);
+  };
+
+  // Close language dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(event.target as Node)) {
+        setIsLangOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
@@ -72,14 +99,55 @@ export const AuthLayout: React.FC = () => {
 
       {/* Right Panel - Auth Forms */}
       <div className="flex-1 flex flex-col">
-        {/* Mobile Logo */}
-        <div className="lg:hidden p-6">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
-              <Zap className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">Automax</span>
-          </Link>
+        {/* Top Bar with Language Switcher */}
+        <div className="flex items-center justify-between p-6">
+          {/* Mobile Logo */}
+          <div className="lg:hidden">
+            <Link to="/" className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+                <Zap className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-xl font-bold text-gray-900">Automax</span>
+            </Link>
+          </div>
+          <div className="hidden lg:block" /> {/* Spacer for desktop */}
+
+          {/* Language Switcher */}
+          <div className="relative" ref={langRef}>
+            <button
+              onClick={() => setIsLangOpen(!isLangOpen)}
+              className="flex items-center gap-1.5 px-3 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
+              title={t('settings.language')}
+            >
+              <Languages className="w-5 h-5" />
+              <span className="text-sm font-medium uppercase">{currentLang}</span>
+            </button>
+
+            {isLangOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 animate-scale-in origin-top-right">
+                <div className="px-3 py-2 border-b border-gray-100">
+                  <p className="text-xs font-medium text-gray-500 uppercase">{t('settings.selectLanguage')}</p>
+                </div>
+                {supportedLanguages.map((lang) => (
+                  <button
+                    key={lang.code}
+                    onClick={() => handleLanguageChange(lang.code)}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${
+                      currentLang === lang.code
+                        ? 'bg-blue-50 text-blue-600'
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className="text-lg">{lang.code === 'en' ? '🇺🇸' : '🇸🇦'}</span>
+                    <div className="text-left">
+                      <p className="font-medium">{lang.nativeName}</p>
+                      <p className="text-xs text-gray-500">{lang.name}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Form Container */}

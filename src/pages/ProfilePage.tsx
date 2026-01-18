@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useTranslation } from 'react-i18next';
 import {
   Camera,
   User,
@@ -28,6 +29,7 @@ const profileSchema = z.object({
 type ProfileFormData = z.infer<typeof profileSchema>;
 
 export const ProfilePage: React.FC = () => {
+  const { t } = useTranslation();
   const { user, setUser } = useAuthStore();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -59,7 +61,7 @@ export const ProfilePage: React.FC = () => {
       const response = await authApi.updateProfile(data);
       if (response.success && response.data) {
         setUser(response.data);
-        setSuccess('Profile updated successfully');
+        setSuccess(t('profile.profileUpdated'));
         setIsEditing(false);
       } else {
         setError(response.error || 'Failed to update profile');
@@ -96,12 +98,12 @@ export const ProfilePage: React.FC = () => {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      setError('File size must be less than 5MB');
+      setError(t('profile.fileSizeError'));
       return;
     }
 
     if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
-      setError('Only JPEG, PNG, GIF, and WebP images are allowed');
+      setError(t('profile.fileTypeError'));
       return;
     }
 
@@ -112,7 +114,7 @@ export const ProfilePage: React.FC = () => {
       const response = await authApi.uploadAvatar(file);
       if (response.success && response.data) {
         setUser(response.data);
-        setSuccess('Avatar updated successfully');
+        setSuccess(t('profile.avatarUpdated'));
       } else {
         setError(response.error || 'Failed to upload avatar');
       }
@@ -133,8 +135,8 @@ export const ProfilePage: React.FC = () => {
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
-        <p className="mt-2 text-gray-500">Manage your personal information and account details</p>
+        <h1 className="text-3xl font-bold text-gray-900">{t('profile.title')}</h1>
+        <p className="mt-2 text-gray-500">{t('profile.subtitle')}</p>
       </div>
 
       {/* Alerts */}
@@ -216,7 +218,7 @@ export const ProfilePage: React.FC = () => {
               <div className="mt-4 flex justify-center gap-2 flex-wrap">
                 {user?.is_super_admin && (
                   <span className="px-3 py-1 bg-red-100 text-red-700 text-xs font-medium rounded-full">
-                    Super Admin
+                    {t('profile.superAdmin')}
                   </span>
                 )}
                 {user?.roles?.map((role) => (
@@ -242,7 +244,7 @@ export const ProfilePage: React.FC = () => {
                     <Calendar className="w-4 h-4 text-gray-500" />
                   </div>
                   <span className="text-gray-600">
-                    Joined {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'N/A'}
+                    {t('profile.joined')} {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'N/A'}
                   </span>
                 </div>
                 {user?.department && (
@@ -257,7 +259,7 @@ export const ProfilePage: React.FC = () => {
 
               {/* Upload Hint */}
               <p className="mt-4 text-xs text-gray-400 text-center">
-                Click the camera icon to change your photo
+                {t('profile.clickCameraToChange')}
               </p>
             </div>
           </Card>
@@ -269,8 +271,8 @@ export const ProfilePage: React.FC = () => {
           <Card>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-lg font-bold text-gray-900">Personal Information</h3>
-                <p className="text-sm text-gray-500">Update your personal details</p>
+                <h3 className="text-lg font-bold text-gray-900">{t('profile.personalInfo')}</h3>
+                <p className="text-sm text-gray-500">{t('profile.personalInfoDesc')}</p>
               </div>
               {!isEditing && (
                 <Button
@@ -279,7 +281,7 @@ export const ProfilePage: React.FC = () => {
                   leftIcon={<Edit3 className="w-4 h-4" />}
                   onClick={() => setIsEditing(true)}
                 >
-                  Edit
+                  {t('common.edit')}
                 </Button>
               )}
             </div>
@@ -287,16 +289,16 @@ export const ProfilePage: React.FC = () => {
             {isEditing ? (
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <Input
-                  label="Email"
+                  label={t('profile.email')}
                   type="email"
                   value={user?.email || ''}
                   disabled
-                  hint="Email cannot be changed"
+                  hint={t('profile.emailCannotChange')}
                   leftIcon={<Mail className="w-5 h-5" />}
                 />
 
                 <Input
-                  label="Username"
+                  label={t('profile.username')}
                   placeholder="johndoe"
                   error={errors.username?.message}
                   leftIcon={<User className="w-5 h-5" />}
@@ -305,13 +307,13 @@ export const ProfilePage: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
-                    label="First Name"
+                    label={t('profile.firstName')}
                     placeholder="John"
                     error={errors.first_name?.message}
                     {...register('first_name')}
                   />
                   <Input
-                    label="Last Name"
+                    label={t('profile.lastName')}
                     placeholder="Doe"
                     error={errors.last_name?.message}
                     {...register('last_name')}
@@ -324,7 +326,7 @@ export const ProfilePage: React.FC = () => {
                     isLoading={isLoading}
                     leftIcon={!isLoading && <Save className="w-4 h-4" />}
                   >
-                    Save Changes
+                    {t('profile.saveChanges')}
                   </Button>
                   <Button
                     type="button"
@@ -332,7 +334,7 @@ export const ProfilePage: React.FC = () => {
                     onClick={handleCancel}
                     disabled={isLoading}
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </Button>
                 </div>
               </form>
@@ -340,19 +342,19 @@ export const ProfilePage: React.FC = () => {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Email</label>
+                    <label className="text-sm font-medium text-gray-500">{t('profile.email')}</label>
                     <p className="mt-1 text-gray-900">{user?.email}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Username</label>
+                    <label className="text-sm font-medium text-gray-500">{t('profile.username')}</label>
                     <p className="mt-1 text-gray-900">@{user?.username}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-500">First Name</label>
+                    <label className="text-sm font-medium text-gray-500">{t('profile.firstName')}</label>
                     <p className="mt-1 text-gray-900">{user?.first_name || '—'}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Last Name</label>
+                    <label className="text-sm font-medium text-gray-500">{t('profile.lastName')}</label>
                     <p className="mt-1 text-gray-900">{user?.last_name || '—'}</p>
                   </div>
                 </div>
@@ -363,8 +365,8 @@ export const ProfilePage: React.FC = () => {
           {/* Account Details */}
           <Card>
             <div className="mb-6">
-              <h3 className="text-lg font-bold text-gray-900">Account Details</h3>
-              <p className="text-sm text-gray-500">Your account status and permissions</p>
+              <h3 className="text-lg font-bold text-gray-900">{t('profile.accountDetails')}</h3>
+              <p className="text-sm text-gray-500">{t('profile.accountDetailsDesc')}</p>
             </div>
 
             <div className="space-y-6">
@@ -375,12 +377,12 @@ export const ProfilePage: React.FC = () => {
                     <Check className="w-5 h-5 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Account Status</p>
-                    <p className="text-xs text-gray-500">Your account is active and verified</p>
+                    <p className="text-sm font-medium text-gray-900">{t('profile.accountStatus')}</p>
+                    <p className="text-xs text-gray-500">{t('profile.accountActive')}</p>
                   </div>
                 </div>
                 <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
-                  Active
+                  {t('profile.active')}
                 </span>
               </div>
 
@@ -389,7 +391,7 @@ export const ProfilePage: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <Briefcase className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm font-medium text-gray-700">Assigned Roles</span>
+                    <span className="text-sm font-medium text-gray-700">{t('profile.assignedRoles')}</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {user.roles.map((role) => (
@@ -409,7 +411,7 @@ export const ProfilePage: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <Shield className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm font-medium text-gray-700">Permissions</span>
+                    <span className="text-sm font-medium text-gray-700">{t('profile.permissions')}</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {user.permissions.slice(0, 10).map((permission) => (
@@ -422,7 +424,7 @@ export const ProfilePage: React.FC = () => {
                     ))}
                     {user.permissions.length > 10 && (
                       <span className="px-3 py-1 bg-gray-100 text-gray-500 text-xs font-medium rounded-lg">
-                        +{user.permissions.length - 10} more
+                        +{user.permissions.length - 10} {t('profile.more')}
                       </span>
                     )}
                   </div>

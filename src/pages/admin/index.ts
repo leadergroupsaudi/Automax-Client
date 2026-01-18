@@ -13,6 +13,7 @@ export { WorkflowDesignerPage } from './WorkflowDesignerPage';
 export { IncidentsPage } from './IncidentsPage';
 export { IncidentCreatePage } from './IncidentCreatePage';
 export { IncidentDetailPage } from './IncidentDetailPage';
+export { MyIncidentsPage } from './MyIncidentsPage';
 export { SMTPSettingsPage } from './SMTPSettingsPage';
 export { ReportBuilderPage } from './ReportBuilderPage';
 export { ReportTemplatesPage } from './ReportTemplatesPage';

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
   AlertTriangle,
   ChevronLeft,
@@ -11,21 +12,53 @@ import {
   Menu,
   X,
   ChevronDown,
+  ChevronRight,
   Sparkles,
   Plus,
   List,
   Circle,
+  User,
+  UserCheck,
+  PenLine,
+  Languages,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { authApi } from '../../api/auth';
 import { incidentApi } from '../../api/admin';
+import { setLanguage, getCurrentLanguage, supportedLanguages } from '../../i18n';
 
 export const IncidentLayout: React.FC = () => {
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [myIncidentsOpen, setMyIncidentsOpen] = useState(false);
+  const [isLangOpen, setIsLangOpen] = useState(false);
+  const [currentLang, setCurrentLang] = useState(getCurrentLanguage());
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const langRef = useRef<HTMLDivElement>(null);
+
+  const handleLanguageChange = async (langCode: string) => {
+    if (langCode === currentLang) {
+      setIsLangOpen(false);
+      return;
+    }
+    await setLanguage(langCode);
+    setCurrentLang(langCode);
+    setIsLangOpen(false);
+  };
+
+  // Close language dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(event.target as Node)) {
+        setIsLangOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Fetch incident stats to get statuses
   const { data: statsData } = useQuery({
@@ -132,6 +165,57 @@ export const IncidentLayout: React.FC = () => {
               </>
             )}
           </NavLink>
+
+          {/* My Incidents - Collapsible */}
+          <div>
+            <button
+              onClick={() => setMyIncidentsOpen(!myIncidentsOpen)}
+              className={`w-full group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 text-slate-400 hover:text-white hover:bg-white/5`}
+            >
+              <User size={20} className="flex-shrink-0" />
+              {!collapsed && (
+                <>
+                  <span className="ml-3 font-medium text-sm flex-1 text-left">My Incidents</span>
+                  <ChevronRight
+                    size={16}
+                    className={`transition-transform duration-200 ${myIncidentsOpen ? 'rotate-90' : ''}`}
+                  />
+                </>
+              )}
+            </button>
+            {myIncidentsOpen && !collapsed && (
+              <div className="ml-4 mt-1 space-y-1 border-l border-white/10 pl-2">
+                <NavLink
+                  to="/incidents/my-assigned"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
+                      isActive
+                        ? 'bg-gradient-to-r from-blue-600/90 to-cyan-600/90 text-white shadow-lg shadow-blue-500/20'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`
+                  }
+                >
+                  <UserCheck size={16} className="flex-shrink-0" />
+                  <span className="ml-2 font-medium text-sm">Assigned to me</span>
+                </NavLink>
+                <NavLink
+                  to="/incidents/my-created"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
+                      isActive
+                        ? 'bg-gradient-to-r from-blue-600/90 to-cyan-600/90 text-white shadow-lg shadow-blue-500/20'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`
+                  }
+                >
+                  <PenLine size={16} className="flex-shrink-0" />
+                  <span className="ml-2 font-medium text-sm">Created by me</span>
+                </NavLink>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Status Filters */}
@@ -176,22 +260,22 @@ export const IncidentLayout: React.FC = () => {
               Overview
             </p>
             <div className="px-3 space-y-3">
-              <div className="flex items-center justify-between text-sm">
+              <NavLink
+                to="/incidents"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between text-sm hover:bg-white/5 rounded-lg px-2 py-1.5 -mx-2 transition-colors"
+              >
                 <span className="text-slate-400">Total</span>
                 <span className="text-white font-semibold">{statsData.data.total || 0}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">Open</span>
-                <span className="text-emerald-400 font-semibold">{statsData.data.open || 0}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">In Progress</span>
-                <span className="text-blue-400 font-semibold">{statsData.data.in_progress || 0}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
+              </NavLink>
+              <NavLink
+                to="/incidents?sla_breached=true"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between text-sm hover:bg-white/5 rounded-lg px-2 py-1.5 -mx-2 transition-colors"
+              >
                 <span className="text-slate-400">SLA Breached</span>
                 <span className="text-rose-400 font-semibold">{statsData.data.sla_breached || 0}</span>
-              </div>
+              </NavLink>
             </div>
           </>
         )}
@@ -326,6 +410,43 @@ export const IncidentLayout: React.FC = () => {
                   className="w-64 pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all placeholder:text-slate-400"
                 />
               </div>
+            </div>
+
+            {/* Language Switcher */}
+            <div className="relative" ref={langRef}>
+              <button
+                onClick={() => setIsLangOpen(!isLangOpen)}
+                className="flex items-center gap-1.5 p-2.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
+                title={t('settings.language')}
+              >
+                <Languages className="w-5 h-5" />
+                <span className="text-xs font-medium uppercase">{currentLang}</span>
+              </button>
+
+              {isLangOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-scale-in origin-top-right">
+                  <div className="px-3 py-2 border-b border-slate-100">
+                    <p className="text-xs font-medium text-slate-500 uppercase">{t('settings.selectLanguage')}</p>
+                  </div>
+                  {supportedLanguages.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => handleLanguageChange(lang.code)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${
+                        currentLang === lang.code
+                          ? 'bg-blue-50 text-blue-600'
+                          : 'text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className="text-lg">{lang.code === 'en' ? '🇺🇸' : '🇸🇦'}</span>
+                      <div className="text-left">
+                        <p className="font-medium">{lang.nativeName}</p>
+                        <p className="text-xs text-slate-500">{lang.name}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Notifications */}

@@ -22,6 +22,7 @@ import {
   IncidentsPage,
   IncidentCreatePage,
   IncidentDetailPage,
+  MyIncidentsPage,
   SMTPSettingsPage,
   ReportBuilderPage,
   ReportTemplatesPage,
@@ -89,6 +90,8 @@ function App() {
             <Route element={<IncidentLayout />}>
               <Route path="/incidents" element={<IncidentsPage />} />
               <Route path="/incidents/new" element={<IncidentCreatePage />} />
+              <Route path="/incidents/my-assigned" element={<MyIncidentsPage type="assigned" />} />
+              <Route path="/incidents/my-created" element={<MyIncidentsPage type="created" />} />
               <Route path="/incidents/:id" element={<IncidentDetailPage />} />
             </Route>
           </Route>

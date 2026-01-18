@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Search,
@@ -57,6 +58,7 @@ const initialFormData: UserFormData = {
 };
 
 export const UsersPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -322,12 +324,12 @@ export const UsersPage: React.FC = () => {
           <div className="w-16 h-16 bg-[hsl(var(--destructive)/0.1)] rounded-2xl flex items-center justify-center mb-4">
             <XCircle className="w-8 h-8 text-[hsl(var(--destructive))]" />
           </div>
-          <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">Failed to Load Users</h3>
+          <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">{t('users.failedToLoad')}</h3>
           <p className="text-[hsl(var(--muted-foreground))] mb-6 text-center max-w-sm">
-            There was an error loading the user list. Please try again.
+            {t('users.errorLoading')}
           </p>
           <Button onClick={() => refetch()} leftIcon={<RefreshCw className="w-4 h-4" />}>
-            Try Again
+            {t('common.tryAgain')}
           </Button>
         </div>
       </div>
@@ -343,18 +345,18 @@ export const UsersPage: React.FC = () => {
             <div className="p-2 rounded-lg bg-[hsl(var(--primary)/0.1)]">
               <UsersIcon className="w-5 h-5 text-[hsl(var(--primary))]" />
             </div>
-            <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">Users</h1>
+            <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">{t('users.title')}</h1>
           </div>
           <p className="text-[hsl(var(--muted-foreground))] mt-1 ml-12">
-            Manage user accounts and access permissions
+            {t('users.subtitle')}
           </p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" leftIcon={<Download className="w-4 h-4" />}>
-            Export
+            {t('common.export')}
           </Button>
           <Button leftIcon={<Plus className="w-4 h-4" />} onClick={openCreateModal}>
-            Add User
+            {t('users.addUser')}
           </Button>
         </div>
       </div>
@@ -366,7 +368,7 @@ export const UsersPage: React.FC = () => {
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[hsl(var(--muted-foreground))] w-5 h-5" />
             <input
               type="text"
-              placeholder="Search by name, email, or username..."
+              placeholder={t('users.searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-12 pr-4 py-3 bg-[hsl(var(--muted)/0.5)] border border-[hsl(var(--border))] rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] focus:bg-[hsl(var(--background))] transition-all text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))]"
@@ -374,7 +376,7 @@ export const UsersPage: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" leftIcon={<Filter className="w-4 h-4" />}>
-              Filters
+              {t('common.filter')}
             </Button>
             <Button
               variant="ghost"
@@ -383,7 +385,7 @@ export const UsersPage: React.FC = () => {
               isLoading={isFetching}
               leftIcon={!isFetching ? <RefreshCw className="w-4 h-4" /> : undefined}
             >
-              Refresh
+              {t('common.refresh')}
             </Button>
           </div>
         </div>
@@ -396,7 +398,7 @@ export const UsersPage: React.FC = () => {
             <div className="inline-flex items-center justify-center w-14 h-14 bg-[hsl(var(--primary)/0.1)] rounded-2xl mb-4">
               <div className="w-6 h-6 border-2 border-[hsl(var(--primary))] border-t-transparent rounded-full animate-spin" />
             </div>
-            <p className="text-[hsl(var(--muted-foreground))]">Loading users...</p>
+            <p className="text-[hsl(var(--muted-foreground))]">{t('users.loadingUsers')}</p>
           </div>
         ) : (
           <>
@@ -406,37 +408,37 @@ export const UsersPage: React.FC = () => {
                   <tr className="border-b border-[hsl(var(--border))]">
                     <th className="px-6 py-4 text-left">
                       <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                        User
+                        {t('users.user')}
                       </span>
                     </th>
                     <th className="px-6 py-4 text-left">
                       <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                        Email
+                        {t('users.email')}
                       </span>
                     </th>
                     <th className="px-6 py-4 text-left">
                       <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                        Roles
+                        {t('users.roles')}
                       </span>
                     </th>
                     <th className="px-6 py-4 text-left">
                       <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                        Department
+                        {t('users.department')}
                       </span>
                     </th>
                     <th className="px-6 py-4 text-left">
                       <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                        Location
+                        {t('users.location')}
                       </span>
                     </th>
                     <th className="px-6 py-4 text-left">
                       <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                        Status
+                        {t('users.status')}
                       </span>
                     </th>
                     <th className="px-6 py-4 text-right">
                       <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                        Actions
+                        {t('common.actions')}
                       </span>
                     </th>
                   </tr>
@@ -480,7 +482,7 @@ export const UsersPage: React.FC = () => {
                           {user.is_super_admin && (
                             <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg shadow-sm">
                               <Shield className="w-3 h-3" />
-                              Super Admin
+                              {t('profile.superAdmin')}
                             </span>
                           )}
                           {user.roles?.slice(0, 2).map((role) => (
@@ -497,7 +499,7 @@ export const UsersPage: React.FC = () => {
                             </span>
                           )}
                           {!user.is_super_admin && (!user.roles || user.roles.length === 0) && (
-                            <span className="text-sm text-[hsl(var(--muted-foreground))]">No roles</span>
+                            <span className="text-sm text-[hsl(var(--muted-foreground))]">{t('users.noRoles')}</span>
                           )}
                         </div>
                       </td>
@@ -563,12 +565,12 @@ export const UsersPage: React.FC = () => {
                         {user.is_active ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))] rounded-full">
                             <CheckCircle2 className="w-3.5 h-3.5" />
-                            Active
+                            {t('users.active')}
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] rounded-full">
                             <XCircle className="w-3.5 h-3.5" />
-                            Inactive
+                            {t('users.inactive')}
                           </span>
                         )}
                       </td>
@@ -590,16 +592,16 @@ export const UsersPage: React.FC = () => {
             {/* Pagination */}
             <div className="px-6 py-4 border-t border-[hsl(var(--border))] flex flex-col sm:flex-row items-center justify-between gap-4 bg-[hsl(var(--muted)/0.3)]">
               <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                Showing{' '}
+                {t('common.showing')}{' '}
                 <span className="font-semibold text-[hsl(var(--foreground))]">
                   {((page - 1) * limit) + 1}
                 </span>{' '}
-                to{' '}
+                {t('users.to')}{' '}
                 <span className="font-semibold text-[hsl(var(--foreground))]">
                   {Math.min(page * limit, data?.total_items || 0)}
                 </span>{' '}
-                of{' '}
-                <span className="font-semibold text-[hsl(var(--foreground))]">{data?.total_items || 0}</span> users
+                {t('common.of')}{' '}
+                <span className="font-semibold text-[hsl(var(--foreground))]">{data?.total_items || 0}</span> {t('users.users')}
               </p>
 
               <div className="flex items-center gap-2">
@@ -677,7 +679,7 @@ export const UsersPage: React.FC = () => {
               className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] transition-colors"
             >
               <Eye className="w-4 h-4" />
-              View Details
+              {t('users.viewDetails')}
             </button>
             <button
               onClick={() => {
@@ -690,12 +692,12 @@ export const UsersPage: React.FC = () => {
               className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] transition-colors"
             >
               <Edit2 className="w-4 h-4" />
-              Edit User
+              {t('users.editUser')}
             </button>
             <div className="my-1 border-t border-[hsl(var(--border))]" />
             <button className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-colors">
               <Trash2 className="w-4 h-4" />
-              Delete User
+              {t('users.deleteUser')}
             </button>
           </div>
         </>
@@ -712,7 +714,7 @@ export const UsersPage: React.FC = () => {
                   <UsersIcon className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">Edit User</h3>
+                  <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">{t('users.editUser')}</h3>
                   <p className="text-sm text-[hsl(var(--muted-foreground))]">
                     {editingUser.email}
                   </p>
@@ -732,7 +734,7 @@ export const UsersPage: React.FC = () => {
                 {/* Basic Info */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">First Name</label>
+                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('users.firstName')}</label>
                     <input
                       type="text"
                       placeholder="e.g., John"
@@ -742,7 +744,7 @@ export const UsersPage: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Last Name</label>
+                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('users.lastName')}</label>
                     <input
                       type="text"
                       placeholder="e.g., Doe"
@@ -755,7 +757,7 @@ export const UsersPage: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Username</label>
+                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('users.username')}</label>
                     <input
                       type="text"
                       placeholder="e.g., johndoe"
@@ -765,7 +767,7 @@ export const UsersPage: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Phone</label>
+                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('users.phone')}</label>
                     <input
                       type="text"
                       placeholder="e.g., +1 234 567 890"
@@ -781,9 +783,9 @@ export const UsersPage: React.FC = () => {
                   data={departmentsTree}
                   selectedIds={formData.department_ids}
                   onSelectionChange={(ids) => setFormData({ ...formData, department_ids: ids })}
-                  label="Departments"
+                  label={t('users.departments')}
                   icon={<Building2 className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />}
-                  emptyMessage="No departments available"
+                  emptyMessage={t('users.noDepartmentsAvailable')}
                   colorScheme="accent"
                   maxHeight="180px"
                 />
@@ -793,9 +795,9 @@ export const UsersPage: React.FC = () => {
                   data={locationsTree}
                   selectedIds={formData.location_ids}
                   onSelectionChange={(ids) => setFormData({ ...formData, location_ids: ids })}
-                  label="Locations"
+                  label={t('users.locations')}
                   icon={<MapPin className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />}
-                  emptyMessage="No locations available"
+                  emptyMessage={t('users.noLocationsAvailable')}
                   colorScheme="success"
                   maxHeight="180px"
                 />
@@ -805,9 +807,9 @@ export const UsersPage: React.FC = () => {
                   data={classificationsTree}
                   selectedIds={formData.classification_ids}
                   onSelectionChange={(ids) => setFormData({ ...formData, classification_ids: ids })}
-                  label="Classifications"
+                  label={t('users.classifications')}
                   icon={<FolderTree className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />}
-                  emptyMessage="No classifications available"
+                  emptyMessage={t('users.noClassificationsAvailable')}
                   colorScheme="warning"
                   maxHeight="180px"
                 />
@@ -816,15 +818,15 @@ export const UsersPage: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <Shield className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">Roles</label>
+                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">{t('users.roles')}</label>
                     <span className="px-2 py-0.5 text-xs font-medium bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] rounded-md">
-                      {formData.role_ids.length} selected
+                      {formData.role_ids.length} {t('common.selected')}
                     </span>
                   </div>
                   <div className="border border-[hsl(var(--border))] rounded-xl max-h-40 overflow-y-auto p-3">
                     <div className="flex flex-wrap gap-2">
                       {rolesData?.data?.length === 0 ? (
-                        <p className="text-sm text-[hsl(var(--muted-foreground))]">No roles available</p>
+                        <p className="text-sm text-[hsl(var(--muted-foreground))]">{t('users.noRolesAvailable')}</p>
                       ) : (
                         rolesData?.data?.map((role: Role) => (
                           <button
@@ -850,7 +852,7 @@ export const UsersPage: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <CheckCircle2 className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">Status</label>
+                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">{t('users.status')}</label>
                   </div>
                   <div className="flex gap-3">
                     <button
@@ -864,7 +866,7 @@ export const UsersPage: React.FC = () => {
                       )}
                     >
                       <CheckCircle2 className="w-4 h-4" />
-                      Active
+                      {t('users.active')}
                     </button>
                     <button
                       type="button"
@@ -877,7 +879,7 @@ export const UsersPage: React.FC = () => {
                       )}
                     >
                       <XCircle className="w-4 h-4" />
-                      Inactive
+                      {t('users.inactive')}
                     </button>
                   </div>
                 </div>
@@ -886,14 +888,14 @@ export const UsersPage: React.FC = () => {
               {/* Modal Footer */}
               <div className="flex justify-end gap-3 px-6 py-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.5)]">
                 <Button variant="ghost" type="button" onClick={closeModal}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   type="submit"
                   isLoading={updateMutation.isPending}
                   leftIcon={!updateMutation.isPending ? <Check className="w-4 h-4" /> : undefined}
                 >
-                  {updateMutation.isPending ? 'Saving...' : 'Update User'}
+                  {updateMutation.isPending ? t('users.saving') : t('users.updateUser')}
                 </Button>
               </div>
             </form>
@@ -912,9 +914,9 @@ export const UsersPage: React.FC = () => {
                   <Plus className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">Create New User</h3>
+                  <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">{t('users.createNewUser')}</h3>
                   <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                    Add a new user to the system
+                    {t('users.addNewUserToSystem')}
                   </p>
                 </div>
               </div>
@@ -955,7 +957,7 @@ export const UsersPage: React.FC = () => {
                   </div>
                   <label className="cursor-pointer">
                     <span className="px-4 py-2 text-sm font-medium text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)] rounded-lg hover:bg-[hsl(var(--primary)/0.2)] transition-colors">
-                      {avatarPreview ? 'Change Photo' : 'Upload Photo'}
+                      {avatarPreview ? t('users.changePhoto') : t('users.uploadPhoto')}
                     </span>
                     <input
                       type="file"
@@ -970,7 +972,7 @@ export const UsersPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-                      Email <span className="text-[hsl(var(--destructive))]">*</span>
+                      {t('users.email')} <span className="text-[hsl(var(--destructive))]">*</span>
                     </label>
                     <input
                       type="email"
@@ -983,7 +985,7 @@ export const UsersPage: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-                      Username <span className="text-[hsl(var(--destructive))]">*</span>
+                      {t('users.username')} <span className="text-[hsl(var(--destructive))]">*</span>
                     </label>
                     <input
                       type="text"
@@ -999,7 +1001,7 @@ export const UsersPage: React.FC = () => {
                 {/* Password */}
                 <div>
                   <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-                    Password <span className="text-[hsl(var(--destructive))]">*</span>
+                    {t('auth.password')} <span className="text-[hsl(var(--destructive))]">*</span>
                   </label>
                   <input
                     type="password"
@@ -1014,7 +1016,7 @@ export const UsersPage: React.FC = () => {
                 {/* Name Fields */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">First Name</label>
+                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('users.firstName')}</label>
                     <input
                       type="text"
                       placeholder="e.g., John"
@@ -1024,7 +1026,7 @@ export const UsersPage: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Last Name</label>
+                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('users.lastName')}</label>
                     <input
                       type="text"
                       placeholder="e.g., Doe"
@@ -1037,7 +1039,7 @@ export const UsersPage: React.FC = () => {
 
                 {/* Phone */}
                 <div>
-                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Phone</label>
+                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('users.phone')}</label>
                   <input
                     type="text"
                     placeholder="e.g., +1 234 567 890"
@@ -1052,9 +1054,9 @@ export const UsersPage: React.FC = () => {
                   data={departmentsTree}
                   selectedIds={createFormData.department_ids}
                   onSelectionChange={(ids) => setCreateFormData({ ...createFormData, department_ids: ids })}
-                  label="Departments"
+                  label={t('users.departments')}
                   icon={<Building2 className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />}
-                  emptyMessage="No departments available"
+                  emptyMessage={t('users.noDepartmentsAvailable')}
                   colorScheme="accent"
                   maxHeight="180px"
                 />
@@ -1064,9 +1066,9 @@ export const UsersPage: React.FC = () => {
                   data={locationsTree}
                   selectedIds={createFormData.location_ids}
                   onSelectionChange={(ids) => setCreateFormData({ ...createFormData, location_ids: ids })}
-                  label="Locations"
+                  label={t('users.locations')}
                   icon={<MapPin className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />}
-                  emptyMessage="No locations available"
+                  emptyMessage={t('users.noLocationsAvailable')}
                   colorScheme="success"
                   maxHeight="180px"
                 />
@@ -1076,9 +1078,9 @@ export const UsersPage: React.FC = () => {
                   data={classificationsTree}
                   selectedIds={createFormData.classification_ids}
                   onSelectionChange={(ids) => setCreateFormData({ ...createFormData, classification_ids: ids })}
-                  label="Classifications"
+                  label={t('users.classifications')}
                   icon={<FolderTree className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />}
-                  emptyMessage="No classifications available"
+                  emptyMessage={t('users.noClassificationsAvailable')}
                   colorScheme="warning"
                   maxHeight="180px"
                 />
@@ -1087,15 +1089,15 @@ export const UsersPage: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <Shield className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">Roles</label>
+                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">{t('users.roles')}</label>
                     <span className="px-2 py-0.5 text-xs font-medium bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] rounded-md">
-                      {createFormData.role_ids.length} selected
+                      {createFormData.role_ids.length} {t('common.selected')}
                     </span>
                   </div>
                   <div className="border border-[hsl(var(--border))] rounded-xl max-h-40 overflow-y-auto p-3">
                     <div className="flex flex-wrap gap-2">
                       {rolesData?.data?.length === 0 ? (
-                        <p className="text-sm text-[hsl(var(--muted-foreground))]">No roles available</p>
+                        <p className="text-sm text-[hsl(var(--muted-foreground))]">{t('users.noRolesAvailable')}</p>
                       ) : (
                         rolesData?.data?.map((role: Role) => (
                           <button
@@ -1121,14 +1123,14 @@ export const UsersPage: React.FC = () => {
               {/* Modal Footer */}
               <div className="flex justify-end gap-3 px-6 py-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.5)]">
                 <Button variant="ghost" type="button" onClick={closeCreateModal}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   type="submit"
                   isLoading={createMutation.isPending}
                   leftIcon={!createMutation.isPending ? <Check className="w-4 h-4" /> : undefined}
                 >
-                  {createMutation.isPending ? 'Creating...' : 'Create User'}
+                  {createMutation.isPending ? t('users.creating') : t('users.createUser')}
                 </Button>
               </div>
             </form>
@@ -1166,7 +1168,7 @@ export const UsersPage: React.FC = () => {
                     ? 'bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]'
                     : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
                 )}>
-                  {viewingUser.is_active ? 'Active' : 'Inactive'}
+                  {viewingUser.is_active ? t('users.active') : t('users.inactive')}
                 </span>
                 <button
                   onClick={closeViewModal}
@@ -1182,15 +1184,15 @@ export const UsersPage: React.FC = () => {
               {/* Contact Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Email</p>
+                  <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{t('users.email')}</p>
                   <div className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-[hsl(var(--primary))]" />
                     <p className="text-sm text-[hsl(var(--foreground))]">{viewingUser.email}</p>
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Phone</p>
-                  <p className="text-sm text-[hsl(var(--foreground))]">{viewingUser.phone || 'Not provided'}</p>
+                  <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{t('users.phone')}</p>
+                  <p className="text-sm text-[hsl(var(--foreground))]">{viewingUser.phone || t('users.notProvided')}</p>
                 </div>
               </div>
 
@@ -1198,7 +1200,7 @@ export const UsersPage: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Building2 className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                  <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Departments</p>
+                  <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{t('users.departments')}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {viewingUser.departments && viewingUser.departments.length > 0 ? (
@@ -1215,7 +1217,7 @@ export const UsersPage: React.FC = () => {
                       {viewingUser.department.name}
                     </span>
                   ) : (
-                    <span className="text-sm text-[hsl(var(--muted-foreground))]">No departments assigned</span>
+                    <span className="text-sm text-[hsl(var(--muted-foreground))]">{t('users.noDepartmentsAssigned')}</span>
                   )}
                 </div>
               </div>
@@ -1224,7 +1226,7 @@ export const UsersPage: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                  <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Locations</p>
+                  <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{t('users.locations')}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {viewingUser.locations && viewingUser.locations.length > 0 ? (
@@ -1241,7 +1243,7 @@ export const UsersPage: React.FC = () => {
                       {viewingUser.location.name}
                     </span>
                   ) : (
-                    <span className="text-sm text-[hsl(var(--muted-foreground))]">No locations assigned</span>
+                    <span className="text-sm text-[hsl(var(--muted-foreground))]">{t('users.noLocationsAssigned')}</span>
                   )}
                 </div>
               </div>
@@ -1250,7 +1252,7 @@ export const UsersPage: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <FolderTree className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                  <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Classifications</p>
+                  <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{t('users.classifications')}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {viewingUser.classifications && viewingUser.classifications.length > 0 ? (
@@ -1263,7 +1265,7 @@ export const UsersPage: React.FC = () => {
                       </span>
                     ))
                   ) : (
-                    <span className="text-sm text-[hsl(var(--muted-foreground))]">No classifications assigned</span>
+                    <span className="text-sm text-[hsl(var(--muted-foreground))]">{t('users.noClassificationsAssigned')}</span>
                   )}
                 </div>
               </div>
@@ -1272,7 +1274,7 @@ export const UsersPage: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Shield className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                  <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Roles</p>
+                  <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{t('users.roles')}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {viewingUser.roles && viewingUser.roles.length > 0 ? (
@@ -1285,7 +1287,7 @@ export const UsersPage: React.FC = () => {
                       </span>
                     ))
                   ) : (
-                    <span className="text-sm text-[hsl(var(--muted-foreground))]">No roles assigned</span>
+                    <span className="text-sm text-[hsl(var(--muted-foreground))]">{t('users.noRolesAssigned')}</span>
                   )}
                 </div>
               </div>
@@ -1293,7 +1295,7 @@ export const UsersPage: React.FC = () => {
               {/* Meta Info */}
               <div className="pt-4 border-t border-[hsl(var(--border))] grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Last Login</p>
+                  <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{t('users.lastLogin')}</p>
                   <p className="text-sm text-[hsl(var(--foreground))]">
                     {viewingUser.last_login_at
                       ? new Date(viewingUser.last_login_at).toLocaleDateString('en-US', {
@@ -1303,11 +1305,11 @@ export const UsersPage: React.FC = () => {
                           hour: '2-digit',
                           minute: '2-digit',
                         })
-                      : 'Never'}
+                      : t('users.never')}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Account Created</p>
+                  <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{t('users.accountCreated')}</p>
                   <p className="text-sm text-[hsl(var(--foreground))]">
                     {new Date(viewingUser.created_at).toLocaleDateString('en-US', {
                       year: 'numeric',
@@ -1322,7 +1324,7 @@ export const UsersPage: React.FC = () => {
             {/* Modal Footer */}
             <div className="flex justify-end gap-3 px-6 py-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.5)]">
               <Button variant="ghost" onClick={closeViewModal}>
-                Close
+                {t('common.close')}
               </Button>
               <Button
                 onClick={() => {
@@ -1331,7 +1333,7 @@ export const UsersPage: React.FC = () => {
                 }}
                 leftIcon={<Edit2 className="w-4 h-4" />}
               >
-                Edit User
+                {t('users.editUser')}
               </Button>
             </div>
           </div>

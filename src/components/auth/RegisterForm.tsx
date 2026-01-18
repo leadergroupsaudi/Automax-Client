@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { User, Mail, Lock, ArrowRight } from 'lucide-react';
 import { Button, Input, Checkbox } from '../ui';
 import { authApi } from '../../api/auth';
@@ -31,6 +32,7 @@ const registerSchema = z.object({
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 export const RegisterForm: React.FC = () => {
+  const { t } = useTranslation();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -62,7 +64,7 @@ export const RegisterForm: React.FC = () => {
 
   const passwordStrength = getPasswordStrength(password);
 
-  const strengthLabels = ['Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'];
+  const strengthLabels = [t('settings.weak'), t('settings.weak'), t('settings.fair'), t('settings.good'), t('settings.strong')];
   const strengthColors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-lime-500', 'bg-emerald-500'];
 
   const onSubmit = async (data: RegisterFormData) => {
@@ -73,7 +75,7 @@ export const RegisterForm: React.FC = () => {
       const { confirmPassword: _, terms: __, ...registerData } = data;
       const response = await authApi.register(registerData);
       if (response.success && response.data) {
-        setAuth(response.data.user, response.data.token);
+        setAuth(response.data.user, response.data.token, response.data.refresh_token);
         navigate('/dashboard');
       } else {
         setError(response.error || 'Registration failed. Please try again.');
@@ -95,9 +97,9 @@ export const RegisterForm: React.FC = () => {
     <div className="animate-fade-in-up">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Create an account</h1>
+        <h1 className="text-3xl font-bold text-gray-900">{t('auth.registerTitle')}</h1>
         <p className="mt-2 text-gray-600">
-          Join Automax today and start managing your workflow
+          {t('auth.registerSubtitle')}
         </p>
       </div>
 
@@ -120,13 +122,13 @@ export const RegisterForm: React.FC = () => {
         {/* Name Fields */}
         <div className="grid grid-cols-2 gap-4">
           <Input
-            label="First name"
+            label={t('auth.firstName')}
             placeholder="John"
             error={errors.first_name?.message}
             {...register('first_name')}
           />
           <Input
-            label="Last name"
+            label={t('auth.lastName')}
             placeholder="Doe"
             error={errors.last_name?.message}
             {...register('last_name')}
@@ -134,7 +136,7 @@ export const RegisterForm: React.FC = () => {
         </div>
 
         <Input
-          label="Username"
+          label={t('auth.username')}
           placeholder="johndoe"
           error={errors.username?.message}
           leftIcon={<User className="w-5 h-5" />}
@@ -142,7 +144,7 @@ export const RegisterForm: React.FC = () => {
         />
 
         <Input
-          label="Email address"
+          label={t('auth.email')}
           type="email"
           placeholder="you@example.com"
           error={errors.email?.message}
@@ -152,9 +154,9 @@ export const RegisterForm: React.FC = () => {
 
         <div>
           <Input
-            label="Password"
+            label={t('auth.password')}
             type="password"
-            placeholder="Create a strong password"
+            placeholder={t('settings.createStrongPassword')}
             error={errors.password?.message}
             leftIcon={<Lock className="w-5 h-5" />}
             {...register('password')}
@@ -175,9 +177,9 @@ export const RegisterForm: React.FC = () => {
                 ))}
               </div>
               <p className="text-xs text-gray-500">
-                Password strength:{' '}
+                {t('settings.passwordStrength')}:{' '}
                 <span className={`font-medium ${passwordStrength >= 4 ? 'text-emerald-600' : passwordStrength >= 3 ? 'text-lime-600' : passwordStrength >= 2 ? 'text-yellow-600' : 'text-red-600'}`}>
-                  {strengthLabels[passwordStrength - 1] || 'Too weak'}
+                  {strengthLabels[passwordStrength - 1] || t('settings.weak')}
                 </span>
               </p>
             </div>
@@ -185,9 +187,9 @@ export const RegisterForm: React.FC = () => {
         </div>
 
         <Input
-          label="Confirm password"
+          label={t('auth.confirmPassword')}
           type="password"
-          placeholder="Confirm your password"
+          placeholder={t('settings.confirmYourPassword')}
           error={errors.confirmPassword?.message}
           leftIcon={<Lock className="w-5 h-5" />}
           {...register('confirmPassword')}
@@ -218,18 +220,18 @@ export const RegisterForm: React.FC = () => {
           isLoading={isLoading}
           rightIcon={!isLoading && <ArrowRight className="w-5 h-5" />}
         >
-          Create account
+          {isLoading ? t('auth.creatingAccount') : t('auth.signUp')}
         </Button>
       </form>
 
       {/* Sign In Link */}
       <p className="mt-8 text-center text-gray-600">
-        Already have an account?{' '}
+        {t('auth.hasAccount')}{' '}
         <Link
           to="/login"
           className="font-semibold text-blue-600 hover:text-blue-700 transition-colors"
         >
-          Sign in
+          {t('auth.signIn')}
         </Link>
       </p>
     </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Search,
   ChevronLeft,
@@ -21,8 +22,8 @@ import {
   Check,
 } from 'lucide-react';
 import { Button } from '../../components/ui';
-import { incidentApi, workflowApi, userApi, departmentApi } from '../../api/admin';
-import type { Incident, IncidentFilter, Workflow, User as UserType, Department, WorkflowState } from '../../types';
+import { incidentApi, workflowApi, userApi, departmentApi, classificationApi, locationApi } from '../../api/admin';
+import type { Incident, IncidentFilter, Workflow, User as UserType, Department, WorkflowState, Classification, Location } from '../../types';
 import { cn } from '@/lib/utils';
 
 const priorityLabels: Record<number, { label: string; color: string }> = {
@@ -82,6 +83,7 @@ const loadColumnsFromStorage = (): ColumnConfig[] => {
 };
 
 export const IncidentsPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [filter, setFilter] = useState<IncidentFilter>({
@@ -137,32 +139,60 @@ export const IncidentsPage: React.FC = () => {
     return acc;
   }, []);
 
-  // Read status from URL and sync with filter
+  // Read status and sla_breached from URL and sync with filter
   useEffect(() => {
     const statusParam = searchParams.get('status');
-    if (statusParam && statusParam !== statusFilter) {
-      setStatusFilter(statusParam);
-      // Find the state ID by name
-      const matchingState = uniqueStates.find(
-        (s: WorkflowState) => s.name.toLowerCase() === statusParam.toLowerCase()
-      );
-      if (matchingState) {
-        setFilter(prev => ({
-          ...prev,
-          current_state_id: matchingState.id,
-          page: 1,
-        }));
-        setShowFilters(true);
+    const slaBreachedParam = searchParams.get('sla_breached');
+
+    // Build new filter state based on URL params
+    const newFilterUpdates: Partial<IncidentFilter> = {};
+    let needsUpdate = false;
+
+    // Handle sla_breached param
+    if (slaBreachedParam === 'true') {
+      if (filter.sla_breached !== true) {
+        newFilterUpdates.sla_breached = true;
+        needsUpdate = true;
       }
-    } else if (!statusParam && statusFilter) {
-      setStatusFilter(null);
+    } else {
+      if (filter.sla_breached !== undefined) {
+        newFilterUpdates.sla_breached = undefined;
+        needsUpdate = true;
+      }
+    }
+
+    // Handle status param
+    if (statusParam) {
+      if (statusParam !== statusFilter) {
+        setStatusFilter(statusParam);
+        // Find the state ID by name
+        const matchingState = uniqueStates.find(
+          (s: WorkflowState) => s.name.toLowerCase() === statusParam.toLowerCase()
+        );
+        if (matchingState && filter.current_state_id !== matchingState.id) {
+          newFilterUpdates.current_state_id = matchingState.id;
+          needsUpdate = true;
+        }
+      }
+    } else {
+      if (statusFilter) {
+        setStatusFilter(null);
+      }
+      if (filter.current_state_id !== undefined) {
+        newFilterUpdates.current_state_id = undefined;
+        needsUpdate = true;
+      }
+    }
+
+    // Apply updates if needed
+    if (needsUpdate) {
       setFilter(prev => ({
         ...prev,
-        current_state_id: undefined,
+        ...newFilterUpdates,
         page: 1,
       }));
     }
-  }, [searchParams, uniqueStates, statusFilter]);
+  }, [searchParams, uniqueStates]);
 
   const { data: incidentsData, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ['incidents', filter],
@@ -182,6 +212,16 @@ export const IncidentsPage: React.FC = () => {
   const { data: departmentsData } = useQuery({
     queryKey: ['admin', 'departments', 'list'],
     queryFn: departmentApi.list,
+  });
+
+  const { data: classificationsData } = useQuery({
+    queryKey: ['admin', 'classifications', 'list'],
+    queryFn: classificationApi.list,
+  });
+
+  const { data: locationsData } = useQuery({
+    queryKey: ['admin', 'locations', 'list'],
+    queryFn: locationApi.list,
   });
 
   const stats = statsData?.data;
@@ -210,6 +250,8 @@ export const IncidentsPage: React.FC = () => {
     filter.search ||
     filter.workflow_id ||
     filter.current_state_id ||
+    filter.classification_id ||
+    filter.location_id ||
     filter.priority ||
     filter.severity ||
     filter.assignee_id ||
@@ -233,12 +275,12 @@ export const IncidentsPage: React.FC = () => {
           <div className="w-16 h-16 bg-[hsl(var(--destructive)/0.1)] rounded-2xl flex items-center justify-center mb-4">
             <XCircle className="w-8 h-8 text-[hsl(var(--destructive))]" />
           </div>
-          <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">Failed to Load Incidents</h3>
+          <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">{t('incidents.failedToLoad')}</h3>
           <p className="text-[hsl(var(--muted-foreground))] mb-6 text-center max-w-sm">
-            There was an error loading the incident list. Please try again.
+            {t('incidents.errorLoading')}
           </p>
           <Button onClick={() => refetch()} leftIcon={<RefreshCw className="w-4 h-4" />}>
-            Try Again
+            {t('common.tryAgain')}
           </Button>
         </div>
       </div>
@@ -251,17 +293,19 @@ export const IncidentsPage: React.FC = () => {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <div className="p-2 rounded-lg bg-[hsl(var(--primary)/0.1)]">
-              <AlertTriangle className="w-5 h-5 text-[hsl(var(--primary))]" />
+            <div className={`p-2 rounded-lg ${filter.sla_breached ? 'bg-red-500/10' : 'bg-[hsl(var(--primary)/0.1)]'}`}>
+              <AlertTriangle className={`w-5 h-5 ${filter.sla_breached ? 'text-red-500' : 'text-[hsl(var(--primary))]'}`} />
             </div>
             <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">
-              {statusFilter ? `${statusFilter} Incidents` : 'Incidents'}
+              {filter.sla_breached ? t('incidents.slaBreached') : statusFilter ? `${statusFilter} ${t('incidents.title')}` : t('incidents.title')}
             </h1>
           </div>
           <p className="text-[hsl(var(--muted-foreground))] mt-1 ml-12">
-            {statusFilter
-              ? `Showing incidents with status: ${statusFilter}`
-              : 'Track and manage incident reports'
+            {filter.sla_breached
+              ? t('incidents.showingSlaBreach')
+              : statusFilter
+              ? `${t('incidents.showingStatus')}: ${statusFilter}`
+              : t('incidents.subtitle')
             }
           </p>
         </div>
@@ -273,10 +317,10 @@ export const IncidentsPage: React.FC = () => {
             isLoading={isFetching}
             leftIcon={!isFetching ? <RefreshCw className="w-4 h-4" /> : undefined}
           >
-            Refresh
+            {t('common.refresh')}
           </Button>
           <Button leftIcon={<Plus className="w-4 h-4" />} onClick={() => navigate('/incidents/new')}>
-            Create Incident
+            {t('incidents.createIncident')}
           </Button>
         </div>
       </div>
@@ -533,6 +577,32 @@ export const IncidentsPage: React.FC = () => {
                 <option value="">All Departments</option>
                 {departmentsData?.data?.map((dept: Department) => (
                   <option key={dept.id} value={dept.id}>{dept.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">Classification</label>
+              <select
+                value={filter.classification_id || ''}
+                onChange={(e) => handleFilterChange('classification_id', e.target.value || undefined)}
+                className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+              >
+                <option value="">All Classifications</option>
+                {classificationsData?.data?.map((classification: Classification) => (
+                  <option key={classification.id} value={classification.id}>{classification.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">Location</label>
+              <select
+                value={filter.location_id || ''}
+                onChange={(e) => handleFilterChange('location_id', e.target.value || undefined)}
+                className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+              >
+                <option value="">All Locations</option>
+                {locationsData?.data?.map((location: Location) => (
+                  <option key={location.id} value={location.id}>{location.name}</option>
                 ))}
               </select>
             </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
   Users,
   Shield,
@@ -73,6 +74,7 @@ const StatCard: React.FC<StatCardProps> = ({
 );
 
 export const AdminDashboard: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
 
   const { data: usersData, isLoading: usersLoading } = useQuery({
@@ -102,7 +104,7 @@ export const AdminDashboard: React.FC = () => {
 
   const stats: StatCardProps[] = [
     {
-      title: 'Open Incidents',
+      title: t('dashboard.openIncidents'),
       icon: AlertTriangle,
       gradient: 'bg-gradient-to-br from-red-500 to-orange-600',
       count: (incidentStatsData?.data?.open ?? 0) + (incidentStatsData?.data?.in_progress ?? 0),
@@ -110,7 +112,7 @@ export const AdminDashboard: React.FC = () => {
       href: '/incidents',
     },
     {
-      title: 'Total Incidents',
+      title: t('dashboard.totalIncidents'),
       icon: AlertTriangle,
       gradient: 'bg-gradient-to-br from-amber-500 to-yellow-600',
       count: incidentStatsData?.data?.total ?? 0,
@@ -118,7 +120,7 @@ export const AdminDashboard: React.FC = () => {
       href: '/incidents',
     },
     {
-      title: 'Workflows',
+      title: t('nav.workflows'),
       icon: GitBranch,
       gradient: 'bg-gradient-to-br from-cyan-500 to-teal-600',
       count: workflowsData?.data?.length ?? 0,
@@ -126,7 +128,7 @@ export const AdminDashboard: React.FC = () => {
       href: '/workflows',
     },
     {
-      title: 'Total Users',
+      title: t('admin.totalUsers'),
       icon: Users,
       gradient: 'bg-gradient-to-br from-blue-500 to-blue-600',
       count: usersData?.total_items ?? 0,
@@ -134,7 +136,7 @@ export const AdminDashboard: React.FC = () => {
       href: '/admin/users',
     },
     {
-      title: 'Active Roles',
+      title: t('admin.totalRoles'),
       icon: Shield,
       gradient: 'bg-gradient-to-br from-emerald-500 to-teal-600',
       count: rolesData?.data?.length ?? 0,
@@ -142,7 +144,7 @@ export const AdminDashboard: React.FC = () => {
       href: '/admin/roles',
     },
     {
-      title: 'Departments',
+      title: t('admin.departments'),
       icon: Building2,
       gradient: 'bg-gradient-to-br from-purple-500 to-violet-600',
       count: departmentsData?.data?.length ?? 0,
@@ -153,32 +155,32 @@ export const AdminDashboard: React.FC = () => {
 
   const quickActions = [
     {
-      title: 'View Incidents',
-      description: 'Manage incident reports',
+      title: t('incidents.title'),
+      description: t('dashboard.createTrackManage'),
       icon: AlertTriangle,
       href: '/incidents',
       color: 'text-red-600',
       bg: 'bg-red-50 hover:bg-red-100',
     },
     {
-      title: 'Manage Workflows',
-      description: 'Configure workflows',
+      title: t('nav.workflows'),
+      description: t('dashboard.designConfigure'),
       icon: GitBranch,
       href: '/workflows',
       color: 'text-cyan-600',
       bg: 'bg-cyan-50 hover:bg-cyan-100',
     },
     {
-      title: 'Manage Users',
-      description: 'User accounts',
+      title: t('admin.users'),
+      description: t('dashboard.userAccessControl'),
       icon: Users,
       href: '/admin/users',
       color: 'text-blue-600',
       bg: 'bg-blue-50 hover:bg-blue-100',
     },
     {
-      title: 'Manage Roles',
-      description: 'Configure permissions',
+      title: t('admin.roles'),
+      description: t('admin.permissions'),
       icon: Shield,
       href: '/admin/roles',
       color: 'text-emerald-600',
@@ -227,21 +229,21 @@ export const AdminDashboard: React.FC = () => {
             <div className="flex items-center gap-3 mb-3">
               <div className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full backdrop-blur-sm">
                 <Sparkles className="w-4 h-4 text-amber-400" />
-                <span className="text-sm font-medium text-slate-200">Admin Dashboard</span>
+                <span className="text-sm font-medium text-slate-200">{t('admin.dashboard')}</span>
               </div>
             </div>
             <h1 className="text-3xl lg:text-4xl font-bold mb-2">
-              Welcome back, {user?.first_name || user?.username}
+              {t('dashboard.welcome')}, {user?.first_name || user?.username}
             </h1>
             <p className="text-slate-400 text-lg max-w-xl">
-              Here's what's happening with your organization today. Manage users, roles, and system settings all in one place.
+              {t('dashboard.whatToWorkOn')}
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/20 border border-emerald-500/30 rounded-xl backdrop-blur-sm">
               <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-              <span className="text-sm font-medium text-emerald-300">All Systems Operational</span>
+              <span className="text-sm font-medium text-emerald-300">{t('dashboard.allSystemsOperational')}</span>
             </div>
           </div>
         </div>
@@ -251,8 +253,8 @@ export const AdminDashboard: React.FC = () => {
       <div>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-bold text-slate-800">Overview</h2>
-            <p className="text-slate-500 text-sm">Quick look at your system metrics</p>
+            <h2 className="text-xl font-bold text-slate-800">{t('dashboard.title')}</h2>
+            <p className="text-slate-500 text-sm">{t('dashboard.insightsLogs')}</p>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -269,8 +271,8 @@ export const AdminDashboard: React.FC = () => {
           <div className="bg-white rounded-2xl border border-slate-200/60 p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-lg font-bold text-slate-800">Quick Actions</h3>
-                <p className="text-sm text-slate-500">Common tasks</p>
+                <h3 className="text-lg font-bold text-slate-800">{t('dashboard.quickActions')}</h3>
+                <p className="text-sm text-slate-500">{t('common.actions')}</p>
               </div>
               <Zap className="w-5 h-5 text-amber-500" />
             </div>
@@ -296,11 +298,11 @@ export const AdminDashboard: React.FC = () => {
           <div className="bg-white rounded-2xl border border-slate-200/60 p-6 h-full">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-lg font-bold text-slate-800">Recent Activity</h3>
-                <p className="text-sm text-slate-500">Latest system events</p>
+                <h3 className="text-lg font-bold text-slate-800">{t('admin.actionLogs')}</h3>
+                <p className="text-sm text-slate-500">{t('dashboard.insightsLogs')}</p>
               </div>
               <button className="text-sm font-medium text-violet-600 hover:text-violet-700 flex items-center gap-1 transition-colors">
-                View all
+                {t('dashboard.viewAll')}
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -335,12 +337,12 @@ export const AdminDashboard: React.FC = () => {
       <div className="bg-white rounded-2xl border border-slate-200/60 p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-lg font-bold text-slate-800">System Health</h3>
-            <p className="text-sm text-slate-500">Infrastructure status</p>
+            <h3 className="text-lg font-bold text-slate-800">{t('admin.systemSettings')}</h3>
+            <p className="text-sm text-slate-500">{t('dashboard.allSystemsOperational')}</p>
           </div>
           <span className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-lg">
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-            All healthy
+            {t('profile.active')}
           </span>
         </div>
 

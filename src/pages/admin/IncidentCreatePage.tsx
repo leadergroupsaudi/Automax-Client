@@ -98,15 +98,17 @@ export function IncidentCreatePage() {
   const createMutation = useMutation({
     mutationFn: (data: IncidentCreateRequest) => incidentApi.create(data),
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'incidents'] });
+      // Invalidate all incident-related queries
+      queryClient.invalidateQueries({ queryKey: ['incidents'] });
       if (response.data) {
         navigate(`/incidents/${response.data.id}`);
       } else {
         navigate('/incidents');
       }
     },
-    onError: (error: Error) => {
-      setErrors({ submit: error.message });
+    onError: (error: any) => {
+      const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to create incident';
+      setErrors({ submit: message });
     },
   });
 
@@ -182,7 +184,11 @@ export function IncidentCreatePage() {
     if (formData.assignee_id) submitData.assignee_id = formData.assignee_id;
     if (formData.department_id) submitData.department_id = formData.department_id;
     if (formData.location_id) submitData.location_id = formData.location_id;
-    if (formData.due_date) submitData.due_date = formData.due_date;
+    // Convert datetime-local format to RFC3339 for backend
+    if (formData.due_date) {
+      const date = new Date(formData.due_date);
+      submitData.due_date = date.toISOString();
+    }
     if (formData.reporter_name) submitData.reporter_name = formData.reporter_name;
     if (formData.reporter_email) submitData.reporter_email = formData.reporter_email;
 

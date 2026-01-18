@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../stores/authStore';
 import {
   Settings,
@@ -11,40 +12,41 @@ import {
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
+  const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
 
   const navigationCards = [
     {
-      title: 'Admin Panel',
-      subtitle: 'User & Access Control',
-      description: 'Users, roles, permissions, departments',
+      title: t('dashboard.adminPanel'),
+      subtitle: t('dashboard.userAccessControl'),
+      description: t('dashboard.usersRolesPermissions'),
       href: '/admin',
       icon: Settings,
       gradient: 'from-violet-500 to-purple-600',
       shadowColor: 'shadow-violet-500/20',
     },
     {
-      title: 'Incident Management',
-      subtitle: 'Track & Resolve',
-      description: 'Create, track, and manage incidents',
+      title: t('dashboard.incidentManagement'),
+      subtitle: t('dashboard.trackResolve'),
+      description: t('dashboard.createTrackManage'),
       href: '/incidents',
       icon: AlertTriangle,
       gradient: 'from-blue-500 to-cyan-500',
       shadowColor: 'shadow-blue-500/20',
     },
     {
-      title: 'Workflow Management',
-      subtitle: 'Design & Configure',
-      description: 'Build workflows with states & transitions',
+      title: t('dashboard.workflowManagement'),
+      subtitle: t('dashboard.designConfigure'),
+      description: t('dashboard.buildWorkflows'),
       href: '/workflows',
       icon: GitBranch,
       gradient: 'from-emerald-500 to-teal-500',
       shadowColor: 'shadow-emerald-500/20',
     },
     {
-      title: 'Reports & Analytics',
-      subtitle: 'Insights & Logs',
-      description: 'View reports and audit logs',
+      title: t('dashboard.reportsAnalytics'),
+      subtitle: t('dashboard.insightsLogs'),
+      description: t('dashboard.viewReportsLogs'),
       href: '/reports',
       icon: FileBarChart,
       gradient: 'from-orange-500 to-amber-500',
@@ -61,11 +63,11 @@ export const DashboardPage: React.FC = () => {
             <Sparkles className="w-5 h-5 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">
-            Welcome back, {user?.first_name || user?.username}
+            {t('dashboard.welcome')}, {user?.first_name || user?.username}
           </h1>
         </div>
         <p className="text-[hsl(var(--muted-foreground))] ml-12">
-          What would you like to work on today?
+          {t('dashboard.whatToWorkOn')}
         </p>
       </div>
 
@@ -118,7 +120,7 @@ export const DashboardPage: React.FC = () => {
       <div className="mt-auto pt-8 flex items-center justify-center gap-3 py-4">
         <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
         <span className="text-sm text-[hsl(var(--muted-foreground))]">
-          All systems operational
+          {t('dashboard.allSystemsOperational')}
         </span>
       </div>
     </div>

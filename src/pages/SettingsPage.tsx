@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Lock,
   Shield,
@@ -15,10 +16,12 @@ import {
   Globe,
   Check,
   X,
+  Languages,
 } from 'lucide-react';
 import { Button, Input, Card } from '../components/ui';
 import { useAuthStore } from '../stores/authStore';
 import { authApi } from '../api/auth';
+import { setLanguage, getCurrentLanguage, supportedLanguages } from '../i18n';
 
 const passwordSchema = z.object({
   old_password: z.string().min(1, 'Current password is required'),
@@ -36,15 +39,29 @@ const passwordSchema = z.object({
 type PasswordFormData = z.infer<typeof passwordSchema>;
 
 export const SettingsPage: React.FC = () => {
+  const { t } = useTranslation();
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [currentLang, setCurrentLang] = useState(getCurrentLanguage());
+  const [languageSuccess, setLanguageSuccess] = useState('');
 
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+
+  const handleLanguageChange = async (langCode: string) => {
+    if (langCode === currentLang) return;
+
+    await setLanguage(langCode);
+    setCurrentLang(langCode);
+    setLanguageSuccess(t('settings.languageChanged'));
+
+    // Clear success message after 3 seconds
+    setTimeout(() => setLanguageSuccess(''), 3000);
+  };
 
   const {
     register,
@@ -127,31 +144,31 @@ export const SettingsPage: React.FC = () => {
 
   const settingsGroups = [
     {
-      title: 'Notifications',
+      title: t('settings.notifications'),
       icon: Bell,
-      description: 'Configure how you receive notifications',
+      description: t('settings.notificationsDesc'),
       items: [
-        { label: 'Email notifications', description: 'Receive updates via email', enabled: true },
-        { label: 'Push notifications', description: 'Browser push notifications', enabled: false },
-        { label: 'Weekly digest', description: 'Get a weekly summary of activities', enabled: true },
+        { label: t('settings.emailNotifications'), description: t('settings.emailNotificationsDesc'), enabled: true },
+        { label: t('settings.pushNotifications'), description: t('settings.pushNotificationsDesc'), enabled: false },
+        { label: t('settings.weeklyDigest'), description: t('settings.weeklyDigestDesc'), enabled: true },
       ],
     },
     {
-      title: 'Appearance',
+      title: t('settings.appearance'),
       icon: Moon,
-      description: 'Customize the look and feel',
+      description: t('settings.appearanceDesc'),
       items: [
-        { label: 'Dark mode', description: 'Use dark theme', enabled: false },
-        { label: 'Compact view', description: 'Show more items on screen', enabled: false },
+        { label: t('settings.darkMode'), description: t('settings.darkModeDesc'), enabled: false },
+        { label: t('settings.compactView'), description: t('settings.compactViewDesc'), enabled: false },
       ],
     },
     {
-      title: 'Privacy',
+      title: t('settings.privacy'),
       icon: Eye,
-      description: 'Control your privacy settings',
+      description: t('settings.privacyDesc'),
       items: [
-        { label: 'Profile visibility', description: 'Allow others to see your profile', enabled: true },
-        { label: 'Activity status', description: 'Show when you are online', enabled: true },
+        { label: t('settings.profileVisibility'), description: t('settings.profileVisibilityDesc'), enabled: true },
+        { label: t('settings.activityStatus'), description: t('settings.activityStatusDesc'), enabled: true },
       ],
     },
   ];
@@ -160,8 +177,8 @@ export const SettingsPage: React.FC = () => {
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-        <p className="mt-2 text-gray-500">Manage your account settings and preferences</p>
+        <h1 className="text-3xl font-bold text-gray-900">{t('settings.title')}</h1>
+        <p className="mt-2 text-gray-500">{t('settings.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -174,35 +191,35 @@ export const SettingsPage: React.FC = () => {
                 className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-blue-600 bg-blue-50 rounded-xl"
               >
                 <Shield className="w-5 h-5" />
-                Security
+                {t('settings.security')}
               </a>
               <a
                 href="#notifications"
                 className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-xl transition-colors"
               >
                 <Bell className="w-5 h-5" />
-                Notifications
+                {t('settings.notifications')}
               </a>
               <a
                 href="#appearance"
                 className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-xl transition-colors"
               >
                 <Moon className="w-5 h-5" />
-                Appearance
+                {t('settings.appearance')}
               </a>
               <a
                 href="#privacy"
                 className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-xl transition-colors"
               >
                 <Eye className="w-5 h-5" />
-                Privacy
+                {t('settings.privacy')}
               </a>
               <a
                 href="#language"
                 className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-xl transition-colors"
               >
                 <Globe className="w-5 h-5" />
-                Language & Region
+                {t('settings.language')}
               </a>
               <div className="border-t border-gray-100 my-2" />
               <a
@@ -210,7 +227,7 @@ export const SettingsPage: React.FC = () => {
                 className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors"
               >
                 <AlertTriangle className="w-5 h-5" />
-                Danger Zone
+                {t('settings.dangerZone')}
               </a>
             </nav>
           </Card>
@@ -225,8 +242,8 @@ export const SettingsPage: React.FC = () => {
                 <Shield className="w-6 h-6 text-blue-600" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900">Security</h3>
-                <p className="text-sm text-gray-500">Manage your password and security preferences</p>
+                <h3 className="text-lg font-bold text-gray-900">{t('settings.security')}</h3>
+                <p className="text-sm text-gray-500">{t('settings.securityDesc')}</p>
               </div>
             </div>
 
@@ -250,9 +267,9 @@ export const SettingsPage: React.FC = () => {
 
             <form onSubmit={handleSubmit(onPasswordSubmit)} className="space-y-5">
               <Input
-                label="Current Password"
+                label={t('settings.currentPassword')}
                 type="password"
-                placeholder="Enter your current password"
+                placeholder={t('settings.enterCurrentPassword')}
                 error={errors.old_password?.message}
                 leftIcon={<Key className="w-5 h-5" />}
                 {...register('old_password')}
@@ -260,9 +277,9 @@ export const SettingsPage: React.FC = () => {
 
               <div>
                 <Input
-                  label="New Password"
+                  label={t('settings.newPassword')}
                   type="password"
-                  placeholder="Create a strong password"
+                  placeholder={t('settings.createStrongPassword')}
                   error={errors.new_password?.message}
                   leftIcon={<Lock className="w-5 h-5" />}
                   {...register('new_password')}
@@ -282,16 +299,16 @@ export const SettingsPage: React.FC = () => {
                       ))}
                     </div>
                     <p className="text-xs text-gray-500">
-                      Use 8+ characters with uppercase, lowercase, and numbers
+                      {t('settings.passwordHint')}
                     </p>
                   </div>
                 )}
               </div>
 
               <Input
-                label="Confirm New Password"
+                label={t('settings.confirmNewPassword')}
                 type="password"
-                placeholder="Confirm your new password"
+                placeholder={t('settings.confirmYourPassword')}
                 error={errors.confirm_password?.message}
                 leftIcon={<Lock className="w-5 h-5" />}
                 {...register('confirm_password')}
@@ -302,7 +319,7 @@ export const SettingsPage: React.FC = () => {
                 isLoading={isPasswordLoading}
                 leftIcon={!isPasswordLoading && <Key className="w-4 h-4" />}
               >
-                Change Password
+                {t('settings.changePassword')}
               </Button>
             </form>
           </Card>
@@ -348,6 +365,60 @@ export const SettingsPage: React.FC = () => {
             </Card>
           ))}
 
+          {/* Language Section */}
+          <Card id="language">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="p-3 bg-purple-50 rounded-xl">
+                <Languages className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">{t('settings.language')}</h3>
+                <p className="text-sm text-gray-500">{t('settings.selectLanguage')}</p>
+              </div>
+            </div>
+
+            {languageSuccess && (
+              <div className="mb-6 p-4 bg-emerald-50 border border-emerald-100 rounded-xl animate-fade-in">
+                <div className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+                  <p className="text-sm font-medium text-emerald-800">{languageSuccess}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {supportedLanguages.map((lang) => (
+                <button
+                  key={lang.code}
+                  type="button"
+                  onClick={() => handleLanguageChange(lang.code)}
+                  className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${
+                    currentLang === lang.code
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{lang.code === 'en' ? '🇺🇸' : '🇸🇦'}</span>
+                    <div className="text-left">
+                      <p className={`text-sm font-medium ${
+                        currentLang === lang.code ? 'text-blue-700' : 'text-gray-900'
+                      }`}>
+                        {lang.nativeName}
+                      </p>
+                      <p className="text-xs text-gray-500">{lang.name}</p>
+                    </div>
+                  </div>
+                  {currentLang === lang.code && (
+                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                      <Check className="w-4 h-4 text-white" />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </Card>
+
           {/* Danger Zone */}
           <Card id="danger" className="border-red-200">
             <div className="flex items-start gap-4 mb-6">
@@ -355,8 +426,8 @@ export const SettingsPage: React.FC = () => {
                 <AlertTriangle className="w-6 h-6 text-red-600" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-red-600">Danger Zone</h3>
-                <p className="text-sm text-gray-500">Irreversible and destructive actions</p>
+                <h3 className="text-lg font-bold text-red-600">{t('settings.dangerZone')}</h3>
+                <p className="text-sm text-gray-500">{t('settings.dangerZoneDesc')}</p>
               </div>
             </div>
 
@@ -375,9 +446,9 @@ export const SettingsPage: React.FC = () => {
                   <Trash2 className="w-5 h-5 text-red-600" />
                 </div>
                 <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-gray-900">Delete Account</h4>
+                  <h4 className="text-sm font-semibold text-gray-900">{t('settings.deleteAccount')}</h4>
                   <p className="text-sm text-gray-600 mt-1">
-                    Permanently delete your account and all associated data. This action cannot be undone.
+                    {t('settings.deleteAccountDesc')}
                   </p>
 
                   {!showDeleteConfirm ? (
@@ -388,12 +459,12 @@ export const SettingsPage: React.FC = () => {
                       onClick={() => setShowDeleteConfirm(true)}
                       leftIcon={<Trash2 className="w-4 h-4" />}
                     >
-                      Delete Account
+                      {t('settings.deleteAccount')}
                     </Button>
                   ) : (
                     <div className="mt-4 p-4 bg-white rounded-xl border border-red-200">
                       <p className="text-sm text-red-700 font-medium mb-4">
-                        Are you absolutely sure? This will permanently delete your account for{' '}
+                        {t('settings.deleteConfirmation')}{' '}
                         <span className="font-bold">{user?.email}</span>.
                       </p>
                       <div className="flex gap-3">
@@ -403,7 +474,7 @@ export const SettingsPage: React.FC = () => {
                           onClick={handleDeleteAccount}
                           isLoading={isDeleting}
                         >
-                          Yes, Delete My Account
+                          {t('settings.yesDeleteAccount')}
                         </Button>
                         <Button
                           variant="outline"
@@ -411,7 +482,7 @@ export const SettingsPage: React.FC = () => {
                           onClick={() => setShowDeleteConfirm(false)}
                           disabled={isDeleting}
                         >
-                          Cancel
+                          {t('common.cancel')}
                         </Button>
                       </div>
                     </div>

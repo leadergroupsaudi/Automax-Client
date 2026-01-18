@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
   GitBranch,
   ChevronLeft,
@@ -15,18 +16,45 @@ import {
   Plus,
   List,
   Settings,
+  Languages,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { authApi } from '../../api/auth';
 import { workflowApi } from '../../api/admin';
+import { setLanguage, getCurrentLanguage, supportedLanguages } from '../../i18n';
 import type { Workflow } from '../../types';
 
 export const WorkflowLayout: React.FC = () => {
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [isLangOpen, setIsLangOpen] = useState(false);
+  const [currentLang, setCurrentLang] = useState(getCurrentLanguage());
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const langRef = useRef<HTMLDivElement>(null);
+
+  const handleLanguageChange = async (langCode: string) => {
+    if (langCode === currentLang) {
+      setIsLangOpen(false);
+      return;
+    }
+    await setLanguage(langCode);
+    setCurrentLang(langCode);
+    setIsLangOpen(false);
+  };
+
+  // Close language dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(event.target as Node)) {
+        setIsLangOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Fetch workflows
   const { data: workflowsData } = useQuery({
@@ -334,6 +362,43 @@ export const WorkflowLayout: React.FC = () => {
                   className="w-64 pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all placeholder:text-slate-400"
                 />
               </div>
+            </div>
+
+            {/* Language Switcher */}
+            <div className="relative" ref={langRef}>
+              <button
+                onClick={() => setIsLangOpen(!isLangOpen)}
+                className="flex items-center gap-1.5 p-2.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
+                title={t('settings.language')}
+              >
+                <Languages className="w-5 h-5" />
+                <span className="text-xs font-medium uppercase">{currentLang}</span>
+              </button>
+
+              {isLangOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-scale-in origin-top-right">
+                  <div className="px-3 py-2 border-b border-slate-100">
+                    <p className="text-xs font-medium text-slate-500 uppercase">{t('settings.selectLanguage')}</p>
+                  </div>
+                  {supportedLanguages.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => handleLanguageChange(lang.code)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${
+                        currentLang === lang.code
+                          ? 'bg-emerald-50 text-emerald-600'
+                          : 'text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className="text-lg">{lang.code === 'en' ? '🇺🇸' : '🇸🇦'}</span>
+                      <div className="text-left">
+                        <p className="font-medium">{lang.nativeName}</p>
+                        <p className="text-xs text-slate-500">{lang.name}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Notifications */}

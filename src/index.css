@@ -503,6 +503,103 @@
   }
 }
 
+/* RTL Support for Arabic */
+[dir="rtl"] {
+  text-align: right;
+}
+
+[dir="rtl"] .rtl\:space-x-reverse > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 1;
+}
+
+/* Flip icons and directional elements in RTL */
+[dir="rtl"] .rtl\:rotate-180 {
+  transform: rotate(180deg);
+}
+
+[dir="rtl"] .rtl\:flip {
+  transform: scaleX(-1);
+}
+
+/* RTL margin and padding adjustments */
+[dir="rtl"] .ltr\:ml-auto {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+[dir="rtl"] .ltr\:mr-auto {
+  margin-right: 0;
+  margin-left: auto;
+}
+
+[dir="rtl"] .ltr\:text-left {
+  text-align: right;
+}
+
+[dir="rtl"] .ltr\:text-right {
+  text-align: left;
+}
+
+/* Sidebar RTL support */
+[dir="rtl"] .sidebar-collapsed {
+  transform: translateX(100%);
+}
+
+/* Border adjustments for RTL */
+[dir="rtl"] .border-l {
+  border-left-width: 0;
+  border-right-width: 1px;
+}
+
+[dir="rtl"] .border-r {
+  border-right-width: 0;
+  border-left-width: 1px;
+}
+
+[dir="rtl"] .border-l-4 {
+  border-left-width: 0;
+  border-right-width: 4px;
+}
+
+/* Priority borders in RTL */
+[dir="rtl"] .priority-critical,
+[dir="rtl"] .priority-high,
+[dir="rtl"] .priority-medium,
+[dir="rtl"] .priority-low {
+  border-left-width: 0 !important;
+  border-right-width: 4px !important;
+  border-right-color: inherit !important;
+}
+
+/* Flex direction adjustments for RTL */
+[dir="rtl"] .flex-row {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .flex-row-reverse {
+  flex-direction: row;
+}
+
+/* Keep certain elements LTR even in RTL context */
+[dir="rtl"] .ltr-force {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Arabic font family for better rendering */
+[dir="rtl"] {
+  font-family: 'Noto Sans Arabic', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Slide animations for RTL */
+[dir="rtl"] .animate-slide-in-left {
+  animation: slideInRight 0.3s ease-out forwards;
+}
+
+[dir="rtl"] .animate-slide-in-right {
+  animation: slideInLeft 0.3s ease-out forwards;
+}
+
 /* Print styles */
 @media print {
   .no-print {

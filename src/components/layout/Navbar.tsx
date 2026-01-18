@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   LogOut,
   User,
@@ -12,17 +13,33 @@ import {
   X,
   Zap,
   LayoutDashboard,
+  Languages,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { authApi } from '../../api/auth';
+import { setLanguage, getCurrentLanguage, supportedLanguages } from '../../i18n';
 
 export const Navbar: React.FC = () => {
+  const { t } = useTranslation();
   const { user, isAuthenticated, logout } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLangOpen, setIsLangOpen] = useState(false);
+  const [currentLang, setCurrentLang] = useState(getCurrentLanguage());
   const profileRef = useRef<HTMLDivElement>(null);
+  const langRef = useRef<HTMLDivElement>(null);
+
+  const handleLanguageChange = async (langCode: string) => {
+    if (langCode === currentLang) {
+      setIsLangOpen(false);
+      return;
+    }
+    await setLanguage(langCode);
+    setCurrentLang(langCode);
+    setIsLangOpen(false);
+  };
 
   const handleLogout = async () => {
     try {
@@ -44,11 +61,14 @@ export const Navbar: React.FC = () => {
       p.includes(':manage')
     );
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setIsProfileOpen(false);
+      }
+      if (langRef.current && !langRef.current.contains(event.target as Node)) {
+        setIsLangOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -56,7 +76,7 @@ export const Navbar: React.FC = () => {
   }, []);
 
   const navLinks = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
   ];
 
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
@@ -103,11 +123,48 @@ export const Navbar: React.FC = () => {
                 {/* Search (Desktop) */}
                 <button className="hidden lg:flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-xl text-sm text-gray-500 transition-colors w-64">
                   <Search className="w-4 h-4" />
-                  <span>Search...</span>
+                  <span>{t('nav.searchPlaceholder')}</span>
                   <kbd className="ml-auto bg-white px-2 py-0.5 rounded text-xs text-gray-400 border border-gray-200">
                     /
                   </kbd>
                 </button>
+
+                {/* Language Switcher */}
+                <div className="relative" ref={langRef}>
+                  <button
+                    onClick={() => setIsLangOpen(!isLangOpen)}
+                    className="flex items-center gap-1.5 p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
+                    title={t('settings.language')}
+                  >
+                    <Languages className="w-5 h-5" />
+                    <span className="text-xs font-medium uppercase">{currentLang}</span>
+                  </button>
+
+                  {isLangOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 animate-scale-in origin-top-right">
+                      <div className="px-3 py-2 border-b border-gray-100">
+                        <p className="text-xs font-medium text-gray-500 uppercase">{t('settings.selectLanguage')}</p>
+                      </div>
+                      {supportedLanguages.map((lang) => (
+                        <button
+                          key={lang.code}
+                          onClick={() => handleLanguageChange(lang.code)}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${
+                            currentLang === lang.code
+                              ? 'bg-blue-50 text-blue-600'
+                              : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className="text-lg">{lang.code === 'en' ? '🇺🇸' : '🇸🇦'}</span>
+                          <div className="text-left">
+                            <p className="font-medium">{lang.nativeName}</p>
+                            <p className="text-xs text-gray-500">{lang.name}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 {/* Notifications */}
                 <button className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-xl transition-colors">
@@ -164,7 +221,7 @@ export const Navbar: React.FC = () => {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                         >
                           <User className="w-4 h-4 text-gray-400" />
-                          Your Profile
+                          {t('nav.viewProfile')}
                         </Link>
                         <Link
                           to="/settings"
@@ -172,7 +229,7 @@ export const Navbar: React.FC = () => {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                         >
                           <Settings className="w-4 h-4 text-gray-400" />
-                          Settings
+                          {t('nav.settings')}
                         </Link>
                         {hasAdminAccess && (
                           <Link
@@ -181,7 +238,7 @@ export const Navbar: React.FC = () => {
                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                           >
                             <Shield className="w-4 h-4 text-gray-400" />
-                            Admin Panel
+                            {t('nav.admin')}
                           </Link>
                         )}
                       </div>
@@ -196,7 +253,7 @@ export const Navbar: React.FC = () => {
                           className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
                         >
                           <LogOut className="w-4 h-4" />
-                          Sign out
+                          {t('auth.logout')}
                         </button>
                       </div>
                     </div>
@@ -217,13 +274,13 @@ export const Navbar: React.FC = () => {
                   to="/login"
                   className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
                 >
-                  Sign in
+                  {t('auth.signIn')}
                 </Link>
                 <Link
                   to="/register"
                   className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl shadow-lg shadow-blue-500/25 transition-all"
                 >
-                  Get Started
+                  {t('auth.signUp')}
                 </Link>
               </div>
             )}

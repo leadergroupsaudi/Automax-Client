@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
 import { Button, Input, Checkbox } from '../ui';
 import { authApi } from '../../api/auth';
@@ -16,6 +17,7 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export const LoginForm: React.FC = () => {
+  const { t } = useTranslation();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -36,7 +38,7 @@ export const LoginForm: React.FC = () => {
     try {
       const response = await authApi.login(data);
       if (response.success && response.data) {
-        setAuth(response.data.user, response.data.token);
+        setAuth(response.data.user, response.data.token, response.data.refresh_token);
         navigate('/dashboard');
       } else {
         setError(response.error || 'Login failed. Please try again.');
@@ -58,9 +60,9 @@ export const LoginForm: React.FC = () => {
     <div className="animate-fade-in-up">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Welcome back</h1>
+        <h1 className="text-3xl font-bold text-gray-900">{t('auth.welcomeBack')}</h1>
         <p className="mt-2 text-gray-600">
-          Enter your credentials to access your account
+          {t('auth.loginSubtitle')}
         </p>
       </div>
 
@@ -81,7 +83,7 @@ export const LoginForm: React.FC = () => {
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <Input
-          label="Email address"
+          label={t('auth.email')}
           type="email"
           placeholder="you@example.com"
           error={errors.email?.message}
@@ -90,21 +92,21 @@ export const LoginForm: React.FC = () => {
         />
 
         <Input
-          label="Password"
+          label={t('auth.password')}
           type="password"
-          placeholder="Enter your password"
+          placeholder="••••••••"
           error={errors.password?.message}
           leftIcon={<Lock className="w-5 h-5" />}
           {...register('password')}
         />
 
         <div className="flex items-center justify-between">
-          <Checkbox label="Remember me" />
+          <Checkbox label={t('auth.rememberMe')} />
           <Link
             to="/forgot-password"
             className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
           >
-            Forgot password?
+            {t('auth.forgotPassword')}
           </Link>
         </div>
 
@@ -115,7 +117,7 @@ export const LoginForm: React.FC = () => {
           isLoading={isLoading}
           rightIcon={!isLoading && <ArrowRight className="w-5 h-5" />}
         >
-          Sign in
+          {t('auth.signIn')}
         </Button>
       </form>
 
@@ -162,12 +164,12 @@ export const LoginForm: React.FC = () => {
 
       {/* Sign Up Link */}
       <p className="mt-8 text-center text-gray-600">
-        Don't have an account?{' '}
+        {t('auth.noAccount')}{' '}
         <Link
           to="/register"
           className="font-semibold text-blue-600 hover:text-blue-700 transition-colors"
         >
-          Create an account
+          {t('auth.signUp')}
         </Link>
       </p>
     </div>

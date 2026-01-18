@@ -52,6 +52,7 @@ interface StateFormData {
   state_type: 'initial' | 'normal' | 'terminal';
   color: string;
   sla_hours: number | undefined;
+  viewable_role_ids: string[];
 }
 
 interface TransitionFormData {
@@ -68,6 +69,7 @@ interface TransitionFormData {
   assign_user_id: string;
   assignment_role_id: string;
   auto_match_user: boolean;
+  manual_select_user: boolean;
 }
 
 const initialStateFormData: StateFormData = {
@@ -77,6 +79,7 @@ const initialStateFormData: StateFormData = {
   state_type: 'normal',
   color: '#6366f1',
   sla_hours: undefined,
+  viewable_role_ids: [],
 };
 
 const initialTransitionFormData: TransitionFormData = {
@@ -93,6 +96,7 @@ const initialTransitionFormData: TransitionFormData = {
   assign_user_id: '',
   assignment_role_id: '',
   auto_match_user: false,
+  manual_select_user: false,
 };
 
 const STATE_COLORS = [
@@ -352,6 +356,7 @@ export const WorkflowDesignerPage: React.FC = () => {
       state_type: state.state_type as 'initial' | 'normal' | 'terminal',
       color: state.color,
       sla_hours: state.sla_hours || undefined,
+      viewable_role_ids: state.viewable_roles?.map((r) => r.id) || [],
     });
     setIsStateModalOpen(true);
   };
@@ -385,6 +390,7 @@ export const WorkflowDesignerPage: React.FC = () => {
       assign_user_id: transition.assign_user_id || '',
       assignment_role_id: transition.assignment_role_id || '',
       auto_match_user: transition.auto_match_user || false,
+      manual_select_user: transition.manual_select_user || false,
     });
     setIsTransitionModalOpen(true);
   };
@@ -437,6 +443,7 @@ export const WorkflowDesignerPage: React.FC = () => {
       state_type: stateFormData.state_type,
       color: stateFormData.color,
       sla_hours: stateFormData.sla_hours,
+      viewable_role_ids: stateFormData.viewable_role_ids,
     };
 
     if (editingState) {
@@ -462,6 +469,7 @@ export const WorkflowDesignerPage: React.FC = () => {
       assign_user_id: transitionFormData.assign_user_id || undefined,
       assignment_role_id: transitionFormData.assignment_role_id || undefined,
       auto_match_user: transitionFormData.auto_match_user,
+      manual_select_user: transitionFormData.manual_select_user,
     };
 
     if (editingTransition) {
@@ -531,6 +539,15 @@ export const WorkflowDesignerPage: React.FC = () => {
       role_ids: prev.role_ids.includes(roleId)
         ? prev.role_ids.filter((id) => id !== roleId)
         : [...prev.role_ids, roleId],
+    }));
+  };
+
+  const toggleStateRole = (roleId: string) => {
+    setStateFormData((prev) => ({
+      ...prev,
+      viewable_role_ids: prev.viewable_role_ids.includes(roleId)
+        ? prev.viewable_role_ids.filter((id) => id !== roleId)
+        : [...prev.viewable_role_ids, roleId],
     }));
   };
 
@@ -734,6 +751,7 @@ export const WorkflowDesignerPage: React.FC = () => {
                         <th className="text-left py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">Code</th>
                         <th className="text-left py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">Type</th>
                         <th className="text-left py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">SLA Hours</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">Viewable Roles</th>
                         <th className="text-right py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">Actions</th>
                       </tr>
                     </thead>
@@ -762,6 +780,29 @@ export const WorkflowDesignerPage: React.FC = () => {
                             <span className="text-sm text-[hsl(var(--muted-foreground))]">
                               {state.sla_hours ? `${state.sla_hours}h` : '-'}
                             </span>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex flex-wrap gap-1">
+                              {!state.viewable_roles || state.viewable_roles.length === 0 ? (
+                                <span className="text-xs text-[hsl(var(--muted-foreground))]">All roles</span>
+                              ) : (
+                                <>
+                                  {state.viewable_roles.slice(0, 2).map((role) => (
+                                    <span
+                                      key={role.id}
+                                      className="px-2 py-0.5 text-xs font-medium bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] rounded"
+                                    >
+                                      {role.name}
+                                    </span>
+                                  ))}
+                                  {state.viewable_roles.length > 2 && (
+                                    <span className="px-2 py-0.5 text-xs font-medium bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] rounded">
+                                      +{state.viewable_roles.length - 2}
+                                    </span>
+                                  )}
+                                </>
+                              )}
+                            </div>
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center justify-end gap-1">
@@ -1292,6 +1333,38 @@ export const WorkflowDesignerPage: React.FC = () => {
                     Maximum time an incident should remain in this state
                   </p>
                 </div>
+
+                {/* Viewable Roles */}
+                <div>
+                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
+                    Viewable Roles
+                    <span className="text-xs font-normal text-[hsl(var(--muted-foreground))] ml-2">
+                      (leave empty to show to all roles)
+                    </span>
+                  </label>
+                  <div className="border border-[hsl(var(--border))] rounded-xl p-3 max-h-40 overflow-y-auto space-y-2">
+                    {roles.map((role) => (
+                      <label
+                        key={role.id}
+                        className={cn(
+                          "flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all",
+                          stateFormData.viewable_role_ids.includes(role.id)
+                            ? "bg-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.3)]"
+                            : "hover:bg-[hsl(var(--muted)/0.5)]"
+                        )}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={stateFormData.viewable_role_ids.includes(role.id)}
+                          onChange={() => toggleStateRole(role.id)}
+                          className="w-4 h-4 text-[hsl(var(--primary))] border-[hsl(var(--border))] rounded"
+                        />
+                        <Shield className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                        <span className="text-sm text-[hsl(var(--foreground))]">{role.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 px-6 py-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.5)]">
@@ -1490,33 +1563,116 @@ export const WorkflowDesignerPage: React.FC = () => {
                   </label>
 
                   <div className="space-y-3">
+                    {/* Option 1: No assignment */}
                     <label className="flex items-center gap-3 p-3 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.3)] cursor-pointer">
                       <input
-                        type="checkbox"
-                        checked={transitionFormData.auto_match_user}
-                        onChange={(e) => {
+                        type="radio"
+                        name="user_assignment_mode"
+                        checked={!transitionFormData.auto_match_user && !transitionFormData.manual_select_user && !transitionFormData.assign_user_id}
+                        onChange={() => {
                           setTransitionFormData({
                             ...transitionFormData,
-                            auto_match_user: e.target.checked,
-                            assign_user_id: e.target.checked ? '' : transitionFormData.assign_user_id,
+                            auto_match_user: false,
+                            manual_select_user: false,
+                            assign_user_id: '',
+                            assignment_role_id: '',
                           });
                         }}
-                        className="w-4 h-4 text-[hsl(var(--primary))] border-[hsl(var(--border))] rounded"
+                        className="w-4 h-4 text-[hsl(var(--primary))] border-[hsl(var(--border))]"
                       />
                       <div>
                         <span className="text-sm font-medium text-[hsl(var(--foreground))]">
-                          Auto-match user based on criteria
+                          No user assignment
                         </span>
                         <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                          Matches users with role + incident's classification/location/department
+                          Don't change the incident assignee
                         </p>
                       </div>
                     </label>
 
-                    {transitionFormData.auto_match_user && (
+                    {/* Option 2: Auto-assign all matching users */}
+                    <label className="flex items-center gap-3 p-3 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.3)] cursor-pointer">
+                      <input
+                        type="radio"
+                        name="user_assignment_mode"
+                        checked={transitionFormData.auto_match_user && !transitionFormData.manual_select_user}
+                        onChange={() => {
+                          setTransitionFormData({
+                            ...transitionFormData,
+                            auto_match_user: true,
+                            manual_select_user: false,
+                            assign_user_id: '',
+                          });
+                        }}
+                        className="w-4 h-4 text-[hsl(var(--primary))] border-[hsl(var(--border))]"
+                      />
                       <div>
+                        <span className="text-sm font-medium text-[hsl(var(--foreground))]">
+                          Auto-assign all matching users
+                        </span>
+                        <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                          Automatically assigns ALL users matching role + incident criteria
+                        </p>
+                      </div>
+                    </label>
+
+                    {/* Option 3: Manual selection */}
+                    <label className="flex items-center gap-3 p-3 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.3)] cursor-pointer">
+                      <input
+                        type="radio"
+                        name="user_assignment_mode"
+                        checked={transitionFormData.manual_select_user}
+                        onChange={() => {
+                          setTransitionFormData({
+                            ...transitionFormData,
+                            auto_match_user: false,
+                            manual_select_user: true,
+                            assign_user_id: '',
+                          });
+                        }}
+                        className="w-4 h-4 text-[hsl(var(--primary))] border-[hsl(var(--border))]"
+                      />
+                      <div>
+                        <span className="text-sm font-medium text-[hsl(var(--foreground))]">
+                          Manual selection during transition
+                        </span>
+                        <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                          Performer selects from matching users when executing transition
+                        </p>
+                      </div>
+                    </label>
+
+                    {/* Option 4: Assign specific user */}
+                    <label className="flex items-center gap-3 p-3 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.3)] cursor-pointer">
+                      <input
+                        type="radio"
+                        name="user_assignment_mode"
+                        checked={!transitionFormData.auto_match_user && !transitionFormData.manual_select_user && !!transitionFormData.assign_user_id}
+                        onChange={() => {
+                          setTransitionFormData({
+                            ...transitionFormData,
+                            auto_match_user: false,
+                            manual_select_user: false,
+                            assignment_role_id: '',
+                          });
+                        }}
+                        className="w-4 h-4 text-[hsl(var(--primary))] border-[hsl(var(--border))]"
+                      />
+                      <div>
+                        <span className="text-sm font-medium text-[hsl(var(--foreground))]">
+                          Assign specific user
+                        </span>
+                        <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                          Always assign to a specific user
+                        </p>
+                      </div>
+                    </label>
+
+                    {/* Role selector for auto-match or manual selection */}
+                    {(transitionFormData.auto_match_user || transitionFormData.manual_select_user) && (
+                      <div className="ml-7">
                         <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">
-                          Role to match (required for auto-match):
+                          Role to match (required):
                         </label>
                         <select
                           value={transitionFormData.assignment_role_id}
@@ -1531,10 +1687,11 @@ export const WorkflowDesignerPage: React.FC = () => {
                       </div>
                     )}
 
-                    {!transitionFormData.auto_match_user && (
-                      <div>
+                    {/* User selector for specific user assignment */}
+                    {!transitionFormData.auto_match_user && !transitionFormData.manual_select_user && (
+                      <div className="ml-7">
                         <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">
-                          Or assign to specific user:
+                          Select user:
                         </label>
                         <select
                           value={transitionFormData.assign_user_id}

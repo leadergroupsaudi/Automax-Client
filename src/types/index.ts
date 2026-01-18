@@ -437,6 +437,7 @@ export interface WorkflowState {
   sla_hours?: number;
   sort_order: number;
   is_active: boolean;
+  viewable_roles?: Role[];
   created_at: string;
 }
 
@@ -463,6 +464,7 @@ export interface WorkflowTransition {
   assignment_role_id?: string;
   assignment_role?: Role;
   auto_match_user: boolean;
+  manual_select_user: boolean;
 
   requirements?: TransitionRequirement[];
   actions?: TransitionAction[];
@@ -535,6 +537,7 @@ export interface WorkflowStateCreateRequest {
   position_y?: number;
   sla_hours?: number;
   sort_order?: number;
+  viewable_role_ids?: string[];
 }
 
 export interface WorkflowStateUpdateRequest {
@@ -548,6 +551,7 @@ export interface WorkflowStateUpdateRequest {
   sla_hours?: number;
   sort_order?: number;
   is_active?: boolean;
+  viewable_role_ids?: string[];
 }
 
 export interface WorkflowTransitionCreateRequest {
@@ -567,6 +571,7 @@ export interface WorkflowTransitionCreateRequest {
   assign_user_id?: string;
   assignment_role_id?: string;
   auto_match_user?: boolean;
+  manual_select_user?: boolean;
 }
 
 export interface WorkflowTransitionUpdateRequest {
@@ -587,6 +592,7 @@ export interface WorkflowTransitionUpdateRequest {
   assign_user_id?: string | null;
   assignment_role_id?: string | null;
   auto_match_user?: boolean;
+  manual_select_user?: boolean;
 }
 
 export interface TransitionRequirementRequest {
@@ -620,6 +626,7 @@ export interface Incident {
   severity: number;
   source?: IncidentSource;
   assignee?: User;
+  assignees?: User[];
   department?: Department;
   location?: Location;
   latitude?: number;
@@ -733,6 +740,12 @@ export interface AvailableTransition {
   reason?: string;
 }
 
+export interface StateStatDetail {
+  id: string;
+  name: string;
+  count: number;
+}
+
 export interface IncidentStats {
   total: number;
   open: number;
@@ -743,6 +756,7 @@ export interface IncidentStats {
   by_priority: Record<number, number>;
   by_severity: Record<number, number>;
   by_state: Record<string, number>;
+  by_state_details?: StateStatDetail[];
 }
 
 // Incident request types

@@ -24,11 +24,13 @@ import {
   X,
   Upload,
   History,
+  Tags,
 } from 'lucide-react';
 import { Button } from '../../components/ui';
 import { MiniWorkflowView } from '../../components/workflow';
 import { RevisionHistory } from '../../components/incidents';
 import { incidentApi, userApi, workflowApi, departmentApi } from '../../api/admin';
+import { API_URL } from '../../api/client';
 import type {
   IncidentDetail,
   AvailableTransition,
@@ -79,6 +81,16 @@ export const IncidentDetailPage: React.FC = () => {
   const [userMatchResult, setUserMatchResult] = useState<UserMatchResponse | null>(null);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>('');
   const [selectedUserId, setSelectedUserId] = useState<string>('');
+
+  // Image lightbox state
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; name: string } | null>(null);
+
+  // Image comparison state
+  const [compareMode, setCompareMode] = useState(false);
+  const [selectedForCompare, setSelectedForCompare] = useState<IncidentAttachment[]>([]);
+  const [compareModalOpen, setCompareModalOpen] = useState(false);
+  const [compareSliderPosition, setCompareSliderPosition] = useState(50);
 
   // Queries
   const { data: incidentData, isLoading, error, refetch } = useQuery({
@@ -209,6 +221,59 @@ export const IncidentDetailPage: React.FC = () => {
     });
   };
 
+  // Helper to check if attachment is an image
+  const isImageAttachment = (mimeType: string) => {
+    return mimeType.startsWith('image/');
+  };
+
+  // Get attachment URL with auth token
+  const getAttachmentUrl = (attachmentId: string) => {
+    const token = localStorage.getItem('token');
+    return `${API_URL}/attachments/${attachmentId}?token=${token}`;
+  };
+
+  // Open image in lightbox
+  const openLightbox = (attachment: IncidentAttachment) => {
+    setLightboxImage({
+      url: getAttachmentUrl(attachment.id),
+      name: attachment.file_name,
+    });
+    setLightboxOpen(true);
+  };
+
+  // Toggle image selection for comparison
+  const toggleCompareSelection = (attachment: IncidentAttachment) => {
+    setSelectedForCompare(prev => {
+      const isSelected = prev.some(a => a.id === attachment.id);
+      if (isSelected) {
+        return prev.filter(a => a.id !== attachment.id);
+      } else if (prev.length < 2) {
+        return [...prev, attachment];
+      }
+      return prev;
+    });
+  };
+
+  // Check if attachment is selected for comparison
+  const isSelectedForCompare = (attachmentId: string) => {
+    return selectedForCompare.some(a => a.id === attachmentId);
+  };
+
+  // Open comparison modal
+  const openCompareModal = () => {
+    if (selectedForCompare.length === 2) {
+      setCompareSliderPosition(50);
+      setCompareModalOpen(true);
+    }
+  };
+
+  // Exit compare mode
+  const exitCompareMode = () => {
+    setCompareMode(false);
+    setSelectedForCompare([]);
+    setCompareModalOpen(false);
+  };
+
   const handleTransitionClick = async (transition: AvailableTransition) => {
     setSelectedTransition(transition);
     setTransitionModalOpen(true);
@@ -220,7 +285,8 @@ export const IncidentDetailPage: React.FC = () => {
     // Check if we need to fetch assignment matches
     const trans = transition.transition;
     const needsDeptMatch = trans.auto_detect_department && !trans.assign_department_id;
-    const needsUserMatch = trans.auto_match_user && trans.assignment_role_id && !trans.assign_user_id;
+    // Fetch users for both auto_match_user AND manual_select_user
+    const needsUserMatch = (trans.auto_match_user || trans.manual_select_user) && trans.assignment_role_id && !trans.assign_user_id;
 
     if ((needsDeptMatch || needsUserMatch) && incident) {
       setMatchLoading(true);
@@ -251,8 +317,10 @@ export const IncidentDetailPage: React.FC = () => {
           });
           if (userResult.success && userResult.data) {
             setUserMatchResult(userResult.data);
-            // Auto-select if single match
-            if (userResult.data.single_match && userResult.data.matched_user_id) {
+            // For auto_match_user, backend handles multi-assign, no need to select here
+            // For manual_select_user, user must always pick from dropdown (don't auto-select)
+            // Only auto-select for auto_match_user with single match (for display purposes)
+            if (trans.auto_match_user && !trans.manual_select_user && userResult.data.single_match && userResult.data.matched_user_id) {
               setSelectedUserId(userResult.data.matched_user_id);
             }
           }
@@ -694,41 +762,185 @@ export const IncidentDetailPage: React.FC = () => {
                   </div>
 
                   {/* Attachments List */}
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {attachments.length === 0 ? (
                       <p className="text-center text-[hsl(var(--muted-foreground))] py-8">No attachments.</p>
                     ) : (
-                      attachments.map((attachment: IncidentAttachment) => (
-                        <div
-                          key={attachment.id}
-                          className="flex items-center justify-between p-3 bg-[hsl(var(--muted)/0.3)] rounded-lg"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-[hsl(var(--background))] rounded-lg">
-                              <FileText className="w-5 h-5 text-[hsl(var(--muted-foreground))]" />
+                      <>
+                        {/* Image Grid */}
+                        {attachments.filter((a: IncidentAttachment) => isImageAttachment(a.mime_type)).length > 0 && (
+                          <>
+                            {/* Compare Mode Controls */}
+                            {attachments.filter((a: IncidentAttachment) => isImageAttachment(a.mime_type)).length >= 2 && (
+                              <div className="flex items-center justify-between mb-3 p-3 bg-[hsl(var(--muted)/0.3)] rounded-lg">
+                                <div className="flex items-center gap-3">
+                                  <button
+                                    onClick={() => {
+                                      if (compareMode) {
+                                        exitCompareMode();
+                                      } else {
+                                        setCompareMode(true);
+                                      }
+                                    }}
+                                    className={cn(
+                                      "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+                                      compareMode
+                                        ? "bg-[hsl(var(--primary))] text-white"
+                                        : "bg-[hsl(var(--background))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]"
+                                    )}
+                                  >
+                                    {compareMode ? 'Exit Compare' : 'Compare Images'}
+                                  </button>
+                                  {compareMode && (
+                                    <span className="text-sm text-[hsl(var(--muted-foreground))]">
+                                      Select 2 images to compare ({selectedForCompare.length}/2)
+                                    </span>
+                                  )}
+                                </div>
+                                {compareMode && selectedForCompare.length === 2 && (
+                                  <button
+                                    onClick={openCompareModal}
+                                    className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-sm font-medium hover:bg-[hsl(var(--primary)/0.9)] transition-colors"
+                                  >
+                                    Compare Now
+                                  </button>
+                                )}
+                              </div>
+                            )}
+
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
+                              {attachments
+                                .filter((a: IncidentAttachment) => isImageAttachment(a.mime_type))
+                                .map((attachment: IncidentAttachment) => (
+                                  <div
+                                    key={attachment.id}
+                                    className={cn(
+                                      "relative group rounded-lg overflow-hidden border-2 bg-[hsl(var(--muted)/0.3)] transition-all",
+                                      compareMode && isSelectedForCompare(attachment.id)
+                                        ? "border-[hsl(var(--primary))] ring-2 ring-[hsl(var(--primary)/0.3)]"
+                                        : "border-[hsl(var(--border))]"
+                                    )}
+                                  >
+                                    {/* Selection checkbox for compare mode */}
+                                    {compareMode && (
+                                      <div
+                                        className="absolute top-2 left-2 z-10 cursor-pointer"
+                                        onClick={() => toggleCompareSelection(attachment)}
+                                      >
+                                        <div
+                                          className={cn(
+                                            "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
+                                            isSelectedForCompare(attachment.id)
+                                              ? "bg-[hsl(var(--primary))] border-[hsl(var(--primary))]"
+                                              : "bg-white/90 border-gray-400 hover:border-[hsl(var(--primary))]"
+                                          )}
+                                        >
+                                          {isSelectedForCompare(attachment.id) && (
+                                            <CheckCircle2 className="w-4 h-4 text-white" />
+                                          )}
+                                          {!isSelectedForCompare(attachment.id) && selectedForCompare.length < 2 && (
+                                            <span className="text-xs text-gray-500">
+                                              {selectedForCompare.length + 1}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    <img
+                                      src={getAttachmentUrl(attachment.id)}
+                                      alt={attachment.file_name}
+                                      className={cn(
+                                        "w-full h-32 object-cover transition-opacity",
+                                        compareMode
+                                          ? "cursor-pointer"
+                                          : "cursor-pointer hover:opacity-90"
+                                      )}
+                                      onClick={() => {
+                                        if (compareMode) {
+                                          toggleCompareSelection(attachment);
+                                        } else {
+                                          openLightbox(attachment);
+                                        }
+                                      }}
+                                    />
+                                    {!compareMode && (
+                                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                        <button
+                                          onClick={() => openLightbox(attachment)}
+                                          className="p-2 bg-white/90 rounded-full text-gray-700 hover:bg-white transition-colors mr-2"
+                                        >
+                                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                                          </svg>
+                                        </button>
+                                        <a
+                                          href={getAttachmentUrl(attachment.id)}
+                                          download={attachment.file_name}
+                                          className="p-2 bg-white/90 rounded-full text-gray-700 hover:bg-white transition-colors mr-2"
+                                        >
+                                          <Download className="w-5 h-5" />
+                                        </a>
+                                        <button
+                                          onClick={() => deleteAttachmentMutation.mutate(attachment.id)}
+                                          className="p-2 bg-white/90 rounded-full text-red-600 hover:bg-white transition-colors"
+                                        >
+                                          <Trash2 className="w-5 h-5" />
+                                        </button>
+                                      </div>
+                                    )}
+                                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-2 truncate">
+                                      {attachment.file_name}
+                                    </div>
+                                  </div>
+                                ))}
                             </div>
-                            <div>
-                              <p className="text-sm font-medium text-[hsl(var(--foreground))]">
-                                {attachment.file_name}
-                              </p>
-                              <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                                {formatFileSize(attachment.file_size)} • {formatDateTime(attachment.created_at)}
-                              </p>
-                            </div>
+                          </>
+                        )}
+
+                        {/* Non-Image Files List */}
+                        {attachments.filter((a: IncidentAttachment) => !isImageAttachment(a.mime_type)).length > 0 && (
+                          <div className="space-y-2">
+                            {attachments
+                              .filter((a: IncidentAttachment) => !isImageAttachment(a.mime_type))
+                              .map((attachment: IncidentAttachment) => (
+                                <div
+                                  key={attachment.id}
+                                  className="flex items-center justify-between p-3 bg-[hsl(var(--muted)/0.3)] rounded-lg"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-[hsl(var(--background))] rounded-lg">
+                                      <FileText className="w-5 h-5 text-[hsl(var(--muted-foreground))]" />
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-medium text-[hsl(var(--foreground))]">
+                                        {attachment.file_name}
+                                      </p>
+                                      <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                                        {formatFileSize(attachment.file_size)} • {formatDateTime(attachment.created_at)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <a
+                                      href={getAttachmentUrl(attachment.id)}
+                                      download={attachment.file_name}
+                                      className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
+                                    >
+                                      <Download className="w-4 h-4" />
+                                    </a>
+                                    <button
+                                      onClick={() => deleteAttachmentMutation.mutate(attachment.id)}
+                                      className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] transition-colors"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
                           </div>
-                          <div className="flex items-center gap-2">
-                            <button className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors">
-                              <Download className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => deleteAttachmentMutation.mutate(attachment.id)}
-                              className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      ))
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -780,13 +992,61 @@ export const IncidentDetailPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Assignee */}
+              {/* Classification */}
               <div>
                 <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                  Assignee
+                  Classification
                 </label>
-                <div className="mt-1 flex items-center justify-between">
-                  {incident.assignee ? (
+                <div className="mt-1 flex items-center gap-2 text-sm text-[hsl(var(--foreground))]">
+                  <Tags className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                  {incident.classification?.name || 'Unclassified'}
+                </div>
+              </div>
+
+              {/* Assignees */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                    Assignee{incident.assignees && incident.assignees.length > 1 ? 's' : ''}
+                    {incident.assignees && incident.assignees.length > 0 && (
+                      <span className="ml-1 text-[hsl(var(--primary))]">({incident.assignees.length})</span>
+                    )}
+                  </label>
+                  <button
+                    onClick={() => setAssignModalOpen(true)}
+                    className="text-xs text-[hsl(var(--primary))] hover:underline"
+                  >
+                    Change
+                  </button>
+                </div>
+                <div className="mt-1 space-y-2">
+                  {incident.assignees && incident.assignees.length > 0 ? (
+                    <div className="space-y-1.5">
+                      {incident.assignees.map((assignee, index) => (
+                        <div key={assignee.id} className="flex items-center gap-2">
+                          {assignee.avatar ? (
+                            <img
+                              src={assignee.avatar}
+                              alt={assignee.username}
+                              className="w-6 h-6 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent))] flex items-center justify-center">
+                              <span className="text-white text-xs font-semibold">
+                                {assignee.first_name?.[0] || assignee.username[0]}
+                              </span>
+                            </div>
+                          )}
+                          <span className="text-sm text-[hsl(var(--foreground))]">
+                            {assignee.first_name || assignee.username}
+                            {index === 0 && incident.assignees!.length > 1 && (
+                              <span className="ml-1 text-xs text-[hsl(var(--muted-foreground))]">(Primary)</span>
+                            )}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : incident.assignee ? (
                     <div className="flex items-center gap-2">
                       {incident.assignee.avatar ? (
                         <img
@@ -811,12 +1071,6 @@ export const IncidentDetailPage: React.FC = () => {
                       Unassigned
                     </span>
                   )}
-                  <button
-                    onClick={() => setAssignModalOpen(true)}
-                    className="text-xs text-[hsl(var(--primary))] hover:underline"
-                  >
-                    Change
-                  </button>
                 </div>
               </div>
 
@@ -1030,13 +1284,20 @@ export const IncidentDetailPage: React.FC = () => {
                   )}
 
                   {/* User Assignment */}
-                  {(selectedTransition.transition.assign_user_id || (selectedTransition.transition.auto_match_user && selectedTransition.transition.assignment_role_id)) && (
+                  {(selectedTransition.transition.assign_user_id ||
+                    ((selectedTransition.transition.auto_match_user || selectedTransition.transition.manual_select_user) && selectedTransition.transition.assignment_role_id)) && (
                     <div className="bg-[hsl(var(--muted)/0.5)] rounded-lg p-3">
                       <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase mb-2 flex items-center gap-1">
                         <User className="w-3 h-3" />
                         User Assignment
+                        {selectedTransition.transition.manual_select_user && (
+                          <span className="text-amber-500">(Manual Selection Required)</span>
+                        )}
+                        {selectedTransition.transition.auto_match_user && !selectedTransition.transition.manual_select_user && (
+                          <span className="text-green-500">(Auto-assign to all matched)</span>
+                        )}
                         {selectedTransition.transition.assignment_role && (
-                          <span className="text-[hsl(var(--primary))]">({selectedTransition.transition.assignment_role.name})</span>
+                          <span className="text-[hsl(var(--primary))] ml-1">Role: {selectedTransition.transition.assignment_role.name}</span>
                         )}
                       </p>
                       {selectedTransition.transition.assign_user_id ? (
@@ -1045,33 +1306,55 @@ export const IncidentDetailPage: React.FC = () => {
                             {selectedTransition.transition.assign_user?.first_name || selectedTransition.transition.assign_user?.username || 'Selected User'}
                           </span>
                         </p>
-                      ) : userMatchResult ? (
-                        userMatchResult.users.length === 0 ? (
-                          <p className="text-sm text-amber-600">No matching users found</p>
-                        ) : userMatchResult.single_match ? (
-                          <p className="text-sm text-[hsl(var(--foreground))]">
-                            Will assign to: <span className="font-medium">
-                              {userMatchResult.users[0]?.first_name
-                                ? `${userMatchResult.users[0].first_name} ${userMatchResult.users[0].last_name || ''}`
-                                : userMatchResult.users[0]?.username}
-                            </span>
-                          </p>
+                      ) : selectedTransition.transition.manual_select_user ? (
+                        // Manual select mode - always show dropdown
+                        userMatchResult ? (
+                          userMatchResult.users.length === 0 ? (
+                            <p className="text-sm text-amber-600">No users with the required role found</p>
+                          ) : (
+                            <select
+                              value={selectedUserId}
+                              onChange={(e) => setSelectedUserId(e.target.value)}
+                              className="w-full px-3 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-md text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                            >
+                              <option value="">Select assignee...</option>
+                              {userMatchResult.users.map((user) => (
+                                <option key={user.id} value={user.id}>
+                                  {user.first_name ? `${user.first_name} ${user.last_name || ''}` : user.username} ({user.email})
+                                </option>
+                              ))}
+                            </select>
+                          )
                         ) : (
-                          <select
-                            value={selectedUserId}
-                            onChange={(e) => setSelectedUserId(e.target.value)}
-                            className="w-full px-3 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-md text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
-                          >
-                            <option value="">Select user...</option>
-                            {userMatchResult.users.map((user) => (
-                              <option key={user.id} value={user.id}>
-                                {user.first_name ? `${user.first_name} ${user.last_name || ''}` : user.username} ({user.email})
-                              </option>
-                            ))}
-                          </select>
+                          <p className="text-sm text-[hsl(var(--muted-foreground))]">Loading users...</p>
+                        )
+                      ) : selectedTransition.transition.auto_match_user ? (
+                        // Auto-match mode - assign to ALL matched users
+                        userMatchResult ? (
+                          userMatchResult.users.length === 0 ? (
+                            <p className="text-sm text-amber-600">No matching users found</p>
+                          ) : (
+                            <div>
+                              <p className="text-sm text-[hsl(var(--foreground))] mb-2">
+                                Will assign to <span className="font-medium text-green-600">{userMatchResult.users.length} user(s)</span>:
+                              </p>
+                              <div className="flex flex-wrap gap-1">
+                                {userMatchResult.users.map((user) => (
+                                  <span
+                                    key={user.id}
+                                    className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]"
+                                  >
+                                    {user.first_name ? `${user.first_name} ${user.last_name || ''}` : user.username}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )
+                        ) : (
+                          <p className="text-sm text-[hsl(var(--muted-foreground))]">Auto-assign based on role & criteria</p>
                         )
                       ) : (
-                        <p className="text-sm text-[hsl(var(--muted-foreground))]">Auto-match based on role & criteria</p>
+                        <p className="text-sm text-[hsl(var(--muted-foreground))]">No assignment configured</p>
                       )}
                     </div>
                   )}
@@ -1220,6 +1503,147 @@ export const IncidentDetailPage: React.FC = () => {
                 Assign
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Lightbox */}
+      {lightboxOpen && lightboxImage && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center"
+          onClick={() => setLightboxOpen(false)}
+        >
+          {/* Close Button */}
+          <button
+            onClick={() => setLightboxOpen(false)}
+            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          {/* Image Name */}
+          <div className="absolute top-4 left-4 text-white text-sm bg-black/50 px-3 py-1.5 rounded-lg">
+            {lightboxImage.name}
+          </div>
+
+          {/* Download Button */}
+          <a
+            href={lightboxImage.url}
+            download={lightboxImage.name}
+            onClick={(e) => e.stopPropagation()}
+            className="absolute bottom-4 right-4 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+          >
+            <Download className="w-6 h-6" />
+          </a>
+
+          {/* Image */}
+          <img
+            src={lightboxImage.url}
+            alt={lightboxImage.name}
+            className="max-w-[90vw] max-h-[90vh] object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
+      {/* Image Comparison Modal */}
+      {compareModalOpen && selectedForCompare.length === 2 && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/95 flex flex-col"
+          onClick={() => setCompareModalOpen(false)}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 text-white" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-4">
+              <h3 className="text-lg font-semibold">Image Comparison</h3>
+              <span className="text-sm text-gray-400">Drag the slider to compare</span>
+            </div>
+            <button
+              onClick={() => setCompareModalOpen(false)}
+              className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Comparison Container */}
+          <div className="flex-1 flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+            <div className="relative w-full max-w-5xl h-[70vh] overflow-hidden rounded-lg">
+              {/* Image 2 (Right/Bottom layer) */}
+              <img
+                src={getAttachmentUrl(selectedForCompare[1].id)}
+                alt={selectedForCompare[1].file_name}
+                className="absolute inset-0 w-full h-full object-contain"
+              />
+
+              {/* Image 1 (Left/Top layer with clip) */}
+              <div
+                className="absolute inset-0 overflow-hidden"
+                style={{ clipPath: `inset(0 ${100 - compareSliderPosition}% 0 0)` }}
+              >
+                <img
+                  src={getAttachmentUrl(selectedForCompare[0].id)}
+                  alt={selectedForCompare[0].file_name}
+                  className="absolute inset-0 w-full h-full object-contain"
+                />
+              </div>
+
+              {/* Slider Line */}
+              <div
+                className="absolute top-0 bottom-0 w-1 bg-white cursor-ew-resize z-10"
+                style={{ left: `${compareSliderPosition}%`, transform: 'translateX(-50%)' }}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  const container = e.currentTarget.parentElement;
+                  if (!container) return;
+
+                  const handleMouseMove = (moveEvent: MouseEvent) => {
+                    const rect = container.getBoundingClientRect();
+                    const x = moveEvent.clientX - rect.left;
+                    const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+                    setCompareSliderPosition(percentage);
+                  };
+
+                  const handleMouseUp = () => {
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                  };
+
+                  document.addEventListener('mousemove', handleMouseMove);
+                  document.addEventListener('mouseup', handleMouseUp);
+                }}
+              >
+                {/* Slider Handle */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center">
+                  <div className="flex items-center gap-0.5">
+                    <ChevronRight className="w-4 h-4 text-gray-600 rotate-180" />
+                    <ChevronRight className="w-4 h-4 text-gray-600" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Image Labels */}
+              <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/70 text-white text-sm rounded-lg">
+                {selectedForCompare[0].file_name}
+              </div>
+              <div className="absolute top-4 right-4 px-3 py-1.5 bg-black/70 text-white text-sm rounded-lg">
+                {selectedForCompare[1].file_name}
+              </div>
+            </div>
+          </div>
+
+          {/* Footer - View Mode Toggle */}
+          <div className="flex items-center justify-center gap-4 p-4 text-white" onClick={(e) => e.stopPropagation()}>
+            <span className="text-sm text-gray-400">Slider position:</span>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={compareSliderPosition}
+              onChange={(e) => setCompareSliderPosition(Number(e.target.value))}
+              className="w-48 accent-white"
+            />
+            <span className="text-sm w-12">{Math.round(compareSliderPosition)}%</span>
           </div>
         </div>
       )}
