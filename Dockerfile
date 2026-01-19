@@ -26,8 +26,12 @@ RUN npm install -g serve
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
 
+# Copy entrypoint script
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
 # Expose port
 EXPOSE 3000
 
-# Run the application
-CMD ["serve", "-s", "dist", "-l", "3000"]
+# Use entrypoint script to generate runtime config
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

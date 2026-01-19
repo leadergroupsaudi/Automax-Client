@@ -1,6 +1,19 @@
 import axios from 'axios';
 
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
+// Runtime config from window.APP_CONFIG (set by docker-entrypoint.sh)
+// Falls back to import.meta.env for local development, then to default
+declare global {
+  interface Window {
+    APP_CONFIG?: {
+      API_URL?: string;
+    };
+  }
+}
+
+export const API_URL =
+  window.APP_CONFIG?.API_URL ||
+  import.meta.env.VITE_API_URL ||
+  'http://localhost:8080/api/v1';
 
 export const apiClient = axios.create({
   baseURL: API_URL,

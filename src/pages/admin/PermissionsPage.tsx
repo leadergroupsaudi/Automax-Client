@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
   Plus,
   Edit2,
@@ -49,6 +50,7 @@ const actionBadgeColors: Record<string, string> = {
 };
 
 export const PermissionsPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPermission, setEditingPermission] = useState<Permission | null>(null);
@@ -179,12 +181,12 @@ export const PermissionsPage: React.FC = () => {
             <div className="p-2 rounded-lg bg-[hsl(var(--primary)/0.1)]">
               <Key className="w-5 h-5 text-[hsl(var(--primary))]" />
             </div>
-            <h2 className="text-2xl font-bold text-[hsl(var(--foreground))]">Permissions</h2>
+            <h2 className="text-2xl font-bold text-[hsl(var(--foreground))]">{t('permissions.title')}</h2>
           </div>
-          <p className="text-[hsl(var(--muted-foreground))] mt-1 ml-12">Manage system permissions and access controls</p>
+          <p className="text-[hsl(var(--muted-foreground))] mt-1 ml-12">{t('permissions.subtitle')}</p>
         </div>
         <Button onClick={openCreateModal} leftIcon={<Plus className="w-4 h-4" />}>
-          Add Permission
+          {t('permissions.addPermission')}
         </Button>
       </div>
 
@@ -196,7 +198,7 @@ export const PermissionsPage: React.FC = () => {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]" />
             <input
               type="text"
-              placeholder="Search permissions..."
+              placeholder={t('permissions.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-[hsl(var(--muted)/0.5)] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
@@ -211,7 +213,7 @@ export const PermissionsPage: React.FC = () => {
               onChange={(e) => setSelectedModule(e.target.value)}
               className="px-4 py-2.5 bg-[hsl(var(--muted)/0.5)] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
             >
-              <option value="">All Modules</option>
+              <option value="">{t('permissions.allModules')}</option>
               {modulesData?.data?.map((module: string) => (
                 <option key={module} value={module}>
                   {module.charAt(0).toUpperCase() + module.slice(1)}
@@ -226,20 +228,20 @@ export const PermissionsPage: React.FC = () => {
       {isLoading ? (
         <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-12 text-center">
           <div className="w-10 h-10 border-2 border-[hsl(var(--primary))] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-[hsl(var(--muted-foreground))]">Loading permissions...</p>
+          <p className="text-[hsl(var(--muted-foreground))]">{t('permissions.loadingPermissions')}</p>
         </div>
       ) : Object.keys(filteredGroupedPermissions).length === 0 ? (
         <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-12 text-center">
           <div className="w-16 h-16 bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent))] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[hsl(var(--primary)/0.25)]">
             <Key className="w-8 h-8 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">No permissions found</h3>
+          <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">{t('permissions.noPermissionsFound')}</h3>
           <p className="text-[hsl(var(--muted-foreground))] mb-6">
-            {searchQuery ? 'Try adjusting your search query' : 'Create your first permission to get started'}
+            {searchQuery ? t('permissions.adjustSearchQuery') : t('permissions.createFirstPermission')}
           </p>
           {!searchQuery && (
             <Button onClick={openCreateModal} leftIcon={<Plus className="w-4 h-4" />}>
-              Create Permission
+              {t('permissions.createPermission')}
             </Button>
           )}
         </div>
@@ -255,7 +257,7 @@ export const PermissionsPage: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] capitalize">{module}</h3>
-                    <p className="text-sm text-[hsl(var(--muted-foreground))]">{perms.length} permissions</p>
+                    <p className="text-sm text-[hsl(var(--muted-foreground))]">{perms.length} {t('permissions.permissionsCount')}</p>
                   </div>
                 </div>
               </div>
@@ -329,22 +331,22 @@ export const PermissionsPage: React.FC = () => {
                   <AlertTriangle className="w-6 h-6 text-[hsl(var(--destructive))]" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">Delete Permission</h3>
+                  <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">{t('permissions.deleteConfirmTitle')}</h3>
                   <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
-                    Are you sure you want to delete this permission? This will affect all roles using it.
+                    {t('permissions.deleteConfirmMessage')}
                   </p>
                 </div>
               </div>
               <div className="flex justify-end gap-3">
                 <Button variant="ghost" onClick={() => setDeleteConfirm(null)}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   variant="destructive"
                   onClick={() => deleteMutation.mutate(deleteConfirm)}
                   isLoading={deleteMutation.isPending}
                 >
-                  {deleteMutation.isPending ? 'Deleting...' : 'Delete Permission'}
+                  {deleteMutation.isPending ? t('permissions.deleting') : t('permissions.deletePermission')}
                 </Button>
               </div>
             </div>
@@ -364,10 +366,10 @@ export const PermissionsPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">
-                    {editingPermission ? 'Edit Permission' : 'Create Permission'}
+                    {editingPermission ? t('permissions.editPermission') : t('permissions.createPermission')}
                   </h3>
                   <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                    {editingPermission ? 'Update permission details' : 'Add a new permission'}
+                    {editingPermission ? t('permissions.updatePermissionDetails') : t('permissions.addNewPermission')}
                   </p>
                 </div>
               </div>
@@ -382,7 +384,7 @@ export const PermissionsPage: React.FC = () => {
             {/* Modal Body */}
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Name</label>
+                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('permissions.name')}</label>
                 <input
                   type="text"
                   placeholder="e.g., Create Users"
@@ -396,7 +398,7 @@ export const PermissionsPage: React.FC = () => {
               {!editingPermission && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Code</label>
+                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('permissions.code')}</label>
                     <input
                       type="text"
                       placeholder="e.g., users:create"
@@ -408,7 +410,7 @@ export const PermissionsPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Module</label>
+                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('permissions.module')}</label>
                     <input
                       type="text"
                       placeholder="e.g., users"
@@ -420,26 +422,26 @@ export const PermissionsPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Action</label>
+                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('permissions.action')}</label>
                     <select
                       value={formData.action}
                       onChange={(e) => setFormData({ ...formData, action: e.target.value })}
                       className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
                       required
                     >
-                      <option value="">Select action</option>
-                      <option value="create">Create</option>
-                      <option value="view">View</option>
-                      <option value="update">Update</option>
-                      <option value="delete">Delete</option>
-                      <option value="manage">Manage</option>
+                      <option value="">{t('permissions.selectAction')}</option>
+                      <option value="create">{t('permissions.actionCreate')}</option>
+                      <option value="view">{t('permissions.actionView')}</option>
+                      <option value="update">{t('permissions.actionUpdate')}</option>
+                      <option value="delete">{t('permissions.actionDelete')}</option>
+                      <option value="manage">{t('permissions.actionManage')}</option>
                     </select>
                   </div>
                 </>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Description</label>
+                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('common.description')}</label>
                 <textarea
                   placeholder="Describe what this permission allows..."
                   value={formData.description}
@@ -452,7 +454,7 @@ export const PermissionsPage: React.FC = () => {
               {/* Modal Footer */}
               <div className="flex justify-end gap-3 pt-4 border-t border-[hsl(var(--border))]">
                 <Button variant="ghost" type="button" onClick={closeModal}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   type="submit"
@@ -460,10 +462,10 @@ export const PermissionsPage: React.FC = () => {
                   leftIcon={!(createMutation.isPending || updateMutation.isPending) ? <Check className="w-4 h-4" /> : undefined}
                 >
                   {createMutation.isPending || updateMutation.isPending
-                    ? 'Saving...'
+                    ? t('common.loading')
                     : editingPermission
-                    ? 'Update'
-                    : 'Create'}
+                    ? t('common.update')
+                    : t('common.create')}
                 </Button>
               </div>
             </form>
