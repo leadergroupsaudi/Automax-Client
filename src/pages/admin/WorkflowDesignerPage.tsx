@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Plus,
   Edit2,
@@ -112,6 +113,7 @@ const STATE_COLORS = [
 ];
 
 export const WorkflowDesignerPage: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -608,10 +610,10 @@ export const WorkflowDesignerPage: React.FC = () => {
     return (
       <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-12 text-center">
         <AlertTriangle className="w-12 h-12 text-[hsl(var(--destructive))] mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">Workflow not found</h3>
-        <p className="text-[hsl(var(--muted-foreground))] mb-6">The workflow you're looking for doesn't exist.</p>
+        <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">{t('errors.notFound')}</h3>
+        <p className="text-[hsl(var(--muted-foreground))] mb-6">{t('workflows.noWorkflowsDesc')}</p>
         <Button onClick={() => navigate('/workflows')} leftIcon={<ArrowLeft className="w-4 h-4" />}>
-          Back to Workflows
+          {t('workflows.allWorkflows')}
         </Button>
       </div>
     );
@@ -653,7 +655,7 @@ export const WorkflowDesignerPage: React.FC = () => {
             )}
           >
             <Layout className="w-4 h-4" />
-            Visual Designer
+            {t('workflows.visualDesigner')}
           </button>
           <button
             onClick={() => setActiveTab('states')}
@@ -665,7 +667,7 @@ export const WorkflowDesignerPage: React.FC = () => {
             )}
           >
             <Circle className="w-4 h-4" />
-            States ({states.length})
+            {t('workflows.statesTab')} ({states.length})
           </button>
           <button
             onClick={() => setActiveTab('transitions')}
@@ -677,7 +679,7 @@ export const WorkflowDesignerPage: React.FC = () => {
             )}
           >
             <ArrowRight className="w-4 h-4" />
-            Transitions ({transitions.length})
+            {t('workflows.transitionsTab')} ({transitions.length})
           </button>
           <button
             onClick={() => setActiveTab('matching')}
@@ -689,7 +691,7 @@ export const WorkflowDesignerPage: React.FC = () => {
             )}
           >
             <Settings className="w-4 h-4" />
-            Matching Rules
+            {t('workflows.matchingRules')}
           </button>
           <button
             onClick={() => setActiveTab('fields')}
@@ -701,7 +703,7 @@ export const WorkflowDesignerPage: React.FC = () => {
             )}
           >
             <ClipboardList className="w-4 h-4" />
-            Form Fields
+            {t('workflows.requiredFields')}
           </button>
         </div>
 
@@ -729,17 +731,17 @@ export const WorkflowDesignerPage: React.FC = () => {
             <div className="space-y-4">
               <div className="flex justify-end">
                 <Button onClick={openCreateStateModal} leftIcon={<Plus className="w-4 h-4" />}>
-                  Add State
+                  {t('workflows.addState')}
                 </Button>
               </div>
 
               {states.length === 0 ? (
                 <div className="text-center py-12">
                   <Circle className="w-12 h-12 text-[hsl(var(--muted-foreground))] mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">No states yet</h3>
-                  <p className="text-[hsl(var(--muted-foreground))] mb-4">Add states to define the workflow stages</p>
+                  <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">{t('workflows.noStates')}</h3>
+                  <p className="text-[hsl(var(--muted-foreground))] mb-4">{t('workflows.noStatesDesc')}</p>
                   <Button onClick={openCreateStateModal} leftIcon={<Plus className="w-4 h-4" />}>
-                    Add First State
+                    {t('workflows.addState')}
                   </Button>
                 </div>
               ) : (
@@ -837,21 +839,21 @@ export const WorkflowDesignerPage: React.FC = () => {
                   leftIcon={<Plus className="w-4 h-4" />}
                   disabled={states.length < 2}
                 >
-                  Add Transition
+                  {t('workflows.addTransition')}
                 </Button>
               </div>
 
               {states.length < 2 && (
                 <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-sm text-amber-600">
-                  You need at least 2 states to create transitions.
+                  {t('workflows.noStatesDesc')}
                 </div>
               )}
 
               {transitions.length === 0 ? (
                 <div className="text-center py-12">
                   <ArrowRight className="w-12 h-12 text-[hsl(var(--muted-foreground))] mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">No transitions yet</h3>
-                  <p className="text-[hsl(var(--muted-foreground))] mb-4">Add transitions to connect states</p>
+                  <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">{t('workflows.noTransitions')}</h3>
+                  <p className="text-[hsl(var(--muted-foreground))] mb-4">{t('workflows.noTransitionsDesc')}</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">

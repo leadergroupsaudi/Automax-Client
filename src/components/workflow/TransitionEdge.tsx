@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   getBezierPath,
   EdgeLabelRenderer,
@@ -27,6 +28,7 @@ function TransitionEdge({
   selected,
   markerEnd,
 }: EdgeProps) {
+  const { t } = useTranslation();
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,
@@ -65,18 +67,18 @@ function TransitionEdge({
               ${selected ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}
             `}
           >
-            <span className="text-gray-700">{edgeData?.name || 'Transition'}</span>
+            <span className="text-gray-700">{edgeData?.name || t('incidents.transition')}</span>
             {/* Indicators */}
             <div className="flex items-center gap-1 mt-1">
               {edgeData?.hasRequirements && (
-                <span className="w-2 h-2 rounded-full bg-blue-500" title="Has requirements" />
+                <span className="w-2 h-2 rounded-full bg-blue-500" title={t('incidents.hasRequirements')} />
               )}
               {edgeData?.hasActions && (
-                <span className="w-2 h-2 rounded-full bg-emerald-500" title="Has actions" />
+                <span className="w-2 h-2 rounded-full bg-emerald-500" title={t('incidents.hasActions')} />
               )}
               {edgeData?.allowedRolesCount && edgeData.allowedRolesCount > 0 && (
                 <span className="text-[10px] text-gray-500">
-                  {edgeData.allowedRolesCount} role{edgeData.allowedRolesCount > 1 ? 's' : ''}
+                  {edgeData.allowedRolesCount} {edgeData.allowedRolesCount > 1 ? t('incidents.roles') : t('incidents.role')}
                 </span>
               )}
             </div>

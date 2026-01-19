@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Save, AlertTriangle, Info, Zap } from 'lucide-react';
 import { Button, Card, Input, Select, Textarea } from '../../components/ui';
 import { workflowApi, classificationApi, incidentApi } from '../../api/admin';
@@ -9,6 +10,7 @@ import type { IncidentCreateRequest, User, Department, Location, Workflow, Class
 import { INCIDENT_SOURCES } from '../../types';
 
 export function IncidentCreatePage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -146,18 +148,18 @@ export function IncidentCreatePage() {
     const newErrors: Record<string, string> = {};
 
     if (!formData.title.trim()) {
-      newErrors.title = 'Title is required';
+      newErrors.title = t('incidents.titleRequired');
     }
 
     if (!formData.workflow_id) {
-      newErrors.workflow_id = 'Workflow is required. Please select classification, location, source, or severity to auto-match.';
+      newErrors.workflow_id = t('incidents.workflowRequired');
     }
 
     // Validate workflow-specific required fields
     for (const field of workflowRequiredFields) {
       const value = formData[field as keyof typeof formData];
       if (!value || (typeof value === 'string' && !value.trim())) {
-        newErrors[field] = `${fieldLabels[field] || field} is required`;
+        newErrors[field] = t('incidents.fieldRequired', { field: fieldLabels[field] || field });
       }
     }
 
@@ -196,48 +198,48 @@ export function IncidentCreatePage() {
   };
 
   const priorityOptions = [
-    { value: '1', label: 'Critical' },
-    { value: '2', label: 'High' },
-    { value: '3', label: 'Medium' },
-    { value: '4', label: 'Low' },
-    { value: '5', label: 'Very Low' },
+    { value: '1', label: t('priorities.critical') },
+    { value: '2', label: t('priorities.high') },
+    { value: '3', label: t('priorities.medium') },
+    { value: '4', label: t('priorities.low') },
+    { value: '5', label: t('priorities.veryLow') },
   ];
 
   const severityOptions = [
-    { value: '1', label: 'Critical' },
-    { value: '2', label: 'Major' },
-    { value: '3', label: 'Moderate' },
-    { value: '4', label: 'Minor' },
-    { value: '5', label: 'Cosmetic' },
+    { value: '1', label: t('severities.critical') },
+    { value: '2', label: t('severities.major') },
+    { value: '3', label: t('severities.moderate') },
+    { value: '4', label: t('severities.minor') },
+    { value: '5', label: t('severities.cosmetic') },
   ];
 
   const sourceOptions = [
-    { value: '', label: 'Select source...' },
+    { value: '', label: t('incidents.selectSource') },
     ...INCIDENT_SOURCES.map(s => ({ value: s.value, label: s.label })),
   ];
 
   const workflowOptions = [
-    { value: '', label: 'Select workflow...' },
+    { value: '', label: t('incidents.selectWorkflow') },
     ...workflows.map(wf => ({ value: wf.id, label: wf.name })),
   ];
 
   const classificationOptions = [
-    { value: '', label: 'Select classification...' },
+    { value: '', label: t('incidents.selectClassification') },
     ...classifications.map(c => ({ value: c.id, label: c.name })),
   ];
 
   const userOptions = [
-    { value: '', label: 'Unassigned' },
+    { value: '', label: t('incidents.unassigned') },
     ...users.map(u => ({ value: u.id, label: `${u.first_name} ${u.last_name}` })),
   ];
 
   const departmentOptions = [
-    { value: '', label: 'No department' },
+    { value: '', label: t('incidents.noDepartment') },
     ...departments.map(d => ({ value: d.id, label: d.name })),
   ];
 
   const locationOptions = [
-    { value: '', label: 'No location' },
+    { value: '', label: t('incidents.noLocation') },
     ...locations.map(l => ({ value: l.id, label: l.name })),
   ];
 
@@ -249,8 +251,8 @@ export function IncidentCreatePage() {
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Create Incident</h1>
-          <p className="text-gray-600">Create a new incident to track and manage</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('incidents.createIncident')}</h1>
+          <p className="text-gray-600">{t('incidents.createIncidentSubtitle')}</p>
         </div>
       </div>
 
@@ -259,23 +261,23 @@ export function IncidentCreatePage() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Basic Information</h2>
+              <h2 className="text-lg font-semibold mb-4">{t('incidents.basicInformation')}</h2>
 
               <div className="space-y-4">
                 <Input
-                  label="Title"
+                  label={t('incidents.incidentTitle')}
                   value={formData.title}
                   onChange={(e) => handleChange('title', e.target.value)}
                   error={errors.title}
-                  placeholder="Brief description of the incident"
+                  placeholder={t('incidents.titlePlaceholder')}
                   required
                 />
 
                 <Textarea
-                  label="Description"
+                  label={t('incidents.description')}
                   value={formData.description || ''}
                   onChange={(e) => handleChange('description', e.target.value)}
-                  placeholder="Detailed description of the incident..."
+                  placeholder={t('incidents.descriptionPlaceholder')}
                   rows={5}
                   required={workflowRequiredFields.includes('description')}
                   error={errors.description}
@@ -285,15 +287,15 @@ export function IncidentCreatePage() {
                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Zap className="w-4 h-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-800">Auto-Workflow Selection</span>
+                    <span className="text-sm font-medium text-blue-800">{t('incidents.autoWorkflowSelection')}</span>
                   </div>
                   <p className="text-xs text-blue-700 mb-3">
-                    Select classification, location, source, or severity to automatically match a workflow.
+                    {t('incidents.autoWorkflowHint')}
                   </p>
 
                   <div className="grid grid-cols-2 gap-3">
                     <Select
-                      label="Classification"
+                      label={t('incidents.classification')}
                       value={formData.classification_id || ''}
                       onChange={(e) => handleChange('classification_id', e.target.value)}
                       options={classificationOptions}
@@ -302,7 +304,7 @@ export function IncidentCreatePage() {
                     />
 
                     <Select
-                      label="Location"
+                      label={t('incidents.location')}
                       value={formData.location_id || ''}
                       onChange={(e) => handleChange('location_id', e.target.value)}
                       options={locationOptions}
@@ -313,7 +315,7 @@ export function IncidentCreatePage() {
 
                   <div className="mt-3">
                     <Select
-                      label="Source"
+                      label={t('incidents.source')}
                       value={formData.source || ''}
                       onChange={(e) => handleChange('source', e.target.value as IncidentSource || undefined)}
                       options={sourceOptions}
@@ -325,7 +327,7 @@ export function IncidentCreatePage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <Select
-                    label="Priority"
+                    label={t('incidents.priority')}
                     value={String(formData.priority || 3)}
                     onChange={(e) => handleChange('priority', parseInt(e.target.value))}
                     options={priorityOptions}
@@ -334,7 +336,7 @@ export function IncidentCreatePage() {
                   />
 
                   <Select
-                    label="Severity"
+                    label={t('incidents.severity')}
                     value={String(formData.severity || 3)}
                     onChange={(e) => handleChange('severity', parseInt(e.target.value))}
                     options={severityOptions}
@@ -346,7 +348,7 @@ export function IncidentCreatePage() {
                 {/* Workflow Selection */}
                 <div className="relative">
                   <Select
-                    label="Workflow"
+                    label={t('incidents.workflow')}
                     value={formData.workflow_id || ''}
                     onChange={(e) => handleChange('workflow_id', e.target.value)}
                     error={errors.workflow_id}
@@ -356,7 +358,7 @@ export function IncidentCreatePage() {
                   {isAutoMatched && autoMatchedWorkflow && (
                     <div className="mt-1 flex items-center gap-1.5 text-xs text-green-600">
                       <Info className="w-3 h-3" />
-                      <span>Auto-matched based on your selections</span>
+                      <span>{t('incidents.autoMatchedHint')}</span>
                     </div>
                   )}
                 </div>
@@ -364,24 +366,24 @@ export function IncidentCreatePage() {
             </Card>
 
             <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Reporter Information</h2>
+              <h2 className="text-lg font-semibold mb-4">{t('incidents.reporterInformation')}</h2>
 
               <div className="grid grid-cols-2 gap-4">
                 <Input
-                  label="Reporter Name"
+                  label={t('incidents.reporterName')}
                   value={formData.reporter_name || ''}
                   onChange={(e) => handleChange('reporter_name', e.target.value)}
-                  placeholder="Name of person reporting"
+                  placeholder={t('incidents.reporterNamePlaceholder')}
                   required={workflowRequiredFields.includes('reporter_name')}
                   error={errors.reporter_name}
                 />
 
                 <Input
-                  label="Reporter Email"
+                  label={t('incidents.reporterEmail')}
                   type="email"
                   value={formData.reporter_email || ''}
                   onChange={(e) => handleChange('reporter_email', e.target.value)}
-                  placeholder="reporter@example.com"
+                  placeholder={t('incidents.reporterEmailPlaceholder')}
                   required={workflowRequiredFields.includes('reporter_email')}
                   error={errors.reporter_email}
                 />
@@ -392,11 +394,11 @@ export function IncidentCreatePage() {
           {/* Sidebar */}
           <div className="space-y-6">
             <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Assignment</h2>
+              <h2 className="text-lg font-semibold mb-4">{t('incidents.assignment')}</h2>
 
               <div className="space-y-4">
                 <Select
-                  label="Assignee"
+                  label={t('incidents.assignee')}
                   value={formData.assignee_id || ''}
                   onChange={(e) => handleChange('assignee_id', e.target.value)}
                   options={userOptions}
@@ -405,7 +407,7 @@ export function IncidentCreatePage() {
                 />
 
                 <Select
-                  label="Department"
+                  label={t('incidents.department')}
                   value={formData.department_id || ''}
                   onChange={(e) => handleChange('department_id', e.target.value)}
                   options={departmentOptions}
@@ -414,7 +416,7 @@ export function IncidentCreatePage() {
                 />
 
                 <Input
-                  label="Due Date"
+                  label={t('incidents.dueDate')}
                   type="datetime-local"
                   value={formData.due_date || ''}
                   onChange={(e) => handleChange('due_date', e.target.value)}
@@ -440,7 +442,7 @@ export function IncidentCreatePage() {
                   leftIcon={<Save className="w-4 h-4" />}
                   isLoading={createMutation.isPending}
                 >
-                  Create Incident
+                  {t('incidents.createIncident')}
                 </Button>
 
                 <Button
@@ -449,7 +451,7 @@ export function IncidentCreatePage() {
                   className="w-full"
                   onClick={() => navigate('/incidents')}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </div>
             </Card>

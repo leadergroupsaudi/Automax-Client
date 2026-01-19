@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
   AlertTriangle,
@@ -60,6 +61,7 @@ const severityLabels: Record<number, { label: string; color: string; bgColor: st
 };
 
 export const IncidentDetailPage: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -425,7 +427,7 @@ export const IncidentDetailPage: React.FC = () => {
           <div className="inline-flex items-center justify-center w-14 h-14 bg-[hsl(var(--primary)/0.1)] rounded-2xl mb-4">
             <div className="w-6 h-6 border-2 border-[hsl(var(--primary))] border-t-transparent rounded-full animate-spin" />
           </div>
-          <p className="text-[hsl(var(--muted-foreground))]">Loading incident...</p>
+          <p className="text-[hsl(var(--muted-foreground))]">{t('incidents.loadingIncident')}</p>
         </div>
       </div>
     );
@@ -438,10 +440,10 @@ export const IncidentDetailPage: React.FC = () => {
           <div className="w-16 h-16 bg-[hsl(var(--destructive)/0.1)] rounded-2xl flex items-center justify-center mb-4">
             <XCircle className="w-8 h-8 text-[hsl(var(--destructive))]" />
           </div>
-          <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">Incident Not Found</h3>
-          <p className="text-[hsl(var(--muted-foreground))] mb-6">The incident you're looking for doesn't exist or has been deleted.</p>
+          <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">{t('incidents.incidentNotFound')}</h3>
+          <p className="text-[hsl(var(--muted-foreground))] mb-6">{t('incidents.incidentNotFoundDesc')}</p>
           <Button onClick={() => navigate('/incidents')} leftIcon={<ArrowLeft className="w-4 h-4" />}>
-            Back to Incidents
+            {t('incidents.backToIncidents')}
           </Button>
         </div>
       </div>
@@ -458,7 +460,7 @@ export const IncidentDetailPage: React.FC = () => {
             className="flex items-center gap-1 text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] mb-3 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Incidents
+            {t('incidents.backToIncidents')}
           </button>
           <div className="flex items-center gap-3 mb-2">
             <span className="text-sm font-medium text-[hsl(var(--primary))]">{incident.incident_number}</span>
@@ -476,7 +478,7 @@ export const IncidentDetailPage: React.FC = () => {
             {incident.sla_breached && (
               <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-red-500/10 text-red-600">
                 <AlertTriangle className="w-3 h-3" />
-                SLA Breached
+                {t('incidents.slaBreached')}
               </span>
             )}
           </div>
@@ -501,10 +503,10 @@ export const IncidentDetailPage: React.FC = () => {
             onClick={() => refetch()}
             leftIcon={<RefreshCw className="w-4 h-4" />}
           >
-            Refresh
+            {t('incidents.refresh')}
           </Button>
           <Button variant="ghost" size="sm" leftIcon={<Edit2 className="w-4 h-4" />}>
-            Edit
+            {t('incidents.edit')}
           </Button>
         </div>
       </div>
@@ -514,9 +516,9 @@ export const IncidentDetailPage: React.FC = () => {
         <div className="lg:col-span-2 space-y-6">
           {/* Description */}
           <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">Description</h3>
+            <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">{t('incidents.description')}</h3>
             <p className="text-[hsl(var(--foreground))] whitespace-pre-wrap">
-              {incident.description || 'No description provided.'}
+              {incident.description || t('incidents.noDescription')}
             </p>
           </div>
 
@@ -534,7 +536,7 @@ export const IncidentDetailPage: React.FC = () => {
               >
                 <span className="flex items-center justify-center gap-2">
                   <Clock className="w-4 h-4" />
-                  Activity
+                  {t('incidents.activity')}
                 </span>
               </button>
               <button
@@ -548,7 +550,7 @@ export const IncidentDetailPage: React.FC = () => {
               >
                 <span className="flex items-center justify-center gap-2">
                   <MessageSquare className="w-4 h-4" />
-                  Comments ({comments.length})
+                  {t('incidents.comments')} ({comments.length})
                 </span>
               </button>
               <button
@@ -562,7 +564,7 @@ export const IncidentDetailPage: React.FC = () => {
               >
                 <span className="flex items-center justify-center gap-2">
                   <Paperclip className="w-4 h-4" />
-                  Attachments ({attachments.length})
+                  {t('incidents.attachments')} ({attachments.length})
                 </span>
               </button>
               <button
@@ -576,7 +578,7 @@ export const IncidentDetailPage: React.FC = () => {
               >
                 <span className="flex items-center justify-center gap-2">
                   <History className="w-4 h-4" />
-                  Revisions
+                  {t('incidents.revisions')}
                 </span>
               </button>
             </div>
@@ -586,7 +588,7 @@ export const IncidentDetailPage: React.FC = () => {
               {activeTab === 'activity' && (
                 <div className="space-y-4">
                   {history.length === 0 ? (
-                    <p className="text-center text-[hsl(var(--muted-foreground))] py-8">No activity yet.</p>
+                    <p className="text-center text-[hsl(var(--muted-foreground))] py-8">{t('incidents.noActivity')}</p>
                   ) : (
                     <div className="relative">
                       <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-[hsl(var(--border))]" />
@@ -605,11 +607,11 @@ export const IncidentDetailPage: React.FC = () => {
                             <div className="flex items-start justify-between mb-2">
                               <div>
                                 <span className="font-medium text-[hsl(var(--foreground))]">
-                                  {item.transition?.name || 'State Changed'}
+                                  {item.transition?.name || t('incidents.stateChanged')}
                                 </span>
-                                <span className="text-[hsl(var(--muted-foreground))] mx-2">by</span>
+                                <span className="text-[hsl(var(--muted-foreground))] mx-2">{t('incidents.by')}</span>
                                 <span className="font-medium text-[hsl(var(--foreground))]">
-                                  {item.performed_by?.first_name || item.performed_by?.username || 'System'}
+                                  {item.performed_by?.first_name || item.performed_by?.username || t('incidents.system')}
                                 </span>
                               </div>
                               <span className="text-xs text-[hsl(var(--muted-foreground))]">
@@ -660,7 +662,7 @@ export const IncidentDetailPage: React.FC = () => {
                     <textarea
                       value={commentText}
                       onChange={(e) => setCommentText(e.target.value)}
-                      placeholder="Add a comment..."
+                      placeholder={t('incidents.addCommentPlaceholder')}
                       rows={3}
                       className="flex-1 px-4 py-3 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] resize-none"
                     />
@@ -673,7 +675,7 @@ export const IncidentDetailPage: React.FC = () => {
                         onChange={(e) => setIsInternalComment(e.target.checked)}
                         className="rounded border-[hsl(var(--border))]"
                       />
-                      Internal comment (not visible to reporter)
+                      {t('incidents.internalComment')}
                     </label>
                     <Button
                       size="sm"
@@ -682,14 +684,14 @@ export const IncidentDetailPage: React.FC = () => {
                       isLoading={addCommentMutation.isPending}
                       leftIcon={!addCommentMutation.isPending ? <Send className="w-4 h-4" /> : undefined}
                     >
-                      Add Comment
+                      {t('incidents.addComment')}
                     </Button>
                   </div>
 
                   {/* Comments List */}
                   <div className="space-y-4 mt-6">
                     {comments.length === 0 ? (
-                      <p className="text-center text-[hsl(var(--muted-foreground))] py-8">No comments yet.</p>
+                      <p className="text-center text-[hsl(var(--muted-foreground))] py-8">{t('incidents.noCommentsYet')}</p>
                     ) : (
                       comments.map((comment: IncidentComment) => (
                         <div key={comment.id} className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-4">
@@ -714,7 +716,7 @@ export const IncidentDetailPage: React.FC = () => {
                                 </span>
                                 {comment.is_internal && (
                                   <span className="ml-2 px-1.5 py-0.5 text-xs bg-yellow-100 text-yellow-700 rounded">
-                                    Internal
+                                    {t('incidents.internal')}
                                   </span>
                                 )}
                               </div>
@@ -748,7 +750,7 @@ export const IncidentDetailPage: React.FC = () => {
                   <div>
                     <label className="inline-flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg cursor-pointer hover:opacity-90 transition-opacity">
                       <Upload className="w-4 h-4" />
-                      Upload File
+                      {t('incidents.uploadFile')}
                       <input
                         type="file"
                         className="hidden"
@@ -757,14 +759,14 @@ export const IncidentDetailPage: React.FC = () => {
                       />
                     </label>
                     {uploadAttachmentMutation.isPending && (
-                      <span className="ml-2 text-sm text-[hsl(var(--muted-foreground))]">Uploading...</span>
+                      <span className="ml-2 text-sm text-[hsl(var(--muted-foreground))]">{t('incidents.uploading')}</span>
                     )}
                   </div>
 
                   {/* Attachments List */}
                   <div className="space-y-3">
                     {attachments.length === 0 ? (
-                      <p className="text-center text-[hsl(var(--muted-foreground))] py-8">No attachments.</p>
+                      <p className="text-center text-[hsl(var(--muted-foreground))] py-8">{t('incidents.noAttachmentsYet')}</p>
                     ) : (
                       <>
                         {/* Image Grid */}
@@ -789,11 +791,11 @@ export const IncidentDetailPage: React.FC = () => {
                                         : "bg-[hsl(var(--background))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]"
                                     )}
                                   >
-                                    {compareMode ? 'Exit Compare' : 'Compare Images'}
+                                    {compareMode ? t('incidents.exitCompare') : t('incidents.compareImages')}
                                   </button>
                                   {compareMode && (
                                     <span className="text-sm text-[hsl(var(--muted-foreground))]">
-                                      Select 2 images to compare ({selectedForCompare.length}/2)
+                                      {t('incidents.selectImagesToCompare')} ({selectedForCompare.length}/2)
                                     </span>
                                   )}
                                 </div>
@@ -802,7 +804,7 @@ export const IncidentDetailPage: React.FC = () => {
                                     onClick={openCompareModal}
                                     className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-sm font-medium hover:bg-[hsl(var(--primary)/0.9)] transition-colors"
                                   >
-                                    Compare Now
+                                    {t('incidents.compareNow')}
                                   </button>
                                 )}
                               </div>
@@ -958,12 +960,12 @@ export const IncidentDetailPage: React.FC = () => {
         <div className="space-y-6">
           {/* Details Card */}
           <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">Details</h3>
+            <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">{t('incidents.details')}</h3>
             <div className="space-y-4">
               {/* Priority */}
               <div>
                 <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                  Priority
+                  {t('incidents.priority')}
                 </label>
                 <div className="mt-1">
                   <span className={cn(
@@ -971,7 +973,12 @@ export const IncidentDetailPage: React.FC = () => {
                     priorityLabels[incident.priority]?.bgColor || 'bg-gray-100',
                     priorityLabels[incident.priority]?.color || 'text-gray-700'
                   )}>
-                    {priorityLabels[incident.priority]?.label || `Priority ${incident.priority}`}
+                    {incident.priority === 1 ? t('priorities.critical') :
+                     incident.priority === 2 ? t('priorities.high') :
+                     incident.priority === 3 ? t('priorities.medium') :
+                     incident.priority === 4 ? t('priorities.low') :
+                     incident.priority === 5 ? t('priorities.veryLow') :
+                     `${t('incidents.priority')} ${incident.priority}`}
                   </span>
                 </div>
               </div>
@@ -979,7 +986,7 @@ export const IncidentDetailPage: React.FC = () => {
               {/* Severity */}
               <div>
                 <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                  Severity
+                  {t('incidents.severity')}
                 </label>
                 <div className="mt-1">
                   <span className={cn(
@@ -987,7 +994,12 @@ export const IncidentDetailPage: React.FC = () => {
                     severityLabels[incident.severity]?.bgColor || 'bg-gray-100',
                     severityLabels[incident.severity]?.color || 'text-gray-700'
                   )}>
-                    {severityLabels[incident.severity]?.label || `Severity ${incident.severity}`}
+                    {incident.severity === 1 ? t('severities.critical') :
+                     incident.severity === 2 ? t('severities.major') :
+                     incident.severity === 3 ? t('severities.moderate') :
+                     incident.severity === 4 ? t('severities.minor') :
+                     incident.severity === 5 ? t('severities.cosmetic') :
+                     `${t('incidents.severity')} ${incident.severity}`}
                   </span>
                 </div>
               </div>
@@ -995,11 +1007,11 @@ export const IncidentDetailPage: React.FC = () => {
               {/* Classification */}
               <div>
                 <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                  Classification
+                  {t('incidents.classification')}
                 </label>
                 <div className="mt-1 flex items-center gap-2 text-sm text-[hsl(var(--foreground))]">
                   <Tags className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                  {incident.classification?.name || 'Unclassified'}
+                  {incident.classification?.name || t('incidents.unclassified')}
                 </div>
               </div>
 
@@ -1007,7 +1019,7 @@ export const IncidentDetailPage: React.FC = () => {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                    Assignee{incident.assignees && incident.assignees.length > 1 ? 's' : ''}
+                    {incident.assignees && incident.assignees.length > 1 ? t('incidents.assignees') : t('incidents.assignee')}
                     {incident.assignees && incident.assignees.length > 0 && (
                       <span className="ml-1 text-[hsl(var(--primary))]">({incident.assignees.length})</span>
                     )}
@@ -1016,7 +1028,7 @@ export const IncidentDetailPage: React.FC = () => {
                     onClick={() => setAssignModalOpen(true)}
                     className="text-xs text-[hsl(var(--primary))] hover:underline"
                   >
-                    Change
+                    {t('incidents.change')}
                   </button>
                 </div>
                 <div className="mt-1 space-y-2">
@@ -1040,7 +1052,7 @@ export const IncidentDetailPage: React.FC = () => {
                           <span className="text-sm text-[hsl(var(--foreground))]">
                             {assignee.first_name || assignee.username}
                             {index === 0 && incident.assignees!.length > 1 && (
-                              <span className="ml-1 text-xs text-[hsl(var(--muted-foreground))]">(Primary)</span>
+                              <span className="ml-1 text-xs text-[hsl(var(--muted-foreground))]">({t('incidents.primary')})</span>
                             )}
                           </span>
                         </div>
@@ -1068,7 +1080,7 @@ export const IncidentDetailPage: React.FC = () => {
                   ) : (
                     <span className="text-sm text-[hsl(var(--muted-foreground))] flex items-center gap-1">
                       <User className="w-4 h-4" />
-                      Unassigned
+                      {t('incidents.unassigned')}
                     </span>
                   )}
                 </div>
@@ -1078,7 +1090,7 @@ export const IncidentDetailPage: React.FC = () => {
               {incident.department && (
                 <div>
                   <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                    Department
+                    {t('incidents.department')}
                   </label>
                   <div className="mt-1 flex items-center gap-2 text-sm text-[hsl(var(--foreground))]">
                     <Building2 className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
@@ -1091,7 +1103,7 @@ export const IncidentDetailPage: React.FC = () => {
               {incident.location && (
                 <div>
                   <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                    Location
+                    {t('incidents.location')}
                   </label>
                   <div className="mt-1 flex items-center gap-2 text-sm text-[hsl(var(--foreground))]">
                     <MapPin className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
@@ -1103,7 +1115,7 @@ export const IncidentDetailPage: React.FC = () => {
               {/* Due Date */}
               <div>
                 <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                  Due Date
+                  {t('incidents.dueDate')}
                 </label>
                 <div className="mt-1 flex items-center gap-2 text-sm text-[hsl(var(--foreground))]">
                   <Calendar className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
@@ -1115,7 +1127,7 @@ export const IncidentDetailPage: React.FC = () => {
               {incident.sla_deadline && (
                 <div>
                   <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                    SLA Deadline
+                    {t('incidents.slaDeadline')}
                   </label>
                   <div className={cn(
                     "mt-1 flex items-center gap-2 text-sm",
@@ -1131,7 +1143,7 @@ export const IncidentDetailPage: React.FC = () => {
               {/* Created */}
               <div>
                 <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                  Created
+                  {t('incidents.created')}
                 </label>
                 <div className="mt-1 text-sm text-[hsl(var(--foreground))]">
                   {formatDateTime(incident.created_at)}
@@ -1141,7 +1153,7 @@ export const IncidentDetailPage: React.FC = () => {
               {/* Reporter */}
               <div>
                 <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                  Reporter
+                  {t('incidents.reporter')}
                 </label>
                 <div className="mt-1 text-sm text-[hsl(var(--foreground))]">
                   {incident.reporter?.first_name || incident.reporter?.username || incident.reporter_name || incident.reporter_email || 'Unknown'}
@@ -1153,7 +1165,7 @@ export const IncidentDetailPage: React.FC = () => {
           {/* Workflow Info */}
           {incident.workflow && (
             <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">Workflow</h3>
+              <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">{t('incidents.workflow')}</h3>
               <p className="text-sm text-[hsl(var(--foreground))]">{incident.workflow.name}</p>
               {incident.workflow.description && (
                 <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1 mb-4">{incident.workflow.description}</p>
@@ -1177,7 +1189,7 @@ export const IncidentDetailPage: React.FC = () => {
           <div className="bg-[hsl(var(--card))] rounded-xl shadow-2xl max-w-md w-full animate-scale-in">
             <div className="flex items-center justify-between px-6 py-4 border-b border-[hsl(var(--border))]">
               <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">
-                Execute Transition
+                {t('incidents.executeTransition')}
               </h3>
               <button
                 onClick={() => {
@@ -1199,7 +1211,7 @@ export const IncidentDetailPage: React.FC = () => {
                     color: selectedTransition.transition.from_state?.color || 'hsl(var(--foreground))',
                   }}
                 >
-                  {selectedTransition.transition.from_state?.name || 'Current'}
+                  {selectedTransition.transition.from_state?.name || t('incidents.current')}
                 </span>
                 <ChevronRight className="w-5 h-5 text-[hsl(var(--muted-foreground))]" />
                 <span
@@ -1209,14 +1221,14 @@ export const IncidentDetailPage: React.FC = () => {
                     color: selectedTransition.transition.to_state?.color || 'hsl(var(--foreground))',
                   }}
                 >
-                  {selectedTransition.transition.to_state?.name || 'Next'}
+                  {selectedTransition.transition.to_state?.name || t('incidents.next')}
                 </span>
               </div>
 
               {/* Requirements */}
               {selectedTransition.requirements && selectedTransition.requirements.length > 0 && (
                 <div className="bg-[hsl(var(--muted)/0.5)] rounded-lg p-3">
-                  <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase mb-2">Requirements</p>
+                  <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase mb-2">{t('incidents.requirements')}</p>
                   <ul className="space-y-1">
                     {selectedTransition.requirements.map((req, idx) => (
                       <li key={idx} className="flex items-center gap-2 text-sm text-[hsl(var(--foreground))]">
@@ -1225,10 +1237,10 @@ export const IncidentDetailPage: React.FC = () => {
                         ) : (
                           <CheckCircle2 className="w-4 h-4 text-green-500" />
                         )}
-                        {req.requirement_type === 'comment' && 'Comment'}
-                        {req.requirement_type === 'attachment' && 'Attachment'}
-                        {req.requirement_type === 'field_value' && 'Field value'}
-                        {req.is_mandatory && <span className="text-xs text-amber-500">(required)</span>}
+                        {req.requirement_type === 'comment' && t('incidents.comment')}
+                        {req.requirement_type === 'attachment' && t('incidents.attachment')}
+                        {req.requirement_type === 'field_value' && t('incidents.fieldValue')}
+                        {req.is_mandatory && <span className="text-xs text-amber-500">({t('incidents.required')})</span>}
                       </li>
                     ))}
                   </ul>
@@ -1240,7 +1252,7 @@ export const IncidentDetailPage: React.FC = () => {
                 <div className="bg-[hsl(var(--muted)/0.5)] rounded-lg p-3">
                   <div className="flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))]">
                     <div className="w-4 h-4 border-2 border-[hsl(var(--primary))] border-t-transparent rounded-full animate-spin" />
-                    Loading assignment options...
+                    {t('incidents.loadingAssignmentOptions')}
                   </div>
                 </div>
               ) : (
@@ -1250,18 +1262,18 @@ export const IncidentDetailPage: React.FC = () => {
                     <div className="bg-[hsl(var(--muted)/0.5)] rounded-lg p-3">
                       <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase mb-2 flex items-center gap-1">
                         <Building2 className="w-3 h-3" />
-                        Department Assignment
+                        {t('incidents.departmentAssignment')}
                       </p>
                       {selectedTransition.transition.assign_department_id ? (
                         <p className="text-sm text-[hsl(var(--foreground))]">
-                          Will assign to: <span className="font-medium">{selectedTransition.transition.assign_department?.name || 'Selected Department'}</span>
+                          {t('incidents.willAssignTo')} <span className="font-medium">{selectedTransition.transition.assign_department?.name || t('incidents.department')}</span>
                         </p>
                       ) : departmentMatchResult ? (
                         departmentMatchResult.departments.length === 0 ? (
-                          <p className="text-sm text-amber-600">No matching departments found</p>
+                          <p className="text-sm text-amber-600">{t('incidents.noMatchingDepartments')}</p>
                         ) : departmentMatchResult.single_match ? (
                           <p className="text-sm text-[hsl(var(--foreground))]">
-                            Will assign to: <span className="font-medium">{departmentMatchResult.departments[0]?.name}</span>
+                            {t('incidents.willAssignTo')} <span className="font-medium">{departmentMatchResult.departments[0]?.name}</span>
                           </p>
                         ) : (
                           <select
@@ -1269,7 +1281,7 @@ export const IncidentDetailPage: React.FC = () => {
                             onChange={(e) => setSelectedDepartmentId(e.target.value)}
                             className="w-full px-3 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-md text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
                           >
-                            <option value="">Select department...</option>
+                            <option value="">{t('incidents.selectDepartment')}</option>
                             {departmentMatchResult.departments.map((dept) => (
                               <option key={dept.id} value={dept.id}>
                                 {dept.name}
@@ -1278,7 +1290,7 @@ export const IncidentDetailPage: React.FC = () => {
                           </select>
                         )
                       ) : (
-                        <p className="text-sm text-[hsl(var(--muted-foreground))]">Auto-detect based on classification & location</p>
+                        <p className="text-sm text-[hsl(var(--muted-foreground))]">{t('incidents.autoDetectDeptLocation')}</p>
                       )}
                     </div>
                   )}
@@ -1289,12 +1301,12 @@ export const IncidentDetailPage: React.FC = () => {
                     <div className="bg-[hsl(var(--muted)/0.5)] rounded-lg p-3">
                       <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase mb-2 flex items-center gap-1">
                         <User className="w-3 h-3" />
-                        User Assignment
+                        {t('incidents.userAssignment')}
                         {selectedTransition.transition.manual_select_user && (
-                          <span className="text-amber-500">(Manual Selection Required)</span>
+                          <span className="text-amber-500">({t('incidents.manualSelectionRequired')})</span>
                         )}
                         {selectedTransition.transition.auto_match_user && !selectedTransition.transition.manual_select_user && (
-                          <span className="text-green-500">(Auto-assign to all matched)</span>
+                          <span className="text-green-500">({t('incidents.autoAssignAllMatched')})</span>
                         )}
                         {selectedTransition.transition.assignment_role && (
                           <span className="text-[hsl(var(--primary))] ml-1">Role: {selectedTransition.transition.assignment_role.name}</span>
@@ -1302,22 +1314,22 @@ export const IncidentDetailPage: React.FC = () => {
                       </p>
                       {selectedTransition.transition.assign_user_id ? (
                         <p className="text-sm text-[hsl(var(--foreground))]">
-                          Will assign to: <span className="font-medium">
-                            {selectedTransition.transition.assign_user?.first_name || selectedTransition.transition.assign_user?.username || 'Selected User'}
+                          {t('incidents.willAssignTo')} <span className="font-medium">
+                            {selectedTransition.transition.assign_user?.first_name || selectedTransition.transition.assign_user?.username || t('incidents.assignee')}
                           </span>
                         </p>
                       ) : selectedTransition.transition.manual_select_user ? (
                         // Manual select mode - always show dropdown
                         userMatchResult ? (
                           userMatchResult.users.length === 0 ? (
-                            <p className="text-sm text-amber-600">No users with the required role found</p>
+                            <p className="text-sm text-amber-600">{t('incidents.noUsersWithRole')}</p>
                           ) : (
                             <select
                               value={selectedUserId}
                               onChange={(e) => setSelectedUserId(e.target.value)}
                               className="w-full px-3 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-md text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
                             >
-                              <option value="">Select assignee...</option>
+                              <option value="">{t('incidents.selectAssignee')}</option>
                               {userMatchResult.users.map((user) => (
                                 <option key={user.id} value={user.id}>
                                   {user.first_name ? `${user.first_name} ${user.last_name || ''}` : user.username} ({user.email})
@@ -1326,17 +1338,17 @@ export const IncidentDetailPage: React.FC = () => {
                             </select>
                           )
                         ) : (
-                          <p className="text-sm text-[hsl(var(--muted-foreground))]">Loading users...</p>
+                          <p className="text-sm text-[hsl(var(--muted-foreground))]">{t('incidents.loadingUsers')}</p>
                         )
                       ) : selectedTransition.transition.auto_match_user ? (
                         // Auto-match mode - assign to ALL matched users
                         userMatchResult ? (
                           userMatchResult.users.length === 0 ? (
-                            <p className="text-sm text-amber-600">No matching users found</p>
+                            <p className="text-sm text-amber-600">{t('incidents.noMatchingUsers')}</p>
                           ) : (
                             <div>
                               <p className="text-sm text-[hsl(var(--foreground))] mb-2">
-                                Will assign to <span className="font-medium text-green-600">{userMatchResult.users.length} user(s)</span>:
+                                {t('incidents.willAssignToUsers', { count: userMatchResult.users.length })}
                               </p>
                               <div className="flex flex-wrap gap-1">
                                 {userMatchResult.users.map((user) => (
@@ -1351,10 +1363,10 @@ export const IncidentDetailPage: React.FC = () => {
                             </div>
                           )
                         ) : (
-                          <p className="text-sm text-[hsl(var(--muted-foreground))]">Auto-assign based on role & criteria</p>
+                          <p className="text-sm text-[hsl(var(--muted-foreground))]">{t('incidents.autoAssignRoleCriteria')}</p>
                         )
                       ) : (
-                        <p className="text-sm text-[hsl(var(--muted-foreground))]">No assignment configured</p>
+                        <p className="text-sm text-[hsl(var(--muted-foreground))]">{t('incidents.noAssignmentConfigured')}</p>
                       )}
                     </div>
                   )}
@@ -1365,7 +1377,7 @@ export const IncidentDetailPage: React.FC = () => {
               {selectedTransition.requirements?.some(r => r.requirement_type === 'attachment') && (
                 <div>
                   <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-                    Attachment
+                    {t('incidents.attachment')}
                     {selectedTransition.requirements?.some(r => r.requirement_type === 'attachment' && r.is_mandatory) && (
                       <span className="text-red-500 ml-1">*</span>
                     )}
@@ -1392,7 +1404,7 @@ export const IncidentDetailPage: React.FC = () => {
                   ) : (
                     <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-[hsl(var(--border))] rounded-lg cursor-pointer hover:border-[hsl(var(--primary))] hover:bg-[hsl(var(--muted)/0.3)] transition-colors">
                       <Upload className="w-5 h-5 text-[hsl(var(--muted-foreground))]" />
-                      <span className="text-sm text-[hsl(var(--muted-foreground))]">Click to upload file</span>
+                      <span className="text-sm text-[hsl(var(--muted-foreground))]">{t('incidents.clickToUpload')}</span>
                       <input
                         type="file"
                         className="hidden"
@@ -1411,7 +1423,7 @@ export const IncidentDetailPage: React.FC = () => {
               {/* Comment */}
               <div>
                 <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-                  Comment
+                  {t('incidents.comment')}
                   {selectedTransition.requirements?.some(r => r.requirement_type === 'comment' && r.is_mandatory) && (
                     <span className="text-red-500 ml-1">*</span>
                   )}
@@ -1419,7 +1431,7 @@ export const IncidentDetailPage: React.FC = () => {
                 <textarea
                   value={transitionComment}
                   onChange={(e) => setTransitionComment(e.target.value)}
-                  placeholder="Add a comment for this transition..."
+                  placeholder={t('incidents.addCommentForTransition')}
                   rows={3}
                   className="w-full px-4 py-3 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] resize-none"
                 />
@@ -1435,14 +1447,14 @@ export const IncidentDetailPage: React.FC = () => {
                   setTransitionAttachment(null);
                 }}
               >
-                Cancel
+                {t('incidents.cancel')}
               </Button>
               <Button
                 onClick={executeTransition}
                 isLoading={transitionMutation.isPending || transitionUploading}
                 leftIcon={!(transitionMutation.isPending || transitionUploading) ? <Play className="w-4 h-4" /> : undefined}
               >
-                {transitionUploading ? 'Uploading...' : 'Execute'}
+                {transitionUploading ? t('incidents.uploading') : t('incidents.execute')}
               </Button>
             </div>
           </div>
@@ -1455,7 +1467,7 @@ export const IncidentDetailPage: React.FC = () => {
           <div className="bg-[hsl(var(--card))] rounded-xl shadow-2xl max-w-md w-full animate-scale-in">
             <div className="flex items-center justify-between px-6 py-4 border-b border-[hsl(var(--border))]">
               <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">
-                Assign Incident
+                {t('incidents.assignIncident')}
               </h3>
               <button
                 onClick={() => {
@@ -1469,14 +1481,14 @@ export const IncidentDetailPage: React.FC = () => {
             </div>
             <div className="p-6">
               <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-                Select Assignee
+                {t('incidents.selectAssignee')}
               </label>
               <select
                 value={selectedAssignee}
                 onChange={(e) => setSelectedAssignee(e.target.value)}
                 className="w-full px-4 py-3 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
               >
-                <option value="">Select a user...</option>
+                <option value="">{t('incidents.selectUser')}</option>
                 {usersData?.data?.map((user: UserType) => (
                   <option key={user.id} value={user.id}>
                     {user.first_name ? `${user.first_name} ${user.last_name || ''}` : user.username} ({user.email})
@@ -1492,7 +1504,7 @@ export const IncidentDetailPage: React.FC = () => {
                   setSelectedAssignee('');
                 }}
               >
-                Cancel
+                {t('incidents.cancel')}
               </Button>
               <Button
                 onClick={() => assignMutation.mutate(selectedAssignee)}
@@ -1500,7 +1512,7 @@ export const IncidentDetailPage: React.FC = () => {
                 isLoading={assignMutation.isPending}
                 leftIcon={!assignMutation.isPending ? <User className="w-4 h-4" /> : undefined}
               >
-                Assign
+                {t('incidents.assign')}
               </Button>
             </div>
           </div>
@@ -1555,8 +1567,8 @@ export const IncidentDetailPage: React.FC = () => {
           {/* Header */}
           <div className="flex items-center justify-between p-4 text-white" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-4">
-              <h3 className="text-lg font-semibold">Image Comparison</h3>
-              <span className="text-sm text-gray-400">Drag the slider to compare</span>
+              <h3 className="text-lg font-semibold">{t('incidents.imageComparison')}</h3>
+              <span className="text-sm text-gray-400">{t('incidents.dragSliderToCompare')}</span>
             </div>
             <button
               onClick={() => setCompareModalOpen(false)}
@@ -1634,7 +1646,7 @@ export const IncidentDetailPage: React.FC = () => {
 
           {/* Footer - View Mode Toggle */}
           <div className="flex items-center justify-center gap-4 p-4 text-white" onClick={(e) => e.stopPropagation()}>
-            <span className="text-sm text-gray-400">Slider position:</span>
+            <span className="text-sm text-gray-400">{t('incidents.sliderPosition')}</span>
             <input
               type="range"
               min="0"

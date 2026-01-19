@@ -97,8 +97,8 @@ export const IncidentLayout: React.FC = () => {
           </div>
           {!collapsed && (
             <div>
-              <h1 className="text-lg font-bold text-white tracking-tight">Incidents</h1>
-              <p className="text-[10px] text-slate-400 uppercase tracking-widest">Management</p>
+              <h1 className="text-lg font-bold text-white tracking-tight">{t('sidebar.incidents')}</h1>
+              <p className="text-[10px] text-slate-400 uppercase tracking-widest">{t('sidebar.management')}</p>
             </div>
           )}
         </div>
@@ -117,7 +117,7 @@ export const IncidentLayout: React.FC = () => {
         {/* Main Actions */}
         {!collapsed && (
           <p className="px-3 mb-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
-            Actions
+            {t('sidebar.actions')}
           </p>
         )}
         <div className="space-y-1">
@@ -139,7 +139,7 @@ export const IncidentLayout: React.FC = () => {
                   <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />
                 )}
                 <List size={20} className="flex-shrink-0" />
-                {!collapsed && <span className="ml-3 font-medium text-sm">All Incidents</span>}
+                {!collapsed && <span className="ml-3 font-medium text-sm">{t('sidebar.allIncidents')}</span>}
               </>
             )}
           </NavLink>
@@ -161,7 +161,7 @@ export const IncidentLayout: React.FC = () => {
                   <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />
                 )}
                 <Plus size={20} className="flex-shrink-0" />
-                {!collapsed && <span className="ml-3 font-medium text-sm">New Incident</span>}
+                {!collapsed && <span className="ml-3 font-medium text-sm">{t('sidebar.newIncident')}</span>}
               </>
             )}
           </NavLink>
@@ -175,7 +175,7 @@ export const IncidentLayout: React.FC = () => {
               <User size={20} className="flex-shrink-0" />
               {!collapsed && (
                 <>
-                  <span className="ml-3 font-medium text-sm flex-1 text-left">My Incidents</span>
+                  <span className="ml-3 font-medium text-sm flex-1 text-left">{t('sidebar.myIncidents')}</span>
                   <ChevronRight
                     size={16}
                     className={`transition-transform duration-200 ${myIncidentsOpen ? 'rotate-90' : ''}`}
@@ -197,7 +197,7 @@ export const IncidentLayout: React.FC = () => {
                   }
                 >
                   <UserCheck size={16} className="flex-shrink-0" />
-                  <span className="ml-2 font-medium text-sm">Assigned to me</span>
+                  <span className="ml-2 font-medium text-sm">{t('sidebar.assignedToMe')}</span>
                 </NavLink>
                 <NavLink
                   to="/incidents/my-created"
@@ -211,7 +211,7 @@ export const IncidentLayout: React.FC = () => {
                   }
                 >
                   <PenLine size={16} className="flex-shrink-0" />
-                  <span className="ml-2 font-medium text-sm">Created by me</span>
+                  <span className="ml-2 font-medium text-sm">{t('sidebar.createdByMe')}</span>
                 </NavLink>
               </div>
             )}
@@ -225,7 +225,7 @@ export const IncidentLayout: React.FC = () => {
               <>
                 <div className="my-6 border-t border-white/5" />
                 <p className="px-3 mb-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
-                  By Status
+                  {t('sidebar.byStatus')}
                 </p>
               </>
             )}
@@ -257,7 +257,7 @@ export const IncidentLayout: React.FC = () => {
           <>
             <div className="my-6 border-t border-white/5" />
             <p className="px-3 mb-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
-              Overview
+              {t('sidebar.overview')}
             </p>
             <div className="px-3 space-y-3">
               <NavLink
@@ -265,7 +265,7 @@ export const IncidentLayout: React.FC = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center justify-between text-sm hover:bg-white/5 rounded-lg px-2 py-1.5 -mx-2 transition-colors"
               >
-                <span className="text-slate-400">Total</span>
+                <span className="text-slate-400">{t('sidebar.total')}</span>
                 <span className="text-white font-semibold">{statsData.data.total || 0}</span>
               </NavLink>
               <NavLink
@@ -273,7 +273,7 @@ export const IncidentLayout: React.FC = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center justify-between text-sm hover:bg-white/5 rounded-lg px-2 py-1.5 -mx-2 transition-colors"
               >
-                <span className="text-slate-400">SLA Breached</span>
+                <span className="text-slate-400">{t('sidebar.slaBreached')}</span>
                 <span className="text-rose-400 font-semibold">{statsData.data.sla_breached || 0}</span>
               </NavLink>
             </div>
@@ -284,7 +284,7 @@ export const IncidentLayout: React.FC = () => {
           <>
             <div className="my-6 border-t border-white/5" />
             <p className="px-3 mb-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
-              Quick Links
+              {t('sidebar.quickLinks')}
             </p>
           </>
         )}
@@ -295,7 +295,7 @@ export const IncidentLayout: React.FC = () => {
           className={`group flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 text-slate-400 hover:text-white rounded-xl hover:bg-white/5 transition-colors`}
         >
           <Home size={20} />
-          {!collapsed && <span className="ml-3 font-medium text-sm">Back to Home</span>}
+          {!collapsed && <span className="ml-3 font-medium text-sm">{t('sidebar.backToHome')}</span>}
         </NavLink>
       </nav>
 
@@ -336,7 +336,7 @@ export const IncidentLayout: React.FC = () => {
               className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-slate-300 hover:text-rose-400 bg-slate-900/50 hover:bg-rose-500/10 rounded-lg transition-colors"
             >
               <LogOut size={16} />
-              Sign Out
+              {t('sidebar.signOut')}
             </button>
           </div>
         )}
@@ -392,11 +392,11 @@ export const IncidentLayout: React.FC = () => {
 
             {/* Breadcrumb / Title */}
             <div className="hidden sm:flex items-center gap-2 text-sm">
-              <span className="text-slate-400">Incidents</span>
+              <span className="text-slate-400">{t('sidebar.incidents')}</span>
               <span className="text-slate-300">/</span>
-              <span className="font-semibold text-slate-700">Management</span>
+              <span className="font-semibold text-slate-700">{t('sidebar.management')}</span>
             </div>
-            <h1 className="text-lg font-bold text-slate-800 sm:hidden">Incidents</h1>
+            <h1 className="text-lg font-bold text-slate-800 sm:hidden">{t('sidebar.incidents')}</h1>
           </div>
 
           <div className="flex items-center gap-3">
@@ -406,7 +406,7 @@ export const IncidentLayout: React.FC = () => {
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Search incidents..."
+                  placeholder={t('sidebar.searchIncidents')}
                   className="w-64 pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all placeholder:text-slate-400"
                 />
               </div>
@@ -483,7 +483,7 @@ export const IncidentLayout: React.FC = () => {
                   </p>
                   <p className="text-xs text-slate-400 leading-tight flex items-center gap-1">
                     {user?.is_super_admin && <Sparkles className="w-3 h-3 text-amber-500" />}
-                    {user?.is_super_admin ? 'Super Admin' : 'User'}
+                    {user?.is_super_admin ? t('profile.superAdmin') : t('sidebar.user')}
                   </p>
                 </div>
                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
@@ -507,7 +507,7 @@ export const IncidentLayout: React.FC = () => {
                         className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
                       >
                         <Home className="w-4 h-4" />
-                        Back to Home
+                        {t('sidebar.backToHome')}
                       </NavLink>
                     </div>
                     <div className="border-t border-slate-100 pt-2">
@@ -519,7 +519,7 @@ export const IncidentLayout: React.FC = () => {
                         className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 transition-colors"
                       >
                         <LogOut className="w-4 h-4" />
-                        Sign Out
+                        {t('sidebar.signOut')}
                       </button>
                     </div>
                   </div>
