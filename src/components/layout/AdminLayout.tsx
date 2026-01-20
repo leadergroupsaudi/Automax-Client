@@ -21,6 +21,7 @@ import {
   Mail,
   FileBarChart,
   Languages,
+  Database,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { authApi } from '../../api/auth';
@@ -59,6 +60,7 @@ const sidebarSectionsConfig: SidebarSection[] = [
   {
     titleKey: 'admin.system',
     items: [
+      { icon: Database, labelKey: 'lookups.title', path: '/admin/lookups' },
       { icon: FileBarChart, labelKey: 'admin.reports', path: '/admin/reports' },
       { icon: Mail, labelKey: 'admin.smtpSettings', path: '/admin/smtp-settings' },
     ],

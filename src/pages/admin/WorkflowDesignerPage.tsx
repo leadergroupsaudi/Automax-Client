@@ -22,7 +22,7 @@ import {
   Mail,
   ClipboardList,
 } from 'lucide-react';
-import { workflowApi, roleApi, classificationApi, locationApi, departmentApi, userApi } from '../../api/admin';
+import { workflowApi, roleApi, classificationApi, locationApi, departmentApi, userApi, lookupApi } from '../../api/admin';
 import type {
   WorkflowState,
   WorkflowTransition,
@@ -38,6 +38,7 @@ import type {
   User,
   IncidentSource,
   IncidentFormField,
+  LookupCategory,
 } from '../../types';
 import { INCIDENT_SOURCES, EMAIL_RECIPIENTS, type EmailRecipient, type TransitionEmailConfig } from '../../types';
 import { cn } from '@/lib/utils';
@@ -156,12 +157,10 @@ export const WorkflowDesignerPage: React.FC = () => {
   // Required fields configuration
   const [requiredFields, setRequiredFields] = useState<IncidentFormField[]>([]);
 
-  // Available form fields that can be made required
-  const availableFormFields: { field: IncidentFormField; label: string; description: string }[] = [
+  // Base form fields that can be made required
+  const baseFormFields: { field: IncidentFormField; label: string; description: string }[] = [
     { field: 'description', label: 'Description', description: 'Detailed incident description' },
     { field: 'classification_id', label: 'Classification', description: 'Incident category/type' },
-    { field: 'priority', label: 'Priority', description: 'Urgency level' },
-    { field: 'severity', label: 'Severity', description: 'Impact level' },
     { field: 'source', label: 'Source', description: 'Where the incident originated' },
     { field: 'assignee_id', label: 'Assignee', description: 'User assigned to handle' },
     { field: 'department_id', label: 'Department', description: 'Responsible department' },
@@ -214,6 +213,11 @@ export const WorkflowDesignerPage: React.FC = () => {
     queryFn: () => userApi.list(1, 1000), // Get all users
   });
 
+  const { data: lookupCategoriesData } = useQuery({
+    queryKey: ['admin', 'lookups', 'categories'],
+    queryFn: () => lookupApi.listCategories(),
+  });
+
   const workflow = workflowData?.data;
   const classifications: Classification[] = classificationsData?.data || [];
   const locations: Location[] = locationsData?.data || [];
@@ -222,6 +226,26 @@ export const WorkflowDesignerPage: React.FC = () => {
   const states = statesData?.data || [];
   const transitions = transitionsData?.data || [];
   const roles = rolesData?.data || [];
+  const lookupCategories: LookupCategory[] = (lookupCategoriesData?.data || []).filter(
+    (cat) => cat.add_to_incident_form
+  );
+
+  // Get Priority and Severity categories for matching rules
+  const allLookupCategories: LookupCategory[] = lookupCategoriesData?.data || [];
+  const priorityCategory = allLookupCategories.find(c => c.code === 'PRIORITY');
+  const severityCategory = allLookupCategories.find(c => c.code === 'SEVERITY');
+  const priorityValues = (priorityCategory?.values || []).sort((a, b) => a.sort_order - b.sort_order);
+  const severityValues = (severityCategory?.values || []).sort((a, b) => a.sort_order - b.sort_order);
+
+  // Available form fields including dynamic lookup categories
+  const availableFormFields = React.useMemo(() => {
+    const lookupFields = lookupCategories.map((cat) => ({
+      field: `lookup:${cat.code}` as IncidentFormField,
+      label: cat.name,
+      description: cat.description || `${cat.name} lookup value`,
+    }));
+    return [...baseFormFields, ...lookupFields];
+  }, [lookupCategories]);
 
   // Initialize matching config and required fields from workflow data
   useEffect(() => {
@@ -1085,47 +1109,87 @@ export const WorkflowDesignerPage: React.FC = () => {
                   </p>
                   <div className="space-y-4">
                     <div>
-                      <label className="text-xs font-medium text-[hsl(var(--muted-foreground))]">Severity Range (1=Critical, 5=Cosmetic)</label>
+                      <label className="text-xs font-medium text-[hsl(var(--muted-foreground))]">Severity Range</label>
                       <div className="flex items-center gap-2 mt-1">
-                        <input
-                          type="number"
-                          min={1}
-                          max={5}
+                        <select
                           value={matchingConfig.severity_min}
                           onChange={(e) => setMatchingConfig(prev => ({ ...prev, severity_min: parseInt(e.target.value) || 1 }))}
-                          className="w-20 px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm"
-                        />
+                          className="flex-1 px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm"
+                        >
+                          {severityValues.map(v => (
+                            <option key={v.id} value={v.sort_order}>{v.name}</option>
+                          ))}
+                          {severityValues.length === 0 && (
+                            <>
+                              <option value={1}>1 - Critical</option>
+                              <option value={2}>2 - Major</option>
+                              <option value={3}>3 - Moderate</option>
+                              <option value={4}>4 - Minor</option>
+                              <option value={5}>5 - Cosmetic</option>
+                            </>
+                          )}
+                        </select>
                         <span className="text-[hsl(var(--muted-foreground))]">to</span>
-                        <input
-                          type="number"
-                          min={1}
-                          max={5}
+                        <select
                           value={matchingConfig.severity_max}
                           onChange={(e) => setMatchingConfig(prev => ({ ...prev, severity_max: parseInt(e.target.value) || 5 }))}
-                          className="w-20 px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm"
-                        />
+                          className="flex-1 px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm"
+                        >
+                          {severityValues.map(v => (
+                            <option key={v.id} value={v.sort_order}>{v.name}</option>
+                          ))}
+                          {severityValues.length === 0 && (
+                            <>
+                              <option value={1}>1 - Critical</option>
+                              <option value={2}>2 - Major</option>
+                              <option value={3}>3 - Moderate</option>
+                              <option value={4}>4 - Minor</option>
+                              <option value={5}>5 - Cosmetic</option>
+                            </>
+                          )}
+                        </select>
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-[hsl(var(--muted-foreground))]">Priority Range (1=Critical, 5=Very Low)</label>
+                      <label className="text-xs font-medium text-[hsl(var(--muted-foreground))]">Priority Range</label>
                       <div className="flex items-center gap-2 mt-1">
-                        <input
-                          type="number"
-                          min={1}
-                          max={5}
+                        <select
                           value={matchingConfig.priority_min}
                           onChange={(e) => setMatchingConfig(prev => ({ ...prev, priority_min: parseInt(e.target.value) || 1 }))}
-                          className="w-20 px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm"
-                        />
+                          className="flex-1 px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm"
+                        >
+                          {priorityValues.map(v => (
+                            <option key={v.id} value={v.sort_order}>{v.name}</option>
+                          ))}
+                          {priorityValues.length === 0 && (
+                            <>
+                              <option value={1}>1 - Critical</option>
+                              <option value={2}>2 - High</option>
+                              <option value={3}>3 - Medium</option>
+                              <option value={4}>4 - Low</option>
+                              <option value={5}>5 - Very Low</option>
+                            </>
+                          )}
+                        </select>
                         <span className="text-[hsl(var(--muted-foreground))]">to</span>
-                        <input
-                          type="number"
-                          min={1}
-                          max={5}
+                        <select
                           value={matchingConfig.priority_max}
                           onChange={(e) => setMatchingConfig(prev => ({ ...prev, priority_max: parseInt(e.target.value) || 5 }))}
-                          className="w-20 px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm"
-                        />
+                          className="flex-1 px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm"
+                        >
+                          {priorityValues.map(v => (
+                            <option key={v.id} value={v.sort_order}>{v.name}</option>
+                          ))}
+                          {priorityValues.length === 0 && (
+                            <>
+                              <option value={1}>1 - Critical</option>
+                              <option value={2}>2 - High</option>
+                              <option value={3}>3 - Medium</option>
+                              <option value={4}>4 - Low</option>
+                              <option value={5}>5 - Very Low</option>
+                            </>
+                          )}
+                        </select>
                       </div>
                     </div>
                   </div>

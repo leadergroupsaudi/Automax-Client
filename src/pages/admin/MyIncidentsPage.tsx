@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Search,
   ChevronLeft,
@@ -23,20 +24,13 @@ import { incidentApi } from '../../api/admin';
 import type { Incident } from '../../types';
 import { cn } from '@/lib/utils';
 
-const priorityLabels: Record<number, { label: string; color: string }> = {
-  1: { label: 'Critical', color: 'bg-red-500' },
-  2: { label: 'High', color: 'bg-orange-500' },
-  3: { label: 'Medium', color: 'bg-yellow-500' },
-  4: { label: 'Low', color: 'bg-green-500' },
-  5: { label: 'Minimal', color: 'bg-gray-400' },
-};
-
 interface MyIncidentsPageProps {
   type: 'assigned' | 'created';
 }
 
 export const MyIncidentsPage: React.FC<MyIncidentsPageProps> = ({ type }) => {
   const navigate = useNavigate();
+  const { i18n } = useTranslation();
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
@@ -66,6 +60,15 @@ export const MyIncidentsPage: React.FC<MyIncidentsPageProps> = ({ type }) => {
         incident.incident_number.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : incidents;
+
+  const getLookupValue = (incident: Incident, categoryCode: string) => {
+    return incident.lookup_values?.find(lv => lv.category?.code === categoryCode);
+  };
+
+  const getLookupLabel = (value: any) => {
+    if (!value) return null;
+    return i18n.language === 'ar' && value.name_ar ? value.name_ar : value.name;
+  };
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-';
@@ -266,7 +269,9 @@ export const MyIncidentsPage: React.FC<MyIncidentsPageProps> = ({ type }) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[hsl(var(--border))]">
-                  {filteredIncidents.map((incident: Incident) => (
+                  {filteredIncidents.map((incident: Incident) => {
+                    const priority = getLookupValue(incident, 'PRIORITY');
+                    return (
                     <tr
                       key={incident.id}
                       className="hover:bg-[hsl(var(--muted)/0.5)] transition-colors cursor-pointer"
@@ -298,12 +303,12 @@ export const MyIncidentsPage: React.FC<MyIncidentsPageProps> = ({ type }) => {
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={cn(
-                          "inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium text-white",
-                          priorityLabels[incident.priority]?.color || 'bg-gray-400'
-                        )}>
-                          {priorityLabels[incident.priority]?.label || `P${incident.priority}`}
-                        </span>
+                          {priority ? (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium text-white"
+                                  style={{ backgroundColor: priority.color || 'bg-gray-400' }}>
+                              {getLookupLabel(priority)}
+                            </span>
+                          ) : <span className="text-sm text-[hsl(var(--muted-foreground))]">-</span>}
                       </td>
                       <td className="px-6 py-4">
                         {isAssigned ? (
@@ -376,7 +381,7 @@ export const MyIncidentsPage: React.FC<MyIncidentsPageProps> = ({ type }) => {
                         </Button>
                       </td>
                     </tr>
-                  ))}
+                  )})}
                 </tbody>
               </table>
             </div>

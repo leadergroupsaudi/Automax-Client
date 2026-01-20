@@ -26,6 +26,7 @@ import {
   SMTPSettingsPage,
   ReportBuilderPage,
   ReportTemplatesPage,
+  LookupsPage,
 } from './pages';
 
 const queryClient = new QueryClient({
@@ -74,6 +75,7 @@ function App() {
               <Route path="/admin/reports" element={<ReportTemplatesPage />} />
               <Route path="/admin/reports/builder" element={<ReportBuilderPage />} />
               <Route path="/admin/reports/builder/:templateId" element={<ReportBuilderPage />} />
+              <Route path="/admin/lookups" element={<LookupsPage />} />
             </Route>
           </Route>
 

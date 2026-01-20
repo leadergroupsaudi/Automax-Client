@@ -67,6 +67,12 @@ import type {
   ReportTemplateShareRequest,
   UserMatchRequest,
   UserMatchResponse,
+  LookupCategory,
+  LookupValue,
+  LookupCategoryCreateRequest,
+  LookupCategoryUpdateRequest,
+  LookupValueCreateRequest,
+  LookupValueUpdateRequest,
 } from '../types';
 
 // User Management
@@ -876,6 +882,67 @@ export const reportApi = {
       `/admin/reports/templates/${id}/unshare`,
       { user_ids: userIds }
     );
+    return response.data;
+  },
+};
+
+// Lookup API
+export const lookupApi = {
+  // Categories
+  listCategories: async (): Promise<ApiResponse<LookupCategory[]>> => {
+    const response = await apiClient.get<ApiResponse<LookupCategory[]>>('/admin/lookups/categories');
+    return response.data;
+  },
+
+  getCategory: async (id: string): Promise<ApiResponse<LookupCategory>> => {
+    const response = await apiClient.get<ApiResponse<LookupCategory>>(`/admin/lookups/categories/${id}`);
+    return response.data;
+  },
+
+  createCategory: async (data: LookupCategoryCreateRequest): Promise<ApiResponse<LookupCategory>> => {
+    const response = await apiClient.post<ApiResponse<LookupCategory>>('/admin/lookups/categories', data);
+    return response.data;
+  },
+
+  updateCategory: async (id: string, data: LookupCategoryUpdateRequest): Promise<ApiResponse<LookupCategory>> => {
+    const response = await apiClient.put<ApiResponse<LookupCategory>>(`/admin/lookups/categories/${id}`, data);
+    return response.data;
+  },
+
+  deleteCategory: async (id: string): Promise<ApiResponse<null>> => {
+    const response = await apiClient.delete<ApiResponse<null>>(`/admin/lookups/categories/${id}`);
+    return response.data;
+  },
+
+  // Values
+  listValues: async (categoryId: string): Promise<ApiResponse<LookupValue[]>> => {
+    const response = await apiClient.get<ApiResponse<LookupValue[]>>(`/admin/lookups/categories/${categoryId}/values`);
+    return response.data;
+  },
+
+  getValue: async (id: string): Promise<ApiResponse<LookupValue>> => {
+    const response = await apiClient.get<ApiResponse<LookupValue>>(`/admin/lookups/values/${id}`);
+    return response.data;
+  },
+
+  createValue: async (categoryId: string, data: LookupValueCreateRequest): Promise<ApiResponse<LookupValue>> => {
+    const response = await apiClient.post<ApiResponse<LookupValue>>(`/admin/lookups/categories/${categoryId}/values`, data);
+    return response.data;
+  },
+
+  updateValue: async (id: string, data: LookupValueUpdateRequest): Promise<ApiResponse<LookupValue>> => {
+    const response = await apiClient.put<ApiResponse<LookupValue>>(`/admin/lookups/values/${id}`, data);
+    return response.data;
+  },
+
+  deleteValue: async (id: string): Promise<ApiResponse<null>> => {
+    const response = await apiClient.delete<ApiResponse<null>>(`/admin/lookups/values/${id}`);
+    return response.data;
+  },
+
+  // Public - get values by category code (for dropdowns)
+  getValuesByCode: async (code: string): Promise<ApiResponse<LookupValue[]>> => {
+    const response = await apiClient.get<ApiResponse<LookupValue[]>>(`/lookups/${code}`);
     return response.data;
   },
 };

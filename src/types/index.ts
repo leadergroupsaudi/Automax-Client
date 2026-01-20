@@ -101,6 +101,78 @@ export interface ApiResponse<T> {
   error?: string;
 }
 
+// Lookup types
+export interface LookupCategory {
+  id: string;
+  code: string;
+  name: string;
+  name_ar?: string;
+  description?: string;
+  is_system: boolean;
+  is_active: boolean;
+  add_to_incident_form?: boolean;
+  values_count: number;
+  values?: LookupValue[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LookupValue {
+  id: string;
+  category_id: string;
+  category?: LookupCategory;
+  code: string;
+  name: string;
+  name_ar?: string;
+  description?: string;
+  sort_order: number;
+  color?: string;
+  is_default: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LookupCategoryCreateRequest {
+  code: string;
+  name: string;
+  name_ar?: string;
+  description?: string;
+  is_active?: boolean;
+  add_to_incident_form?: boolean;
+}
+
+export interface LookupCategoryUpdateRequest {
+  code?: string;
+  name?: string;
+  name_ar?: string;
+  description?: string;
+  is_active?: boolean;
+  add_to_incident_form?: boolean;
+}
+
+export interface LookupValueCreateRequest {
+  code: string;
+  name: string;
+  name_ar?: string;
+  description?: string;
+  sort_order?: number;
+  color?: string;
+  is_default?: boolean;
+  is_active?: boolean;
+}
+
+export interface LookupValueUpdateRequest {
+  code?: string;
+  name?: string;
+  name_ar?: string;
+  description?: string;
+  sort_order?: number;
+  color?: string;
+  is_default?: boolean;
+  is_active?: boolean;
+}
+
 export interface PaginatedResponse<T> {
   success: boolean;
   data: T[];
@@ -384,6 +456,7 @@ export interface WorkflowMatchConfig {
 }
 
 // Incident form field names that can be made required
+// Includes standard fields and lookup category codes (e.g., 'lookup:PRIORITY', 'lookup:NATIONALITY')
 export type IncidentFormField =
   | 'description'
   | 'classification_id'
@@ -395,7 +468,8 @@ export type IncidentFormField =
   | 'location_id'
   | 'due_date'
   | 'reporter_name'
-  | 'reporter_email';
+  | 'reporter_email'
+  | `lookup:${string}`; // Dynamic lookup category required fields
 
 // Workflow types
 export interface Workflow {
@@ -623,8 +697,7 @@ export interface Incident {
   classification?: Classification;
   workflow?: Workflow;
   current_state?: WorkflowState;
-  priority: number;
-  severity: number;
+  lookup_values?: LookupValue[];
   source?: IncidentSource;
   assignee?: User;
   assignees?: User[];
@@ -754,8 +827,6 @@ export interface IncidentStats {
   resolved: number;
   closed: number;
   sla_breached: number;
-  by_priority: Record<number, number>;
-  by_severity: Record<number, number>;
   by_state: Record<string, number>;
   by_state_details?: StateStatDetail[];
 }
@@ -766,8 +837,6 @@ export interface IncidentCreateRequest {
   description?: string;
   classification_id?: string;
   workflow_id?: string;  // Now optional - can be auto-matched
-  priority?: number;
-  severity?: number;
   source?: IncidentSource;
   assignee_id?: string;
   department_id?: string;
@@ -778,14 +847,13 @@ export interface IncidentCreateRequest {
   reporter_email?: string;
   reporter_name?: string;
   custom_fields?: string;
+  lookup_value_ids?: string[];
 }
 
 export interface IncidentUpdateRequest {
   title?: string;
   description?: string;
   classification_id?: string;
-  priority?: number;
-  severity?: number;
   assignee_id?: string;
   department_id?: string;
   location_id?: string;
@@ -793,6 +861,7 @@ export interface IncidentUpdateRequest {
   longitude?: number;
   due_date?: string;
   custom_fields?: string;
+  lookup_value_ids?: string[];
 }
 
 export interface IncidentTransitionRequest {

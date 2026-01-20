@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -41,27 +41,12 @@ import type {
   User as UserType,
   DepartmentMatchResponse,
   UserMatchResponse,
+  LookupValue,
 } from '../../types';
 import { cn } from '@/lib/utils';
 
-const priorityLabels: Record<number, { label: string; color: string; bgColor: string }> = {
-  1: { label: 'Critical', color: 'text-red-700', bgColor: 'bg-red-100' },
-  2: { label: 'High', color: 'text-orange-700', bgColor: 'bg-orange-100' },
-  3: { label: 'Medium', color: 'text-yellow-700', bgColor: 'bg-yellow-100' },
-  4: { label: 'Low', color: 'text-green-700', bgColor: 'bg-green-100' },
-  5: { label: 'Minimal', color: 'text-gray-700', bgColor: 'bg-gray-100' },
-};
-
-const severityLabels: Record<number, { label: string; color: string; bgColor: string }> = {
-  1: { label: 'Critical', color: 'text-red-700', bgColor: 'bg-red-100' },
-  2: { label: 'Major', color: 'text-orange-700', bgColor: 'bg-orange-100' },
-  3: { label: 'Moderate', color: 'text-yellow-700', bgColor: 'bg-yellow-100' },
-  4: { label: 'Minor', color: 'text-blue-700', bgColor: 'bg-blue-100' },
-  5: { label: 'Trivial', color: 'text-gray-700', bgColor: 'bg-gray-100' },
-};
-
 export const IncidentDetailPage: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -131,6 +116,18 @@ export const IncidentDetailPage: React.FC = () => {
   });
 
   const incident = incidentData?.data as IncidentDetail | undefined;
+
+  const groupedLookupValues = useMemo(() => {
+    if (!incident?.lookup_values) return {};
+    return incident.lookup_values.reduce((acc, value) => {
+      const categoryName = value.category?.name || 'Other';
+      if (!acc[categoryName]) {
+        acc[categoryName] = [];
+      }
+      acc[categoryName].push(value);
+      return acc;
+    }, {} as Record<string, LookupValue[]>);
+  }, [incident?.lookup_values]);
 
   // Fetch full workflow with states and transitions for visualization
   const { data: fullWorkflowData } = useQuery({
@@ -962,48 +959,6 @@ export const IncidentDetailPage: React.FC = () => {
           <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-6 shadow-sm">
             <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">{t('incidents.details')}</h3>
             <div className="space-y-4">
-              {/* Priority */}
-              <div>
-                <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                  {t('incidents.priority')}
-                </label>
-                <div className="mt-1">
-                  <span className={cn(
-                    "inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium",
-                    priorityLabels[incident.priority]?.bgColor || 'bg-gray-100',
-                    priorityLabels[incident.priority]?.color || 'text-gray-700'
-                  )}>
-                    {incident.priority === 1 ? t('priorities.critical') :
-                     incident.priority === 2 ? t('priorities.high') :
-                     incident.priority === 3 ? t('priorities.medium') :
-                     incident.priority === 4 ? t('priorities.low') :
-                     incident.priority === 5 ? t('priorities.veryLow') :
-                     `${t('incidents.priority')} ${incident.priority}`}
-                  </span>
-                </div>
-              </div>
-
-              {/* Severity */}
-              <div>
-                <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                  {t('incidents.severity')}
-                </label>
-                <div className="mt-1">
-                  <span className={cn(
-                    "inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium",
-                    severityLabels[incident.severity]?.bgColor || 'bg-gray-100',
-                    severityLabels[incident.severity]?.color || 'text-gray-700'
-                  )}>
-                    {incident.severity === 1 ? t('severities.critical') :
-                     incident.severity === 2 ? t('severities.major') :
-                     incident.severity === 3 ? t('severities.moderate') :
-                     incident.severity === 4 ? t('severities.minor') :
-                     incident.severity === 5 ? t('severities.cosmetic') :
-                     `${t('incidents.severity')} ${incident.severity}`}
-                  </span>
-                </div>
-              </div>
-
               {/* Classification */}
               <div>
                 <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
@@ -1014,6 +969,29 @@ export const IncidentDetailPage: React.FC = () => {
                   {incident.classification?.name || t('incidents.unclassified')}
                 </div>
               </div>
+
+              {/* Dynamic Lookups */}
+              {Object.entries(groupedLookupValues).map(([category, values]) => (
+                <div key={category}>
+                  <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                    {i18n.language === 'ar' ? (values[0]?.category?.name_ar || category) : category}
+                  </label>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {(values as LookupValue[]).map(value => (
+                      <span
+                        key={value.id}
+                        className="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium"
+                        style={{
+                          backgroundColor: value.color ? `${value.color}20` : 'hsl(var(--muted))',
+                          color: value.color || 'hsl(var(--foreground))',
+                        }}
+                      >
+                        {i18n.language === 'ar' && value.name_ar ? value.name_ar : value.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
 
               {/* Assignees */}
               <div>

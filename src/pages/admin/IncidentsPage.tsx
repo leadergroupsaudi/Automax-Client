@@ -26,22 +26,6 @@ import { incidentApi, workflowApi, userApi, departmentApi, classificationApi, lo
 import type { Incident, IncidentFilter, Workflow, User as UserType, Department, WorkflowState, Classification, Location } from '../../types';
 import { cn } from '@/lib/utils';
 
-const priorityLabels: Record<number, { label: string; color: string }> = {
-  1: { label: 'Critical', color: 'bg-red-500' },
-  2: { label: 'High', color: 'bg-orange-500' },
-  3: { label: 'Medium', color: 'bg-yellow-500' },
-  4: { label: 'Low', color: 'bg-green-500' },
-  5: { label: 'Minimal', color: 'bg-gray-400' },
-};
-
-const severityLabels: Record<number, { label: string; color: string }> = {
-  1: { label: 'Critical', color: 'bg-red-600' },
-  2: { label: 'Major', color: 'bg-orange-600' },
-  3: { label: 'Moderate', color: 'bg-yellow-600' },
-  4: { label: 'Minor', color: 'bg-blue-500' },
-  5: { label: 'Trivial', color: 'bg-gray-400' },
-};
-
 // Column configuration
 interface ColumnConfig {
   id: string;
@@ -83,7 +67,7 @@ const loadColumnsFromStorage = (): ColumnConfig[] => {
 };
 
 export const IncidentsPage: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [filter, setFilter] = useState<IncidentFilter>({
@@ -252,12 +236,19 @@ export const IncidentsPage: React.FC = () => {
     filter.current_state_id ||
     filter.classification_id ||
     filter.location_id ||
-    filter.priority ||
-    filter.severity ||
     filter.assignee_id ||
     filter.department_id ||
     filter.sla_breached !== undefined
   );
+
+  const getLookupValue = (incident: Incident, categoryCode: string) => {
+    return incident.lookup_values?.find(lv => lv.category?.code === categoryCode);
+  };
+
+  const getLookupLabel = (value: any) => {
+    if (!value) return null;
+    return i18n.language === 'ar' && value.name_ar ? value.name_ar : value.name;
+  };
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-';
@@ -527,32 +518,6 @@ export const IncidentsPage: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">Priority</label>
-              <select
-                value={filter.priority || ''}
-                onChange={(e) => handleFilterChange('priority', e.target.value ? Number(e.target.value) : undefined)}
-                className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
-              >
-                <option value="">All Priorities</option>
-                {Object.entries(priorityLabels).map(([value, { label }]) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">Severity</label>
-              <select
-                value={filter.severity || ''}
-                onChange={(e) => handleFilterChange('severity', e.target.value ? Number(e.target.value) : undefined)}
-                className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
-              >
-                <option value="">All Severities</option>
-                {Object.entries(severityLabels).map(([value, { label }]) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
               <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">Assignee</label>
               <select
                 value={filter.assignee_id || ''}
@@ -727,7 +692,10 @@ export const IncidentsPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[hsl(var(--border))]">
-                  {incidents.map((incident: Incident) => (
+                  {incidents.map((incident: Incident) => {
+                    const priority = getLookupValue(incident, 'PRIORITY');
+                    const severity = getLookupValue(incident, 'SEVERITY');
+                    return (
                     <tr
                       key={incident.id}
                       className="hover:bg-[hsl(var(--muted)/0.5)] transition-colors cursor-pointer"
@@ -764,22 +732,22 @@ export const IncidentsPage: React.FC = () => {
                       )}
                       {isColumnVisible('priority') && (
                         <td className="px-6 py-4">
-                          <span className={cn(
-                            "inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium text-white",
-                            priorityLabels[incident.priority]?.color || 'bg-gray-400'
-                          )}>
-                            {priorityLabels[incident.priority]?.label || `P${incident.priority}`}
-                          </span>
+                          {priority ? (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium text-white"
+                                  style={{ backgroundColor: priority.color || 'bg-gray-400' }}>
+                              {getLookupLabel(priority)}
+                            </span>
+                          ) : <span className="text-sm text-[hsl(var(--muted-foreground))]">-</span>}
                         </td>
                       )}
                       {isColumnVisible('severity') && (
                         <td className="px-6 py-4">
-                          <span className={cn(
-                            "inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium text-white",
-                            severityLabels[incident.severity]?.color || 'bg-gray-400'
-                          )}>
-                            {severityLabels[incident.severity]?.label || `S${incident.severity}`}
-                          </span>
+                          {severity ? (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium text-white"
+                                  style={{ backgroundColor: severity.color || 'bg-gray-400' }}>
+                              {getLookupLabel(severity)}
+                            </span>
+                          ) : <span className="text-sm text-[hsl(var(--muted-foreground))]">-</span>}
                         </td>
                       )}
                       {isColumnVisible('assignee') && (
@@ -870,7 +838,7 @@ export const IncidentsPage: React.FC = () => {
                         </td>
                       )}
                     </tr>
-                  ))}
+                  )})}
                 </tbody>
               </table>
             </div>
