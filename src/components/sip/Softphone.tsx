@@ -153,11 +153,24 @@ export default function SoftPhone({
       cleanup();
     };
 
+    const remoteStreamHandler = (e: Event) => {
+      const ce = e as CustomEvent<MediaStream>;
+      const stream = ce.detail;
+
+      if (remoteAudioRef.current && stream) {
+        remoteAudioRef.current.srcObject = stream;
+        remoteAudioRef.current.play().catch(() => {
+          // Autoplay may be blocked
+        });
+      }
+    };
+
     window.addEventListener("incoming-call", incomingHandler as EventListener);
     window.addEventListener("sip-registered", registeredHandler);
     window.addEventListener("sip-registration-failed", failedHandler);
     window.addEventListener("call-connected", callConnectedHandler);
     window.addEventListener("call-ended", callEndedHandler);
+    window.addEventListener("remote-stream", remoteStreamHandler as EventListener);
 
     return () => {
       window.removeEventListener("incoming-call", incomingHandler as EventListener);
@@ -165,6 +178,7 @@ export default function SoftPhone({
       window.removeEventListener("sip-registration-failed", failedHandler);
       window.removeEventListener("call-connected", callConnectedHandler);
       window.removeEventListener("call-ended", callEndedHandler);
+      window.removeEventListener("remote-stream", remoteStreamHandler as EventListener);
     };
   }, []);
 
@@ -227,8 +241,15 @@ export default function SoftPhone({
     setActiveCall(null);
     setCallDuration(0);
     setIsMuted(false);
+    setIsSpeakerOn(true);
     stopRingtone();
     stopTimer();
+
+    // Reset audio element
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = null;
+      remoteAudioRef.current.volume = 1;
+    }
   };
 
   /* ---------------- DIALPAD ---------------- */
@@ -247,12 +268,18 @@ export default function SoftPhone({
   /* ---------------- AUDIO CONTROLS ---------------- */
 
   const toggleMute = (): void => {
+    sipService.toggleMute();
     setIsMuted((prev) => !prev);
-    // sipService.toggleMute(!isMuted);
   };
 
   const toggleSpeaker = (): void => {
-    setIsSpeakerOn((prev) => !prev);
+    const newSpeakerState = !isSpeakerOn;
+    setIsSpeakerOn(newSpeakerState);
+
+    // Control remote audio volume
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.volume = newSpeakerState ? 1 : 0;
+    }
   };
 
   /* ---------------- AUDIO ---------------- */

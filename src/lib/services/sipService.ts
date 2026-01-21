@@ -21,6 +21,7 @@ type SipEventName =
   | "remote-stream"
   | "local-stream"
   | "call-connected"
+  | "call-ended"
   | "permissions-blocked"
   | "permissions-missing"
   | "myStatusChange";
@@ -186,7 +187,11 @@ const sipService = {
 
 function cleanup(): void {
   session = null;
-  localStream = null;
+  if (localStream) {
+    localStream.getTracks().forEach(track => track.stop());
+    localStream = null;
+  }
+  dispatch("call-ended");
 }
 
 /* -------------------- Optional API -------------------- */
