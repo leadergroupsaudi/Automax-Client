@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Check, Search, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ReportFieldDefinition } from '../../types';
@@ -15,6 +16,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   selectedColumns,
   onChange,
 }) => {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
@@ -85,13 +87,13 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
       {/* Search and actions */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+          <Search className="absolute ltr:left-3 rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search columns..."
-            className="w-full pl-9 pr-4 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)]"
+            placeholder={t('reports.columnSelector.searchColumns')}
+            className="w-full ltr:pl-9 ltr:pr-4 rtl:pr-9 rtl:pl-4 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)]"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -100,28 +102,28 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
             onClick={selectAll}
             className="px-3 py-2 text-xs font-medium text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors"
           >
-            All
+            {t('reports.columnSelector.all')}
           </button>
           <button
             type="button"
             onClick={selectNone}
             className="px-3 py-2 text-xs font-medium text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] rounded-lg transition-colors"
           >
-            None
+            {t('reports.columnSelector.none')}
           </button>
           <button
             type="button"
             onClick={selectDefaults}
             className="px-3 py-2 text-xs font-medium text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] rounded-lg transition-colors"
           >
-            Defaults
+            {t('reports.columnSelector.defaults')}
           </button>
         </div>
       </div>
 
       {/* Selected count */}
       <div className="text-xs text-[hsl(var(--muted-foreground))]">
-        {selectedColumns.length} of {fields.length} columns selected
+        {selectedColumns.length} {t('reports.columnSelector.columnsSelected', { total: fields.length })}
       </div>
 
       {/* Column list grouped by category */}

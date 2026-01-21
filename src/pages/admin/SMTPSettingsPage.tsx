@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Mail,
@@ -54,6 +55,7 @@ const commonPorts = [
 ];
 
 export const SMTPSettingsPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [showPassword, setShowPassword] = useState(false);
@@ -119,9 +121,9 @@ export const SMTPSettingsPage: React.FC = () => {
     mutationFn: (toEmail: string) => smtpApi.test({ to_email: toEmail }),
     onSuccess: (response) => {
       if (response.data?.success) {
-        setErrors({ testSuccess: 'Test email sent successfully!' });
+        setErrors({ testSuccess: t('smtp.testEmailSuccess') });
       } else {
-        setErrors({ test: response.data?.message || 'Test failed' });
+        setErrors({ test: response.data?.message || t('smtp.testFailed') });
       }
     },
     onError: (error: Error) => {
@@ -134,9 +136,9 @@ export const SMTPSettingsPage: React.FC = () => {
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'smtp'] });
       if (response.data?.success) {
-        setErrors({ verifySuccess: 'Connection verified successfully!' });
+        setErrors({ verifySuccess: t('smtp.connectionVerified') });
       } else {
-        setErrors({ verify: response.data?.message || 'Verification failed' });
+        setErrors({ verify: response.data?.message || t('smtp.verificationFailed') });
       }
     },
     onError: (error: Error) => {
@@ -155,24 +157,24 @@ export const SMTPSettingsPage: React.FC = () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.host.trim()) {
-      newErrors.host = 'SMTP host is required';
+      newErrors.host = t('smtp.hostRequired');
     }
     if (!formData.port || formData.port < 1 || formData.port > 65535) {
-      newErrors.port = 'Valid port number is required (1-65535)';
+      newErrors.port = t('smtp.portRequired');
     }
     if (!formData.username.trim()) {
-      newErrors.username = 'Username is required';
+      newErrors.username = t('smtp.usernameRequired');
     }
     if (!hasExistingConfig && !formData.password.trim()) {
-      newErrors.password = 'Password is required';
+      newErrors.password = t('smtp.passwordRequired');
     }
     if (!formData.from_email.trim()) {
-      newErrors.from_email = 'From email is required';
+      newErrors.from_email = t('smtp.fromEmailRequired');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.from_email)) {
-      newErrors.from_email = 'Invalid email format';
+      newErrors.from_email = t('smtp.invalidEmailFormat');
     }
     if (!formData.from_name.trim()) {
-      newErrors.from_name = 'From name is required';
+      newErrors.from_name = t('smtp.fromNameRequired');
     }
 
     setErrors(newErrors);
@@ -205,11 +207,11 @@ export const SMTPSettingsPage: React.FC = () => {
   const handleTest = (e: React.FormEvent) => {
     e.preventDefault();
     if (!testEmail.trim()) {
-      setErrors({ test: 'Please enter a test email address' });
+      setErrors({ test: t('smtp.enterTestEmail') });
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmail)) {
-      setErrors({ test: 'Invalid email format' });
+      setErrors({ test: t('smtp.invalidEmailFormat') });
       return;
     }
     setErrors({});
@@ -235,10 +237,10 @@ export const SMTPSettingsPage: React.FC = () => {
             <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500">
               <Mail className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">SMTP Settings</h1>
+            <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">{t('smtp.title')}</h1>
           </div>
-          <p className="text-[hsl(var(--muted-foreground))] mt-1 ml-12">
-            Configure email server settings for sending notifications
+          <p className="text-[hsl(var(--muted-foreground))] mt-1 ltr:ml-12 rtl:mr-12">
+            {t('smtp.subtitle')}
           </p>
         </div>
         {hasExistingConfig && (
@@ -252,12 +254,12 @@ export const SMTPSettingsPage: React.FC = () => {
               {smtpConfig?.is_verified ? (
                 <>
                   <CheckCircle2 className="w-4 h-4" />
-                  Verified
+                  {t('smtp.verified')}
                 </>
               ) : (
                 <>
                   <AlertTriangle className="w-4 h-4" />
-                  Not Verified
+                  {t('smtp.notVerified')}
                 </>
               )}
             </div>
@@ -268,7 +270,7 @@ export const SMTPSettingsPage: React.FC = () => {
               isLoading={verifyMutation.isPending}
               leftIcon={!verifyMutation.isPending ? <RefreshCw className="w-4 h-4" /> : undefined}
             >
-              Verify Connection
+              {t('smtp.verifyConnection')}
             </Button>
           </div>
         )}
@@ -300,9 +302,9 @@ export const SMTPSettingsPage: React.FC = () => {
           <form onSubmit={handleSubmit}>
             <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] overflow-hidden">
               <div className="px-6 py-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
-                <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">Server Configuration</h2>
+                <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">{t('smtp.serverConfiguration')}</h2>
                 <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                  Enter your SMTP server details
+                  {t('smtp.enterServerDetails')}
                 </p>
               </div>
 
@@ -311,14 +313,14 @@ export const SMTPSettingsPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">
-                      <Server className="w-4 h-4 inline mr-1" />
-                      SMTP Host
+                      <Server className="w-4 h-4 inline ltr:mr-1 rtl:ml-1" />
+                      {t('smtp.smtpHost')}
                     </label>
                     <input
                       type="text"
                       value={formData.host}
                       onChange={(e) => handleChange('host', e.target.value)}
-                      placeholder="smtp.example.com"
+                      placeholder={t('smtp.hostPlaceholder')}
                       className={cn(
                         "w-full px-4 py-2.5 bg-[hsl(var(--background))] border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]",
                         errors.host ? "border-red-500" : "border-[hsl(var(--border))]"
@@ -329,7 +331,7 @@ export const SMTPSettingsPage: React.FC = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">
-                      Port
+                      {t('smtp.port')}
                     </label>
                     <div className="flex gap-2">
                       <input
@@ -364,11 +366,15 @@ export const SMTPSettingsPage: React.FC = () => {
                 {/* Encryption */}
                 <div>
                   <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-                    <Lock className="w-4 h-4 inline mr-1" />
-                    Encryption
+                    <Lock className="w-4 h-4 inline ltr:mr-1 rtl:ml-1" />
+                    {t('smtp.encryption')}
                   </label>
                   <div className="flex gap-2">
-                    {encryptionOptions.map((opt) => (
+                    {[
+                      { value: 'none', labelKey: 'smtp.encryptionNone', descKey: 'smtp.encryptionNoneDesc' },
+                      { value: 'tls', labelKey: 'smtp.encryptionTls', descKey: 'smtp.encryptionTlsDesc' },
+                      { value: 'ssl', labelKey: 'smtp.encryptionSsl', descKey: 'smtp.encryptionSslDesc' },
+                    ].map((opt) => (
                       <button
                         key={opt.value}
                         type="button"
@@ -380,8 +386,8 @@ export const SMTPSettingsPage: React.FC = () => {
                             : "border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:border-[hsl(var(--primary)/0.5)]"
                         )}
                       >
-                        {opt.label}
-                        <p className="text-xs font-normal mt-0.5 opacity-70">{opt.description}</p>
+                        {t(opt.labelKey)}
+                        <p className="text-xs font-normal mt-0.5 opacity-70">{t(opt.descKey)}</p>
                       </button>
                     ))}
                   </div>
@@ -391,14 +397,14 @@ export const SMTPSettingsPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">
-                      <User className="w-4 h-4 inline mr-1" />
-                      Username
+                      <User className="w-4 h-4 inline ltr:mr-1 rtl:ml-1" />
+                      {t('smtp.username')}
                     </label>
                     <input
                       type="text"
                       value={formData.username}
                       onChange={(e) => handleChange('username', e.target.value)}
-                      placeholder="your@email.com"
+                      placeholder={t('smtp.usernamePlaceholder')}
                       className={cn(
                         "w-full px-4 py-2.5 bg-[hsl(var(--background))] border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]",
                         errors.username ? "border-red-500" : "border-[hsl(var(--border))]"
@@ -409,24 +415,24 @@ export const SMTPSettingsPage: React.FC = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">
-                      <Lock className="w-4 h-4 inline mr-1" />
-                      Password {hasExistingConfig && <span className="text-xs text-[hsl(var(--muted-foreground))]">(leave empty to keep current)</span>}
+                      <Lock className="w-4 h-4 inline ltr:mr-1 rtl:ml-1" />
+                      {t('smtp.password')} {hasExistingConfig && <span className="text-xs text-[hsl(var(--muted-foreground))]">{t('smtp.leaveEmptyToKeep')}</span>}
                     </label>
                     <div className="relative">
                       <input
                         type={showPassword ? 'text' : 'password'}
                         value={formData.password}
                         onChange={(e) => handleChange('password', e.target.value)}
-                        placeholder={hasExistingConfig ? '••••••••' : 'Enter password'}
+                        placeholder={hasExistingConfig ? '••••••••' : t('smtp.enterPassword')}
                         className={cn(
-                          "w-full px-4 py-2.5 pr-10 bg-[hsl(var(--background))] border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]",
+                          "w-full px-4 py-2.5 ltr:pr-10 rtl:pl-10 bg-[hsl(var(--background))] border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]",
                           errors.password ? "border-red-500" : "border-[hsl(var(--border))]"
                         )}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                        className="absolute ltr:right-3 rtl:left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
@@ -439,14 +445,14 @@ export const SMTPSettingsPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">
-                      <AtSign className="w-4 h-4 inline mr-1" />
-                      From Email
+                      <AtSign className="w-4 h-4 inline ltr:mr-1 rtl:ml-1" />
+                      {t('smtp.fromEmail')}
                     </label>
                     <input
                       type="email"
                       value={formData.from_email}
                       onChange={(e) => handleChange('from_email', e.target.value)}
-                      placeholder="noreply@example.com"
+                      placeholder={t('smtp.fromEmailPlaceholder')}
                       className={cn(
                         "w-full px-4 py-2.5 bg-[hsl(var(--background))] border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]",
                         errors.from_email ? "border-red-500" : "border-[hsl(var(--border))]"
@@ -457,13 +463,13 @@ export const SMTPSettingsPage: React.FC = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">
-                      From Name
+                      {t('smtp.fromName')}
                     </label>
                     <input
                       type="text"
                       value={formData.from_name}
                       onChange={(e) => handleChange('from_name', e.target.value)}
-                      placeholder="Automax Notifications"
+                      placeholder={t('smtp.fromNamePlaceholder')}
                       className={cn(
                         "w-full px-4 py-2.5 bg-[hsl(var(--background))] border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]",
                         errors.from_name ? "border-red-500" : "border-[hsl(var(--border))]"
@@ -480,23 +486,23 @@ export const SMTPSettingsPage: React.FC = () => {
                       type="button"
                       variant="outline"
                       onClick={() => {
-                        if (confirm('Are you sure you want to delete the SMTP configuration?')) {
+                        if (confirm(t('smtp.deleteConfirm'))) {
                           deleteMutation.mutate();
                         }
                       }}
                       isLoading={deleteMutation.isPending}
                       className="text-red-600 border-red-200 hover:bg-red-50"
                     >
-                      Delete Configuration
+                      {t('smtp.deleteConfiguration')}
                     </Button>
                   )}
-                  <div className="ml-auto">
+                  <div className="ltr:ml-auto rtl:mr-auto">
                     <Button
                       type="submit"
                       isLoading={isPending}
                       leftIcon={<Save className="w-4 h-4" />}
                     >
-                      {hasExistingConfig ? 'Update Settings' : 'Save Settings'}
+                      {hasExistingConfig ? t('smtp.updateSettings') : t('smtp.saveSettings')}
                     </Button>
                   </div>
                 </div>

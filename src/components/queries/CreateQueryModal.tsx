@@ -10,14 +10,14 @@ import {
   Building2,
   User,
   Search,
-  MessageSquare,
+  HelpCircle,
   Radio,
   FileText,
 } from 'lucide-react';
 import { Button, TreeSelect } from '../ui';
 import type { TreeSelectNode } from '../ui';
 import {
-  complaintApi,
+  queryApi,
   classificationApi,
   workflowApi,
   departmentApi,
@@ -29,17 +29,17 @@ import type {
   Department,
   User as UserType,
   Incident,
-  CreateComplaintRequest,
+  CreateQueryRequest,
 } from '../../types';
 import { cn } from '@/lib/utils';
 
-interface CreateComplaintModalProps {
+interface CreateQueryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (complaintId: string) => void;
+  onSuccess: (queryId: string) => void;
 }
 
-export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
+export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
@@ -62,16 +62,16 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
   // Errors
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Query for complaint classifications
+  // Query for query classifications
   const { data: classificationsData, isLoading: classificationsLoading } = useQuery({
-    queryKey: ['classifications', 'complaint'],
+    queryKey: ['classifications', 'query'],
     queryFn: async () => {
-      // Get 'complaint' and 'all' types
-      const [complaintRes, allRes] = await Promise.all([
-        classificationApi.getTreeByType('complaint'),
+      // Get 'query' and 'all' types
+      const [queryRes, allRes] = await Promise.all([
+        classificationApi.getTreeByType('query'),
         classificationApi.getTreeByType('all'),
       ]);
-      const combined = [...(complaintRes.data || []), ...(allRes.data || [])];
+      const combined = [...(queryRes.data || []), ...(allRes.data || [])];
       // Deduplicate by ID
       const unique = combined.filter((item, index, self) =>
         index === self.findIndex(t => t.id === item.id)
@@ -81,16 +81,16 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
     enabled: isOpen,
   });
 
-  // Query for complaint workflows
+  // Query for query workflows
   const { data: workflowsData, isLoading: workflowsLoading } = useQuery({
-    queryKey: ['workflows', 'complaint'],
+    queryKey: ['workflows', 'query'],
     queryFn: async () => {
-      // Get 'complaint' and 'all' types
-      const [complaintRes, allRes] = await Promise.all([
-        workflowApi.listByRecordType('complaint', true),
+      // Get 'query' and 'all' types
+      const [queryRes, allRes] = await Promise.all([
+        workflowApi.listByRecordType('query', true),
         workflowApi.listByRecordType('all', true),
       ]);
-      const combined = [...(complaintRes.data || []), ...(allRes.data || [])];
+      const combined = [...(queryRes.data || []), ...(allRes.data || [])];
       // Deduplicate by ID
       const unique = combined.filter((item, index, self) =>
         index === self.findIndex(t => t.id === item.id)
@@ -161,13 +161,13 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
 
   // Filter workflows based on selected classification
   const filteredWorkflows = useMemo(() => {
-    const complaintWorkflows = workflows.filter(w => w.is_active);
+    const queryWorkflows = workflows.filter(w => w.is_active);
 
     if (!classificationId) {
-      return complaintWorkflows;
+      return queryWorkflows;
     }
 
-    const matching = complaintWorkflows.filter(w => {
+    const matching = queryWorkflows.filter(w => {
       const hasNoClassificationRestriction = !w.classifications || w.classifications.length === 0;
 
       if (hasNoClassificationRestriction) return true;
@@ -176,7 +176,7 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
     });
 
     // If no workflows match the classification, show all workflows as fallback
-    if (matching.length === 0) return complaintWorkflows;
+    if (matching.length === 0) return queryWorkflows;
     return matching;
   }, [workflows, classificationId]);
 
@@ -190,11 +190,11 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
     }
   }, [filteredWorkflows, workflowId]);
 
-  // Create complaint mutation
+  // Create query mutation
   const createMutation = useMutation({
-    mutationFn: (data: CreateComplaintRequest) => complaintApi.create(data),
+    mutationFn: (data: CreateQueryRequest) => queryApi.create(data),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['complaints'] });
+      queryClient.invalidateQueries({ queryKey: ['queries'] });
       if (result.data?.id) {
         onSuccess(result.data.id);
       }
@@ -235,13 +235,13 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!title.trim()) {
-      newErrors.title = t('complaints.titleRequired', 'Title is required');
+      newErrors.title = t('queries.titleRequired', 'Title is required');
     }
     if (!classificationId) {
-      newErrors.classification = t('complaints.classificationRequired', 'Classification is required');
+      newErrors.classification = t('queries.classificationRequired', 'Classification is required');
     }
     if (!workflowId) {
-      newErrors.workflow = t('complaints.workflowRequired', 'Workflow is required');
+      newErrors.workflow = t('queries.workflowRequired', 'Workflow is required');
     }
 
     setErrors(newErrors);
@@ -251,7 +251,7 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
   const handleSubmit = () => {
     if (!validate()) return;
 
-    const data: CreateComplaintRequest = {
+    const data: CreateQueryRequest = {
       title: title.trim(),
       description: description.trim() || undefined,
       classification_id: classificationId,
@@ -279,15 +279,15 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[hsl(var(--border))]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
-              <MessageSquare className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center">
+              <HelpCircle className="w-5 h-5 text-white" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">
-                {t('complaints.createComplaint', 'Create Complaint')}
+                {t('queries.createQuery', 'Create Query')}
               </h3>
               <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                {t('complaints.createComplaintDescription', 'Create a new complaint record')}
+                {t('queries.createQueryDescription', 'Create a new query record')}
               </p>
             </div>
           </div>
@@ -305,21 +305,21 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
           <div className="space-y-4">
             <h4 className="text-sm font-medium text-[hsl(var(--foreground))] flex items-center gap-2">
               <FileText className="w-4 h-4" />
-              {t('complaints.basicInfo', 'Basic Information')}
+              {t('queries.basicInfo', 'Basic Information')}
             </h4>
 
             {/* Title */}
             <div>
               <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1">
-                {t('complaints.title', 'Title')} <span className="text-red-500">*</span>
+                {t('queries.title', 'Title')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder={t('complaints.titlePlaceholder', 'Enter complaint title...')}
+                placeholder={t('queries.titlePlaceholder', 'Enter query title...')}
                 className={cn(
-                  "w-full px-4 py-2 bg-[hsl(var(--background))] border rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500",
+                  "w-full px-4 py-2 bg-[hsl(var(--background))] border rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500",
                   errors.title ? "border-red-500" : "border-[hsl(var(--border))]"
                 )}
               />
@@ -331,14 +331,14 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
             {/* Description */}
             <div>
               <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1">
-                {t('complaints.description', 'Description')}
+                {t('queries.description', 'Description')}
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder={t('complaints.descriptionPlaceholder', 'Describe the complaint...')}
+                placeholder={t('queries.descriptionPlaceholder', 'Describe the query...')}
                 rows={3}
-                className="w-full px-4 py-3 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 resize-none"
+                className="w-full px-4 py-3 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 resize-none"
               />
             </div>
           </div>
@@ -348,7 +348,7 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
             <div>
               <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1">
                 <Radio className="w-3 h-3 inline mr-1" />
-                {t('complaints.channel', 'Channel')}
+                {t('queries.channel', 'Channel')}
                 <span className="text-xs text-[hsl(var(--muted-foreground))] ml-1">
                   ({t('common.optional', 'Optional')})
                 </span>
@@ -357,8 +357,8 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
                 type="text"
                 value={channel}
                 onChange={(e) => setChannel(e.target.value)}
-                placeholder={t('complaints.channelPlaceholder', 'e.g., Phone, Email, Web')}
-                className="w-full px-4 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                placeholder={t('queries.channelPlaceholder', 'e.g., Phone, Email, Web')}
+                className="w-full px-4 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
               />
             </div>
           </div>
@@ -367,7 +367,7 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
           <div className="space-y-4">
             <h4 className="text-sm font-medium text-[hsl(var(--foreground))] flex items-center gap-2">
               <FileText className="w-4 h-4" />
-              {t('complaints.sourceIncident', 'Source Incident/Request')}
+              {t('queries.sourceIncident', 'Source Incident/Request')}
               <span className="text-xs text-[hsl(var(--muted-foreground))]">
                 ({t('common.optional', 'Optional')})
               </span>
@@ -403,8 +403,8 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
                       setShowIncidentSearch(true);
                     }}
                     onFocus={() => setShowIncidentSearch(true)}
-                    placeholder={t('complaints.searchSourceIncident', 'Search for incident/request number or title...')}
-                    className="w-full pl-10 pr-4 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    placeholder={t('queries.searchSourceIncident', 'Search for incident/request number or title...')}
+                    className="w-full pl-10 pr-4 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
                   />
                 </div>
 
@@ -413,11 +413,11 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
                   <div className="absolute top-full left-0 right-0 mt-1 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
                     {incidentsLoading ? (
                       <div className="p-4 text-center">
-                        <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                        <div className="w-5 h-5 border-2 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto" />
                       </div>
                     ) : searchedIncidents.length === 0 ? (
                       <div className="p-4 text-center text-sm text-[hsl(var(--muted-foreground))]">
-                        {t('complaints.noIncidentsFound', 'No incidents found')}
+                        {t('queries.noIncidentsFound', 'No incidents found')}
                       </div>
                     ) : (
                       searchedIncidents.map((incident) => (
@@ -461,19 +461,19 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
             <div className="space-y-3">
               <h4 className="text-sm font-medium text-[hsl(var(--foreground))] flex items-center gap-2">
                 <Tags className="w-4 h-4" />
-                {t('complaints.classification', 'Classification')} <span className="text-red-500">*</span>
+                {t('queries.classification', 'Classification')} <span className="text-red-500">*</span>
               </h4>
 
               {classificationsLoading ? (
                 <div className="flex items-center justify-center py-4">
-                  <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : classifications.length === 0 ? (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <div className="flex items-center gap-2 text-amber-700">
+                <div className="p-3 bg-violet-50 border border-violet-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-violet-700">
                     <AlertTriangle className="w-4 h-4" />
                     <p className="text-xs">
-                      {t('complaints.noClassifications', 'No complaint classifications found.')}
+                      {t('queries.noClassifications', 'No query classifications found.')}
                     </p>
                   </div>
                 </div>
@@ -482,10 +482,10 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
                   data={classificationTreeData}
                   value={classificationId}
                   onChange={(id) => setClassificationId(id)}
-                  placeholder={t('complaints.selectClassification', 'Select classification...')}
+                  placeholder={t('queries.selectClassification', 'Select classification...')}
                   error={errors.classification}
                   leafOnly={true}
-                  emptyMessage={t('complaints.noClassifications', 'No complaint classifications found.')}
+                  emptyMessage={t('queries.noClassifications', 'No query classifications found.')}
                   maxHeight="200px"
                 />
               )}
@@ -495,19 +495,19 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
             <div className="space-y-3">
               <h4 className="text-sm font-medium text-[hsl(var(--foreground))] flex items-center gap-2">
                 <Workflow className="w-4 h-4" />
-                {t('complaints.workflow', 'Workflow')} <span className="text-red-500">*</span>
+                {t('queries.workflow', 'Workflow')} <span className="text-red-500">*</span>
               </h4>
 
               {workflowsLoading ? (
                 <div className="flex items-center justify-center py-4">
-                  <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : filteredWorkflows.length === 0 ? (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <div className="flex items-center gap-2 text-amber-700">
+                <div className="p-3 bg-violet-50 border border-violet-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-violet-700">
                     <AlertTriangle className="w-4 h-4" />
                     <p className="text-xs">
-                      {t('complaints.noWorkflows', 'No complaint workflows found.')}
+                      {t('queries.noWorkflows', 'No query workflows found.')}
                     </p>
                   </div>
                 </div>
@@ -524,7 +524,7 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
                       className={cn(
                         "w-full p-2 rounded-lg text-left transition-colors text-sm",
                         workflowId === workflow.id
-                          ? "bg-amber-500/10 text-amber-700 border border-amber-500"
+                          ? "bg-violet-500/10 text-violet-700 border border-violet-500"
                           : "hover:bg-[hsl(var(--muted)/0.5)]"
                       )}
                     >
@@ -532,7 +532,7 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
                         <div className={cn(
                           "w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0",
                           workflowId === workflow.id
-                            ? "border-amber-500 bg-amber-500"
+                            ? "border-violet-500 bg-violet-500"
                             : "border-[hsl(var(--muted-foreground))]"
                         )}>
                           {workflowId === workflow.id && (
@@ -562,7 +562,7 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
             <div className="space-y-3">
               <h4 className="text-sm font-medium text-[hsl(var(--foreground))] flex items-center gap-2">
                 <Building2 className="w-4 h-4" />
-                {t('complaints.department', 'Department')}
+                {t('queries.department', 'Department')}
                 <span className="text-xs text-[hsl(var(--muted-foreground))]">
                   ({t('common.optional', 'Optional')})
                 </span>
@@ -574,9 +574,9 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
                   const dept = departments.find(d => d.id === e.target.value);
                   setSelectedDepartment(dept || null);
                 }}
-                className="w-full px-4 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                className="w-full px-4 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
               >
-                <option value="">{t('complaints.selectDepartment', 'Select department...')}</option>
+                <option value="">{t('queries.selectDepartment', 'Select department...')}</option>
                 {flattenDepartments(departments).map((dept) => (
                   <option key={dept.id} value={dept.id}>
                     {'—'.repeat(dept.level)} {dept.name}
@@ -589,7 +589,7 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
             <div className="space-y-3">
               <h4 className="text-sm font-medium text-[hsl(var(--foreground))] flex items-center gap-2">
                 <User className="w-4 h-4" />
-                {t('complaints.assignee', 'Assignee')}
+                {t('queries.assignee', 'Assignee')}
                 <span className="text-xs text-[hsl(var(--muted-foreground))]">
                   ({t('common.optional', 'Optional')})
                 </span>
@@ -601,9 +601,9 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
                   const user = users.find(u => u.id === e.target.value);
                   setSelectedAssignee(user || null);
                 }}
-                className="w-full px-4 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                className="w-full px-4 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
               >
-                <option value="">{t('complaints.selectAssignee', 'Select assignee...')}</option>
+                <option value="">{t('queries.selectAssignee', 'Select assignee...')}</option>
                 {users.map((user) => (
                   <option key={user.id} value={user.id}>
                     {user.first_name} {user.last_name} ({user.username})
@@ -619,7 +619,7 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
               <div className="flex items-center gap-2 text-red-700">
                 <AlertTriangle className="w-4 h-4" />
                 <p className="text-sm">
-                  {(createMutation.error as Error)?.message || t('complaints.createError', 'Failed to create complaint')}
+                  {(createMutation.error as Error)?.message || t('queries.createError', 'Failed to create query')}
                 </p>
               </div>
             </div>
@@ -640,9 +640,9 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
             disabled={createMutation.isPending}
             isLoading={createMutation.isPending}
             leftIcon={!createMutation.isPending ? <CheckCircle2 className="w-4 h-4" /> : undefined}
-            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+            className="bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white"
           >
-            {t('complaints.create', 'Create Complaint')}
+            {t('queries.create', 'Create Query')}
           </Button>
         </div>
       </div>
@@ -650,4 +650,4 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
   );
 };
 
-export default CreateComplaintModal;
+export default CreateQueryModal;

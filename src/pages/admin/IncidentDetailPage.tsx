@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
@@ -28,6 +28,7 @@ import {
   Tags,
   Star,
   ArrowRightLeft,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '../../components/ui';
 import { MiniWorkflowView } from '../../components/workflow';
@@ -502,6 +503,20 @@ export const IncidentDetailPage: React.FC = () => {
             )}
           </div>
           <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">{incident.title}</h1>
+
+          {/* Converted Request Link */}
+          {incident.converted_request_id && (
+            <div className="mt-2 flex items-center gap-2">
+              <span className="text-sm text-[hsl(var(--muted-foreground))]">{t('incidents.convertedTo', 'Converted to')}:</span>
+              <Link
+                to={`/requests/${incident.converted_request_id}`}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                {incident.converted_request?.incident_number || t('incidents.viewRequest', 'View Request')}
+              </Link>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
@@ -1321,7 +1336,7 @@ export const IncidentDetailPage: React.FC = () => {
                           <span className="text-green-500">({t('incidents.autoAssignAllMatched')})</span>
                         )}
                         {selectedTransition.transition.assignment_role && (
-                          <span className="text-[hsl(var(--primary))] ml-1">Role: {selectedTransition.transition.assignment_role.name}</span>
+                          <span className="text-[hsl(var(--primary))] ml-1">{t('incidents.role')}: {selectedTransition.transition.assignment_role.name}</span>
                         )}
                       </p>
                       {selectedTransition.transition.assign_user_id ? (

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
   Plus,
   Edit2,
@@ -58,9 +59,10 @@ interface TreeNodeProps {
   onAdd: (parentId: string, parentName: string) => void;
   onEdit: (cls: Classification) => void;
   onDelete: (id: string) => void;
+  t: (key: string) => string;
 }
 
-const TreeNode: React.FC<TreeNodeProps> = ({ classification, level, onAdd, onEdit, onDelete }) => {
+const TreeNode: React.FC<TreeNodeProps> = ({ classification, level, onAdd, onEdit, onDelete, t }) => {
   const [expanded, setExpanded] = useState(true);
   const hasChildren = classification.children && classification.children.length > 0;
   const gradient = levelGradients[level % levelGradients.length];
@@ -99,7 +101,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ classification, level, onAdd, onEdi
         </div>
         <div className="flex items-center gap-2">
           <span className={cn("px-2.5 py-1 text-xs font-medium rounded-lg", badgeColor)}>
-            Level {classification.level}
+            {t('classifications.level')} {classification.level}
           </span>
           <span
             className={cn(
@@ -115,7 +117,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ classification, level, onAdd, onEdi
                 : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
             )}
           >
-            {classification.type === 'incident' ? 'Incident' : classification.type === 'request' ? 'Request' : classification.type === 'complaint' ? 'Complaint' : classification.type === 'all' ? 'All' : 'Both'}
+            {classification.type === 'incident' ? t('classifications.incident') : classification.type === 'request' ? t('classifications.request') : classification.type === 'complaint' ? t('classifications.complaint') : classification.type === 'all' ? t('classifications.all') : t('classifications.both')}
           </span>
           <span
             className={cn(
@@ -125,27 +127,27 @@ const TreeNode: React.FC<TreeNodeProps> = ({ classification, level, onAdd, onEdi
                 : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
             )}
           >
-            {classification.is_active ? 'Active' : 'Inactive'}
+            {classification.is_active ? t('classifications.active') : t('classifications.inactive')}
           </span>
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => onAdd(classification.id, classification.name)}
               className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.1)] rounded-lg transition-colors"
-              title="Add Child Classification"
+              title={t('classifications.addChildClassification')}
             >
               <Plus className="w-4 h-4" />
             </button>
             <button
               onClick={() => onEdit(classification)}
               className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors"
-              title="Edit"
+              title={t('common.edit')}
             >
               <Edit2 className="w-4 h-4" />
             </button>
             <button
               onClick={() => onDelete(classification.id)}
               className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] rounded-lg transition-colors"
-              title="Delete"
+              title={t('common.delete')}
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -162,6 +164,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ classification, level, onAdd, onEdi
               onAdd={onAdd}
               onEdit={onEdit}
               onDelete={onDelete}
+              t={t}
             />
           ))}
         </div>
@@ -171,6 +174,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ classification, level, onAdd, onEdi
 };
 
 export const ClassificationsPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClassification, setEditingClassification] = useState<Classification | null>(null);
@@ -268,9 +272,9 @@ export const ClassificationsPage: React.FC = () => {
             <div className="p-2 rounded-lg bg-[hsl(var(--primary)/0.1)]">
               <FolderTree className="w-5 h-5 text-[hsl(var(--primary))]" />
             </div>
-            <h2 className="text-2xl font-bold text-[hsl(var(--foreground))]">Classifications</h2>
+            <h2 className="text-2xl font-bold text-[hsl(var(--foreground))]">{t('classifications.title')}</h2>
           </div>
-          <p className="text-[hsl(var(--muted-foreground))] mt-1 ml-12">Manage incident and request classifications</p>
+          <p className="text-[hsl(var(--muted-foreground))] mt-1 ml-12">{t('classifications.subtitle')}</p>
         </div>
       </div>
 
@@ -281,10 +285,9 @@ export const ClassificationsPage: React.FC = () => {
             <Info className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h4 className="text-sm font-semibold text-[hsl(var(--foreground))] mb-1">About Classifications</h4>
+            <h4 className="text-sm font-semibold text-[hsl(var(--foreground))] mb-1">{t('classifications.aboutTitle')}</h4>
             <p className="text-sm text-[hsl(var(--muted-foreground))]">
-              Classifications are used to categorize incidents and requests. Create a hierarchical
-              structure to organize them by type, category, and subcategory for better ticket management.
+              {t('classifications.aboutDescription')}
             </p>
           </div>
         </div>
@@ -299,9 +302,9 @@ export const ClassificationsPage: React.FC = () => {
               <Layers className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">Classification Hierarchy</h3>
+              <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">{t('classifications.hierarchy')}</h3>
               <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                {treeData?.data?.length || 0} root classifications
+                {treeData?.data?.length || 0} {t('classifications.rootClassifications')}
               </p>
             </div>
           </div>
@@ -310,7 +313,7 @@ export const ClassificationsPage: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg hover:bg-[hsl(var(--primary)/0.9)] transition-colors text-sm font-medium shadow-md shadow-[hsl(var(--primary)/0.25)]"
           >
             <Plus className="w-4 h-4" />
-            Add Root Classification
+            {t('classifications.addRootClassification')}
           </button>
         </div>
 
@@ -318,17 +321,17 @@ export const ClassificationsPage: React.FC = () => {
         {isLoading ? (
           <div className="p-12 text-center">
             <div className="w-10 h-10 border-2 border-[hsl(var(--primary))] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-[hsl(var(--muted-foreground))]">Loading classifications...</p>
+            <p className="text-[hsl(var(--muted-foreground))]">{t('classifications.loading')}</p>
           </div>
         ) : treeData?.data?.length === 0 ? (
           <div className="p-12 text-center">
             <div className="w-16 h-16 bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent))] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[hsl(var(--primary)/0.25)]">
               <FolderTree className="w-8 h-8 text-white" />
             </div>
-            <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">No classifications yet</h3>
-            <p className="text-[hsl(var(--muted-foreground))] mb-6">Create your first classification to categorize tickets</p>
+            <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">{t('classifications.noClassificationsYet')}</h3>
+            <p className="text-[hsl(var(--muted-foreground))] mb-6">{t('classifications.createFirstClassification')}</p>
             <Button onClick={() => openCreateModal()} leftIcon={<Plus className="w-4 h-4" />}>
-              Create Classification
+              {t('classifications.createClassification')}
             </Button>
           </div>
         ) : (
@@ -341,6 +344,7 @@ export const ClassificationsPage: React.FC = () => {
                 onAdd={openCreateModal}
                 onEdit={openEditModal}
                 onDelete={setDeleteConfirm}
+                t={t}
               />
             ))}
           </div>
@@ -357,22 +361,22 @@ export const ClassificationsPage: React.FC = () => {
                   <AlertTriangle className="w-6 h-6 text-[hsl(var(--destructive))]" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">Delete Classification</h3>
+                  <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">{t('classifications.deleteConfirmTitle')}</h3>
                   <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
-                    Are you sure you want to delete this classification? All child classifications will also be deleted.
+                    {t('classifications.deleteConfirmMessage')}
                   </p>
                 </div>
               </div>
               <div className="flex justify-end gap-3">
                 <Button variant="ghost" onClick={() => setDeleteConfirm(null)}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   variant="destructive"
                   onClick={() => deleteMutation.mutate(deleteConfirm)}
                   isLoading={deleteMutation.isPending}
                 >
-                  {deleteMutation.isPending ? 'Deleting...' : 'Delete Classification'}
+                  {deleteMutation.isPending ? t('classifications.deleting') : t('classifications.deleteClassification')}
                 </Button>
               </div>
             </div>
@@ -392,14 +396,14 @@ export const ClassificationsPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">
-                    {editingClassification ? 'Edit Classification' : 'Create Classification'}
+                    {editingClassification ? t('classifications.editClassification') : t('classifications.createClassification')}
                   </h3>
                   <p className="text-sm text-[hsl(var(--muted-foreground))]">
                     {editingClassification
-                      ? 'Update classification details'
+                      ? t('classifications.updateDetails')
                       : formData.parent_name
-                        ? `Adding under "${formData.parent_name}"`
-                        : 'Add a new root classification'
+                        ? `${t('classifications.addingUnder')} "${formData.parent_name}"`
+                        : t('classifications.addNewRoot')
                     }
                   </p>
                 </div>
@@ -419,17 +423,17 @@ export const ClassificationsPage: React.FC = () => {
                 <div className="flex items-center gap-3 p-3 bg-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.2)] rounded-xl">
                   <FolderTree className="w-5 h-5 text-[hsl(var(--primary))]" />
                   <div>
-                    <p className="text-xs text-[hsl(var(--muted-foreground))]">Parent Classification</p>
+                    <p className="text-xs text-[hsl(var(--muted-foreground))]">{t('classifications.parentClassification')}</p>
                     <p className="text-sm font-medium text-[hsl(var(--foreground))]">{formData.parent_name}</p>
                   </div>
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Name</label>
+                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('classifications.name')}</label>
                 <input
                   type="text"
-                  placeholder="e.g., Hardware Issues"
+                  placeholder={t('classifications.namePlaceholder')}
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
@@ -440,13 +444,13 @@ export const ClassificationsPage: React.FC = () => {
               {/* Only show parent selector when editing */}
               {editingClassification && (
                 <div>
-                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Parent Classification</label>
+                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('classifications.parentClassification')}</label>
                   <select
                     value={formData.parent_id}
                     onChange={(e) => setFormData({ ...formData, parent_id: e.target.value })}
                     className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
                   >
-                    <option value="">None (Root Level)</option>
+                    <option value="">{t('locations.noneRootLevel')}</option>
                     {classificationsList?.data
                       ?.filter((c: Classification) => c.id !== editingClassification?.id)
                       .map((cls: Classification) => (
@@ -459,9 +463,9 @@ export const ClassificationsPage: React.FC = () => {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Description</label>
+                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('classifications.description')}</label>
                 <textarea
-                  placeholder="Describe this classification..."
+                  placeholder={t('classifications.descriptionPlaceholder')}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
@@ -470,25 +474,25 @@ export const ClassificationsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Type</label>
+                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('classifications.type')}</label>
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value as ClassificationType })}
                   className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
                 >
-                  <option value="all">All (Incidents, Requests & Complaints)</option>
-                  <option value="both">Both (Incidents & Requests)</option>
-                  <option value="incident">Incident Only</option>
-                  <option value="request">Request Only</option>
-                  <option value="complaint">Complaint Only</option>
+                  <option value="all">{t('classifications.typeAll')}</option>
+                  <option value="both">{t('classifications.typeBoth')}</option>
+                  <option value="incident">{t('classifications.typeIncident')}</option>
+                  <option value="request">{t('classifications.typeRequest')}</option>
+                  <option value="complaint">{t('classifications.typeComplaint')}</option>
                 </select>
                 <p className="mt-1.5 text-xs text-[hsl(var(--muted-foreground))]">
-                  Determines which record types can use this classification
+                  {t('classifications.typeHelp')}
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Sort Order</label>
+                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('classifications.sortOrder')}</label>
                 <input
                   type="number"
                   value={formData.sort_order}
@@ -496,13 +500,13 @@ export const ClassificationsPage: React.FC = () => {
                   className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
                   min={0}
                 />
-                <p className="mt-1.5 text-xs text-[hsl(var(--muted-foreground))]">Lower numbers appear first</p>
+                <p className="mt-1.5 text-xs text-[hsl(var(--muted-foreground))]">{t('classifications.sortOrderHelp')}</p>
               </div>
 
               {/* Modal Footer */}
               <div className="flex justify-end gap-3 pt-4 border-t border-[hsl(var(--border))]">
                 <Button variant="ghost" type="button" onClick={closeModal}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   type="submit"
@@ -510,10 +514,10 @@ export const ClassificationsPage: React.FC = () => {
                   leftIcon={!(createMutation.isPending || updateMutation.isPending) ? <Check className="w-4 h-4" /> : undefined}
                 >
                   {createMutation.isPending || updateMutation.isPending
-                    ? 'Saving...'
+                    ? t('classifications.saving')
                     : editingClassification
-                    ? 'Update'
-                    : 'Create'}
+                    ? t('common.update')
+                    : t('common.create')}
                 </Button>
               </div>
             </form>

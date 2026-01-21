@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
   Plus,
   Edit2,
@@ -75,9 +76,10 @@ interface TreeNodeProps {
   onAdd: (parentId: string, parentName: string) => void;
   onEdit: (loc: Location) => void;
   onDelete: (id: string) => void;
+  t: (key: string) => string;
 }
 
-const TreeNode: React.FC<TreeNodeProps> = ({ location, level, onAdd, onEdit, onDelete }) => {
+const TreeNode: React.FC<TreeNodeProps> = ({ location, level, onAdd, onEdit, onDelete, t }) => {
   const [expanded, setExpanded] = useState(true);
   const hasChildren = location.children && location.children.length > 0;
   const gradient = typeGradients[location.type] || 'from-[hsl(var(--muted-foreground))] to-[hsl(var(--foreground))]';
@@ -125,27 +127,27 @@ const TreeNode: React.FC<TreeNodeProps> = ({ location, level, onAdd, onEdit, onD
                 : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
             )}
           >
-            {location.is_active ? 'Active' : 'Inactive'}
+            {location.is_active ? t('locations.active') : t('locations.inactive')}
           </span>
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => onAdd(location.id, location.name)}
               className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.1)] rounded-lg transition-colors"
-              title="Add Child Location"
+              title={t('locations.addChildLocation')}
             >
               <Plus className="w-4 h-4" />
             </button>
             <button
               onClick={() => onEdit(location)}
               className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors"
-              title="Edit"
+              title={t('common.edit')}
             >
               <Edit2 className="w-4 h-4" />
             </button>
             <button
               onClick={() => onDelete(location.id)}
               className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] rounded-lg transition-colors"
-              title="Delete"
+              title={t('common.delete')}
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -162,6 +164,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ location, level, onAdd, onEdit, onD
               onAdd={onAdd}
               onEdit={onEdit}
               onDelete={onDelete}
+              t={t}
             />
           ))}
         </div>
@@ -171,6 +174,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ location, level, onAdd, onEdit, onD
 };
 
 export const LocationsPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
@@ -270,15 +274,15 @@ export const LocationsPage: React.FC = () => {
             <div className="p-2 rounded-lg bg-[hsl(var(--primary)/0.1)]">
               <MapPin className="w-5 h-5 text-[hsl(var(--primary))]" />
             </div>
-            <h2 className="text-2xl font-bold text-[hsl(var(--foreground))]">Locations</h2>
+            <h2 className="text-2xl font-bold text-[hsl(var(--foreground))]">{t('locations.title')}</h2>
           </div>
-          <p className="text-[hsl(var(--muted-foreground))] mt-1 ml-12">Manage organizational locations and geography</p>
+          <p className="text-[hsl(var(--muted-foreground))] mt-1 ml-12">{t('locations.subtitle')}</p>
         </div>
       </div>
 
       {/* Location Types Legend */}
       <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-5">
-        <p className="text-sm font-semibold text-[hsl(var(--foreground))] mb-3">Location Types</p>
+        <p className="text-sm font-semibold text-[hsl(var(--foreground))] mb-3">{t('locations.locationTypes')}</p>
         <div className="flex flex-wrap gap-2">
           {locationTypes.map((type) => (
             <div
@@ -286,7 +290,7 @@ export const LocationsPage: React.FC = () => {
               className={cn("inline-flex items-center gap-2 px-3 py-1.5 rounded-lg", typeBadgeColors[type.value])}
             >
               <type.icon className="w-3.5 h-3.5" />
-              <span className="text-xs font-medium">{type.label}</span>
+              <span className="text-xs font-medium">{t(`locations.type${type.value.charAt(0).toUpperCase() + type.value.slice(1)}`)}</span>
             </div>
           ))}
         </div>
@@ -301,9 +305,9 @@ export const LocationsPage: React.FC = () => {
               <MapPin className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">Location Hierarchy</h3>
+              <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">{t('locations.hierarchy')}</h3>
               <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                {treeData?.data?.length || 0} root locations
+                {treeData?.data?.length || 0} {t('locations.rootLocations')}
               </p>
             </div>
           </div>
@@ -312,7 +316,7 @@ export const LocationsPage: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg hover:bg-[hsl(var(--primary)/0.9)] transition-colors text-sm font-medium shadow-md shadow-[hsl(var(--primary)/0.25)]"
           >
             <Plus className="w-4 h-4" />
-            Add Root Location
+            {t('locations.addRootLocation')}
           </button>
         </div>
 
@@ -320,17 +324,17 @@ export const LocationsPage: React.FC = () => {
         {isLoading ? (
           <div className="p-12 text-center">
             <div className="w-10 h-10 border-2 border-[hsl(var(--primary))] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-[hsl(var(--muted-foreground))]">Loading locations...</p>
+            <p className="text-[hsl(var(--muted-foreground))]">{t('locations.loading')}</p>
           </div>
         ) : treeData?.data?.length === 0 ? (
           <div className="p-12 text-center">
             <div className="w-16 h-16 bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent))] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[hsl(var(--primary)/0.25)]">
               <MapPin className="w-8 h-8 text-white" />
             </div>
-            <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">No locations yet</h3>
-            <p className="text-[hsl(var(--muted-foreground))] mb-6">Create your first location to organize your geography</p>
+            <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">{t('locations.noLocationsYet')}</h3>
+            <p className="text-[hsl(var(--muted-foreground))] mb-6">{t('locations.createFirstLocation')}</p>
             <Button onClick={() => openCreateModal()} leftIcon={<Plus className="w-4 h-4" />}>
-              Create Location
+              {t('locations.createLocation')}
             </Button>
           </div>
         ) : (
@@ -343,6 +347,7 @@ export const LocationsPage: React.FC = () => {
                 onAdd={openCreateModal}
                 onEdit={openEditModal}
                 onDelete={setDeleteConfirm}
+                t={t}
               />
             ))}
           </div>
@@ -359,22 +364,22 @@ export const LocationsPage: React.FC = () => {
                   <AlertTriangle className="w-6 h-6 text-[hsl(var(--destructive))]" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">Delete Location</h3>
+                  <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">{t('locations.deleteConfirmTitle')}</h3>
                   <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
-                    Are you sure you want to delete this location? All child locations will also be deleted.
+                    {t('locations.deleteConfirmMessage')}
                   </p>
                 </div>
               </div>
               <div className="flex justify-end gap-3">
                 <Button variant="ghost" onClick={() => setDeleteConfirm(null)}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   variant="destructive"
                   onClick={() => deleteMutation.mutate(deleteConfirm)}
                   isLoading={deleteMutation.isPending}
                 >
-                  {deleteMutation.isPending ? 'Deleting...' : 'Delete Location'}
+                  {deleteMutation.isPending ? t('locations.deleting') : t('locations.deleteLocation')}
                 </Button>
               </div>
             </div>
@@ -394,14 +399,14 @@ export const LocationsPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">
-                    {editingLocation ? 'Edit Location' : 'Create Location'}
+                    {editingLocation ? t('locations.editLocation') : t('locations.createLocation')}
                   </h3>
                   <p className="text-sm text-[hsl(var(--muted-foreground))]">
                     {editingLocation
-                      ? 'Update location details'
+                      ? t('locations.updateDetails')
                       : formData.parent_name
-                        ? `Adding under "${formData.parent_name}"`
-                        : 'Add a new root location'
+                        ? `${t('locations.addingUnder')} "${formData.parent_name}"`
+                        : t('locations.addNewRoot')
                     }
                   </p>
                 </div>
@@ -422,17 +427,17 @@ export const LocationsPage: React.FC = () => {
                   <div className="flex items-center gap-3 p-3 bg-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.2)] rounded-xl">
                     <MapPin className="w-5 h-5 text-[hsl(var(--primary))]" />
                     <div>
-                      <p className="text-xs text-[hsl(var(--muted-foreground))]">Parent Location</p>
+                      <p className="text-xs text-[hsl(var(--muted-foreground))]">{t('locations.parentLocation')}</p>
                       <p className="text-sm font-medium text-[hsl(var(--foreground))]">{formData.parent_name}</p>
                     </div>
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Name</label>
+                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('locations.name')}</label>
                   <input
                     type="text"
-                    placeholder="e.g., New York Office"
+                    placeholder={t('locations.namePlaceholder')}
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
@@ -441,10 +446,10 @@ export const LocationsPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Code</label>
+                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('locations.code')}</label>
                   <input
                     type="text"
-                    placeholder="e.g., NY-OFF"
+                    placeholder={t('locations.codePlaceholder')}
                     value={formData.code}
                     onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                     className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] font-mono focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
@@ -452,7 +457,7 @@ export const LocationsPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Type</label>
+                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('locations.type')}</label>
                   <select
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
@@ -460,7 +465,7 @@ export const LocationsPage: React.FC = () => {
                   >
                     {locationTypes.map((type) => (
                       <option key={type.value} value={type.value}>
-                        {type.label}
+                        {t(`locations.type${type.value.charAt(0).toUpperCase() + type.value.slice(1)}`)}
                       </option>
                     ))}
                   </select>
@@ -469,13 +474,13 @@ export const LocationsPage: React.FC = () => {
                 {/* Only show parent selector when editing */}
                 {editingLocation && (
                   <div>
-                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Parent Location</label>
+                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('locations.parentLocation')}</label>
                     <select
                       value={formData.parent_id}
                       onChange={(e) => setFormData({ ...formData, parent_id: e.target.value })}
                       className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
                     >
-                      <option value="">None (Root Level)</option>
+                      <option value="">{t('locations.noneRootLevel')}</option>
                       {locationsList?.data
                         ?.filter((l: Location) => l.id !== editingLocation?.id)
                         .map((loc: Location) => (
@@ -488,9 +493,9 @@ export const LocationsPage: React.FC = () => {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Address</label>
+                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('locations.address')}</label>
                   <textarea
-                    placeholder="Enter the full address..."
+                    placeholder={t('locations.addressPlaceholder')}
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     rows={2}
@@ -499,9 +504,9 @@ export const LocationsPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Description</label>
+                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('locations.description')}</label>
                   <textarea
-                    placeholder="Describe this location..."
+                    placeholder={t('locations.descriptionPlaceholder')}
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={2}
@@ -513,7 +518,7 @@ export const LocationsPage: React.FC = () => {
               {/* Modal Footer */}
               <div className="flex justify-end gap-3 px-6 py-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.5)]">
                 <Button variant="ghost" type="button" onClick={closeModal}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   type="submit"
@@ -521,10 +526,10 @@ export const LocationsPage: React.FC = () => {
                   leftIcon={!(createMutation.isPending || updateMutation.isPending) ? <Check className="w-4 h-4" /> : undefined}
                 >
                   {createMutation.isPending || updateMutation.isPending
-                    ? 'Saving...'
+                    ? t('locations.saving')
                     : editingLocation
-                    ? 'Update'
-                    : 'Create'}
+                    ? t('common.update')
+                    : t('common.create')}
                 </Button>
               </div>
             </form>

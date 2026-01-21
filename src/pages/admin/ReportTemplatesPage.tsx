@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   FileBarChart,
   Plus,
@@ -34,16 +35,17 @@ const iconMap: Record<string, React.ElementType> = {
   GitBranch,
 };
 
-const dataSourceInfo: Record<ReportDataSource, { label: string; icon: string; color: string }> = {
-  incidents: { label: 'Incidents', icon: 'AlertCircle', color: 'text-red-600 bg-red-100' },
-  action_logs: { label: 'Action Logs', icon: 'FileText', color: 'text-blue-600 bg-blue-100' },
-  users: { label: 'Users', icon: 'Users', color: 'text-green-600 bg-green-100' },
-  departments: { label: 'Departments', icon: 'Building2', color: 'text-purple-600 bg-purple-100' },
-  locations: { label: 'Locations', icon: 'MapPin', color: 'text-amber-600 bg-amber-100' },
-  workflows: { label: 'Workflows', icon: 'GitBranch', color: 'text-indigo-600 bg-indigo-100' },
+const dataSourceInfo: Record<ReportDataSource, { labelKey: string; icon: string; color: string }> = {
+  incidents: { labelKey: 'reports.dataSources.incidents', icon: 'AlertCircle', color: 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400' },
+  action_logs: { labelKey: 'reports.dataSources.actionLogs', icon: 'FileText', color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400' },
+  users: { labelKey: 'reports.dataSources.users', icon: 'Users', color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400' },
+  departments: { labelKey: 'reports.dataSources.departments', icon: 'Building2', color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400' },
+  locations: { labelKey: 'reports.dataSources.locations', icon: 'MapPin', color: 'text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400' },
+  workflows: { labelKey: 'reports.dataSources.workflows', icon: 'GitBranch', color: 'text-indigo-600 bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400' },
 };
 
 export const ReportTemplatesPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [filterSource, setFilterSource] = useState<ReportDataSource | ''>('');
@@ -74,7 +76,7 @@ export const ReportTemplatesPage: React.FC = () => {
   });
 
   const handleDelete = (template: ReportTemplate) => {
-    if (confirm(`Are you sure you want to delete "${template.name}"?`)) {
+    if (confirm(`${t('reports.deleteConfirm')} "${template.name}"?`)) {
       deleteMutation.mutate(template.id);
     }
     setActiveMenu(null);
@@ -107,10 +109,10 @@ export const ReportTemplatesPage: React.FC = () => {
             <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-500">
               <FileBarChart className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">Report Templates</h1>
+            <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">{t('reports.templates')}</h1>
           </div>
-          <p className="text-[hsl(var(--muted-foreground))] mt-1 ml-12">
-            Saved report configurations for quick access
+          <p className="text-[hsl(var(--muted-foreground))] mt-1 ltr:ml-12 rtl:mr-12">
+            {t('reports.templatesSubtitle')}
           </p>
         </div>
 
@@ -118,7 +120,7 @@ export const ReportTemplatesPage: React.FC = () => {
           onClick={() => navigate('/admin/reports/builder')}
           leftIcon={<Plus className="w-4 h-4" />}
         >
-          New Report
+          {t('reports.newReport')}
         </Button>
       </div>
 
@@ -129,16 +131,16 @@ export const ReportTemplatesPage: React.FC = () => {
           onChange={(e) => setFilterSource(e.target.value as ReportDataSource | '')}
           className="px-4 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)]"
         >
-          <option value="">All Data Sources</option>
+          <option value="">{t('reports.allDataSources')}</option>
           {Object.entries(dataSourceInfo).map(([key, info]) => (
             <option key={key} value={key}>
-              {info.label}
+              {t(info.labelKey)}
             </option>
           ))}
         </select>
 
         <span className="text-sm text-[hsl(var(--muted-foreground))]">
-          {templates.length} template{templates.length !== 1 ? 's' : ''}
+          {templates.length} {templates.length !== 1 ? t('reports.templates_count') : t('reports.template')}
         </span>
       </div>
 
@@ -151,13 +153,13 @@ export const ReportTemplatesPage: React.FC = () => {
         <div className="text-center py-12 bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))]">
           <FileBarChart className="w-12 h-12 text-[hsl(var(--muted-foreground))] mx-auto mb-4" />
           <h3 className="text-lg font-medium text-[hsl(var(--foreground))] mb-2">
-            No templates yet
+            {t('reports.noTemplatesYet')}
           </h3>
           <p className="text-[hsl(var(--muted-foreground))] mb-4">
-            Create your first report template to get started
+            {t('reports.createFirstTemplate')}
           </p>
           <Button onClick={() => navigate('/admin/reports/builder')}>
-            Create Report
+            {t('reports.createReport')}
           </Button>
         </div>
       ) : (
@@ -183,7 +185,7 @@ export const ReportTemplatesPage: React.FC = () => {
                           {template.name}
                         </h3>
                         <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                          {sourceInfo.label}
+                          {t(sourceInfo.labelKey)}
                         </p>
                       </div>
                     </div>
@@ -201,28 +203,28 @@ export const ReportTemplatesPage: React.FC = () => {
                       </button>
 
                       {activeMenu === template.id && (
-                        <div className="absolute right-0 mt-1 w-40 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg shadow-lg z-10">
+                        <div className="absolute ltr:right-0 rtl:left-0 mt-1 w-40 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg shadow-lg z-10">
                           <button
                             onClick={() => handleEdit(template)}
                             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] transition-colors"
                           >
                             <Edit2 className="w-4 h-4" />
-                            Edit
+                            {t('reports.edit')}
                           </button>
                           <button
                             onClick={() => handleDuplicate(template)}
                             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] transition-colors"
                           >
                             <Copy className="w-4 h-4" />
-                            Duplicate
+                            {t('reports.duplicate')}
                           </button>
                           <hr className="my-1 border-[hsl(var(--border))]" />
                           <button
                             onClick={() => handleDelete(template)}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
-                            Delete
+                            {t('reports.delete')}
                           </button>
                         </div>
                       )}
@@ -251,12 +253,12 @@ export const ReportTemplatesPage: React.FC = () => {
                       {template.is_public ? (
                         <span className="flex items-center gap-1">
                           <Globe className="w-3 h-3" />
-                          Public
+                          {t('reports.public')}
                         </span>
                       ) : (
                         <span className="flex items-center gap-1">
                           <Lock className="w-3 h-3" />
-                          Private
+                          {t('reports.private')}
                         </span>
                       )}
                       {template.created_by && (
@@ -280,7 +282,7 @@ export const ReportTemplatesPage: React.FC = () => {
                     className="w-full"
                     onClick={() => handleEdit(template)}
                   >
-                    Open Report Builder
+                    {t('reports.openReportBuilder')}
                   </Button>
                 </div>
               </div>

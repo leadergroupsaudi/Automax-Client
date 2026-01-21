@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MainLayout, AuthLayout, ProtectedRoute, AdminLayout, AdminProtectedRoute, IncidentLayout, RequestLayout, WorkflowLayout, ComplaintsLayout } from './components/layout';
+import { MainLayout, AuthLayout, ProtectedRoute, AdminLayout, AdminProtectedRoute, IncidentLayout, RequestLayout, WorkflowLayout, ComplaintsLayout, QueryLayout } from './components/layout';
 import {
   LoginPage,
   RegisterPage,
@@ -28,6 +28,8 @@ import {
   MyRequestsPage,
   ComplaintsPage,
   ComplaintDetailPage,
+  QueriesPage,
+  QueryDetailPage,
   SMTPSettingsPage,
   ReportBuilderPage,
   ReportTemplatesPage,
@@ -118,6 +120,14 @@ function App() {
             <Route element={<ComplaintsLayout />}>
               <Route path="/complaints" element={<ComplaintsPage />} />
               <Route path="/complaints/:id" element={<ComplaintDetailPage />} />
+            </Route>
+          </Route>
+
+          {/* Query routes - dedicated layout */}
+          <Route element={<AdminProtectedRoute />}>
+            <Route element={<QueryLayout />}>
+              <Route path="/queries" element={<QueriesPage />} />
+              <Route path="/queries/:id" element={<QueryDetailPage />} />
             </Route>
           </Route>
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
   Building2,
@@ -20,6 +21,7 @@ import type { Location, Classification, Role, User } from '../../types';
 import { cn } from '@/lib/utils';
 
 export const DepartmentDetailPage: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
@@ -44,7 +46,7 @@ export const DepartmentDetailPage: React.FC = () => {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="w-12 h-12 border-2 border-[hsl(var(--primary))] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-[hsl(var(--muted-foreground))]">Loading department...</p>
+          <p className="text-[hsl(var(--muted-foreground))]">{t('departments.loadingDepartment')}</p>
         </div>
       </div>
     );
@@ -57,12 +59,12 @@ export const DepartmentDetailPage: React.FC = () => {
           <div className="w-16 h-16 bg-[hsl(var(--destructive)/0.1)] rounded-2xl flex items-center justify-center mb-4">
             <XCircle className="w-8 h-8 text-[hsl(var(--destructive))]" />
           </div>
-          <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">Department Not Found</h3>
+          <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">{t('departments.departmentNotFound')}</h3>
           <p className="text-[hsl(var(--muted-foreground))] mb-6 text-center max-w-sm">
-            The department you're looking for doesn't exist or has been deleted.
+            {t('departments.departmentNotFoundDesc')}
           </p>
           <Button onClick={() => navigate('/admin/departments')} leftIcon={<ArrowLeft className="w-4 h-4" />}>
-            Back to Departments
+            {t('departments.backToDepartments')}
           </Button>
         </div>
       </div>
@@ -79,7 +81,7 @@ export const DepartmentDetailPage: React.FC = () => {
             className="flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] mb-3 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Departments
+            {t('departments.backToDepartments')}
           </button>
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent))] rounded-2xl flex items-center justify-center shadow-lg shadow-[hsl(var(--primary)/0.25)]">
@@ -96,7 +98,7 @@ export const DepartmentDetailPage: React.FC = () => {
                       : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
                   )}
                 >
-                  {department.is_active ? 'Active' : 'Inactive'}
+                  {department.is_active ? t('departments.active') : t('departments.inactive')}
                 </span>
               </div>
               <p className="text-[hsl(var(--muted-foreground))] mt-1 font-mono text-sm">{department.code}</p>
@@ -113,7 +115,7 @@ export const DepartmentDetailPage: React.FC = () => {
           onClick={() => navigate('/admin/departments', { state: { editDepartment: department } })}
           leftIcon={<Edit2 className="w-4 h-4" />}
         >
-          Edit Department
+          {t('departments.editDepartment')}
         </Button>
       </div>
 
@@ -126,7 +128,7 @@ export const DepartmentDetailPage: React.FC = () => {
             </div>
             <div>
               <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{department.locations?.length || 0}</p>
-              <p className="text-sm text-[hsl(var(--muted-foreground))]">Locations</p>
+              <p className="text-sm text-[hsl(var(--muted-foreground))]">{t('departments.locations')}</p>
             </div>
           </div>
         </div>
@@ -137,7 +139,7 @@ export const DepartmentDetailPage: React.FC = () => {
             </div>
             <div>
               <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{department.classifications?.length || 0}</p>
-              <p className="text-sm text-[hsl(var(--muted-foreground))]">Classifications</p>
+              <p className="text-sm text-[hsl(var(--muted-foreground))]">{t('departments.classifications')}</p>
             </div>
           </div>
         </div>
@@ -148,7 +150,7 @@ export const DepartmentDetailPage: React.FC = () => {
             </div>
             <div>
               <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{department.roles?.length || 0}</p>
-              <p className="text-sm text-[hsl(var(--muted-foreground))]">Roles</p>
+              <p className="text-sm text-[hsl(var(--muted-foreground))]">{t('departments.roles')}</p>
             </div>
           </div>
         </div>
@@ -159,7 +161,7 @@ export const DepartmentDetailPage: React.FC = () => {
             </div>
             <div>
               <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{departmentUsers.length}</p>
-              <p className="text-sm text-[hsl(var(--muted-foreground))]">Users</p>
+              <p className="text-sm text-[hsl(var(--muted-foreground))]">{t('departments.users')}</p>
             </div>
           </div>
         </div>
@@ -175,8 +177,8 @@ export const DepartmentDetailPage: React.FC = () => {
                 <MapPin className="w-4 h-4 text-[hsl(var(--primary))]" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-[hsl(var(--foreground))]">Locations</h3>
-                <p className="text-xs text-[hsl(var(--muted-foreground))]">{department.locations?.length || 0} assigned</p>
+                <h3 className="text-base font-semibold text-[hsl(var(--foreground))]">{t('departments.locations')}</h3>
+                <p className="text-xs text-[hsl(var(--muted-foreground))]">{department.locations?.length || 0} {t('departments.assigned')}</p>
               </div>
             </div>
           </div>
@@ -207,7 +209,7 @@ export const DepartmentDetailPage: React.FC = () => {
                           : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
                       )}
                     >
-                      {location.is_active ? 'Active' : 'Inactive'}
+                      {location.is_active ? t('departments.active') : t('departments.inactive')}
                     </span>
                   </div>
                 ))}
@@ -215,7 +217,7 @@ export const DepartmentDetailPage: React.FC = () => {
             ) : (
               <div className="text-center py-8">
                 <MapPin className="w-10 h-10 text-[hsl(var(--muted-foreground)/0.5)] mx-auto mb-2" />
-                <p className="text-sm text-[hsl(var(--muted-foreground))]">No locations assigned</p>
+                <p className="text-sm text-[hsl(var(--muted-foreground))]">{t('departments.noLocationsAssigned')}</p>
               </div>
             )}
           </div>
@@ -229,8 +231,8 @@ export const DepartmentDetailPage: React.FC = () => {
                 <FolderTree className="w-4 h-4 text-[hsl(var(--accent))]" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-[hsl(var(--foreground))]">Classifications</h3>
-                <p className="text-xs text-[hsl(var(--muted-foreground))]">{department.classifications?.length || 0} assigned</p>
+                <h3 className="text-base font-semibold text-[hsl(var(--foreground))]">{t('departments.classifications')}</h3>
+                <p className="text-xs text-[hsl(var(--muted-foreground))]">{department.classifications?.length || 0} {t('departments.assigned')}</p>
               </div>
             </div>
           </div>
@@ -263,7 +265,7 @@ export const DepartmentDetailPage: React.FC = () => {
                           : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
                       )}
                     >
-                      {classification.is_active ? 'Active' : 'Inactive'}
+                      {classification.is_active ? t('departments.active') : t('departments.inactive')}
                     </span>
                   </div>
                 ))}
@@ -271,7 +273,7 @@ export const DepartmentDetailPage: React.FC = () => {
             ) : (
               <div className="text-center py-8">
                 <FolderTree className="w-10 h-10 text-[hsl(var(--muted-foreground)/0.5)] mx-auto mb-2" />
-                <p className="text-sm text-[hsl(var(--muted-foreground))]">No classifications assigned</p>
+                <p className="text-sm text-[hsl(var(--muted-foreground))]">{t('departments.noClassificationsAssigned')}</p>
               </div>
             )}
           </div>
@@ -285,8 +287,8 @@ export const DepartmentDetailPage: React.FC = () => {
                 <Shield className="w-4 h-4 text-[hsl(var(--success))]" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-[hsl(var(--foreground))]">Roles</h3>
-                <p className="text-xs text-[hsl(var(--muted-foreground))]">{department.roles?.length || 0} assigned</p>
+                <h3 className="text-base font-semibold text-[hsl(var(--foreground))]">{t('departments.roles')}</h3>
+                <p className="text-xs text-[hsl(var(--muted-foreground))]">{department.roles?.length || 0} {t('departments.assigned')}</p>
               </div>
             </div>
           </div>
@@ -309,7 +311,7 @@ export const DepartmentDetailPage: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="px-2 py-0.5 text-xs font-medium bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] rounded-md">
-                        {role.permissions?.length || 0} permissions
+                        {role.permissions?.length || 0} {t('departments.permissions')}
                       </span>
                       <span
                         className={cn(
@@ -319,7 +321,7 @@ export const DepartmentDetailPage: React.FC = () => {
                             : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
                         )}
                       >
-                        {role.is_active ? 'Active' : 'Inactive'}
+                        {role.is_active ? t('departments.active') : t('departments.inactive')}
                       </span>
                     </div>
                   </div>
@@ -328,7 +330,7 @@ export const DepartmentDetailPage: React.FC = () => {
             ) : (
               <div className="text-center py-8">
                 <Shield className="w-10 h-10 text-[hsl(var(--muted-foreground)/0.5)] mx-auto mb-2" />
-                <p className="text-sm text-[hsl(var(--muted-foreground))]">No roles assigned</p>
+                <p className="text-sm text-[hsl(var(--muted-foreground))]">{t('departments.noRolesAssigned')}</p>
               </div>
             )}
           </div>
@@ -343,15 +345,15 @@ export const DepartmentDetailPage: React.FC = () => {
                   <Users className="w-4 h-4 text-[hsl(var(--warning))]" />
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-[hsl(var(--foreground))]">Users</h3>
-                  <p className="text-xs text-[hsl(var(--muted-foreground))]">{departmentUsers.length} members</p>
+                  <h3 className="text-base font-semibold text-[hsl(var(--foreground))]">{t('departments.users')}</h3>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))]">{departmentUsers.length} {t('departments.members')}</p>
                 </div>
               </div>
               <button
                 onClick={() => navigate('/admin/users')}
                 className="flex items-center gap-1 text-xs text-[hsl(var(--primary))] hover:underline"
               >
-                View All <ExternalLink className="w-3 h-3" />
+                {t('departments.viewAll')} <ExternalLink className="w-3 h-3" />
               </button>
             </div>
           </div>
@@ -359,7 +361,7 @@ export const DepartmentDetailPage: React.FC = () => {
             {isLoadingUsers ? (
               <div className="text-center py-8">
                 <div className="w-8 h-8 border-2 border-[hsl(var(--primary))] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                <p className="text-sm text-[hsl(var(--muted-foreground))]">Loading users...</p>
+                <p className="text-sm text-[hsl(var(--muted-foreground))]">{t('departments.loadingUsers')}</p>
               </div>
             ) : departmentUsers.length > 0 ? (
               <div className="space-y-2">
@@ -401,9 +403,9 @@ export const DepartmentDetailPage: React.FC = () => {
                       )}
                     >
                       {user.is_active ? (
-                        <><CheckCircle2 className="w-3 h-3" /> Active</>
+                        <><CheckCircle2 className="w-3 h-3" /> {t('departments.active')}</>
                       ) : (
-                        <><XCircle className="w-3 h-3" /> Inactive</>
+                        <><XCircle className="w-3 h-3" /> {t('departments.inactive')}</>
                       )}
                     </span>
                   </div>
@@ -413,14 +415,14 @@ export const DepartmentDetailPage: React.FC = () => {
                     onClick={() => navigate('/admin/users')}
                     className="w-full text-center py-2 text-sm text-[hsl(var(--primary))] hover:underline"
                   >
-                    +{departmentUsers.length - 5} more users
+                    {t('departments.moreUsers', { count: departmentUsers.length - 5 })}
                   </button>
                 )}
               </div>
             ) : (
               <div className="text-center py-8">
                 <Users className="w-10 h-10 text-[hsl(var(--muted-foreground)/0.5)] mx-auto mb-2" />
-                <p className="text-sm text-[hsl(var(--muted-foreground))]">No users in this department</p>
+                <p className="text-sm text-[hsl(var(--muted-foreground))]">{t('departments.noUsersInDepartment')}</p>
               </div>
             )}
           </div>

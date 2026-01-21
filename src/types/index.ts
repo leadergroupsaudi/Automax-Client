@@ -1,6 +1,6 @@
 // Record Type definitions
-export type RecordType = 'incident' | 'request' | 'complaint';
-export type ClassificationType = 'incident' | 'request' | 'complaint' | 'both' | 'all';
+export type RecordType = 'incident' | 'request' | 'complaint' | 'query';
+export type ClassificationType = 'incident' | 'request' | 'complaint' | 'query' | 'both' | 'all';
 
 // Base types
 export interface User {
@@ -707,6 +707,8 @@ export interface Incident {
   record_type: RecordType;
   source_incident_id?: string;
   source_incident?: Incident;
+  converted_request_id?: string;
+  converted_request?: Incident;
   classification?: Classification;
   workflow?: Workflow;
   current_state?: WorkflowState;
@@ -991,6 +993,19 @@ export interface CreateComplaintRequest {
   source_incident_id?: string;
   channel?: string;
   reporter_id?: string; // Link to user who reported/created the complaint
+  department_id?: string;
+  assignee_id?: string;
+  location_id?: string;
+  lookup_value_ids?: string[];
+}
+
+export interface CreateQueryRequest {
+  title: string;
+  description?: string;
+  classification_id: string;
+  workflow_id: string;
+  source_incident_id?: string;
+  channel?: string;
   department_id?: string;
   assignee_id?: string;
   location_id?: string;

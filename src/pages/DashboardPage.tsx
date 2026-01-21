@@ -11,6 +11,7 @@ import {
   Sparkles,
   FileText,
   MessageSquareWarning,
+  HelpCircle,
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
@@ -53,6 +54,15 @@ export const DashboardPage: React.FC = () => {
       icon: MessageSquareWarning,
       gradient: 'from-amber-500 to-orange-500',
       shadowColor: 'shadow-amber-500/20',
+    },
+    {
+      title: t('dashboard.queryManagement', 'Query Management'),
+      subtitle: t('dashboard.citizenQueries', 'Citizen Queries'),
+      description: t('dashboard.manageQueries', 'Handle and respond to queries'),
+      href: '/queries',
+      icon: HelpCircle,
+      gradient: 'from-violet-500 to-purple-500',
+      shadowColor: 'shadow-violet-500/20',
     },
     {
       title: t('dashboard.workflowManagement'),

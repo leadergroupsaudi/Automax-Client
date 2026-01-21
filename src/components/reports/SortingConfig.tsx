@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import type { ReportSort, ReportFieldDefinition } from '../../types';
 
@@ -13,6 +14,7 @@ export const SortingConfig: React.FC<SortingConfigProps> = ({
   sorting,
   onChange,
 }) => {
+  const { t } = useTranslation();
   const sortableFields = fields.filter((f) => f.sortable);
 
   const addSort = () => {
@@ -53,7 +55,7 @@ export const SortingConfig: React.FC<SortingConfigProps> = ({
   if (sortableFields.length === 0) {
     return (
       <div className="text-sm text-[hsl(var(--muted-foreground))] text-center py-4">
-        No sortable fields available
+        {t('reports.sortingConfig.noSortableFields')}
       </div>
     );
   }
@@ -63,7 +65,7 @@ export const SortingConfig: React.FC<SortingConfigProps> = ({
       {/* Sorting list */}
       {sorting.length === 0 ? (
         <div className="text-sm text-[hsl(var(--muted-foreground))] text-center py-4 border border-dashed border-[hsl(var(--border))] rounded-lg">
-          No sorting configured. Results will use default order.
+          {t('reports.sortingConfig.noSortingConfigured')}
         </div>
       ) : (
         <div className="flex flex-wrap gap-2">
@@ -98,17 +100,17 @@ export const SortingConfig: React.FC<SortingConfigProps> = ({
                   type="button"
                   onClick={() => toggleDirection(index)}
                   className="flex items-center gap-1 px-2 py-1 text-sm font-medium hover:bg-[hsl(var(--background))] rounded transition-colors"
-                  title={sort.direction === 'asc' ? 'Ascending' : 'Descending'}
+                  title={sort.direction === 'asc' ? t('reports.sortingConfig.ascending') : t('reports.sortingConfig.descending')}
                 >
                   {sort.direction === 'asc' ? (
                     <>
                       <ArrowUp className="w-3 h-3" />
-                      <span className="text-xs">ASC</span>
+                      <span className="text-xs">{t('reports.sortingConfig.asc')}</span>
                     </>
                   ) : (
                     <>
                       <ArrowDown className="w-3 h-3" />
-                      <span className="text-xs">DESC</span>
+                      <span className="text-xs">{t('reports.sortingConfig.desc')}</span>
                     </>
                   )}
                 </button>
@@ -135,7 +137,7 @@ export const SortingConfig: React.FC<SortingConfigProps> = ({
           className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors"
         >
           <Plus className="w-4 h-4" />
-          Add Sort
+          {t('reports.sortingConfig.addSort')}
         </button>
       )}
     </div>

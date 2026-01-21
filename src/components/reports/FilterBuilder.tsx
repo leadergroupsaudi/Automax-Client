@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ReportFilter, ReportFieldDefinition, FilterOperator, FilterValue } from '../../types';
@@ -15,13 +16,14 @@ interface FilterRowProps {
   fields: ReportFieldDefinition[];
   onChange: (filter: ReportFilter) => void;
   onRemove: () => void;
+  t: (key: string) => string;
 }
 
 // Generate a unique ID for new filters
 const generateFilterId = () => `filter_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
 // Filter Row Component
-const FilterRow: React.FC<FilterRowProps> = ({ filter, fields, onChange, onRemove }) => {
+const FilterRow: React.FC<FilterRowProps> = ({ filter, fields, onChange, onRemove, t }) => {
   const selectedField = fields.find((f) => f.field === filter.field);
   const fieldType = selectedField?.type || 'string';
   const operators = getOperatorsForFieldType(fieldType);
@@ -65,9 +67,9 @@ const FilterRow: React.FC<FilterRowProps> = ({ filter, fields, onChange, onRemov
           onChange={(e) => handleValueChange(e.target.value === 'true')}
           className="flex-1 px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)]"
         >
-          <option value="">Select...</option>
-          <option value="true">Yes</option>
-          <option value="false">No</option>
+          <option value="">{t('reports.filterBuilder.selectValue')}</option>
+          <option value="true">{t('reports.filterBuilder.yes')}</option>
+          <option value="false">{t('reports.filterBuilder.no')}</option>
         </select>
       );
     }
@@ -117,7 +119,7 @@ const FilterRow: React.FC<FilterRowProps> = ({ filter, fields, onChange, onRemov
           }}
           className="flex-1 px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)]"
         >
-          <option value="">Select...</option>
+          <option value="">{t('reports.filterBuilder.selectValue')}</option>
           {selectedField.options.map((opt) => (
             <option key={String(opt.value)} value={String(opt.value)}>
               {opt.label}
@@ -137,15 +139,15 @@ const FilterRow: React.FC<FilterRowProps> = ({ filter, fields, onChange, onRemov
             type={inputType}
             value={rangeValue?.from || ''}
             onChange={(e) => handleValueChange({ from: e.target.value, to: rangeValue?.to || '' })}
-            placeholder="From"
+            placeholder={t('reports.filterBuilder.from')}
             className="flex-1 px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)]"
           />
-          <span className="text-sm text-[hsl(var(--muted-foreground))]">to</span>
+          <span className="text-sm text-[hsl(var(--muted-foreground))]">{t('reports.filterBuilder.to')}</span>
           <input
             type={inputType}
             value={rangeValue?.to || ''}
             onChange={(e) => handleValueChange({ from: rangeValue?.from || '', to: e.target.value })}
-            placeholder="To"
+            placeholder={t('reports.filterBuilder.to')}
             className="flex-1 px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)]"
           />
         </div>
@@ -172,7 +174,7 @@ const FilterRow: React.FC<FilterRowProps> = ({ filter, fields, onChange, onRemov
           type="number"
           value={String(filter.value ?? '')}
           onChange={(e) => handleValueChange(e.target.value ? Number(e.target.value) : null)}
-          placeholder="Enter value..."
+          placeholder={t('reports.filterBuilder.enterValue')}
           className="flex-1 px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)]"
         />
       );
@@ -184,7 +186,7 @@ const FilterRow: React.FC<FilterRowProps> = ({ filter, fields, onChange, onRemov
         type="text"
         value={String(filter.value ?? '')}
         onChange={(e) => handleValueChange(e.target.value)}
-        placeholder="Enter value..."
+        placeholder={t('reports.filterBuilder.enterValue')}
         className="flex-1 px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)]"
       />
     );
@@ -198,7 +200,7 @@ const FilterRow: React.FC<FilterRowProps> = ({ filter, fields, onChange, onRemov
         onChange={(e) => handleFieldChange(e.target.value)}
         className="w-40 px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)]"
       >
-        <option value="">Select field...</option>
+        <option value="">{t('reports.filterBuilder.selectField')}</option>
         {fields
           .filter((f) => f.filterable)
           .map((f) => (
@@ -242,6 +244,8 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
   filters,
   onChange,
 }) => {
+  const { t } = useTranslation();
+
   const addFilter = () => {
     const firstFilterableField = fields.find((f) => f.filterable);
     if (!firstFilterableField) return;
@@ -275,7 +279,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
   if (filterableFields.length === 0) {
     return (
       <div className="text-sm text-[hsl(var(--muted-foreground))] text-center py-4">
-        No filterable fields available
+        {t('reports.filterBuilder.noFilterableFields')}
       </div>
     );
   }
@@ -285,7 +289,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
       {/* Filters list */}
       {filters.length === 0 ? (
         <div className="text-sm text-[hsl(var(--muted-foreground))] text-center py-4 border border-dashed border-[hsl(var(--border))] rounded-lg">
-          No filters added. Click "Add Filter" to add one.
+          {t('reports.filterBuilder.noFiltersAdded')}
         </div>
       ) : (
         <div className="space-y-2">
@@ -296,6 +300,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
               fields={filterableFields}
               onChange={(f) => updateFilter(index, f)}
               onRemove={() => removeFilter(index)}
+              t={t}
             />
           ))}
         </div>
@@ -309,7 +314,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
           className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors"
         >
           <Plus className="w-4 h-4" />
-          Add Filter
+          {t('reports.filterBuilder.addFilter')}
         </button>
         {filters.length > 0 && (
           <button
@@ -317,7 +322,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
             onClick={clearAllFilters}
             className="px-3 py-2 text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] rounded-lg transition-colors"
           >
-            Clear All
+            {t('reports.filterBuilder.clearAll')}
           </button>
         )}
       </div>

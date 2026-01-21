@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   AlertCircle,
   FileText,
@@ -24,16 +25,18 @@ const iconMap: Record<string, React.ElementType> = {
   GitBranch,
 };
 
-const dataSources: { key: ReportDataSource; label: string; description: string; icon: string }[] = [
-  { key: 'incidents', label: 'Incidents', description: 'Incident tracking data', icon: 'AlertCircle' },
-  { key: 'action_logs', label: 'Action Logs', description: 'Audit trail & activity', icon: 'FileText' },
-  { key: 'users', label: 'Users', description: 'User accounts', icon: 'Users' },
-  { key: 'departments', label: 'Departments', description: 'Organization structure', icon: 'Building2' },
-  { key: 'locations', label: 'Locations', description: 'Location hierarchy', icon: 'MapPin' },
-  { key: 'workflows', label: 'Workflows', description: 'Workflow definitions', icon: 'GitBranch' },
+const dataSources: { key: ReportDataSource; labelKey: string; descKey: string; icon: string }[] = [
+  { key: 'incidents', labelKey: 'reports.dataSources.incidents', descKey: 'reports.dataSources.incidentsDesc', icon: 'AlertCircle' },
+  { key: 'action_logs', labelKey: 'reports.dataSources.actionLogs', descKey: 'reports.dataSources.actionLogsDesc', icon: 'FileText' },
+  { key: 'users', labelKey: 'reports.dataSources.users', descKey: 'reports.dataSources.usersDesc', icon: 'Users' },
+  { key: 'departments', labelKey: 'reports.dataSources.departments', descKey: 'reports.dataSources.departmentsDesc', icon: 'Building2' },
+  { key: 'locations', labelKey: 'reports.dataSources.locations', descKey: 'reports.dataSources.locationsDesc', icon: 'MapPin' },
+  { key: 'workflows', labelKey: 'reports.dataSources.workflows', descKey: 'reports.dataSources.workflowsDesc', icon: 'GitBranch' },
 ];
 
 export const DataSourceSelector: React.FC<DataSourceSelectorProps> = ({ value, onChange }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
       {dataSources.map((source) => {
@@ -65,10 +68,10 @@ export const DataSourceSelector: React.FC<DataSourceSelectorProps> = ({ value, o
                 "text-sm font-medium",
                 isSelected ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--foreground))]"
               )}>
-                {source.label}
+                {t(source.labelKey)}
               </p>
               <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                {source.description}
+                {t(source.descKey)}
               </p>
             </div>
           </button>

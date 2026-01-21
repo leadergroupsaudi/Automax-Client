@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import type { ReportFieldDefinition } from '../../types';
 
@@ -25,6 +26,8 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
   totalPages,
   onPageChange,
 }) => {
+  const { t } = useTranslation();
+
   // Get field definitions for selected columns
   const columnDefs = columns
     .map((col) => fields.find((f) => f.field === col))
@@ -81,7 +84,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
   if (data.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-[hsl(var(--muted-foreground))]">No data found matching your criteria.</p>
+        <p className="text-[hsl(var(--muted-foreground))]">{t('reports.reportPreview.noDataFound')}</p>
       </div>
     );
   }
@@ -94,9 +97,9 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
       {/* Results info */}
       <div className="flex items-center justify-between text-sm text-[hsl(var(--muted-foreground))]">
         <span>
-          Showing {startItem} - {endItem} of {totalItems.toLocaleString()} results
+          {t('reports.reportPreview.showing')} {startItem} - {endItem} {t('reports.reportPreview.of')} {totalItems.toLocaleString()} {t('reports.reportPreview.results')}
         </span>
-        <span>{columns.length} columns</span>
+        <span>{columns.length} {t('reports.reportPreview.columns')}</span>
       </div>
 
       {/* Table */}
@@ -143,7 +146,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-[hsl(var(--muted-foreground))]">
-            Page {page} of {totalPages}
+            {t('reports.reportPreview.page')} {page} {t('reports.reportPreview.of')} {totalPages}
           </div>
           <div className="flex items-center gap-2">
             <button

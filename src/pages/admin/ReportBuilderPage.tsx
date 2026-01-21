@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   FileBarChart,
   ChevronDown,
@@ -82,6 +83,7 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
 };
 
 export const ReportBuilderPage: React.FC = () => {
+  const { t } = useTranslation();
   const { templateId } = useParams<{ templateId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -338,10 +340,10 @@ export const ReportBuilderPage: React.FC = () => {
             <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-500">
               <FileBarChart className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">Report Builder</h1>
+            <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">{t('reports.reportBuilder')}</h1>
           </div>
-          <p className="text-[hsl(var(--muted-foreground))] mt-1 ml-12">
-            {loadedTemplate ? `Editing: ${loadedTemplate.name}` : 'Create custom reports from your data'}
+          <p className="text-[hsl(var(--muted-foreground))] mt-1 ltr:ml-12 rtl:mr-12">
+            {loadedTemplate ? `${t('reports.editing')}: ${loadedTemplate.name}` : t('reports.reportBuilderSubtitle')}
           </p>
         </div>
 
@@ -350,8 +352,8 @@ export const ReportBuilderPage: React.FC = () => {
           {templates.length > 0 && (
             <div className="relative group">
               <Button variant="outline" leftIcon={<FolderOpen className="w-4 h-4" />}>
-                Load Template
-                <ChevronDown className="w-4 h-4 ml-1" />
+                {t('reports.loadTemplate')}
+                <ChevronDown className="w-4 h-4 ltr:ml-1 rtl:mr-1" />
               </Button>
               <div className="absolute right-0 mt-1 w-64 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
                 <div className="py-1 max-h-64 overflow-y-auto">
@@ -375,7 +377,7 @@ export const ReportBuilderPage: React.FC = () => {
           )}
 
           <Button variant="outline" onClick={resetForm} leftIcon={<RotateCcw className="w-4 h-4" />}>
-            Reset
+            {t('reports.reset')}
           </Button>
         </div>
       </div>
@@ -384,12 +386,12 @@ export const ReportBuilderPage: React.FC = () => {
       <div className="space-y-4">
         {/* Data Source */}
         <CollapsibleSection
-          title="Data Source"
+          title={t('reports.dataSource')}
           icon={<div className="w-2 h-2 rounded-full bg-blue-500" />}
           badge={
             dataSourceDef ? (
-              <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">
-                {dataSourceDef.label}
+              <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-full">
+                {t(`reports.dataSources.${dataSource}`)}
               </span>
             ) : null
           }
@@ -400,11 +402,11 @@ export const ReportBuilderPage: React.FC = () => {
         {/* Columns */}
         {dataSource && (
           <CollapsibleSection
-            title="Columns"
+            title={t('reports.columns')}
             icon={<div className="w-2 h-2 rounded-full bg-green-500" />}
             badge={
               <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                {selectedColumns.length} selected
+                {selectedColumns.length} {t('reports.selected')}
               </span>
             }
           >
@@ -419,13 +421,13 @@ export const ReportBuilderPage: React.FC = () => {
         {/* Filters */}
         {dataSource && (
           <CollapsibleSection
-            title="Filters"
+            title={t('reports.filters')}
             icon={<div className="w-2 h-2 rounded-full bg-amber-500" />}
             defaultExpanded={filters.length > 0}
             badge={
               filters.length > 0 ? (
-                <span className="px-2 py-1 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">
-                  {filters.length} active
+                <span className="px-2 py-1 text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 rounded-full">
+                  {filters.length} {t('reports.active')}
                 </span>
               ) : null
             }
@@ -437,13 +439,13 @@ export const ReportBuilderPage: React.FC = () => {
         {/* Sorting */}
         {dataSource && (
           <CollapsibleSection
-            title="Sorting"
+            title={t('reports.sorting')}
             icon={<div className="w-2 h-2 rounded-full bg-purple-500" />}
             defaultExpanded={sorting.length > 0}
             badge={
               sorting.length > 0 ? (
                 <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                  {sorting.length} level(s)
+                  {sorting.length} {t('reports.levels')}
                 </span>
               ) : null
             }
@@ -462,7 +464,7 @@ export const ReportBuilderPage: React.FC = () => {
             isLoading={isPreviewLoading}
             leftIcon={!isPreviewLoading ? <Play className="w-4 h-4" /> : undefined}
           >
-            Generate Report
+            {t('reports.generateReport')}
           </Button>
           <Button
             variant="outline"
@@ -470,7 +472,7 @@ export const ReportBuilderPage: React.FC = () => {
             disabled={!canGenerate}
             leftIcon={<Save className="w-4 h-4" />}
           >
-            {loadedTemplate ? 'Update Template' : 'Save Template'}
+            {loadedTemplate ? t('reports.updateTemplate') : t('reports.saveTemplate')}
           </Button>
           <Button
             variant="outline"
@@ -478,7 +480,7 @@ export const ReportBuilderPage: React.FC = () => {
             disabled={!canExport}
             leftIcon={<Download className="w-4 h-4" />}
           >
-            Export
+            {t('reports.export')}
           </Button>
         </div>
       )}
@@ -487,7 +489,7 @@ export const ReportBuilderPage: React.FC = () => {
       {dataSource && (previewData.length > 0 || isPreviewLoading) && (
         <div className="border border-[hsl(var(--border))] rounded-xl overflow-hidden">
           <div className="px-4 py-3 bg-[hsl(var(--muted)/0.3)] border-b border-[hsl(var(--border))]">
-            <h2 className="font-semibold text-[hsl(var(--foreground))]">Preview Results</h2>
+            <h2 className="font-semibold text-[hsl(var(--foreground))]">{t('reports.previewResults')}</h2>
           </div>
           <div className="p-4">
             <ReportPreview

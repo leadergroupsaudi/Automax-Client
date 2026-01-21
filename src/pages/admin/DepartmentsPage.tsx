@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
   Plus,
   Edit2,
@@ -58,9 +59,10 @@ interface TreeNodeProps {
   onAdd: (parentId: string, parentName: string) => void;
   onEdit: (dept: Department) => void;
   onDelete: (id: string) => void;
+  t: (key: string) => string;
 }
 
-const TreeNode: React.FC<TreeNodeProps> = ({ department, level, onView, onAdd, onEdit, onDelete }) => {
+const TreeNode: React.FC<TreeNodeProps> = ({ department, level, onView, onAdd, onEdit, onDelete, t }) => {
   const [expanded, setExpanded] = useState(true);
   const hasChildren = department.children && department.children.length > 0;
   const gradient = levelGradients[level % levelGradients.length];
@@ -109,34 +111,34 @@ const TreeNode: React.FC<TreeNodeProps> = ({ department, level, onView, onAdd, o
                 : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
             )}
           >
-            {department.is_active ? 'Active' : 'Inactive'}
+            {department.is_active ? t('departments.active') : t('departments.inactive')}
           </span>
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => onAdd(department.id, department.name)}
               className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.1)] rounded-lg transition-colors"
-              title="Add Child Department"
+              title={t('departments.addChildDepartment')}
             >
               <Plus className="w-4 h-4" />
             </button>
             <button
               onClick={() => onView(department.id)}
               className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors"
-              title="View Details"
+              title={t('departments.viewDetails')}
             >
               <Eye className="w-4 h-4" />
             </button>
             <button
               onClick={() => onEdit(department)}
               className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors"
-              title="Edit"
+              title={t('common.edit')}
             >
               <Edit2 className="w-4 h-4" />
             </button>
             <button
               onClick={() => onDelete(department.id)}
               className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] rounded-lg transition-colors"
-              title="Delete"
+              title={t('common.delete')}
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -154,6 +156,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ department, level, onView, onAdd, o
               onAdd={onAdd}
               onEdit={onEdit}
               onDelete={onDelete}
+              t={t}
             />
           ))}
         </div>
@@ -163,6 +166,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ department, level, onView, onAdd, o
 };
 
 export const DepartmentsPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -316,9 +320,9 @@ export const DepartmentsPage: React.FC = () => {
             <div className="p-2 rounded-lg bg-[hsl(var(--primary)/0.1)]">
               <Building2 className="w-5 h-5 text-[hsl(var(--primary))]" />
             </div>
-            <h2 className="text-2xl font-bold text-[hsl(var(--foreground))]">Departments</h2>
+            <h2 className="text-2xl font-bold text-[hsl(var(--foreground))]">{t('departments.title')}</h2>
           </div>
-          <p className="text-[hsl(var(--muted-foreground))] mt-1 ml-12">Manage organizational departments and hierarchy</p>
+          <p className="text-[hsl(var(--muted-foreground))] mt-1 ml-12">{t('departments.subtitle')}</p>
         </div>
       </div>
 
@@ -331,9 +335,9 @@ export const DepartmentsPage: React.FC = () => {
               <Building2 className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">Department Hierarchy</h3>
+              <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">{t('departments.hierarchy')}</h3>
               <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                {treeData?.data?.length || 0} root departments
+                {treeData?.data?.length || 0} {t('departments.rootDepartments')}
               </p>
             </div>
           </div>
@@ -342,7 +346,7 @@ export const DepartmentsPage: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg hover:bg-[hsl(var(--primary)/0.9)] transition-colors text-sm font-medium shadow-md shadow-[hsl(var(--primary)/0.25)]"
           >
             <Plus className="w-4 h-4" />
-            Add Root Department
+            {t('departments.addRootDepartment')}
           </button>
         </div>
 
@@ -350,17 +354,17 @@ export const DepartmentsPage: React.FC = () => {
         {isLoading ? (
           <div className="p-12 text-center">
             <div className="w-10 h-10 border-2 border-[hsl(var(--primary))] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-[hsl(var(--muted-foreground))]">Loading departments...</p>
+            <p className="text-[hsl(var(--muted-foreground))]">{t('departments.loading')}</p>
           </div>
         ) : treeData?.data?.length === 0 ? (
           <div className="p-12 text-center">
             <div className="w-16 h-16 bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent))] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[hsl(var(--primary)/0.25)]">
               <Building2 className="w-8 h-8 text-white" />
             </div>
-            <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">No departments yet</h3>
-            <p className="text-[hsl(var(--muted-foreground))] mb-6">Create your first department to organize your team</p>
+            <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">{t('departments.noDepartmentsYet')}</h3>
+            <p className="text-[hsl(var(--muted-foreground))] mb-6">{t('departments.createFirstDepartment')}</p>
             <Button onClick={() => openCreateModal()} leftIcon={<Plus className="w-4 h-4" />}>
-              Create Department
+              {t('departments.createDepartment')}
             </Button>
           </div>
         ) : (
@@ -374,6 +378,7 @@ export const DepartmentsPage: React.FC = () => {
                 onAdd={openCreateModal}
                 onEdit={openEditModal}
                 onDelete={setDeleteConfirm}
+                t={t}
               />
             ))}
           </div>
@@ -390,22 +395,22 @@ export const DepartmentsPage: React.FC = () => {
                   <AlertTriangle className="w-6 h-6 text-[hsl(var(--destructive))]" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">Delete Department</h3>
+                  <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">{t('departments.deleteConfirmTitle')}</h3>
                   <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
-                    Are you sure you want to delete this department? All child departments will also be deleted.
+                    {t('departments.deleteConfirmMessage')}
                   </p>
                 </div>
               </div>
               <div className="flex justify-end gap-3">
                 <Button variant="ghost" onClick={() => setDeleteConfirm(null)}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   variant="destructive"
                   onClick={() => deleteMutation.mutate(deleteConfirm)}
                   isLoading={deleteMutation.isPending}
                 >
-                  {deleteMutation.isPending ? 'Deleting...' : 'Delete Department'}
+                  {deleteMutation.isPending ? t('departments.deleting') : t('departments.deleteDepartment')}
                 </Button>
               </div>
             </div>
@@ -425,14 +430,14 @@ export const DepartmentsPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">
-                    {editingDepartment ? 'Edit Department' : 'Create Department'}
+                    {editingDepartment ? t('departments.editDepartment') : t('departments.createDepartment')}
                   </h3>
                   <p className="text-sm text-[hsl(var(--muted-foreground))]">
                     {editingDepartment
-                      ? 'Update department details'
+                      ? t('departments.updateDetails')
                       : formData.parent_name
-                        ? `Adding under "${formData.parent_name}"`
-                        : 'Add a new root department'
+                        ? `${t('departments.addingUnder')} "${formData.parent_name}"`
+                        : t('departments.addNewRoot')
                     }
                   </p>
                 </div>
@@ -453,7 +458,7 @@ export const DepartmentsPage: React.FC = () => {
                   <div className="flex items-center gap-3 p-3 bg-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.2)] rounded-xl">
                     <Building2 className="w-5 h-5 text-[hsl(var(--primary))]" />
                     <div>
-                      <p className="text-xs text-[hsl(var(--muted-foreground))]">Parent Department</p>
+                      <p className="text-xs text-[hsl(var(--muted-foreground))]">{t('departments.parentDepartment')}</p>
                       <p className="text-sm font-medium text-[hsl(var(--foreground))]">{formData.parent_name}</p>
                     </div>
                   </div>
@@ -461,10 +466,10 @@ export const DepartmentsPage: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Name</label>
+                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('departments.name')}</label>
                     <input
                       type="text"
-                      placeholder="e.g., Engineering"
+                      placeholder={t('departments.namePlaceholder')}
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
@@ -472,10 +477,10 @@ export const DepartmentsPage: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Code</label>
+                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('departments.code')}</label>
                     <input
                       type="text"
-                      placeholder="e.g., ENG"
+                      placeholder={t('departments.codePlaceholder')}
                       value={formData.code}
                       onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                       className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] font-mono focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
@@ -487,13 +492,13 @@ export const DepartmentsPage: React.FC = () => {
                 {/* Only show parent selector when editing */}
                 {editingDepartment && (
                   <div>
-                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Parent Department</label>
+                    <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('departments.parentDepartment')}</label>
                     <select
                       value={formData.parent_id}
                       onChange={(e) => setFormData({ ...formData, parent_id: e.target.value })}
                       className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
                     >
-                      <option value="">None (Root Level)</option>
+                      <option value="">{t('departments.noneRootLevel')}</option>
                       {departmentsList?.data
                         ?.filter((d: Department) => d.id !== editingDepartment?.id)
                         .map((dept: Department) => (
@@ -506,9 +511,9 @@ export const DepartmentsPage: React.FC = () => {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Description</label>
+                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">{t('departments.description')}</label>
                   <textarea
-                    placeholder="Describe this department..."
+                    placeholder={t('departments.descriptionPlaceholder')}
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={2}
@@ -520,15 +525,15 @@ export const DepartmentsPage: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <MapPin className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">Locations</label>
+                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">{t('departments.locations')}</label>
                     <span className="px-2 py-0.5 text-xs font-medium bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] rounded-md">
-                      {formData.location_ids.length} selected
+                      {formData.location_ids.length} {t('common.selected').toLowerCase()}
                     </span>
                   </div>
                   <div className="border border-[hsl(var(--border))] rounded-xl max-h-32 overflow-y-auto p-3">
                     <div className="flex flex-wrap gap-2">
                       {locationsData?.data?.length === 0 ? (
-                        <p className="text-sm text-[hsl(var(--muted-foreground))]">No locations available</p>
+                        <p className="text-sm text-[hsl(var(--muted-foreground))]">{t('departments.noLocationsAvailable')}</p>
                       ) : (
                         locationsData?.data?.map((loc: Location) => (
                           <button
@@ -554,15 +559,15 @@ export const DepartmentsPage: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <FolderTree className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">Classifications</label>
+                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">{t('departments.classifications')}</label>
                     <span className="px-2 py-0.5 text-xs font-medium bg-[hsl(var(--accent)/0.1)] text-[hsl(var(--accent))] rounded-md">
-                      {formData.classification_ids.length} selected
+                      {formData.classification_ids.length} {t('common.selected').toLowerCase()}
                     </span>
                   </div>
                   <div className="border border-[hsl(var(--border))] rounded-xl max-h-32 overflow-y-auto p-3">
                     <div className="flex flex-wrap gap-2">
                       {classificationsData?.data?.length === 0 ? (
-                        <p className="text-sm text-[hsl(var(--muted-foreground))]">No classifications available</p>
+                        <p className="text-sm text-[hsl(var(--muted-foreground))]">{t('departments.noClassificationsAvailable')}</p>
                       ) : (
                         classificationsData?.data?.map((cls: Classification) => (
                           <button
@@ -588,15 +593,15 @@ export const DepartmentsPage: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <Shield className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">Default Roles</label>
+                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">{t('departments.defaultRoles')}</label>
                     <span className="px-2 py-0.5 text-xs font-medium bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))] rounded-md">
-                      {formData.role_ids.length} selected
+                      {formData.role_ids.length} {t('common.selected').toLowerCase()}
                     </span>
                   </div>
                   <div className="border border-[hsl(var(--border))] rounded-xl max-h-32 overflow-y-auto p-3">
                     <div className="flex flex-wrap gap-2">
                       {rolesData?.data?.length === 0 ? (
-                        <p className="text-sm text-[hsl(var(--muted-foreground))]">No roles available</p>
+                        <p className="text-sm text-[hsl(var(--muted-foreground))]">{t('departments.noRolesAvailable')}</p>
                       ) : (
                         rolesData?.data?.map((role: Role) => (
                           <button
@@ -622,7 +627,7 @@ export const DepartmentsPage: React.FC = () => {
               {/* Modal Footer */}
               <div className="flex justify-end gap-3 px-6 py-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.5)]">
                 <Button variant="ghost" type="button" onClick={closeModal}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   type="submit"
@@ -630,10 +635,10 @@ export const DepartmentsPage: React.FC = () => {
                   leftIcon={!(createMutation.isPending || updateMutation.isPending) ? <Check className="w-4 h-4" /> : undefined}
                 >
                   {createMutation.isPending || updateMutation.isPending
-                    ? 'Saving...'
+                    ? t('departments.saving')
                     : editingDepartment
-                    ? 'Update'
-                    : 'Create'}
+                    ? t('common.update')
+                    : t('common.create')}
                 </Button>
               </div>
             </form>

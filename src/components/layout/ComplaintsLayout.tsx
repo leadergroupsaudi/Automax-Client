@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { authApi } from '../../api/auth';
-import { complaintApi } from '../../api/admin';
+import { incidentApi } from '../../api/admin';
 import { setLanguage, getCurrentLanguage, supportedLanguages } from '../../i18n';
 
 export const ComplaintsLayout: React.FC = () => {
@@ -63,15 +63,7 @@ export const ComplaintsLayout: React.FC = () => {
   // Fetch complaint stats
   const { data: statsData } = useQuery({
     queryKey: ['complaints', 'stats'],
-    queryFn: async () => {
-      const result = await complaintApi.list({ limit: 1 });
-      return {
-        data: {
-          total: result.total_items || 0,
-          by_state: {} as Record<string, number>,
-        }
-      };
-    },
+    queryFn: () => incidentApi.getStats('complaint'),
   });
 
   const handleLogout = async () => {
@@ -101,7 +93,7 @@ export const ComplaintsLayout: React.FC = () => {
             <div className="w-10 h-10 bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/30">
               <MessageSquareWarning className="w-5 h-5 text-white" />
             </div>
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border-2 border-slate-900" />
+            <div className="absolute -top-1 -end-1 w-3 h-3 bg-amber-400 rounded-full border-2 border-slate-900" />
           </div>
           {!collapsed && (
             <div>
@@ -115,9 +107,9 @@ export const ComplaintsLayout: React.FC = () => {
       {/* Collapse Button - Desktop */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className={`hidden lg:flex absolute top-[75px] ${collapsed ? 'left-[60px]' : 'left-[248px]'} z-50 w-6 h-6 bg-slate-800 border border-slate-700 rounded-full items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-all shadow-lg`}
+        className={`hidden lg:flex absolute top-[75px] ${collapsed ? 'start-[60px]' : 'start-[248px]'} z-50 w-6 h-6 bg-slate-800 border border-slate-700 rounded-full items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-all shadow-lg`}
       >
-        <ChevronLeft className={`w-3.5 h-3.5 transition-transform ${collapsed ? 'rotate-180' : ''}`} />
+        <ChevronLeft className={`w-3.5 h-3.5 transition-transform ${collapsed ? 'ltr:rotate-180 rtl:rotate-0' : 'ltr:rotate-0 rtl:rotate-180'}`} />
       </button>
 
       {/* Navigation */}
@@ -144,10 +136,10 @@ export const ComplaintsLayout: React.FC = () => {
             {({ isActive }) => (
               <>
                 {isActive && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />
+                  <div className="absolute start-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white ltr:rounded-r-full rtl:rounded-l-full" />
                 )}
                 <List size={20} className="flex-shrink-0" />
-                {!collapsed && <span className="ml-3 font-medium text-sm">{t('sidebar.allComplaints', 'All Complaints')}</span>}
+                {!collapsed && <span className="ms-3 font-medium text-sm">{t('sidebar.allComplaints', 'All Complaints')}</span>}
               </>
             )}
           </NavLink>
@@ -161,16 +153,16 @@ export const ComplaintsLayout: React.FC = () => {
               <User size={20} className="flex-shrink-0" />
               {!collapsed && (
                 <>
-                  <span className="ml-3 font-medium text-sm flex-1 text-left">{t('sidebar.myComplaints', 'My Complaints')}</span>
+                  <span className="ms-3 font-medium text-sm flex-1 text-start">{t('sidebar.myComplaints', 'My Complaints')}</span>
                   <ChevronRight
                     size={16}
-                    className={`transition-transform duration-200 ${myComplaintsOpen ? 'rotate-90' : ''}`}
+                    className={`transition-transform duration-200 ${myComplaintsOpen ? 'ltr:rotate-90 rtl:-rotate-90' : 'rtl:rotate-180'}`}
                   />
                 </>
               )}
             </button>
             {myComplaintsOpen && !collapsed && (
-              <div className="ml-4 mt-1 space-y-1 border-l border-white/10 pl-2">
+              <div className="ms-4 mt-1 space-y-1 border-s border-white/10 ps-2">
                 <NavLink
                   to="/complaints/my-assigned"
                   onClick={() => setMobileMenuOpen(false)}
@@ -183,7 +175,7 @@ export const ComplaintsLayout: React.FC = () => {
                   }
                 >
                   <UserCheck size={16} className="flex-shrink-0" />
-                  <span className="ml-2 font-medium text-sm">{t('sidebar.assignedToMe', 'Assigned to Me')}</span>
+                  <span className="ms-2 font-medium text-sm">{t('sidebar.assignedToMe', 'Assigned to Me')}</span>
                 </NavLink>
                 <NavLink
                   to="/complaints/my-created"
@@ -197,7 +189,7 @@ export const ComplaintsLayout: React.FC = () => {
                   }
                 >
                   <PenLine size={16} className="flex-shrink-0" />
-                  <span className="ml-2 font-medium text-sm">{t('sidebar.createdByMe', 'Created by Me')}</span>
+                  <span className="ms-2 font-medium text-sm">{t('sidebar.createdByMe', 'Created by Me')}</span>
                 </NavLink>
               </div>
             )}
@@ -210,7 +202,7 @@ export const ComplaintsLayout: React.FC = () => {
             className="group relative flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 text-slate-400 hover:text-white hover:bg-white/5"
           >
             <Link2 size={20} className="flex-shrink-0" />
-            {!collapsed && <span className="ml-3 font-medium text-sm">{t('sidebar.viewIncidents', 'View Incidents')}</span>}
+            {!collapsed && <span className="ms-3 font-medium text-sm">{t('sidebar.viewIncidents', 'View Incidents')}</span>}
           </NavLink>
         </div>
 
@@ -236,7 +228,7 @@ export const ComplaintsLayout: React.FC = () => {
                   <Circle size={8} className="flex-shrink-0 fill-current" />
                   {!collapsed && (
                     <>
-                      <span className="ml-3 font-medium text-sm flex-1">{status.name}</span>
+                      <span className="ms-3 font-medium text-sm flex-1">{status.name}</span>
                       <span className="text-xs bg-slate-700 px-2 py-0.5 rounded-md">
                         {status.count}
                       </span>
@@ -283,7 +275,7 @@ export const ComplaintsLayout: React.FC = () => {
           className={`group flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 text-slate-400 hover:text-white rounded-xl hover:bg-white/5 transition-colors`}
         >
           <Home size={20} />
-          {!collapsed && <span className="ml-3 font-medium text-sm">{t('sidebar.backToHome', 'Back to Home')}</span>}
+          {!collapsed && <span className="ms-3 font-medium text-sm">{t('sidebar.backToHome', 'Back to Home')}</span>}
         </NavLink>
       </nav>
 
@@ -353,13 +345,13 @@ export const ComplaintsLayout: React.FC = () => {
 
       {/* Mobile Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 w-[264px] bg-slate-900 z-50 transform transition-transform duration-300 lg:hidden ${
-          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed inset-y-0 start-0 w-[264px] bg-slate-900 z-50 transform transition-transform duration-300 lg:hidden ${
+          mobileMenuOpen ? 'translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full'
         }`}
       >
         <button
           onClick={() => setMobileMenuOpen(false)}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white"
+          className="absolute top-4 end-4 p-2 text-slate-400 hover:text-white"
         >
           <X size={20} />
         </button>
@@ -391,11 +383,11 @@ export const ComplaintsLayout: React.FC = () => {
             {/* Search */}
             <div className="hidden md:flex items-center">
               <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute start-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
                   placeholder={t('sidebar.searchComplaints', 'Search complaints...')}
-                  className="w-64 pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all placeholder:text-slate-400"
+                  className="w-64 ps-10 pe-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all placeholder:text-slate-400"
                 />
               </div>
             </div>
@@ -412,7 +404,7 @@ export const ComplaintsLayout: React.FC = () => {
               </button>
 
               {isLangOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-scale-in origin-top-right">
+                <div className="absolute end-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-scale-in ltr:origin-top-right rtl:origin-top-left">
                   <div className="px-3 py-2 border-b border-slate-100">
                     <p className="text-xs font-medium text-slate-500 uppercase">{t('settings.selectLanguage', 'Select Language')}</p>
                   </div>
@@ -427,7 +419,7 @@ export const ComplaintsLayout: React.FC = () => {
                       }`}
                     >
                       <span className="text-lg">{lang.code === 'en' ? '🇺🇸' : '🇸🇦'}</span>
-                      <div className="text-left">
+                      <div className="text-start">
                         <p className="font-medium">{lang.nativeName}</p>
                         <p className="text-xs text-slate-500">{lang.name}</p>
                       </div>
@@ -440,7 +432,7 @@ export const ComplaintsLayout: React.FC = () => {
             {/* Notifications */}
             <button className="relative p-2.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors">
               <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-amber-500 rounded-full ring-2 ring-white" />
+              <span className="absolute top-2 end-2 w-2 h-2 bg-amber-500 rounded-full ring-2 ring-white" />
             </button>
 
             {/* Divider */}
@@ -450,7 +442,7 @@ export const ComplaintsLayout: React.FC = () => {
             <div className="relative">
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-3 p-1.5 pr-3 hover:bg-slate-50 rounded-xl transition-colors"
+                className="flex items-center gap-3 p-1.5 pe-3 hover:bg-slate-50 rounded-xl transition-colors"
               >
                 {user?.avatar ? (
                   <img
@@ -465,7 +457,7 @@ export const ComplaintsLayout: React.FC = () => {
                     </span>
                   </div>
                 )}
-                <div className="hidden sm:block text-left">
+                <div className="hidden sm:block text-start">
                   <p className="text-sm font-semibold text-slate-700 leading-tight">
                     {user?.first_name || user?.username}
                   </p>
@@ -484,7 +476,7 @@ export const ComplaintsLayout: React.FC = () => {
                     className="fixed inset-0 z-40"
                     onClick={() => setUserMenuOpen(false)}
                   />
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 animate-scale-in origin-top-right">
+                  <div className="absolute end-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 animate-scale-in ltr:origin-top-right rtl:origin-top-left">
                     <div className="px-4 py-3 border-b border-slate-100">
                       <p className="text-sm font-medium text-slate-700">{user?.email}</p>
                     </div>

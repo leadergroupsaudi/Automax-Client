@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Save, Globe, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui';
@@ -21,6 +22,7 @@ export const SaveTemplateDialog: React.FC<SaveTemplateDialogProps> = ({
   existingTemplate,
   dataSourceLabel,
 }) => {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(false);
@@ -45,7 +47,7 @@ export const SaveTemplateDialog: React.FC<SaveTemplateDialogProps> = ({
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
     if (!name.trim()) {
-      newErrors.name = 'Template name is required';
+      newErrors.name = t('reports.saveDialog.templateNameRequired');
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -76,10 +78,10 @@ export const SaveTemplateDialog: React.FC<SaveTemplateDialogProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">
-                {existingTemplate ? 'Update Template' : 'Save as Template'}
+                {existingTemplate ? t('reports.saveDialog.updateTemplate') : t('reports.saveDialog.saveAsTemplate')}
               </h2>
               <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                {dataSourceLabel} report
+                {dataSourceLabel} {t('reports.saveDialog.report')}
               </p>
             </div>
           </div>
@@ -96,7 +98,7 @@ export const SaveTemplateDialog: React.FC<SaveTemplateDialogProps> = ({
           {/* Name */}
           <div>
             <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">
-              Template Name *
+              {t('reports.saveDialog.templateName')} *
             </label>
             <input
               type="text"
@@ -105,7 +107,7 @@ export const SaveTemplateDialog: React.FC<SaveTemplateDialogProps> = ({
                 setName(e.target.value);
                 if (errors.name) setErrors({ ...errors, name: '' });
               }}
-              placeholder="Enter template name..."
+              placeholder={t('reports.saveDialog.templateNamePlaceholder')}
               className={cn(
                 "w-full px-4 py-2.5 bg-[hsl(var(--background))] border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)]",
                 errors.name ? "border-red-500" : "border-[hsl(var(--border))]"
@@ -119,12 +121,12 @@ export const SaveTemplateDialog: React.FC<SaveTemplateDialogProps> = ({
           {/* Description */}
           <div>
             <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">
-              Description
+              {t('reports.saveDialog.description')}
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Optional description..."
+              placeholder={t('reports.saveDialog.descriptionPlaceholder')}
               rows={3}
               className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] resize-none"
             />
@@ -133,7 +135,7 @@ export const SaveTemplateDialog: React.FC<SaveTemplateDialogProps> = ({
           {/* Visibility */}
           <div>
             <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-              Visibility
+              {t('reports.saveDialog.visibility')}
             </label>
             <div className="grid grid-cols-2 gap-3">
               <button
@@ -150,9 +152,9 @@ export const SaveTemplateDialog: React.FC<SaveTemplateDialogProps> = ({
                   "w-5 h-5",
                   !isPublic ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--muted-foreground))]"
                 )} />
-                <div className="text-left">
-                  <p className="text-sm font-medium text-[hsl(var(--foreground))]">Private</p>
-                  <p className="text-xs text-[hsl(var(--muted-foreground))]">Only you can access</p>
+                <div className="ltr:text-left rtl:text-right">
+                  <p className="text-sm font-medium text-[hsl(var(--foreground))]">{t('reports.saveDialog.private')}</p>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))]">{t('reports.saveDialog.privateDesc')}</p>
                 </div>
               </button>
               <button
@@ -169,9 +171,9 @@ export const SaveTemplateDialog: React.FC<SaveTemplateDialogProps> = ({
                   "w-5 h-5",
                   isPublic ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--muted-foreground))]"
                 )} />
-                <div className="text-left">
-                  <p className="text-sm font-medium text-[hsl(var(--foreground))]">Public</p>
-                  <p className="text-xs text-[hsl(var(--muted-foreground))]">Everyone can access</p>
+                <div className="ltr:text-left rtl:text-right">
+                  <p className="text-sm font-medium text-[hsl(var(--foreground))]">{t('reports.saveDialog.public')}</p>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))]">{t('reports.saveDialog.publicDesc')}</p>
                 </div>
               </button>
             </div>
@@ -181,14 +183,14 @@ export const SaveTemplateDialog: React.FC<SaveTemplateDialogProps> = ({
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
           <Button variant="outline" onClick={onClose} disabled={isSaving}>
-            Cancel
+            {t('reports.saveDialog.cancel')}
           </Button>
           <Button
             onClick={handleSave}
             isLoading={isSaving}
             leftIcon={!isSaving ? <Save className="w-4 h-4" /> : undefined}
           >
-            {isSaving ? 'Saving...' : existingTemplate ? 'Update Template' : 'Save Template'}
+            {isSaving ? t('reports.saveDialog.saving') : existingTemplate ? t('reports.saveDialog.updateTemplate') : t('reports.saveDialog.saveTemplate')}
           </Button>
         </div>
       </div>
