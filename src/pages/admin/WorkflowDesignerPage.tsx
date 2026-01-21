@@ -144,6 +144,7 @@ export const WorkflowDesignerPage: React.FC = () => {
     severity_max: number;
     priority_min: number;
     priority_max: number;
+    record_type: 'incident' | 'request' | 'both';
   }>({
     classification_ids: [],
     location_ids: [],
@@ -152,6 +153,7 @@ export const WorkflowDesignerPage: React.FC = () => {
     severity_max: 5,
     priority_min: 1,
     priority_max: 5,
+    record_type: 'incident',
   });
 
   // Required fields configuration
@@ -258,6 +260,7 @@ export const WorkflowDesignerPage: React.FC = () => {
         severity_max: workflow.severity_max ?? 5,
         priority_min: workflow.priority_min ?? 1,
         priority_max: workflow.priority_max ?? 5,
+        record_type: (workflow.record_type as 'incident' | 'request' | 'both') || 'incident',
       });
       setRequiredFields(workflow.required_fields || []);
     }
@@ -273,6 +276,7 @@ export const WorkflowDesignerPage: React.FC = () => {
       severity_max: config.severity_max,
       priority_min: config.priority_min,
       priority_max: config.priority_max,
+      record_type: config.record_type,
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'workflow', id] });
@@ -993,6 +997,103 @@ export const WorkflowDesignerPage: React.FC = () => {
                 <p className="text-xs text-blue-700">
                   Configure which incidents should automatically use this workflow based on classification, location, source, and severity.
                 </p>
+              </div>
+
+              {/* Record Type Selection */}
+              <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-5">
+                <h4 className="text-sm font-semibold text-[hsl(var(--foreground))] mb-4">Record Type</h4>
+                <p className="text-xs text-[hsl(var(--muted-foreground))] mb-3">
+                  Specify which record types this workflow applies to.
+                </p>
+                <div className="flex gap-3">
+                  <label className={cn(
+                    "flex-1 flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all",
+                    matchingConfig.record_type === 'incident'
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-[hsl(var(--border))] hover:border-blue-300"
+                  )}>
+                    <input
+                      type="radio"
+                      name="record_type"
+                      value="incident"
+                      checked={matchingConfig.record_type === 'incident'}
+                      onChange={(e) => setMatchingConfig(prev => ({ ...prev, record_type: e.target.value as 'incident' | 'request' | 'both' }))}
+                      className="sr-only"
+                    />
+                    <div className={cn(
+                      "w-5 h-5 rounded-full border-2 flex items-center justify-center",
+                      matchingConfig.record_type === 'incident'
+                        ? "border-blue-500 bg-blue-500"
+                        : "border-[hsl(var(--muted-foreground))]"
+                    )}>
+                      {matchingConfig.record_type === 'incident' && (
+                        <div className="w-2 h-2 rounded-full bg-white" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-[hsl(var(--foreground))]">Incident Only</p>
+                      <p className="text-xs text-[hsl(var(--muted-foreground))]">For incident management</p>
+                    </div>
+                  </label>
+                  <label className={cn(
+                    "flex-1 flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all",
+                    matchingConfig.record_type === 'request'
+                      ? "border-emerald-500 bg-emerald-50"
+                      : "border-[hsl(var(--border))] hover:border-emerald-300"
+                  )}>
+                    <input
+                      type="radio"
+                      name="record_type"
+                      value="request"
+                      checked={matchingConfig.record_type === 'request'}
+                      onChange={(e) => setMatchingConfig(prev => ({ ...prev, record_type: e.target.value as 'incident' | 'request' | 'both' }))}
+                      className="sr-only"
+                    />
+                    <div className={cn(
+                      "w-5 h-5 rounded-full border-2 flex items-center justify-center",
+                      matchingConfig.record_type === 'request'
+                        ? "border-emerald-500 bg-emerald-500"
+                        : "border-[hsl(var(--muted-foreground))]"
+                    )}>
+                      {matchingConfig.record_type === 'request' && (
+                        <div className="w-2 h-2 rounded-full bg-white" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-[hsl(var(--foreground))]">Request Only</p>
+                      <p className="text-xs text-[hsl(var(--muted-foreground))]">For service requests</p>
+                    </div>
+                  </label>
+                  <label className={cn(
+                    "flex-1 flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all",
+                    matchingConfig.record_type === 'both'
+                      ? "border-purple-500 bg-purple-50"
+                      : "border-[hsl(var(--border))] hover:border-purple-300"
+                  )}>
+                    <input
+                      type="radio"
+                      name="record_type"
+                      value="both"
+                      checked={matchingConfig.record_type === 'both'}
+                      onChange={(e) => setMatchingConfig(prev => ({ ...prev, record_type: e.target.value as 'incident' | 'request' | 'both' }))}
+                      className="sr-only"
+                    />
+                    <div className={cn(
+                      "w-5 h-5 rounded-full border-2 flex items-center justify-center",
+                      matchingConfig.record_type === 'both'
+                        ? "border-purple-500 bg-purple-500"
+                        : "border-[hsl(var(--muted-foreground))]"
+                    )}>
+                      {matchingConfig.record_type === 'both' && (
+                        <div className="w-2 h-2 rounded-full bg-white" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-[hsl(var(--foreground))]">Both</p>
+                      <p className="text-xs text-[hsl(var(--muted-foreground))]">Incidents and requests</p>
+                    </div>
+                  </label>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

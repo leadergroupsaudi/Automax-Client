@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
@@ -27,10 +27,11 @@ import {
   History,
   Tags,
   Star,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { Button } from '../../components/ui';
 import { MiniWorkflowView } from '../../components/workflow';
-import { RevisionHistory } from '../../components/incidents';
+import { RevisionHistory, ConvertToRequestModal } from '../../components/incidents';
 import { incidentApi, userApi, workflowApi, departmentApi } from '../../api/admin';
 import { API_URL } from '../../api/client';
 import type {
@@ -64,6 +65,7 @@ export const IncidentDetailPage: React.FC = () => {
   const [transitionFeedbackComment, setTransitionFeedbackComment] = useState('');
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedAssignee, setSelectedAssignee] = useState<string>('');
+  const [convertModalOpen, setConvertModalOpen] = useState(false);
 
   // Assignment matching state
   const [matchLoading, setMatchLoading] = useState(false);
@@ -514,6 +516,16 @@ export const IncidentDetailPage: React.FC = () => {
               {transition.transition.name}
             </Button>
           ))}
+          {(!incident.record_type || incident.record_type === 'incident') && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setConvertModalOpen(true)}
+              leftIcon={<ArrowRightLeft className="w-4 h-4" />}
+            >
+              {t('incidents.convertToRequest', 'Convert to Request')}
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"
@@ -1714,6 +1726,19 @@ export const IncidentDetailPage: React.FC = () => {
             <span className="text-sm w-12">{Math.round(compareSliderPosition)}%</span>
           </div>
         </div>
+      )}
+
+      {/* Convert to Request Modal */}
+      {incident && (
+        <ConvertToRequestModal
+          incident={incident}
+          isOpen={convertModalOpen}
+          onClose={() => setConvertModalOpen(false)}
+          onSuccess={(newRequestId) => {
+            setConvertModalOpen(false);
+            navigate(`/requests/${newRequestId}`);
+          }}
+        />
       )}
     </div>
   );

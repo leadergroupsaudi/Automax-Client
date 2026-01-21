@@ -1,3 +1,7 @@
+// Record Type definitions
+export type RecordType = 'incident' | 'request';
+export type ClassificationType = 'incident' | 'request' | 'both';
+
 // Base types
 export interface User {
   id: string;
@@ -48,6 +52,7 @@ export interface Classification {
   id: string;
   name: string;
   description: string;
+  type: ClassificationType;
   parent_id: string | null;
   level: number;
   path: string;
@@ -232,6 +237,7 @@ export interface ChangePasswordRequest {
 export interface ClassificationCreateRequest {
   name: string;
   description?: string;
+  type?: ClassificationType;
   parent_id?: string;
   sort_order?: number;
 }
@@ -239,6 +245,7 @@ export interface ClassificationCreateRequest {
 export interface ClassificationUpdateRequest {
   name?: string;
   description?: string;
+  type?: ClassificationType;
   is_active?: boolean;
   sort_order?: number;
 }
@@ -480,6 +487,7 @@ export interface Workflow {
   version: number;
   is_active: boolean;
   is_default: boolean;
+  record_type: ClassificationType;
   canvas_layout?: string;
   required_fields?: IncidentFormField[];
   states?: WorkflowState[];
@@ -575,6 +583,7 @@ export interface WorkflowCreateRequest {
   name: string;
   code: string;
   description?: string;
+  record_type?: ClassificationType;
   classification_ids?: string[];
   location_ids?: string[];
   sources?: IncidentSource[];
@@ -589,6 +598,7 @@ export interface WorkflowUpdateRequest {
   name?: string;
   code?: string;
   description?: string;
+  record_type?: ClassificationType;
   is_active?: boolean;
   is_default?: boolean;
   canvas_layout?: string;
@@ -694,6 +704,9 @@ export interface Incident {
   incident_number: string;
   title: string;
   description: string;
+  record_type: RecordType;
+  source_incident_id?: string;
+  source_incident?: Incident;
   classification?: Classification;
   workflow?: Workflow;
   current_state?: WorkflowState;
@@ -937,10 +950,30 @@ export interface IncidentFilter {
   location_id?: string;
   reporter_id?: string;
   sla_breached?: boolean;
+  record_type?: RecordType;
   start_date?: string;
   end_date?: string;
   page?: number;
   limit?: number;
+}
+
+// Convert Incident to Request types
+export interface ConvertToRequestRequest {
+  transition_id?: string;
+  transition_comment?: string;
+  classification_id: string;
+  workflow_id: string;
+  title?: string;
+  description?: string;
+  assignee_id?: string;
+  department_id?: string;
+  due_date?: string;
+  feedback?: IncidentFeedbackRequest;
+}
+
+export interface ConvertToRequestResponse {
+  original_incident: Incident;
+  new_request: Incident;
 }
 
 // ===========================================

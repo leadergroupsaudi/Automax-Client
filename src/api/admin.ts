@@ -7,6 +7,7 @@ import type {
   Classification,
   ClassificationCreateRequest,
   ClassificationUpdateRequest,
+  ClassificationType,
   Location,
   LocationCreateRequest,
   LocationUpdateRequest,
@@ -51,6 +52,8 @@ import type {
   IncidentRevision,
   IncidentRevisionFilter,
   IncidentSource,
+  ConvertToRequestRequest,
+  ConvertToRequestResponse,
   SMTPConfig,
   SMTPConfigCreateRequest,
   SMTPConfigUpdateRequest,
@@ -156,13 +159,25 @@ export const classificationApi = {
     return response.data;
   },
 
-  list: async (): Promise<ApiResponse<Classification[]>> => {
-    const response = await apiClient.get<ApiResponse<Classification[]>>('/admin/classifications');
+  list: async (type?: ClassificationType): Promise<ApiResponse<Classification[]>> => {
+    const url = type ? `/admin/classifications?type=${type}` : '/admin/classifications';
+    const response = await apiClient.get<ApiResponse<Classification[]>>(url);
     return response.data;
   },
 
-  getTree: async (): Promise<ApiResponse<Classification[]>> => {
-    const response = await apiClient.get<ApiResponse<Classification[]>>('/admin/classifications/tree');
+  listByType: async (type: ClassificationType): Promise<ApiResponse<Classification[]>> => {
+    const response = await apiClient.get<ApiResponse<Classification[]>>(`/admin/classifications?type=${type}`);
+    return response.data;
+  },
+
+  getTree: async (type?: ClassificationType): Promise<ApiResponse<Classification[]>> => {
+    const url = type ? `/admin/classifications/tree?type=${type}` : '/admin/classifications/tree';
+    const response = await apiClient.get<ApiResponse<Classification[]>>(url);
+    return response.data;
+  },
+
+  getTreeByType: async (type: ClassificationType): Promise<ApiResponse<Classification[]>> => {
+    const response = await apiClient.get<ApiResponse<Classification[]>>(`/admin/classifications/tree?type=${type}`);
     return response.data;
   },
 
@@ -410,9 +425,20 @@ export const workflowApi = {
     return response.data;
   },
 
-  list: async (activeOnly = false): Promise<ApiResponse<Workflow[]>> => {
-    const url = activeOnly ? '/admin/workflows?active_only=true' : '/admin/workflows';
+  list: async (activeOnly = false, recordType?: ClassificationType): Promise<ApiResponse<Workflow[]>> => {
+    const params = new URLSearchParams();
+    if (activeOnly) params.append('active_only', 'true');
+    if (recordType) params.append('record_type', recordType);
+    const url = `/admin/workflows${params.toString() ? '?' + params.toString() : ''}`;
     const response = await apiClient.get<ApiResponse<Workflow[]>>(url);
+    return response.data;
+  },
+
+  listByRecordType: async (recordType: ClassificationType, activeOnly = false): Promise<ApiResponse<Workflow[]>> => {
+    const params = new URLSearchParams();
+    params.append('record_type', recordType);
+    if (activeOnly) params.append('active_only', 'true');
+    const response = await apiClient.get<ApiResponse<Workflow[]>>(`/admin/workflows?${params.toString()}`);
     return response.data;
   },
 
@@ -626,11 +652,16 @@ export const incidentApi = {
     if (filter.department_id) params.append('department_id', filter.department_id);
     if (filter.location_id) params.append('location_id', filter.location_id);
     if (filter.sla_breached !== undefined) params.append('sla_breached', String(filter.sla_breached));
+    if (filter.record_type) params.append('record_type', filter.record_type);
     if (filter.start_date) params.append('start_date', filter.start_date);
     if (filter.end_date) params.append('end_date', filter.end_date);
 
     const response = await apiClient.get<PaginatedResponse<Incident>>(`/incidents?${params.toString()}`);
     return response.data;
+  },
+
+  listRequests: async (filter: Omit<IncidentFilter, 'record_type'> = {}): Promise<PaginatedResponse<Incident>> => {
+    return incidentApi.list({ ...filter, record_type: 'request' });
   },
 
   getById: async (id: string): Promise<ApiResponse<IncidentDetail>> => {
@@ -651,6 +682,12 @@ export const incidentApi = {
   // State transitions
   transition: async (id: string, data: IncidentTransitionRequest): Promise<ApiResponse<Incident>> => {
     const response = await apiClient.post<ApiResponse<Incident>>(`/incidents/${id}/transition`, data);
+    return response.data;
+  },
+
+  // Convert incident to request
+  convertToRequest: async (id: string, data: ConvertToRequestRequest): Promise<ApiResponse<ConvertToRequestResponse>> => {
+    const response = await apiClient.post<ApiResponse<ConvertToRequestResponse>>(`/incidents/${id}/convert-to-request`, data);
     return response.data;
   },
 

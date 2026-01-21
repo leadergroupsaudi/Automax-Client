@@ -14,6 +14,8 @@ export { IncidentsPage } from './IncidentsPage';
 export { IncidentCreatePage } from './IncidentCreatePage';
 export { IncidentDetailPage } from './IncidentDetailPage';
 export { MyIncidentsPage } from './MyIncidentsPage';
+export { RequestsPage } from './RequestsPage';
+export { RequestDetailPage } from './RequestDetailPage';
 export { SMTPSettingsPage } from './SMTPSettingsPage';
 export { ReportBuilderPage } from './ReportBuilderPage';
 export { ReportTemplatesPage } from './ReportTemplatesPage';

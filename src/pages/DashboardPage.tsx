@@ -9,6 +9,7 @@ import {
   FileBarChart,
   ArrowRight,
   Sparkles,
+  FileText,
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
@@ -35,13 +36,22 @@ export const DashboardPage: React.FC = () => {
       shadowColor: 'shadow-blue-500/20',
     },
     {
+      title: t('dashboard.requestManagement', 'Request Management'),
+      subtitle: t('dashboard.serviceRequests', 'Service Requests'),
+      description: t('dashboard.manageServiceRequests', 'Handle and track service requests'),
+      href: '/requests',
+      icon: FileText,
+      gradient: 'from-emerald-500 to-teal-500',
+      shadowColor: 'shadow-emerald-500/20',
+    },
+    {
       title: t('dashboard.workflowManagement'),
       subtitle: t('dashboard.designConfigure'),
       description: t('dashboard.buildWorkflows'),
       href: '/workflows',
       icon: GitBranch,
-      gradient: 'from-emerald-500 to-teal-500',
-      shadowColor: 'shadow-emerald-500/20',
+      gradient: 'from-rose-500 to-pink-500',
+      shadowColor: 'shadow-rose-500/20',
     },
     {
       title: t('dashboard.reportsAnalytics'),
