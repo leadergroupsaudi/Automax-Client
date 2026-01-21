@@ -31,6 +31,9 @@ type SipEventName =
 let ua: JsSIP.UA | null = null;
 let session: any = null;
 let localStream: MediaStream | null = null;
+let remoteStreamDispatched = false;
+let callAccepted = false;
+let pendingRemoteStream: MediaStream | null = null;
 
 /* -------------------- RTC Config -------------------- */
 
@@ -48,7 +51,7 @@ const dispatch = <T = unknown>(name: SipEventName, detail?: T): void => {
 
 const sipService = {
   init(config: SipConfig): void {
-    if (ua) return; // prevent double init
+    if (ua) return;
 
     const socket = new JsSIP.WebSocketInterface(config.socketUrl);
 
@@ -60,18 +63,14 @@ const sipService = {
     } as any);
 
     ua.on("registered", () => {
-      console.log("✅ SIP Registered");
       dispatch("sip-registered");
     });
 
     ua.on("registrationFailed", (e: any) => {
-      console.error("❌ SIP Registration failed:", e.cause);
       dispatch("sip-registration-failed", e.cause);
     });
 
-    ua.on("disconnected", () => {
-      console.warn("⚠️ SIP disconnected");
-    });
+    ua.on("disconnected", () => {});
 
     ua.on("newRTCSession", (e: any) => {
       session = e.session;
@@ -90,22 +89,85 @@ const sipService = {
       }
 
       session.on("peerconnection", ({ peerconnection }: any) => {
-        const remoteStream = new MediaStream();
-
         peerconnection.ontrack = (event: RTCTrackEvent) => {
-          if (!remoteStream.getTracks().some(t => t.id === event.track.id)) {
-            remoteStream.addTrack(event.track);
+          if (remoteStreamDispatched) return;
+
+          let streamToUse: MediaStream | null = null;
+
+          if (event.streams && event.streams[0]) {
+            streamToUse = event.streams[0];
+          } else {
+            streamToUse = new MediaStream([event.track]);
           }
-          dispatch("remote-stream", remoteStream);
+
+          if (streamToUse) {
+            if (callAccepted) {
+              remoteStreamDispatched = true;
+              dispatch("remote-stream", streamToUse);
+            } else {
+              pendingRemoteStream = streamToUse;
+            }
+          }
         };
       });
 
+      const connection = session.connection;
+      if (connection) {
+        connection.ontrack = (event: RTCTrackEvent) => {
+          if (event.streams && event.streams[0]) {
+            if (callAccepted && !remoteStreamDispatched) {
+              remoteStreamDispatched = true;
+              dispatch("remote-stream", event.streams[0]);
+            } else if (!callAccepted) {
+              pendingRemoteStream = event.streams[0];
+            }
+          }
+        };
+      }
+
+      session.on("progress", () => {});
+
       session.on("accepted", () => {
+        callAccepted = true;
+
+        if (pendingRemoteStream && !remoteStreamDispatched) {
+          remoteStreamDispatched = true;
+          dispatch("remote-stream", pendingRemoteStream);
+          pendingRemoteStream = null;
+        }
+
+        if (!remoteStreamDispatched) {
+          const conn = session.connection;
+          if (conn) {
+            const receivers = conn.getReceivers();
+
+            if (receivers.length > 0) {
+              const remoteStream = new MediaStream();
+              receivers.forEach((receiver: RTCRtpReceiver) => {
+                if (receiver.track) {
+                  remoteStream.addTrack(receiver.track);
+                }
+              });
+              if (remoteStream.getTracks().length > 0) {
+                remoteStreamDispatched = true;
+                dispatch("remote-stream", remoteStream);
+              }
+            }
+          }
+        }
+
         dispatch("call-connected");
       });
 
-      session.on("ended", cleanup);
-      session.on("failed", cleanup);
+      session.on("confirmed", () => {});
+
+      session.on("ended", () => {
+        cleanup();
+      });
+
+      session.on("failed", () => {
+        cleanup();
+      });
     });
 
     ua.start();
@@ -187,6 +249,9 @@ const sipService = {
 
 function cleanup(): void {
   session = null;
+  remoteStreamDispatched = false;
+  callAccepted = false;
+  pendingRemoteStream = null;
   if (localStream) {
     localStream.getTracks().forEach(track => track.stop());
     localStream = null;
@@ -217,8 +282,8 @@ export async function updateUserStatus(
 
     const data = await res.json();
     dispatch("myStatusChange", data?.response?.data?.call_status);
-  } catch (err) {
-    console.error("Status update failed", err);
+  } catch {
+    // Status update failed silently
   }
 }
 

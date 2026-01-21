@@ -47,6 +47,22 @@ type CallStatus = "idle" | "dialing" | "ringing" | "incoming" | "connected" | "e
 const ring = new Audio(ringtone);
 ring.loop = true;
 
+// Create a persistent audio element for remote stream (singleton)
+let remoteAudioElement: HTMLAudioElement | null = null;
+const getRemoteAudioElement = (): HTMLAudioElement => {
+  if (!remoteAudioElement) {
+    remoteAudioElement = document.createElement('audio');
+    remoteAudioElement.autoplay = true;
+    remoteAudioElement.id = 'softphone-remote-audio';
+    document.body.appendChild(remoteAudioElement);
+  }
+  return remoteAudioElement;
+};
+
+// Singleton timer to prevent duplicates
+let globalTimerRef: NodeJS.Timeout | null = null;
+let globalCallDuration = 0;
+
 /* -------------------- Dialpad Keys -------------------- */
 
 const dialpadKeys = [
@@ -70,10 +86,8 @@ export default function SoftPhone({
   showSip,
   onClose,
   settings,
-  auth,
 }: SoftPhoneProps) {
   const dragRef = useRef<HTMLDivElement | null>(null);
-  const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const [sipConnected, setSipConnected] = useState<boolean>(false);
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
@@ -93,17 +107,19 @@ export default function SoftPhone({
   const [dragging, setDragging] = useState<boolean>(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
-  // Call duration timer
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
   /* ---------------- SIP CONNECTION ---------------- */
+
+  // Initialize persistent audio element on mount
+  useEffect(() => {
+    getRemoteAudioElement();
+  }, []);
 
   useEffect(() => {
     if (showSip && !sipConnected && !isConnecting) {
       tryConnect();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showSip, settings, auth]);
+  }, [showSip, settings]);
 
   const tryConnect = (): void => {
     if (sipConnected || isConnecting) return;
@@ -157,11 +173,12 @@ export default function SoftPhone({
       const ce = e as CustomEvent<MediaStream>;
       const stream = ce.detail;
 
-      if (remoteAudioRef.current && stream) {
-        remoteAudioRef.current.srcObject = stream;
-        remoteAudioRef.current.play().catch(() => {
-          // Autoplay may be blocked
-        });
+      if (stream) {
+        const audioEl = getRemoteAudioElement();
+        audioEl.srcObject = stream;
+        audioEl.volume = 1;
+        audioEl.muted = false;
+        audioEl.play().catch(() => {});
       }
     };
 
@@ -185,17 +202,25 @@ export default function SoftPhone({
   /* ---------------- TIMER ---------------- */
 
   const startTimer = () => {
+    if (globalTimerRef) {
+      clearInterval(globalTimerRef);
+      globalTimerRef = null;
+    }
+    globalCallDuration = 0;
     setCallDuration(0);
-    timerRef.current = setInterval(() => {
-      setCallDuration((prev) => prev + 1);
+
+    globalTimerRef = setInterval(() => {
+      globalCallDuration += 1;
+      setCallDuration(globalCallDuration);
     }, 1000);
   };
 
   const stopTimer = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
+    if (globalTimerRef) {
+      clearInterval(globalTimerRef);
+      globalTimerRef = null;
     }
+    globalCallDuration = 0;
   };
 
   const formatDuration = (seconds: number): string => {
@@ -245,11 +270,9 @@ export default function SoftPhone({
     stopRingtone();
     stopTimer();
 
-    // Reset audio element
-    if (remoteAudioRef.current) {
-      remoteAudioRef.current.srcObject = null;
-      remoteAudioRef.current.volume = 1;
-    }
+    const audioEl = getRemoteAudioElement();
+    audioEl.srcObject = null;
+    audioEl.volume = 1;
   };
 
   /* ---------------- DIALPAD ---------------- */
@@ -258,7 +281,6 @@ export default function SoftPhone({
     if (callStatus === "idle" || callStatus === "ended") {
       setDialedNumber((prev) => prev + digit);
     }
-    // DTMF tones can be sent here during active call
   };
 
   const handleBackspace = (): void => {
@@ -276,10 +298,8 @@ export default function SoftPhone({
     const newSpeakerState = !isSpeakerOn;
     setIsSpeakerOn(newSpeakerState);
 
-    // Control remote audio volume
-    if (remoteAudioRef.current) {
-      remoteAudioRef.current.volume = newSpeakerState ? 1 : 0;
-    }
+    const audioEl = getRemoteAudioElement();
+    audioEl.volume = newSpeakerState ? 1 : 0;
   };
 
   /* ---------------- AUDIO ---------------- */
@@ -318,7 +338,6 @@ export default function SoftPhone({
       const newX = e.clientX - dragOffset.x;
       const newY = e.clientY - dragOffset.y;
 
-      // Constrain to viewport
       const maxX = window.innerWidth - (dragRef.current?.offsetWidth || 350);
       const maxY = window.innerHeight - (dragRef.current?.offsetHeight || 500);
 
@@ -555,9 +574,6 @@ export default function SoftPhone({
           </button>
         )}
       </div>
-
-      {/* Remote Audio */}
-      <audio ref={remoteAudioRef} autoPlay playsInline hidden />
     </div>
   );
 }
