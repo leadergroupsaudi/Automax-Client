@@ -18,6 +18,8 @@ import { classificationApi } from '../../api/admin';
 import type { Classification, ClassificationCreateRequest, ClassificationUpdateRequest, ClassificationType } from '../../types';
 import { cn } from '@/lib/utils';
 import { Button } from '../../components/ui';
+import { usePermissions } from '../../hooks/usePermissions';
+import { PERMISSIONS } from '../../constants/permissions';
 
 interface ClassificationFormData {
   name: string;
@@ -59,10 +61,13 @@ interface TreeNodeProps {
   onAdd: (parentId: string, parentName: string) => void;
   onEdit: (cls: Classification) => void;
   onDelete: (id: string) => void;
+  canCreate: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
   t: (key: string) => string;
 }
 
-const TreeNode: React.FC<TreeNodeProps> = ({ classification, level, onAdd, onEdit, onDelete, t }) => {
+const TreeNode: React.FC<TreeNodeProps> = ({ classification, level, onAdd, onEdit, onDelete, canCreate, canEdit, canDelete, t }) => {
   const [expanded, setExpanded] = useState(true);
   const hasChildren = classification.children && classification.children.length > 0;
   const gradient = levelGradients[level % levelGradients.length];
@@ -130,27 +135,33 @@ const TreeNode: React.FC<TreeNodeProps> = ({ classification, level, onAdd, onEdi
             {classification.is_active ? t('classifications.active') : t('classifications.inactive')}
           </span>
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              onClick={() => onAdd(classification.id, classification.name)}
-              className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.1)] rounded-lg transition-colors"
-              title={t('classifications.addChildClassification')}
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => onEdit(classification)}
-              className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors"
-              title={t('common.edit')}
-            >
-              <Edit2 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => onDelete(classification.id)}
-              className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] rounded-lg transition-colors"
-              title={t('common.delete')}
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            {canCreate && (
+              <button
+                onClick={() => onAdd(classification.id, classification.name)}
+                className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.1)] rounded-lg transition-colors"
+                title={t('classifications.addChildClassification')}
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            )}
+            {canEdit && (
+              <button
+                onClick={() => onEdit(classification)}
+                className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors"
+                title={t('common.edit')}
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+            )}
+            {canDelete && (
+              <button
+                onClick={() => onDelete(classification.id)}
+                className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] rounded-lg transition-colors"
+                title={t('common.delete')}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -164,6 +175,9 @@ const TreeNode: React.FC<TreeNodeProps> = ({ classification, level, onAdd, onEdi
               onAdd={onAdd}
               onEdit={onEdit}
               onDelete={onDelete}
+              canCreate={canCreate}
+              canEdit={canEdit}
+              canDelete={canDelete}
               t={t}
             />
           ))}
@@ -176,10 +190,15 @@ const TreeNode: React.FC<TreeNodeProps> = ({ classification, level, onAdd, onEdi
 export const ClassificationsPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const { hasPermission, isSuperAdmin } = usePermissions();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClassification, setEditingClassification] = useState<Classification | null>(null);
   const [formData, setFormData] = useState<ClassificationFormData>(initialFormData);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  const canCreateClassification = isSuperAdmin || hasPermission(PERMISSIONS.CLASSIFICATIONS_CREATE);
+  const canEditClassification = isSuperAdmin || hasPermission(PERMISSIONS.CLASSIFICATIONS_UPDATE);
+  const canDeleteClassification = isSuperAdmin || hasPermission(PERMISSIONS.CLASSIFICATIONS_DELETE);
 
   const { data: treeData, isLoading } = useQuery({
     queryKey: ['admin', 'classifications', 'tree'],
@@ -308,13 +327,15 @@ export const ClassificationsPage: React.FC = () => {
               </p>
             </div>
           </div>
-          <button
-            onClick={() => openCreateModal()}
-            className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg hover:bg-[hsl(var(--primary)/0.9)] transition-colors text-sm font-medium shadow-md shadow-[hsl(var(--primary)/0.25)]"
-          >
-            <Plus className="w-4 h-4" />
-            {t('classifications.addRootClassification')}
-          </button>
+          {canCreateClassification && (
+            <button
+              onClick={() => openCreateModal()}
+              className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg hover:bg-[hsl(var(--primary)/0.9)] transition-colors text-sm font-medium shadow-md shadow-[hsl(var(--primary)/0.25)]"
+            >
+              <Plus className="w-4 h-4" />
+              {t('classifications.addRootClassification')}
+            </button>
+          )}
         </div>
 
         {/* Tree Content */}
@@ -330,9 +351,11 @@ export const ClassificationsPage: React.FC = () => {
             </div>
             <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">{t('classifications.noClassificationsYet')}</h3>
             <p className="text-[hsl(var(--muted-foreground))] mb-6">{t('classifications.createFirstClassification')}</p>
-            <Button onClick={() => openCreateModal()} leftIcon={<Plus className="w-4 h-4" />}>
-              {t('classifications.createClassification')}
-            </Button>
+            {canCreateClassification && (
+              <Button onClick={() => openCreateModal()} leftIcon={<Plus className="w-4 h-4" />}>
+                {t('classifications.createClassification')}
+              </Button>
+            )}
           </div>
         ) : (
           <div className="divide-y divide-[hsl(var(--border))]">
@@ -344,6 +367,9 @@ export const ClassificationsPage: React.FC = () => {
                 onAdd={openCreateModal}
                 onEdit={openEditModal}
                 onDelete={setDeleteConfirm}
+                canCreate={canCreateClassification}
+                canEdit={canEditClassification}
+                canDelete={canDeleteClassification}
                 t={t}
               />
             ))}

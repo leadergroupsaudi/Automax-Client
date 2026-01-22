@@ -25,6 +25,8 @@ import { Button } from '../../components/ui';
 import { incidentApi, workflowApi, userApi, departmentApi, classificationApi, locationApi } from '../../api/admin';
 import type { Incident, IncidentFilter, Workflow, User as UserType, Department, WorkflowState, Classification, Location } from '../../types';
 import { cn } from '@/lib/utils';
+import { usePermissions } from '../../hooks/usePermissions';
+import { PERMISSIONS } from '../../constants/permissions';
 
 // Column configuration
 interface ColumnConfig {
@@ -69,6 +71,7 @@ const loadColumnsFromStorage = (): ColumnConfig[] => {
 export const RequestsPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { hasPermission, isSuperAdmin } = usePermissions();
   const [searchParams, setSearchParams] = useSearchParams();
   const [filter, setFilter] = useState<IncidentFilter>({
     page: 1,
@@ -78,6 +81,20 @@ export const RequestsPage: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [columns, setColumns] = useState<ColumnConfig[]>(loadColumnsFromStorage);
+
+  const canViewAllRequests = isSuperAdmin || hasPermission(PERMISSIONS.REQUESTS_VIEW_ALL);
+
+  // Get status from URL - users with view permission can access if status filter is applied
+  const urlStatusParam = searchParams.get('status');
+  const urlSlaBreachedParam = searchParams.get('sla_breached');
+  const hasUrlFilter = !!urlStatusParam || urlSlaBreachedParam === 'true';
+
+  // Redirect to my-assigned if user doesn't have view_all permission AND no status filter is applied
+  useEffect(() => {
+    if (!canViewAllRequests && !hasUrlFilter) {
+      navigate('/requests/my-assigned', { replace: true });
+    }
+  }, [canViewAllRequests, hasUrlFilter, navigate]);
   const [showColumnConfig, setShowColumnConfig] = useState(false);
   const columnConfigRef = useRef<HTMLDivElement>(null);
 
@@ -349,7 +366,7 @@ export const RequestsPage: React.FC = () => {
                 <span className="ml-1 w-2 h-2 rounded-full bg-[hsl(var(--primary))]" />
               )}
             </Button>
-            {hasActiveFilters && (
+            {hasActiveFilters && canViewAllRequests && (
               <Button variant="ghost" size="sm" onClick={clearFilters}>
                 {t('common.clear', 'Clear')}
               </Button>
@@ -445,7 +462,11 @@ export const RequestsPage: React.FC = () => {
               <select
                 value={filter.current_state_id || ''}
                 onChange={(e) => handleFilterChange('current_state_id', e.target.value || undefined)}
-                className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                disabled={!canViewAllRequests && hasUrlFilter}
+                className={cn(
+                  "w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]",
+                  !canViewAllRequests && hasUrlFilter && "opacity-60 cursor-not-allowed"
+                )}
               >
                 <option value="">{t('common.allStates', 'All States')}</option>
                 {uniqueStates.map((state: WorkflowState) => (
@@ -512,7 +533,11 @@ export const RequestsPage: React.FC = () => {
               <select
                 value={filter.sla_breached === undefined ? '' : filter.sla_breached.toString()}
                 onChange={(e) => handleFilterChange('sla_breached', e.target.value === '' ? undefined : e.target.value === 'true')}
-                className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                disabled={!canViewAllRequests && hasUrlFilter}
+                className={cn(
+                  "w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]",
+                  !canViewAllRequests && hasUrlFilter && "opacity-60 cursor-not-allowed"
+                )}
               >
                 <option value="">{t('common.all', 'All')}</option>
                 <option value="true">{t('common.breached', 'Breached')}</option>

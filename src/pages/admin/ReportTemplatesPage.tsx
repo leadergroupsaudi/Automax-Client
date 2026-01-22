@@ -25,6 +25,8 @@ import { cn } from '@/lib/utils';
 import { Button } from '../../components/ui';
 import { reportApi } from '../../api/admin';
 import type { ReportTemplate, ReportDataSource } from '../../types';
+import { usePermissions } from '../../hooks/usePermissions';
+import { PERMISSIONS } from '../../constants/permissions';
 
 const iconMap: Record<string, React.ElementType> = {
   AlertCircle,
@@ -48,8 +50,11 @@ export const ReportTemplatesPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { hasPermission, isSuperAdmin } = usePermissions();
   const [filterSource, setFilterSource] = useState<ReportDataSource | ''>('');
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+
+  const canCreateReport = isSuperAdmin || hasPermission(PERMISSIONS.REPORTS_CREATE);
 
   // Fetch templates
   const { data: templatesData, isLoading } = useQuery({
@@ -116,12 +121,14 @@ export const ReportTemplatesPage: React.FC = () => {
           </p>
         </div>
 
-        <Button
-          onClick={() => navigate('/admin/reports/builder')}
-          leftIcon={<Plus className="w-4 h-4" />}
-        >
-          {t('reports.newReport')}
-        </Button>
+        {canCreateReport && (
+          <Button
+            onClick={() => navigate('/admin/reports/builder')}
+            leftIcon={<Plus className="w-4 h-4" />}
+          >
+            {t('reports.newReport')}
+          </Button>
+        )}
       </div>
 
       {/* Filters */}

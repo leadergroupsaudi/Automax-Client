@@ -19,11 +19,16 @@ import { Button } from '../../components/ui';
 import { departmentApi, userApi } from '../../api/admin';
 import type { Location, Classification, Role, User } from '../../types';
 import { cn } from '@/lib/utils';
+import { usePermissions } from '../../hooks/usePermissions';
+import { PERMISSIONS } from '../../constants/permissions';
 
 export const DepartmentDetailPage: React.FC = () => {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { hasPermission, isSuperAdmin } = usePermissions();
+
+  const canEditDepartment = isSuperAdmin || hasPermission(PERMISSIONS.DEPARTMENTS_UPDATE);
 
   const { data: departmentData, isLoading: isLoadingDepartment } = useQuery({
     queryKey: ['admin', 'departments', id],
@@ -110,13 +115,15 @@ export const DepartmentDetailPage: React.FC = () => {
             </p>
           )}
         </div>
-        <Button
-          variant="outline"
-          onClick={() => navigate('/admin/departments', { state: { editDepartment: department } })}
-          leftIcon={<Edit2 className="w-4 h-4" />}
-        >
-          {t('departments.editDepartment')}
-        </Button>
+        {canEditDepartment && (
+          <Button
+            variant="outline"
+            onClick={() => navigate('/admin/departments', { state: { editDepartment: department } })}
+            leftIcon={<Edit2 className="w-4 h-4" />}
+          >
+            {t('departments.editDepartment')}
+          </Button>
+        )}
       </div>
 
       {/* Stats Overview */}

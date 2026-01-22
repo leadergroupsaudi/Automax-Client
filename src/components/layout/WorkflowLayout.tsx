@@ -25,6 +25,8 @@ import { workflowApi } from '../../api/admin';
 import { setLanguage, getCurrentLanguage, supportedLanguages } from '../../i18n';
 import type { Workflow } from '../../types';
 import SoftPhone from '../sip/Softphone';
+import { usePermissions } from '../../hooks/usePermissions';
+import { PERMISSIONS } from '../../constants/permissions';
 
 export const WorkflowLayout: React.FC = () => {
   const { t } = useTranslation();
@@ -37,6 +39,8 @@ export const WorkflowLayout: React.FC = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const langRef = useRef<HTMLDivElement>(null);
+  const { hasPermission, isSuperAdmin } = usePermissions();
+  const canCreateWorkflow = isSuperAdmin || hasPermission(PERMISSIONS.WORKFLOWS_CREATE);
 
   const handleLanguageChange = async (langCode: string) => {
     if (langCode === currentLang) {
@@ -137,27 +141,29 @@ export const WorkflowLayout: React.FC = () => {
             )}
           </NavLink>
 
-          <NavLink
-            to="/workflows/new"
-            onClick={() => setMobileMenuOpen(false)}
-            className={({ isActive }) =>
-              `group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 ${
-                isActive
-                  ? 'bg-gradient-to-r from-emerald-600/90 to-teal-600/90 text-white shadow-lg shadow-emerald-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
-              }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                {isActive && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />
-                )}
-                <Plus size={20} className="flex-shrink-0" />
-                {!collapsed && <span className="ml-3 font-medium text-sm">{t('workflows.newWorkflow')}</span>}
-              </>
-            )}
-          </NavLink>
+          {canCreateWorkflow && (
+            <NavLink
+              to="/workflows/new"
+              onClick={() => setMobileMenuOpen(false)}
+              className={({ isActive }) =>
+                `group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 ${
+                  isActive
+                    ? 'bg-gradient-to-r from-emerald-600/90 to-teal-600/90 text-white shadow-lg shadow-emerald-500/20'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />
+                  )}
+                  <Plus size={20} className="flex-shrink-0" />
+                  {!collapsed && <span className="ml-3 font-medium text-sm">{t('workflows.newWorkflow')}</span>}
+                </>
+              )}
+            </NavLink>
+          )}
         </div>
 
         {/* Workflow List */}
@@ -457,7 +463,7 @@ export const WorkflowLayout: React.FC = () => {
                   </p>
                   <p className="text-xs text-slate-400 leading-tight flex items-center gap-1">
                     {user?.is_super_admin && <Sparkles className="w-3 h-3 text-amber-500" />}
-                    {user?.is_super_admin ? t('profile.superAdmin') : t('sidebar.user')}
+                    {user?.is_super_admin ? t('profile.superAdmin') : user?.roles?.[0]?.name || t('sidebar.user')}
                   </p>
                 </div>
                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />

@@ -29,6 +29,8 @@ import { authApi } from '../../api/auth';
 import { incidentApi } from '../../api/admin';
 import { setLanguage, getCurrentLanguage, supportedLanguages } from '../../i18n';
 import SoftPhone from '../sip/Softphone';
+import { usePermissions } from '../../hooks/usePermissions';
+import { PERMISSIONS } from '../../constants/permissions';
 
 export const IncidentLayout: React.FC = () => {
   const { t } = useTranslation();
@@ -42,6 +44,12 @@ export const IncidentLayout: React.FC = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const langRef = useRef<HTMLDivElement>(null);
+  const { hasPermission, isSuperAdmin } = usePermissions();
+
+  const canCreateIncident = isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_CREATE);
+  const canViewIncidents = isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_VIEW);
+  const canViewAllIncidents = isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_VIEW_ALL);
+  const canViewRequests = isSuperAdmin || hasPermission(PERMISSIONS.REQUESTS_VIEW);
 
   const handleLanguageChange = async (langCode: string) => {
     if (langCode === currentLang) {
@@ -125,128 +133,136 @@ export const IncidentLayout: React.FC = () => {
           </p>
         )}
         <div className="space-y-1">
-          <NavLink
-            to="/incidents"
-            end
-            onClick={() => setMobileMenuOpen(false)}
-            className={({ isActive }) =>
-              `group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 ${
-                isActive
-                  ? 'bg-gradient-to-r from-blue-600/90 to-cyan-600/90 text-white shadow-lg shadow-blue-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
-              }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                {isActive && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />
-                )}
-                <List size={20} className="flex-shrink-0" />
-                {!collapsed && <span className="ml-3 font-medium text-sm">{t('sidebar.allIncidents')}</span>}
-              </>
-            )}
-          </NavLink>
-
-          <NavLink
-            to="/incidents/new"
-            onClick={() => setMobileMenuOpen(false)}
-            className={({ isActive }) =>
-              `group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 ${
-                isActive
-                  ? 'bg-gradient-to-r from-blue-600/90 to-cyan-600/90 text-white shadow-lg shadow-blue-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
-              }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                {isActive && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />
-                )}
-                <Plus size={20} className="flex-shrink-0" />
-                {!collapsed && <span className="ml-3 font-medium text-sm">{t('sidebar.newIncident')}</span>}
-              </>
-            )}
-          </NavLink>
-
-          {/* My Incidents - Collapsible */}
-          <div>
-            <button
-              onClick={() => setMyIncidentsOpen(!myIncidentsOpen)}
-              className={`w-full group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 text-slate-400 hover:text-white hover:bg-white/5`}
+          {canViewAllIncidents && (
+            <NavLink
+              to="/incidents"
+              end
+              onClick={() => setMobileMenuOpen(false)}
+              className={({ isActive }) =>
+                `group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 ${
+                  isActive
+                    ? 'bg-gradient-to-r from-blue-600/90 to-cyan-600/90 text-white shadow-lg shadow-blue-500/20'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`
+              }
             >
-              <User size={20} className="flex-shrink-0" />
-              {!collapsed && (
+              {({ isActive }) => (
                 <>
-                  <span className="ml-3 font-medium text-sm flex-1 text-left">{t('sidebar.myIncidents')}</span>
-                  <ChevronRight
-                    size={16}
-                    className={`transition-transform duration-200 ${myIncidentsOpen ? 'rotate-90' : ''}`}
-                  />
+                  {isActive && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />
+                  )}
+                  <List size={20} className="flex-shrink-0" />
+                  {!collapsed && <span className="ml-3 font-medium text-sm">{t('sidebar.allIncidents')}</span>}
                 </>
               )}
-            </button>
-            {myIncidentsOpen && !collapsed && (
-              <div className="ml-4 mt-1 space-y-1 border-l border-white/10 pl-2">
-                <NavLink
-                  to="/incidents/my-assigned"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={({ isActive }) =>
-                    `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
-                      isActive
-                        ? 'bg-gradient-to-r from-blue-600/90 to-cyan-600/90 text-white shadow-lg shadow-blue-500/20'
-                        : 'text-slate-400 hover:text-white hover:bg-white/5'
-                    }`
-                  }
-                >
-                  <UserCheck size={16} className="flex-shrink-0" />
-                  <span className="ml-2 font-medium text-sm">{t('sidebar.assignedToMe')}</span>
-                </NavLink>
-                <NavLink
-                  to="/incidents/my-created"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={({ isActive }) =>
-                    `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
-                      isActive
-                        ? 'bg-gradient-to-r from-blue-600/90 to-cyan-600/90 text-white shadow-lg shadow-blue-500/20'
-                        : 'text-slate-400 hover:text-white hover:bg-white/5'
-                    }`
-                  }
-                >
-                  <PenLine size={16} className="flex-shrink-0" />
-                  <span className="ml-2 font-medium text-sm">{t('sidebar.createdByMe')}</span>
-                </NavLink>
-              </div>
-            )}
-          </div>
+            </NavLink>
+          )}
+
+          {canCreateIncident && (
+            <NavLink
+              to="/incidents/new"
+              onClick={() => setMobileMenuOpen(false)}
+              className={({ isActive }) =>
+                `group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 ${
+                  isActive
+                    ? 'bg-gradient-to-r from-blue-600/90 to-cyan-600/90 text-white shadow-lg shadow-blue-500/20'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />
+                  )}
+                  <Plus size={20} className="flex-shrink-0" />
+                  {!collapsed && <span className="ml-3 font-medium text-sm">{t('sidebar.newIncident')}</span>}
+                </>
+              )}
+            </NavLink>
+          )}
+
+          {/* My Incidents - Collapsible */}
+          {canViewIncidents && (
+            <div>
+              <button
+                onClick={() => setMyIncidentsOpen(!myIncidentsOpen)}
+                className={`w-full group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 text-slate-400 hover:text-white hover:bg-white/5`}
+              >
+                <User size={20} className="flex-shrink-0" />
+                {!collapsed && (
+                  <>
+                    <span className="ml-3 font-medium text-sm flex-1 text-left">{t('sidebar.myIncidents')}</span>
+                    <ChevronRight
+                      size={16}
+                      className={`transition-transform duration-200 ${myIncidentsOpen ? 'rotate-90' : ''}`}
+                    />
+                  </>
+                )}
+              </button>
+              {myIncidentsOpen && !collapsed && (
+                <div className="ml-4 mt-1 space-y-1 border-l border-white/10 pl-2">
+                  <NavLink
+                    to="/incidents/my-assigned"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
+                        isActive
+                          ? 'bg-gradient-to-r from-blue-600/90 to-cyan-600/90 text-white shadow-lg shadow-blue-500/20'
+                          : 'text-slate-400 hover:text-white hover:bg-white/5'
+                      }`
+                    }
+                  >
+                    <UserCheck size={16} className="flex-shrink-0" />
+                    <span className="ml-2 font-medium text-sm">{t('sidebar.assignedToMe')}</span>
+                  </NavLink>
+                  <NavLink
+                    to="/incidents/my-created"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
+                        isActive
+                          ? 'bg-gradient-to-r from-blue-600/90 to-cyan-600/90 text-white shadow-lg shadow-blue-500/20'
+                          : 'text-slate-400 hover:text-white hover:bg-white/5'
+                      }`
+                    }
+                  >
+                    <PenLine size={16} className="flex-shrink-0" />
+                    <span className="ml-2 font-medium text-sm">{t('sidebar.createdByMe')}</span>
+                  </NavLink>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Requests */}
-          <NavLink
-            to="/requests"
-            onClick={() => setMobileMenuOpen(false)}
-            className={({ isActive }) =>
-              `group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 ${
-                isActive
-                  ? 'bg-gradient-to-r from-emerald-600/90 to-teal-600/90 text-white shadow-lg shadow-emerald-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
-              }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                {isActive && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />
-                )}
-                <FileText size={20} className="flex-shrink-0" />
-                {!collapsed && <span className="ml-3 font-medium text-sm">{t('sidebar.requests', 'Requests')}</span>}
-              </>
-            )}
-          </NavLink>
+          {canViewRequests && (
+            <NavLink
+              to="/requests"
+              onClick={() => setMobileMenuOpen(false)}
+              className={({ isActive }) =>
+                `group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 ${
+                  isActive
+                    ? 'bg-gradient-to-r from-emerald-600/90 to-teal-600/90 text-white shadow-lg shadow-emerald-500/20'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />
+                  )}
+                  <FileText size={20} className="flex-shrink-0" />
+                  {!collapsed && <span className="ml-3 font-medium text-sm">{t('sidebar.requests', 'Requests')}</span>}
+                </>
+              )}
+            </NavLink>
+          )}
         </div>
 
         {/* Status Filters */}
-        {statusItems.length > 0 && (
+        {canViewIncidents && statusItems.length > 0 && (
           <>
             {!collapsed && (
               <>
@@ -280,29 +296,43 @@ export const IncidentLayout: React.FC = () => {
         )}
 
         {/* Quick Stats */}
-        {statsData?.data && !collapsed && (
+        {canViewIncidents && statsData?.data && !collapsed && (
           <>
             <div className="my-6 border-t border-white/5" />
             <p className="px-3 mb-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
               {t('sidebar.overview')}
             </p>
             <div className="px-3 space-y-3">
-              <NavLink
-                to="/incidents"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between text-sm hover:bg-white/5 rounded-lg px-2 py-1.5 -mx-2 transition-colors"
-              >
-                <span className="text-slate-400">{t('sidebar.total')}</span>
-                <span className="text-white font-semibold">{statsData.data.total || 0}</span>
-              </NavLink>
-              <NavLink
-                to="/incidents?sla_breached=true"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between text-sm hover:bg-white/5 rounded-lg px-2 py-1.5 -mx-2 transition-colors"
-              >
-                <span className="text-slate-400">{t('sidebar.slaBreached')}</span>
-                <span className="text-rose-400 font-semibold">{statsData.data.sla_breached || 0}</span>
-              </NavLink>
+              {canViewAllIncidents ? (
+                <NavLink
+                  to="/incidents"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between text-sm hover:bg-white/5 rounded-lg px-2 py-1.5 -mx-2 transition-colors"
+                >
+                  <span className="text-slate-400">{t('sidebar.total')}</span>
+                  <span className="text-white font-semibold">{statsData.data.total || 0}</span>
+                </NavLink>
+              ) : (
+                <div className="flex items-center justify-between text-sm px-2 py-1.5 -mx-2">
+                  <span className="text-slate-400">{t('sidebar.total')}</span>
+                  <span className="text-white font-semibold">{statsData.data.total || 0}</span>
+                </div>
+              )}
+              {canViewAllIncidents ? (
+                <NavLink
+                  to="/incidents?sla_breached=true"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between text-sm hover:bg-white/5 rounded-lg px-2 py-1.5 -mx-2 transition-colors"
+                >
+                  <span className="text-slate-400">{t('sidebar.slaBreached')}</span>
+                  <span className="text-rose-400 font-semibold">{statsData.data.sla_breached || 0}</span>
+                </NavLink>
+              ) : (
+                <div className="flex items-center justify-between text-sm px-2 py-1.5 -mx-2">
+                  <span className="text-slate-400">{t('sidebar.slaBreached')}</span>
+                  <span className="text-rose-400 font-semibold">{statsData.data.sla_breached || 0}</span>
+                </div>
+              )}
             </div>
           </>
         )}
@@ -529,7 +559,7 @@ export const IncidentLayout: React.FC = () => {
                   </p>
                   <p className="text-xs text-slate-400 leading-tight flex items-center gap-1">
                     {user?.is_super_admin && <Sparkles className="w-3 h-3 text-amber-500" />}
-                    {user?.is_super_admin ? t('profile.superAdmin') : t('sidebar.user')}
+                    {user?.is_super_admin ? t('profile.superAdmin') : user?.roles?.[0]?.name || t('sidebar.user')}
                   </p>
                 </div>
                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />

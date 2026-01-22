@@ -25,6 +25,8 @@ import { workflowApi, classificationApi } from '../../api/admin';
 import type { Workflow, Classification, WorkflowCreateRequest, WorkflowUpdateRequest } from '../../types';
 import { cn } from '@/lib/utils';
 import { Button } from '../../components/ui';
+import { usePermissions } from '../../hooks/usePermissions';
+import { PERMISSIONS } from '../../constants/permissions';
 
 interface WorkflowFormData {
   name: string;
@@ -46,8 +48,11 @@ export const WorkflowsPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { hasPermission, isSuperAdmin } = usePermissions();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingWorkflow, setEditingWorkflow] = useState<Workflow | null>(null);
+
+  const canCreateWorkflow = isSuperAdmin || hasPermission(PERMISSIONS.WORKFLOWS_CREATE);
   const [formData, setFormData] = useState<WorkflowFormData>(initialFormData);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [permanentDeleteConfirm, setPermanentDeleteConfirm] = useState<string | null>(null);
@@ -214,9 +219,11 @@ export const WorkflowsPage: React.FC = () => {
           </div>
           <p className="text-[hsl(var(--muted-foreground))] mt-1 ml-12">{t('workflows.subtitle')}</p>
         </div>
-        <Button onClick={openCreateModal} leftIcon={<Plus className="w-4 h-4" />}>
-          {t('workflows.addWorkflow')}
-        </Button>
+        {canCreateWorkflow && (
+          <Button onClick={openCreateModal} leftIcon={<Plus className="w-4 h-4" />}>
+            {t('workflows.addWorkflow')}
+          </Button>
+        )}
       </div>
 
       {/* Workflows Grid */}
@@ -367,9 +374,11 @@ export const WorkflowsPage: React.FC = () => {
           </div>
           <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">{t('workflows.noWorkflows')}</h3>
           <p className="text-[hsl(var(--muted-foreground))] mb-6">{t('workflows.noWorkflowsDesc')}</p>
-          <Button onClick={openCreateModal} leftIcon={<Plus className="w-4 h-4" />}>
-            {t('workflows.createWorkflow')}
-          </Button>
+          {canCreateWorkflow && (
+            <Button onClick={openCreateModal} leftIcon={<Plus className="w-4 h-4" />}>
+              {t('workflows.createWorkflow')}
+            </Button>
+          )}
         </div>
       )}
 

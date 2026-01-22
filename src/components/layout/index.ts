@@ -4,6 +4,7 @@ export { AuthLayout } from './AuthLayout';
 export { ProtectedRoute } from './ProtectedRoute';
 export { AdminLayout } from './AdminLayout';
 export { AdminProtectedRoute } from './AdminProtectedRoute';
+export { PermissionRoute } from './PermissionRoute';
 export { IncidentLayout } from './IncidentLayout';
 export { RequestLayout } from './RequestLayout';
 export { WorkflowLayout } from './WorkflowLayout';

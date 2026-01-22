@@ -47,12 +47,17 @@ import type {
   LookupValue,
 } from '../../types';
 import { cn } from '@/lib/utils';
+import { usePermissions } from '../../hooks/usePermissions';
+import { PERMISSIONS } from '../../constants/permissions';
 
 export const IncidentDetailPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { hasPermission, isSuperAdmin } = usePermissions();
+
+  const canEditIncident = isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_UPDATE);
 
   const [activeTab, setActiveTab] = useState<'activity' | 'comments' | 'attachments' | 'revisions'>('activity');
   const [commentText, setCommentText] = useState('');
@@ -549,9 +554,11 @@ export const IncidentDetailPage: React.FC = () => {
           >
             {t('incidents.refresh')}
           </Button>
-          <Button variant="ghost" size="sm" leftIcon={<Edit2 className="w-4 h-4" />}>
-            {t('incidents.edit')}
-          </Button>
+          {canEditIncident && (
+            <Button variant="ghost" size="sm" leftIcon={<Edit2 className="w-4 h-4" />}>
+              {t('incidents.edit')}
+            </Button>
+          )}
         </div>
       </div>
 

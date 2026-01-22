@@ -24,6 +24,8 @@ import type {
 } from '../../types';
 import { cn } from '@/lib/utils';
 import { Button } from '../../components/ui';
+import { usePermissions } from '../../hooks/usePermissions';
+import { PERMISSIONS } from '../../constants/permissions';
 
 // Category Form Data
 interface CategoryFormData {
@@ -84,6 +86,9 @@ const colorOptions = [
 export const LookupsPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
+  const { hasPermission, isSuperAdmin } = usePermissions();
+
+  const canCreateLookup = isSuperAdmin || hasPermission(PERMISSIONS.LOOKUPS_CREATE);
 
   // State
   const [selectedCategory, setSelectedCategory] = useState<LookupCategory | null>(null);
@@ -291,13 +296,15 @@ export const LookupsPage: React.FC = () => {
             {/* Categories Header */}
             <div className="px-4 py-3 bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] flex items-center justify-between">
               <h3 className="text-sm font-semibold text-[hsl(var(--foreground))]">{t('lookups.categories')}</h3>
-              <button
-                onClick={openCreateCategoryModal}
-                className="p-1.5 text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors"
-                title={t('lookups.addCategory')}
-              >
-                <Plus className="w-4 h-4" />
-              </button>
+              {canCreateLookup && (
+                <button
+                  onClick={openCreateCategoryModal}
+                  className="p-1.5 text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors"
+                  title={t('lookups.addCategory')}
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
             {/* Categories List */}
@@ -399,7 +406,7 @@ export const LookupsPage: React.FC = () => {
                   </p>
                 )}
               </div>
-              {selectedCategory && (
+              {selectedCategory && canCreateLookup && (
                 <button
                   onClick={openCreateValueModal}
                   className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors"
@@ -421,9 +428,11 @@ export const LookupsPage: React.FC = () => {
                 <Tag className="w-12 h-12 text-[hsl(var(--muted-foreground))] mx-auto mb-3" />
                 <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">{t('lookups.noValues')}</h3>
                 <p className="text-[hsl(var(--muted-foreground))] mb-4">{t('lookups.noValuesDesc')}</p>
-                <Button onClick={openCreateValueModal} leftIcon={<Plus className="w-4 h-4" />}>
-                  {t('lookups.addValue')}
-                </Button>
+                {canCreateLookup && (
+                  <Button onClick={openCreateValueModal} leftIcon={<Plus className="w-4 h-4" />}>
+                    {t('lookups.addValue')}
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="overflow-x-auto">

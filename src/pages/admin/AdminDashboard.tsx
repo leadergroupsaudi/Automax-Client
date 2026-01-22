@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { userApi, roleApi, departmentApi, incidentApi, workflowApi } from '../../api/admin';
+import { usePermissions } from '../../hooks/usePermissions';
+import { PERMISSIONS } from '../../constants/permissions';
 
 interface StatCardProps {
   title: string;
@@ -28,6 +30,7 @@ interface StatCardProps {
   isLoading: boolean;
   href: string;
   change?: string;
+  hasPermission?: boolean;
 }
 
 const StatCard: React.FC<StatCardProps> = ({
@@ -38,18 +41,25 @@ const StatCard: React.FC<StatCardProps> = ({
   isLoading,
   href,
   change,
-}) => (
-  <Link to={href} className="group block">
-    <div className="relative overflow-hidden bg-white rounded-2xl border border-slate-200/60 p-6 hover:shadow-xl hover:shadow-slate-200/50 hover:border-slate-300/60 transition-all duration-300">
+  hasPermission = true,
+}) => {
+  const CardContent = (
+    <div className={`relative overflow-hidden bg-white rounded-2xl border border-slate-200/60 p-6 transition-all duration-300 ${
+      hasPermission
+        ? 'hover:shadow-xl hover:shadow-slate-200/50 hover:border-slate-300/60 cursor-pointer'
+        : 'opacity-50 cursor-not-allowed'
+    }`}>
       {/* Background gradient decoration */}
-      <div className={`absolute -top-12 -right-12 w-32 h-32 rounded-full ${gradient} opacity-10 group-hover:opacity-20 group-hover:scale-125 transition-all duration-500`} />
+      <div className={`absolute -top-12 -right-12 w-32 h-32 rounded-full ${gradient} opacity-10 ${hasPermission ? 'group-hover:opacity-20 group-hover:scale-125' : ''} transition-all duration-500`} />
 
       <div className="relative">
         <div className="flex items-start justify-between mb-4">
           <div className={`w-12 h-12 rounded-xl ${gradient} flex items-center justify-center shadow-lg`}>
             <Icon className="w-6 h-6 text-white" />
           </div>
-          <ArrowUpRight className="w-5 h-5 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+          {hasPermission && (
+            <ArrowUpRight className="w-5 h-5 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+          )}
         </div>
 
         <div>
@@ -70,12 +80,23 @@ const StatCard: React.FC<StatCardProps> = ({
         )}
       </div>
     </div>
-  </Link>
-);
+  );
+
+  if (!hasPermission) {
+    return <div className="group block">{CardContent}</div>;
+  }
+
+  return (
+    <Link to={href} className="group block">
+      {CardContent}
+    </Link>
+  );
+};
 
 export const AdminDashboard: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const { hasPermission, isSuperAdmin } = usePermissions();
 
   const { data: usersData, isLoading: usersLoading } = useQuery({
     queryKey: ['admin', 'users'],
@@ -102,6 +123,11 @@ export const AdminDashboard: React.FC = () => {
     queryFn: () => workflowApi.list(),
   });
 
+  // Dashboard-level permission checks
+  const canViewAdminDashboard = isSuperAdmin || hasPermission(PERMISSIONS.DASHBOARD_ADMIN);
+  const canViewIncidentsDashboard = isSuperAdmin || hasPermission(PERMISSIONS.DASHBOARD_INCIDENTS);
+  const canViewWorkflowsDashboard = isSuperAdmin || hasPermission(PERMISSIONS.DASHBOARD_WORKFLOWS);
+
   const stats: StatCardProps[] = [
     {
       title: t('dashboard.openIncidents'),
@@ -110,6 +136,7 @@ export const AdminDashboard: React.FC = () => {
       count: (incidentStatsData?.data?.open ?? 0) + (incidentStatsData?.data?.in_progress ?? 0),
       isLoading: incidentStatsLoading,
       href: '/incidents',
+      hasPermission: canViewIncidentsDashboard,
     },
     {
       title: t('dashboard.totalIncidents'),
@@ -118,6 +145,7 @@ export const AdminDashboard: React.FC = () => {
       count: incidentStatsData?.data?.total ?? 0,
       isLoading: incidentStatsLoading,
       href: '/incidents',
+      hasPermission: canViewIncidentsDashboard,
     },
     {
       title: t('nav.workflows'),
@@ -126,6 +154,7 @@ export const AdminDashboard: React.FC = () => {
       count: workflowsData?.data?.length ?? 0,
       isLoading: workflowsLoading,
       href: '/workflows',
+      hasPermission: canViewWorkflowsDashboard,
     },
     {
       title: t('admin.totalUsers'),
@@ -134,6 +163,7 @@ export const AdminDashboard: React.FC = () => {
       count: usersData?.total_items ?? 0,
       isLoading: usersLoading,
       href: '/admin/users',
+      hasPermission: canViewAdminDashboard,
     },
     {
       title: t('admin.totalRoles'),
@@ -142,6 +172,7 @@ export const AdminDashboard: React.FC = () => {
       count: rolesData?.data?.length ?? 0,
       isLoading: rolesLoading,
       href: '/admin/roles',
+      hasPermission: canViewAdminDashboard,
     },
     {
       title: t('admin.departments'),
@@ -150,6 +181,7 @@ export const AdminDashboard: React.FC = () => {
       count: departmentsData?.data?.length ?? 0,
       isLoading: departmentsLoading,
       href: '/admin/departments',
+      hasPermission: canViewAdminDashboard,
     },
   ];
 
@@ -161,6 +193,7 @@ export const AdminDashboard: React.FC = () => {
       href: '/incidents',
       color: 'text-red-600',
       bg: 'bg-red-50 hover:bg-red-100',
+      hasPermission: canViewIncidentsDashboard,
     },
     {
       title: t('nav.workflows'),
@@ -169,6 +202,7 @@ export const AdminDashboard: React.FC = () => {
       href: '/workflows',
       color: 'text-cyan-600',
       bg: 'bg-cyan-50 hover:bg-cyan-100',
+      hasPermission: canViewWorkflowsDashboard,
     },
     {
       title: t('admin.users'),
@@ -177,6 +211,7 @@ export const AdminDashboard: React.FC = () => {
       href: '/admin/users',
       color: 'text-blue-600',
       bg: 'bg-blue-50 hover:bg-blue-100',
+      hasPermission: canViewAdminDashboard,
     },
     {
       title: t('admin.roles'),
@@ -185,6 +220,7 @@ export const AdminDashboard: React.FC = () => {
       href: '/admin/roles',
       color: 'text-emerald-600',
       bg: 'bg-emerald-50 hover:bg-emerald-100',
+      hasPermission: canViewAdminDashboard,
     },
   ];
 
@@ -258,7 +294,7 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {stats.map((stat) => (
+          {stats.filter((stat) => stat.hasPermission).map((stat) => (
             <StatCard key={stat.title} {...stat} />
           ))}
         </div>
@@ -278,17 +314,31 @@ export const AdminDashboard: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              {quickActions.map((action) => (
-                <Link
-                  key={action.title}
-                  to={action.href}
-                  className={`group p-4 rounded-xl ${action.bg} transition-all duration-200`}
-                >
-                  <action.icon className={`w-6 h-6 ${action.color} mb-3`} />
-                  <p className="font-semibold text-slate-800 text-sm">{action.title}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{action.description}</p>
-                </Link>
-              ))}
+              {quickActions.map((action) => {
+                if (!action.hasPermission) {
+                  return (
+                    <div
+                      key={action.title}
+                      className="group p-4 rounded-xl bg-slate-100 opacity-50 cursor-not-allowed transition-all duration-200"
+                    >
+                      <action.icon className="w-6 h-6 text-slate-400 mb-3" />
+                      <p className="font-semibold text-slate-500 text-sm">{action.title}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{action.description}</p>
+                    </div>
+                  );
+                }
+                return (
+                  <Link
+                    key={action.title}
+                    to={action.href}
+                    className={`group p-4 rounded-xl ${action.bg} transition-all duration-200`}
+                  >
+                    <action.icon className={`w-6 h-6 ${action.color} mb-3`} />
+                    <p className="font-semibold text-slate-800 text-sm">{action.title}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{action.description}</p>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </div>

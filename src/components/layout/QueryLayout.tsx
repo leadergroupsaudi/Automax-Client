@@ -21,11 +21,15 @@ import {
   PenLine,
   Languages,
   Link2,
+  Phone,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { authApi } from '../../api/auth';
 import { incidentApi } from '../../api/admin';
 import { setLanguage, getCurrentLanguage, supportedLanguages } from '../../i18n';
+import { usePermissions } from '../../hooks/usePermissions';
+import { PERMISSIONS } from '../../constants/permissions';
+import SoftPhone from '../sip/Softphone';
 
 export const QueryLayout: React.FC = () => {
   const { t } = useTranslation();
@@ -35,9 +39,14 @@ export const QueryLayout: React.FC = () => {
   const [myQueriesOpen, setMyQueriesOpen] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [currentLang, setCurrentLang] = useState(getCurrentLanguage());
+  const [showSoftphone, setShowSoftphone] = useState(false);
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const langRef = useRef<HTMLDivElement>(null);
+  const { hasPermission, isSuperAdmin } = usePermissions();
+  const canViewIncidents = isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_VIEW_ALL);
+  const canViewQueries = isSuperAdmin || hasPermission(PERMISSIONS.QUERIES_VIEW);
+  const canViewAllQueries = isSuperAdmin || hasPermission(PERMISSIONS.QUERIES_VIEW_ALL);
 
   const handleLanguageChange = async (langCode: string) => {
     if (langCode === currentLang) {
@@ -121,93 +130,99 @@ export const QueryLayout: React.FC = () => {
           </p>
         )}
         <div className="space-y-1">
-          <NavLink
-            to="/queries"
-            end
-            onClick={() => setMobileMenuOpen(false)}
-            className={({ isActive }) =>
-              `group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 ${
-                isActive
-                  ? 'bg-gradient-to-r from-violet-600/90 to-purple-600/90 text-white shadow-lg shadow-violet-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
-              }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                {isActive && (
-                  <div className="absolute start-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white ltr:rounded-r-full rtl:rounded-l-full" />
-                )}
-                <List size={20} className="flex-shrink-0" />
-                {!collapsed && <span className="ms-3 font-medium text-sm">{t('sidebar.allQueries', 'All Queries')}</span>}
-              </>
-            )}
-          </NavLink>
-
-          {/* My Queries - Collapsible */}
-          <div>
-            <button
-              onClick={() => setMyQueriesOpen(!myQueriesOpen)}
-              className={`w-full group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 text-slate-400 hover:text-white hover:bg-white/5`}
+          {canViewAllQueries && (
+            <NavLink
+              to="/queries"
+              end
+              onClick={() => setMobileMenuOpen(false)}
+              className={({ isActive }) =>
+                `group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 ${
+                  isActive
+                    ? 'bg-gradient-to-r from-violet-600/90 to-purple-600/90 text-white shadow-lg shadow-violet-500/20'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`
+              }
             >
-              <User size={20} className="flex-shrink-0" />
-              {!collapsed && (
+              {({ isActive }) => (
                 <>
-                  <span className="ms-3 font-medium text-sm flex-1 text-start">{t('sidebar.myQueries', 'My Queries')}</span>
-                  <ChevronRight
-                    size={16}
-                    className={`transition-transform duration-200 ${myQueriesOpen ? 'ltr:rotate-90 rtl:-rotate-90' : 'rtl:rotate-180'}`}
-                  />
+                  {isActive && (
+                    <div className="absolute start-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white ltr:rounded-r-full rtl:rounded-l-full" />
+                  )}
+                  <List size={20} className="flex-shrink-0" />
+                  {!collapsed && <span className="ms-3 font-medium text-sm">{t('sidebar.allQueries', 'All Queries')}</span>}
                 </>
               )}
-            </button>
-            {myQueriesOpen && !collapsed && (
-              <div className="ms-4 mt-1 space-y-1 border-s border-white/10 ps-2">
-                <NavLink
-                  to="/queries/my-assigned"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={({ isActive }) =>
-                    `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
-                      isActive
-                        ? 'bg-gradient-to-r from-violet-600/90 to-purple-600/90 text-white shadow-lg shadow-violet-500/20'
-                        : 'text-slate-400 hover:text-white hover:bg-white/5'
-                    }`
-                  }
-                >
-                  <UserCheck size={16} className="flex-shrink-0" />
-                  <span className="ms-2 font-medium text-sm">{t('sidebar.assignedToMe', 'Assigned to Me')}</span>
-                </NavLink>
-                <NavLink
-                  to="/queries/my-created"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={({ isActive }) =>
-                    `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
-                      isActive
-                        ? 'bg-gradient-to-r from-violet-600/90 to-purple-600/90 text-white shadow-lg shadow-violet-500/20'
-                        : 'text-slate-400 hover:text-white hover:bg-white/5'
-                    }`
-                  }
-                >
-                  <PenLine size={16} className="flex-shrink-0" />
-                  <span className="ms-2 font-medium text-sm">{t('sidebar.createdByMe', 'Created by Me')}</span>
-                </NavLink>
-              </div>
-            )}
-          </div>
+            </NavLink>
+          )}
+
+          {/* My Queries - Collapsible */}
+          {canViewQueries && (
+            <div>
+              <button
+                onClick={() => setMyQueriesOpen(!myQueriesOpen)}
+                className={`w-full group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 text-slate-400 hover:text-white hover:bg-white/5`}
+              >
+                <User size={20} className="flex-shrink-0" />
+                {!collapsed && (
+                  <>
+                    <span className="ms-3 font-medium text-sm flex-1 text-start">{t('sidebar.myQueries', 'My Queries')}</span>
+                    <ChevronRight
+                      size={16}
+                      className={`transition-transform duration-200 ${myQueriesOpen ? 'ltr:rotate-90 rtl:-rotate-90' : 'rtl:rotate-180'}`}
+                    />
+                  </>
+                )}
+              </button>
+              {myQueriesOpen && !collapsed && (
+                <div className="ms-4 mt-1 space-y-1 border-s border-white/10 ps-2">
+                  <NavLink
+                    to="/queries/my-assigned"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
+                        isActive
+                          ? 'bg-gradient-to-r from-violet-600/90 to-purple-600/90 text-white shadow-lg shadow-violet-500/20'
+                          : 'text-slate-400 hover:text-white hover:bg-white/5'
+                      }`
+                    }
+                  >
+                    <UserCheck size={16} className="flex-shrink-0" />
+                    <span className="ms-2 font-medium text-sm">{t('sidebar.assignedToMe', 'Assigned to Me')}</span>
+                  </NavLink>
+                  <NavLink
+                    to="/queries/my-created"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
+                        isActive
+                          ? 'bg-gradient-to-r from-violet-600/90 to-purple-600/90 text-white shadow-lg shadow-violet-500/20'
+                          : 'text-slate-400 hover:text-white hover:bg-white/5'
+                      }`
+                    }
+                  >
+                    <PenLine size={16} className="flex-shrink-0" />
+                    <span className="ms-2 font-medium text-sm">{t('sidebar.createdByMe', 'Created by Me')}</span>
+                  </NavLink>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Link to Incidents */}
-          <NavLink
-            to="/incidents"
-            onClick={() => setMobileMenuOpen(false)}
-            className="group relative flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 text-slate-400 hover:text-white hover:bg-white/5"
-          >
-            <Link2 size={20} className="flex-shrink-0" />
-            {!collapsed && <span className="ms-3 font-medium text-sm">{t('sidebar.viewIncidents', 'View Incidents')}</span>}
-          </NavLink>
+          {canViewIncidents && (
+            <NavLink
+              to="/incidents"
+              onClick={() => setMobileMenuOpen(false)}
+              className="group relative flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 text-slate-400 hover:text-white hover:bg-white/5"
+            >
+              <Link2 size={20} className="flex-shrink-0" />
+              {!collapsed && <span className="ms-3 font-medium text-sm">{t('sidebar.viewIncidents', 'View Incidents')}</span>}
+            </NavLink>
+          )}
         </div>
 
         {/* Status Filters */}
-        {statusItems.length > 0 && (
+        {canViewQueries && statusItems.length > 0 && (
           <>
             {!collapsed && (
               <>
@@ -241,21 +256,28 @@ export const QueryLayout: React.FC = () => {
         )}
 
         {/* Quick Stats */}
-        {statsData?.data && !collapsed && (
+        {canViewQueries && statsData?.data && !collapsed && (
           <>
             <div className="my-6 border-t border-white/5" />
             <p className="px-3 mb-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
               {t('sidebar.overview', 'Overview')}
             </p>
             <div className="px-3 space-y-3">
-              <NavLink
-                to="/queries"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between text-sm hover:bg-white/5 rounded-lg px-2 py-1.5 -mx-2 transition-colors"
-              >
-                <span className="text-slate-400">{t('sidebar.total', 'Total')}</span>
-                <span className="text-white font-semibold">{statsData.data.total || 0}</span>
-              </NavLink>
+              {canViewAllQueries ? (
+                <NavLink
+                  to="/queries"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between text-sm hover:bg-white/5 rounded-lg px-2 py-1.5 -mx-2 transition-colors"
+                >
+                  <span className="text-slate-400">{t('sidebar.total', 'Total')}</span>
+                  <span className="text-white font-semibold">{statsData.data.total || 0}</span>
+                </NavLink>
+              ) : (
+                <div className="flex items-center justify-between text-sm px-2 py-1.5 -mx-2">
+                  <span className="text-slate-400">{t('sidebar.total', 'Total')}</span>
+                  <span className="text-white font-semibold">{statsData.data.total || 0}</span>
+                </div>
+              )}
             </div>
           </>
         )}
@@ -429,6 +451,25 @@ export const QueryLayout: React.FC = () => {
               )}
             </div>
 
+            {/* Phone/Softphone */}
+            <button
+              onClick={() => setShowSoftphone(!showSoftphone)}
+              className={`relative p-2.5 rounded-xl transition-colors focus:outline-none focus:ring-0 ${
+                showSoftphone
+                  ? 'text-emerald-600 bg-emerald-50'
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <Phone className="w-5 h-5" />
+            </button>
+
+            <SoftPhone
+              showSip={showSoftphone}
+              onClose={() => setShowSoftphone(false)}
+              settings={{ domain: "zkff.automaxsw.com", socketURL: "wss://zkff.automaxsw.com:7443" }}
+              auth={{}}
+            />
+
             {/* Notifications */}
             <button className="relative p-2.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors">
               <Bell className="w-5 h-5" />
@@ -463,7 +504,7 @@ export const QueryLayout: React.FC = () => {
                   </p>
                   <p className="text-xs text-slate-400 leading-tight flex items-center gap-1">
                     {user?.is_super_admin && <Sparkles className="w-3 h-3 text-violet-500" />}
-                    {user?.is_super_admin ? t('profile.superAdmin', 'Super Admin') : t('sidebar.user', 'User')}
+                    {user?.is_super_admin ? t('profile.superAdmin', 'Super Admin') : user?.roles?.[0]?.name || t('sidebar.user', 'User')}
                   </p>
                 </div>
                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />

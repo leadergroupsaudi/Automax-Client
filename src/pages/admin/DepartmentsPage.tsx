@@ -21,6 +21,8 @@ import { departmentApi, locationApi, classificationApi, roleApi } from '../../ap
 import type { Department, DepartmentCreateRequest, DepartmentUpdateRequest, Location, Classification, Role } from '../../types';
 import { cn } from '@/lib/utils';
 import { Button } from '../../components/ui';
+import { usePermissions } from '../../hooks/usePermissions';
+import { PERMISSIONS } from '../../constants/permissions';
 
 interface DepartmentFormData {
   name: string;
@@ -59,10 +61,13 @@ interface TreeNodeProps {
   onAdd: (parentId: string, parentName: string) => void;
   onEdit: (dept: Department) => void;
   onDelete: (id: string) => void;
+  canCreate: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
   t: (key: string) => string;
 }
 
-const TreeNode: React.FC<TreeNodeProps> = ({ department, level, onView, onAdd, onEdit, onDelete, t }) => {
+const TreeNode: React.FC<TreeNodeProps> = ({ department, level, onView, onAdd, onEdit, onDelete, canCreate, canEdit, canDelete, t }) => {
   const [expanded, setExpanded] = useState(true);
   const hasChildren = department.children && department.children.length > 0;
   const gradient = levelGradients[level % levelGradients.length];
@@ -114,13 +119,15 @@ const TreeNode: React.FC<TreeNodeProps> = ({ department, level, onView, onAdd, o
             {department.is_active ? t('departments.active') : t('departments.inactive')}
           </span>
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              onClick={() => onAdd(department.id, department.name)}
-              className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.1)] rounded-lg transition-colors"
-              title={t('departments.addChildDepartment')}
-            >
-              <Plus className="w-4 h-4" />
-            </button>
+            {canCreate && (
+              <button
+                onClick={() => onAdd(department.id, department.name)}
+                className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.1)] rounded-lg transition-colors"
+                title={t('departments.addChildDepartment')}
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            )}
             <button
               onClick={() => onView(department.id)}
               className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors"
@@ -128,20 +135,24 @@ const TreeNode: React.FC<TreeNodeProps> = ({ department, level, onView, onAdd, o
             >
               <Eye className="w-4 h-4" />
             </button>
-            <button
-              onClick={() => onEdit(department)}
-              className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors"
-              title={t('common.edit')}
-            >
-              <Edit2 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => onDelete(department.id)}
-              className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] rounded-lg transition-colors"
-              title={t('common.delete')}
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            {canEdit && (
+              <button
+                onClick={() => onEdit(department)}
+                className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors"
+                title={t('common.edit')}
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+            )}
+            {canDelete && (
+              <button
+                onClick={() => onDelete(department.id)}
+                className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] rounded-lg transition-colors"
+                title={t('common.delete')}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -156,6 +167,9 @@ const TreeNode: React.FC<TreeNodeProps> = ({ department, level, onView, onAdd, o
               onAdd={onAdd}
               onEdit={onEdit}
               onDelete={onDelete}
+              canCreate={canCreate}
+              canEdit={canEdit}
+              canDelete={canDelete}
               t={t}
             />
           ))}
@@ -170,10 +184,15 @@ export const DepartmentsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
+  const { hasPermission, isSuperAdmin } = usePermissions();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
   const [formData, setFormData] = useState<DepartmentFormData>(initialFormData);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  const canCreateDepartment = isSuperAdmin || hasPermission(PERMISSIONS.DEPARTMENTS_CREATE);
+  const canEditDepartment = isSuperAdmin || hasPermission(PERMISSIONS.DEPARTMENTS_UPDATE);
+  const canDeleteDepartment = isSuperAdmin || hasPermission(PERMISSIONS.DEPARTMENTS_DELETE);
 
   // Handle edit state from navigation (e.g., from DepartmentDetailPage)
   useEffect(() => {
@@ -341,13 +360,15 @@ export const DepartmentsPage: React.FC = () => {
               </p>
             </div>
           </div>
-          <button
-            onClick={() => openCreateModal()}
-            className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg hover:bg-[hsl(var(--primary)/0.9)] transition-colors text-sm font-medium shadow-md shadow-[hsl(var(--primary)/0.25)]"
-          >
-            <Plus className="w-4 h-4" />
-            {t('departments.addRootDepartment')}
-          </button>
+          {canCreateDepartment && (
+            <button
+              onClick={() => openCreateModal()}
+              className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg hover:bg-[hsl(var(--primary)/0.9)] transition-colors text-sm font-medium shadow-md shadow-[hsl(var(--primary)/0.25)]"
+            >
+              <Plus className="w-4 h-4" />
+              {t('departments.addRootDepartment')}
+            </button>
+          )}
         </div>
 
         {/* Tree Content */}
@@ -363,9 +384,11 @@ export const DepartmentsPage: React.FC = () => {
             </div>
             <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">{t('departments.noDepartmentsYet')}</h3>
             <p className="text-[hsl(var(--muted-foreground))] mb-6">{t('departments.createFirstDepartment')}</p>
-            <Button onClick={() => openCreateModal()} leftIcon={<Plus className="w-4 h-4" />}>
-              {t('departments.createDepartment')}
-            </Button>
+            {canCreateDepartment && (
+              <Button onClick={() => openCreateModal()} leftIcon={<Plus className="w-4 h-4" />}>
+                {t('departments.createDepartment')}
+              </Button>
+            )}
           </div>
         ) : (
           <div className="divide-y divide-[hsl(var(--border))]">
@@ -378,6 +401,9 @@ export const DepartmentsPage: React.FC = () => {
                 onAdd={openCreateModal}
                 onEdit={openEditModal}
                 onDelete={setDeleteConfirm}
+                canCreate={canCreateDepartment}
+                canEdit={canEditDepartment}
+                canDelete={canDeleteDepartment}
                 t={t}
               />
             ))}

@@ -41,12 +41,6 @@ const initialFormData: FormData = {
   encryption: 'tls',
 };
 
-const encryptionOptions = [
-  { value: 'none', label: 'None', description: 'No encryption (not recommended)' },
-  { value: 'tls', label: 'TLS/STARTTLS', description: 'Recommended for port 587' },
-  { value: 'ssl', label: 'SSL', description: 'Recommended for port 465' },
-];
-
 const commonPorts = [
   { port: 25, label: 'SMTP (25)', encryption: 'none' },
   { port: 587, label: 'Submission (587)', encryption: 'tls' },

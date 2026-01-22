@@ -17,6 +17,8 @@ import { roleApi, permissionApi } from '../../api/admin';
 import type { Role, Permission, RoleCreateRequest, RoleUpdateRequest } from '../../types';
 import { cn } from '@/lib/utils';
 import { Button } from '../../components/ui';
+import { usePermissions } from '../../hooks/usePermissions';
+import { PERMISSIONS } from '../../constants/permissions';
 
 interface RoleFormData {
   name: string;
@@ -35,11 +37,14 @@ const initialFormData: RoleFormData = {
 export const RolesPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const { hasPermission, isSuperAdmin } = usePermissions();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [formData, setFormData] = useState<RoleFormData>(initialFormData);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [permissionSearch, setPermissionSearch] = useState('');
+
+  const canCreateRole = isSuperAdmin || hasPermission(PERMISSIONS.ROLES_CREATE);
 
   const { data: rolesData, isLoading } = useQuery({
     queryKey: ['admin', 'roles'],
@@ -200,9 +205,11 @@ export const RolesPage: React.FC = () => {
           </div>
           <p className="text-[hsl(var(--muted-foreground))] mt-1 ml-12">{t('roles.subtitle')}</p>
         </div>
-        <Button onClick={openCreateModal} leftIcon={<Plus className="w-4 h-4" />}>
-          {t('roles.addRole')}
-        </Button>
+        {canCreateRole && (
+          <Button onClick={openCreateModal} leftIcon={<Plus className="w-4 h-4" />}>
+            {t('roles.addRole')}
+          </Button>
+        )}
       </div>
 
       {/* Roles Grid */}
@@ -316,9 +323,11 @@ export const RolesPage: React.FC = () => {
           </div>
           <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">{t('roles.noRolesYet')}</h3>
           <p className="text-[hsl(var(--muted-foreground))] mb-6">{t('roles.createFirstRole')}</p>
-          <Button onClick={openCreateModal} leftIcon={<Plus className="w-4 h-4" />}>
-            {t('roles.createRole')}
-          </Button>
+          {canCreateRole && (
+            <Button onClick={openCreateModal} leftIcon={<Plus className="w-4 h-4" />}>
+              {t('roles.createRole')}
+            </Button>
+          )}
         </div>
       )}
 

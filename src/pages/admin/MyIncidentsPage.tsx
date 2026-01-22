@@ -23,6 +23,8 @@ import { Button } from '../../components/ui';
 import { incidentApi } from '../../api/admin';
 import type { Incident } from '../../types';
 import { cn } from '@/lib/utils';
+import { usePermissions } from '../../hooks/usePermissions';
+import { PERMISSIONS } from '../../constants/permissions';
 
 interface MyIncidentsPageProps {
   type: 'assigned' | 'created';
@@ -31,11 +33,13 @@ interface MyIncidentsPageProps {
 export const MyIncidentsPage: React.FC<MyIncidentsPageProps> = ({ type }) => {
   const navigate = useNavigate();
   const { i18n } = useTranslation();
+  const { hasPermission, isSuperAdmin } = usePermissions();
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
 
   const isAssigned = type === 'assigned';
+  const canCreateIncident = isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_CREATE);
   const pageTitle = isAssigned ? 'Assigned to Me' : 'Created by Me';
   const pageDescription = isAssigned
     ? 'Incidents that are currently assigned to you'
@@ -121,9 +125,11 @@ export const MyIncidentsPage: React.FC<MyIncidentsPageProps> = ({ type }) => {
           >
             Refresh
           </Button>
-          <Button leftIcon={<Plus className="w-4 h-4" />} onClick={() => navigate('/incidents/new')}>
-            Create Incident
-          </Button>
+          {canCreateIncident && (
+            <Button leftIcon={<Plus className="w-4 h-4" />} onClick={() => navigate('/incidents/new')}>
+              Create Incident
+            </Button>
+          )}
         </div>
       </div>
 
@@ -219,11 +225,11 @@ export const MyIncidentsPage: React.FC<MyIncidentsPageProps> = ({ type }) => {
             </p>
             {searchTerm ? (
               <Button variant="outline" onClick={() => setSearchTerm('')}>Clear Search</Button>
-            ) : (
+            ) : canCreateIncident ? (
               <Button leftIcon={<Plus className="w-4 h-4" />} onClick={() => navigate('/incidents/new')}>
                 Create Incident
               </Button>
-            )}
+            ) : null}
           </div>
         ) : (
           <>

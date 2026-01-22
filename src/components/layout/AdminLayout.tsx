@@ -62,9 +62,9 @@ const sidebarSectionsConfig: SidebarSection[] = [
   {
     titleKey: 'admin.system',
     items: [
-      { icon: Database, labelKey: 'lookups.title', path: '/admin/lookups' },
-      { icon: FileBarChart, labelKey: 'admin.reports', path: '/admin/reports' },
-      { icon: Mail, labelKey: 'admin.smtpSettings', path: '/admin/smtp-settings' },
+      { icon: Database, labelKey: 'lookups.title', path: '/admin/lookups', permission: 'lookups:view' },
+      { icon: FileBarChart, labelKey: 'admin.reports', path: '/admin/reports', permission: 'reports:view' },
+      { icon: Mail, labelKey: 'admin.smtpSettings', path: '/admin/smtp-settings', permission: 'settings:view' },
     ],
   },
 ];
@@ -435,7 +435,7 @@ export const AdminLayout: React.FC = () => {
                   </p>
                   <p className="text-xs text-slate-400 leading-tight flex items-center gap-1">
                     {user?.is_super_admin && <Sparkles className="w-3 h-3 text-amber-500" />}
-                    {user?.is_super_admin ? t('profile.superAdmin') : t('admin.administrator')}
+                    {user?.is_super_admin ? t('profile.superAdmin') : user?.roles?.[0]?.name || t('sidebar.user')}
                   </p>
                 </div>
                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
@@ -451,7 +451,7 @@ export const AdminLayout: React.FC = () => {
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 animate-scale-in origin-top-right">
                     <div className="px-4 py-3 border-b border-slate-100">
                       <p className="text-sm font-medium text-slate-700">{user?.email}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{t('admin.loggedInAsAdmin')}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{user?.roles?.[0]?.name || t('sidebar.user')}</p>
                     </div>
                     <div className="py-2">
                       <NavLink

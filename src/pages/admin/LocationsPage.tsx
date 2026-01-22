@@ -19,6 +19,8 @@ import { locationApi } from '../../api/admin';
 import type { Location, LocationCreateRequest, LocationUpdateRequest } from '../../types';
 import { cn } from '@/lib/utils';
 import { Button } from '../../components/ui';
+import { usePermissions } from '../../hooks/usePermissions';
+import { PERMISSIONS } from '../../constants/permissions';
 
 interface LocationFormData {
   name: string;
@@ -76,10 +78,13 @@ interface TreeNodeProps {
   onAdd: (parentId: string, parentName: string) => void;
   onEdit: (loc: Location) => void;
   onDelete: (id: string) => void;
+  canCreate: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
   t: (key: string) => string;
 }
 
-const TreeNode: React.FC<TreeNodeProps> = ({ location, level, onAdd, onEdit, onDelete, t }) => {
+const TreeNode: React.FC<TreeNodeProps> = ({ location, level, onAdd, onEdit, onDelete, canCreate, canEdit, canDelete, t }) => {
   const [expanded, setExpanded] = useState(true);
   const hasChildren = location.children && location.children.length > 0;
   const gradient = typeGradients[location.type] || 'from-[hsl(var(--muted-foreground))] to-[hsl(var(--foreground))]';
@@ -130,27 +135,33 @@ const TreeNode: React.FC<TreeNodeProps> = ({ location, level, onAdd, onEdit, onD
             {location.is_active ? t('locations.active') : t('locations.inactive')}
           </span>
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              onClick={() => onAdd(location.id, location.name)}
-              className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.1)] rounded-lg transition-colors"
-              title={t('locations.addChildLocation')}
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => onEdit(location)}
-              className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors"
-              title={t('common.edit')}
-            >
-              <Edit2 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => onDelete(location.id)}
-              className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] rounded-lg transition-colors"
-              title={t('common.delete')}
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            {canCreate && (
+              <button
+                onClick={() => onAdd(location.id, location.name)}
+                className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.1)] rounded-lg transition-colors"
+                title={t('locations.addChildLocation')}
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            )}
+            {canEdit && (
+              <button
+                onClick={() => onEdit(location)}
+                className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors"
+                title={t('common.edit')}
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+            )}
+            {canDelete && (
+              <button
+                onClick={() => onDelete(location.id)}
+                className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] rounded-lg transition-colors"
+                title={t('common.delete')}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -164,6 +175,9 @@ const TreeNode: React.FC<TreeNodeProps> = ({ location, level, onAdd, onEdit, onD
               onAdd={onAdd}
               onEdit={onEdit}
               onDelete={onDelete}
+              canCreate={canCreate}
+              canEdit={canEdit}
+              canDelete={canDelete}
               t={t}
             />
           ))}
@@ -176,10 +190,15 @@ const TreeNode: React.FC<TreeNodeProps> = ({ location, level, onAdd, onEdit, onD
 export const LocationsPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const { hasPermission, isSuperAdmin } = usePermissions();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [formData, setFormData] = useState<LocationFormData>(initialFormData);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  const canCreateLocation = isSuperAdmin || hasPermission(PERMISSIONS.LOCATIONS_CREATE);
+  const canEditLocation = isSuperAdmin || hasPermission(PERMISSIONS.LOCATIONS_UPDATE);
+  const canDeleteLocation = isSuperAdmin || hasPermission(PERMISSIONS.LOCATIONS_DELETE);
 
   const { data: treeData, isLoading } = useQuery({
     queryKey: ['admin', 'locations', 'tree'],
@@ -311,13 +330,15 @@ export const LocationsPage: React.FC = () => {
               </p>
             </div>
           </div>
-          <button
-            onClick={() => openCreateModal()}
-            className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg hover:bg-[hsl(var(--primary)/0.9)] transition-colors text-sm font-medium shadow-md shadow-[hsl(var(--primary)/0.25)]"
-          >
-            <Plus className="w-4 h-4" />
-            {t('locations.addRootLocation')}
-          </button>
+          {canCreateLocation && (
+            <button
+              onClick={() => openCreateModal()}
+              className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg hover:bg-[hsl(var(--primary)/0.9)] transition-colors text-sm font-medium shadow-md shadow-[hsl(var(--primary)/0.25)]"
+            >
+              <Plus className="w-4 h-4" />
+              {t('locations.addRootLocation')}
+            </button>
+          )}
         </div>
 
         {/* Tree Content */}
@@ -333,9 +354,11 @@ export const LocationsPage: React.FC = () => {
             </div>
             <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">{t('locations.noLocationsYet')}</h3>
             <p className="text-[hsl(var(--muted-foreground))] mb-6">{t('locations.createFirstLocation')}</p>
-            <Button onClick={() => openCreateModal()} leftIcon={<Plus className="w-4 h-4" />}>
-              {t('locations.createLocation')}
-            </Button>
+            {canCreateLocation && (
+              <Button onClick={() => openCreateModal()} leftIcon={<Plus className="w-4 h-4" />}>
+                {t('locations.createLocation')}
+              </Button>
+            )}
           </div>
         ) : (
           <div className="divide-y divide-[hsl(var(--border))]">
@@ -347,6 +370,9 @@ export const LocationsPage: React.FC = () => {
                 onAdd={openCreateModal}
                 onEdit={openEditModal}
                 onDelete={setDeleteConfirm}
+                canCreate={canCreateLocation}
+                canEdit={canEditLocation}
+                canDelete={canDeleteLocation}
                 t={t}
               />
             ))}

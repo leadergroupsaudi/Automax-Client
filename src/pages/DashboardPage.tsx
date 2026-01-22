@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../stores/authStore';
+import { usePermissions } from '../hooks/usePermissions';
+import { PERMISSIONS } from '../constants/permissions';
 import {
   Settings,
   AlertTriangle,
@@ -14,11 +16,23 @@ import {
   HelpCircle,
 } from 'lucide-react';
 
+interface NavigationCard {
+  title: string;
+  subtitle: string;
+  description: string;
+  href: string;
+  icon: React.ElementType;
+  gradient: string;
+  shadowColor: string;
+  permissions: string[];
+}
+
 export const DashboardPage: React.FC = () => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
+  const { hasAnyPermission, isSuperAdmin } = usePermissions();
 
-  const navigationCards = [
+  const navigationCards: NavigationCard[] = [
     {
       title: t('dashboard.adminPanel'),
       subtitle: t('dashboard.userAccessControl'),
@@ -27,6 +41,7 @@ export const DashboardPage: React.FC = () => {
       icon: Settings,
       gradient: 'from-violet-500 to-purple-600',
       shadowColor: 'shadow-violet-500/20',
+      permissions: [PERMISSIONS.DASHBOARD_ADMIN],
     },
     {
       title: t('dashboard.incidentManagement'),
@@ -36,6 +51,7 @@ export const DashboardPage: React.FC = () => {
       icon: AlertTriangle,
       gradient: 'from-blue-500 to-cyan-500',
       shadowColor: 'shadow-blue-500/20',
+      permissions: [PERMISSIONS.DASHBOARD_INCIDENTS],
     },
     {
       title: t('dashboard.requestManagement', 'Request Management'),
@@ -45,6 +61,7 @@ export const DashboardPage: React.FC = () => {
       icon: FileText,
       gradient: 'from-emerald-500 to-teal-500',
       shadowColor: 'shadow-emerald-500/20',
+      permissions: [PERMISSIONS.DASHBOARD_REQUESTS],
     },
     {
       title: t('dashboard.complaintManagement', 'Complaint Management'),
@@ -54,6 +71,7 @@ export const DashboardPage: React.FC = () => {
       icon: MessageSquareWarning,
       gradient: 'from-amber-500 to-orange-500',
       shadowColor: 'shadow-amber-500/20',
+      permissions: [PERMISSIONS.DASHBOARD_COMPLAINTS],
     },
     {
       title: t('dashboard.queryManagement', 'Query Management'),
@@ -63,6 +81,7 @@ export const DashboardPage: React.FC = () => {
       icon: HelpCircle,
       gradient: 'from-violet-500 to-purple-500',
       shadowColor: 'shadow-violet-500/20',
+      permissions: [PERMISSIONS.DASHBOARD_QUERIES],
     },
     {
       title: t('dashboard.workflowManagement'),
@@ -72,17 +91,24 @@ export const DashboardPage: React.FC = () => {
       icon: GitBranch,
       gradient: 'from-rose-500 to-pink-500',
       shadowColor: 'shadow-rose-500/20',
+      permissions: [PERMISSIONS.DASHBOARD_WORKFLOWS],
     },
     {
       title: t('dashboard.reportsAnalytics'),
       subtitle: t('dashboard.insightsLogs'),
       description: t('dashboard.viewReportsLogs'),
-      href: '/reports',
+      href: '/admin/reports',
       icon: FileBarChart,
       gradient: 'from-orange-500 to-amber-500',
       shadowColor: 'shadow-orange-500/20',
+      permissions: [PERMISSIONS.REPORTS_VIEW],
     },
   ];
+
+  // Filter cards based on user permissions
+  const visibleCards = navigationCards.filter(
+    (card) => isSuperAdmin || hasAnyPermission(card.permissions)
+  );
 
   return (
     <div className="min-h-[calc(100vh-120px)] flex flex-col">
@@ -102,49 +128,65 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* Navigation Cards Grid - 4 columns on large screens */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {navigationCards.map((card) => (
-          <Link
-            key={card.title}
-            to={card.href}
-            className={`
-              group relative overflow-hidden rounded-2xl p-5
-              bg-gradient-to-br ${card.gradient}
-              shadow-lg ${card.shadowColor}
-              hover:shadow-xl hover:scale-[1.02]
-              transition-all duration-300 ease-out
-              min-h-[160px] flex flex-col justify-between
-            `}
-          >
-            {/* Background decoration */}
-            <div className="absolute -top-4 -right-4 w-24 h-24 opacity-10">
-              <card.icon className="w-full h-full" strokeWidth={0.5} />
-            </div>
-
-            {/* Content */}
-            <div className="relative z-10">
-              <div className="p-2.5 bg-white/20 backdrop-blur-sm rounded-xl w-fit mb-3">
-                <card.icon className="w-6 h-6 text-white" />
+      {visibleCards.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {visibleCards.map((card) => (
+            <Link
+              key={card.title}
+              to={card.href}
+              className={`
+                group relative overflow-hidden rounded-2xl p-5
+                bg-gradient-to-br ${card.gradient}
+                shadow-lg ${card.shadowColor}
+                hover:shadow-xl hover:scale-[1.02]
+                transition-all duration-300 ease-out
+                min-h-[160px] flex flex-col justify-between
+              `}
+            >
+              {/* Background decoration */}
+              <div className="absolute -top-4 -right-4 w-24 h-24 opacity-10">
+                <card.icon className="w-full h-full" strokeWidth={0.5} />
               </div>
-              <h2 className="text-lg font-bold text-white leading-tight">{card.title}</h2>
-              <p className="text-white/60 text-xs font-medium mt-0.5">{card.subtitle}</p>
-            </div>
 
-            {/* Arrow indicator */}
-            <div className="relative z-10 flex items-center justify-between mt-3">
-              <p className="text-white/70 text-xs hidden sm:block">{card.description}</p>
-              <div className="p-1.5 bg-white/10 rounded-lg group-hover:bg-white/20 group-hover:translate-x-1 transition-all ml-auto">
-                <ArrowRight className="w-4 h-4 text-white" />
+              {/* Content */}
+              <div className="relative z-10">
+                <div className="p-2.5 bg-white/20 backdrop-blur-sm rounded-xl w-fit mb-3">
+                  <card.icon className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-lg font-bold text-white leading-tight">{card.title}</h2>
+                <p className="text-white/60 text-xs font-medium mt-0.5">{card.subtitle}</p>
               </div>
-            </div>
 
-            {/* Hover shine effect */}
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+              {/* Arrow indicator */}
+              <div className="relative z-10 flex items-center justify-between mt-3">
+                <p className="text-white/70 text-xs hidden sm:block">{card.description}</p>
+                <div className="p-1.5 bg-white/10 rounded-lg group-hover:bg-white/20 group-hover:translate-x-1 transition-all ml-auto">
+                  <ArrowRight className="w-4 h-4 text-white" />
+                </div>
+              </div>
+
+              {/* Hover shine effect */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="p-4 bg-[hsl(var(--muted))] rounded-full w-fit mx-auto mb-4">
+              <Settings className="w-8 h-8 text-[hsl(var(--muted-foreground))]" />
             </div>
-          </Link>
-        ))}
-      </div>
+            <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">
+              {t('dashboard.noAccessTitle', 'No modules available')}
+            </h3>
+            <p className="text-[hsl(var(--muted-foreground))]">
+              {t('dashboard.noAccessDescription', 'Contact your administrator to get access to modules.')}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* System Status Footer */}
       <div className="mt-auto pt-8 flex items-center justify-center gap-3 py-4">

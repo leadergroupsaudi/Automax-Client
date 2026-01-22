@@ -28,6 +28,8 @@ import { userApi, departmentApi, locationApi, roleApi, classificationApi } from 
 import type { User, Role, UpdateProfileRequest } from '../../types';
 import { cn } from '@/lib/utils';
 import { FolderTree } from 'lucide-react';
+import { usePermissions } from '../../hooks/usePermissions';
+import { PERMISSIONS } from '../../constants/permissions';
 
 interface UserFormData {
   first_name: string;
@@ -60,7 +62,10 @@ const initialFormData: UserFormData = {
 export const UsersPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const { hasPermission, isSuperAdmin } = usePermissions();
   const [page, setPage] = useState(1);
+
+  const canCreateUser = isSuperAdmin || hasPermission(PERMISSIONS.USERS_CREATE);
   const [search, setSearch] = useState('');
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; right: number } | null>(null);
@@ -355,9 +360,11 @@ export const UsersPage: React.FC = () => {
           <Button variant="outline" size="sm" leftIcon={<Download className="w-4 h-4" />}>
             {t('common.export')}
           </Button>
-          <Button leftIcon={<Plus className="w-4 h-4" />} onClick={openCreateModal}>
-            {t('users.addUser')}
-          </Button>
+          {canCreateUser && (
+            <Button leftIcon={<Plus className="w-4 h-4" />} onClick={openCreateModal}>
+              {t('users.addUser')}
+            </Button>
+          )}
         </div>
       </div>
 

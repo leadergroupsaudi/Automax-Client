@@ -25,6 +25,8 @@ import { Button } from '../../components/ui';
 import { incidentApi, workflowApi, userApi, departmentApi, classificationApi, locationApi } from '../../api/admin';
 import type { Incident, IncidentFilter, Workflow, User as UserType, Department, WorkflowState, Classification, Location } from '../../types';
 import { cn } from '@/lib/utils';
+import { usePermissions } from '../../hooks/usePermissions';
+import { PERMISSIONS } from '../../constants/permissions';
 
 // Column configuration
 interface ColumnConfig {
@@ -69,6 +71,7 @@ const loadColumnsFromStorage = (): ColumnConfig[] => {
 export const IncidentsPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { hasPermission, isSuperAdmin } = usePermissions();
   const [searchParams, setSearchParams] = useSearchParams();
   const [filter, setFilter] = useState<IncidentFilter>({
     page: 1,
@@ -80,6 +83,21 @@ export const IncidentsPage: React.FC = () => {
   const [columns, setColumns] = useState<ColumnConfig[]>(loadColumnsFromStorage);
   const [showColumnConfig, setShowColumnConfig] = useState(false);
   const columnConfigRef = useRef<HTMLDivElement>(null);
+
+  const canViewAllIncidents = isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_VIEW_ALL);
+  const canCreateIncident = isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_CREATE);
+
+  // Get status from URL - users with view permission can access if status filter is applied
+  const urlStatusParam = searchParams.get('status');
+  const urlSlaBreachedParam = searchParams.get('sla_breached');
+  const hasUrlFilter = !!urlStatusParam || urlSlaBreachedParam === 'true';
+
+  // Redirect to my-assigned if user doesn't have view_all permission AND no status filter is applied
+  useEffect(() => {
+    if (!canViewAllIncidents && !hasUrlFilter) {
+      navigate('/incidents/my-assigned', { replace: true });
+    }
+  }, [canViewAllIncidents, hasUrlFilter, navigate]);
 
   // Handle click outside column config dropdown
   useEffect(() => {
@@ -322,9 +340,11 @@ export const IncidentsPage: React.FC = () => {
           >
             {t('common.refresh')}
           </Button>
-          <Button leftIcon={<Plus className="w-4 h-4" />} onClick={() => navigate('/incidents/new')}>
-            {t('incidents.createIncident')}
-          </Button>
+          {canCreateIncident && (
+            <Button leftIcon={<Plus className="w-4 h-4" />} onClick={() => navigate('/incidents/new')}>
+              {t('incidents.createIncident')}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -406,7 +426,7 @@ export const IncidentsPage: React.FC = () => {
                 <span className="ml-1 w-2 h-2 rounded-full bg-[hsl(var(--primary))]" />
               )}
             </Button>
-            {hasActiveFilters && (
+            {hasActiveFilters && canViewAllIncidents && (
               <Button variant="ghost" size="sm" onClick={clearFilters}>
                 {t('common.clear')}
               </Button>
@@ -502,7 +522,11 @@ export const IncidentsPage: React.FC = () => {
               <select
                 value={filter.current_state_id || ''}
                 onChange={(e) => handleFilterChange('current_state_id', e.target.value || undefined)}
-                className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                disabled={!canViewAllIncidents && hasUrlFilter}
+                className={cn(
+                  "w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]",
+                  !canViewAllIncidents && hasUrlFilter && "opacity-60 cursor-not-allowed"
+                )}
               >
                 <option value="">{t('common.allStates')}</option>
                 {uniqueStates.map((state: WorkflowState) => (
@@ -569,7 +593,11 @@ export const IncidentsPage: React.FC = () => {
               <select
                 value={filter.sla_breached === undefined ? '' : filter.sla_breached.toString()}
                 onChange={(e) => handleFilterChange('sla_breached', e.target.value === '' ? undefined : e.target.value === 'true')}
-                className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                disabled={!canViewAllIncidents && hasUrlFilter}
+                className={cn(
+                  "w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]",
+                  !canViewAllIncidents && hasUrlFilter && "opacity-60 cursor-not-allowed"
+                )}
               >
                 <option value="">{t('common.all')}</option>
                 <option value="true">{t('common.breached')}</option>
@@ -600,11 +628,11 @@ export const IncidentsPage: React.FC = () => {
             </p>
             {hasActiveFilters ? (
               <Button variant="outline" onClick={clearFilters}>{t('common.clearFilters')}</Button>
-            ) : (
+            ) : canCreateIncident ? (
               <Button leftIcon={<Plus className="w-4 h-4" />} onClick={() => navigate('/incidents/new')}>
                 {t('incidents.createIncident')}
               </Button>
-            )}
+            ) : null}
           </div>
         ) : (
           <>

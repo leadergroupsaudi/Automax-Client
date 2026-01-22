@@ -26,6 +26,8 @@ import { complaintApi, workflowApi, userApi, departmentApi, classificationApi } 
 import type { Incident, IncidentFilter, Workflow, User as UserType, Department, WorkflowState, Classification } from '../../types';
 import { cn } from '@/lib/utils';
 import { CreateComplaintModal } from '@/components/complaints/CreateComplaintModal';
+import { usePermissions } from '../../hooks/usePermissions';
+import { PERMISSIONS } from '../../constants/permissions';
 
 // Column configuration
 interface ColumnConfig {
@@ -69,6 +71,7 @@ const loadColumnsFromStorage = (): ColumnConfig[] => {
 export const ComplaintsPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { hasPermission, isSuperAdmin } = usePermissions();
   const [searchParams, setSearchParams] = useSearchParams();
   const [filter, setFilter] = useState<IncidentFilter>({
     page: 1,
@@ -81,6 +84,20 @@ export const ComplaintsPage: React.FC = () => {
   const [showColumnConfig, setShowColumnConfig] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const columnConfigRef = useRef<HTMLDivElement>(null);
+
+  const canCreateComplaint = isSuperAdmin || hasPermission(PERMISSIONS.COMPLAINTS_CREATE);
+  const canViewAllComplaints = isSuperAdmin || hasPermission(PERMISSIONS.COMPLAINTS_VIEW_ALL);
+
+  // Get status from URL - users with view permission can access if status filter is applied
+  const urlStatusParam = searchParams.get('status');
+  const hasUrlFilter = !!urlStatusParam;
+
+  // Redirect to my-assigned if user doesn't have view_all permission AND no status filter is applied
+  useEffect(() => {
+    if (!canViewAllComplaints && !hasUrlFilter) {
+      navigate('/complaints/my-assigned', { replace: true });
+    }
+  }, [canViewAllComplaints, hasUrlFilter, navigate]);
 
   // Handle click outside column config dropdown
   useEffect(() => {
@@ -287,14 +304,16 @@ export const ComplaintsPage: React.FC = () => {
           >
             {t('common.refresh', 'Refresh')}
           </Button>
-          <Button
-            size="sm"
-            leftIcon={<Plus className="w-4 h-4" />}
-            onClick={() => setShowCreateModal(true)}
-            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-          >
-            {t('complaints.createComplaint', 'Create Complaint')}
-          </Button>
+          {canCreateComplaint && (
+            <Button
+              size="sm"
+              leftIcon={<Plus className="w-4 h-4" />}
+              onClick={() => setShowCreateModal(true)}
+              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+            >
+              {t('complaints.createComplaint', 'Create Complaint')}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -323,7 +342,7 @@ export const ComplaintsPage: React.FC = () => {
                 <span className="ml-1 w-2 h-2 rounded-full bg-amber-500" />
               )}
             </Button>
-            {hasActiveFilters && (
+            {hasActiveFilters && canViewAllComplaints && (
               <Button variant="ghost" size="sm" onClick={clearFilters}>
                 {t('common.clear', 'Clear')}
               </Button>
@@ -419,7 +438,11 @@ export const ComplaintsPage: React.FC = () => {
               <select
                 value={filter.current_state_id || ''}
                 onChange={(e) => handleFilterChange('current_state_id', e.target.value || undefined)}
-                className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                disabled={!canViewAllComplaints && hasUrlFilter}
+                className={cn(
+                  "w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500",
+                  !canViewAllComplaints && hasUrlFilter && "opacity-60 cursor-not-allowed"
+                )}
               >
                 <option value="">{t('common.allStates', 'All States')}</option>
                 {uniqueStates.map((state: WorkflowState) => (
@@ -507,7 +530,7 @@ export const ComplaintsPage: React.FC = () => {
             </p>
             {hasActiveFilters ? (
               <Button variant="outline" onClick={clearFilters}>{t('common.clearFilters', 'Clear Filters')}</Button>
-            ) : (
+            ) : canCreateComplaint ? (
               <Button
                 leftIcon={<Plus className="w-4 h-4" />}
                 onClick={() => setShowCreateModal(true)}
@@ -515,7 +538,7 @@ export const ComplaintsPage: React.FC = () => {
               >
                 {t('complaints.createFirstComplaint', 'Create First Complaint')}
               </Button>
-            )}
+            ) : null}
           </div>
         ) : (
           <>
