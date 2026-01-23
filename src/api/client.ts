@@ -40,10 +40,20 @@ const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue = [];
 };
 
+// Flag to prevent interceptor from running during logout
+let isLoggingOut = false;
+
+export const setLoggingOut = (value: boolean) => {
+  isLoggingOut = value;
+};
+
 const redirectToLogin = () => {
+  // Clear all auth-related storage
   localStorage.removeItem('token');
   localStorage.removeItem('refreshToken');
   localStorage.removeItem('user');
+  localStorage.removeItem('auth-storage'); // Clear zustand persisted auth state
+
   if (!window.location.pathname.includes('/login')) {
     window.location.href = '/login';
   }
@@ -69,6 +79,16 @@ apiClient.interceptors.response.use(
 
     // If no config or error is not 401 or request already retried, reject
     if (!originalRequest || error.response?.status !== 401 || originalRequest._retry) {
+      return Promise.reject(error);
+    }
+
+    // If we're logging out, don't try to refresh - just reject
+    if (isLoggingOut) {
+      return Promise.reject(error);
+    }
+
+    // If this is the logout request failing, don't try to refresh
+    if (originalRequest.url?.includes('/auth/logout')) {
       return Promise.reject(error);
     }
 

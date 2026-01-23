@@ -49,6 +49,20 @@ import type {
 import { cn } from '@/lib/utils';
 import { usePermissions } from '../../hooks/usePermissions';
 import { PERMISSIONS } from '../../constants/permissions';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import { Icon } from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix for default marker icon - using local images
+const defaultIcon = new Icon({
+  iconUrl: '/images/leaflet/marker-icon.png',
+  iconRetinaUrl: '/images/leaflet/marker-icon-2x.png',
+  shadowUrl: '/images/leaflet/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
 
 export const IncidentDetailPage: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -1010,46 +1024,121 @@ export const IncidentDetailPage: React.FC = () => {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Details Card */}
-          <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">{t('incidents.details')}</h3>
-            <div className="space-y-4">
-              {/* Classification */}
-              <div>
-                <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                  {t('incidents.classification')}
-                </label>
-                <div className="mt-1 flex items-center gap-2 text-sm text-[hsl(var(--foreground))]">
-                  <Tags className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                  {incident.classification?.name || t('incidents.unclassified')}
+          <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-4 shadow-sm">
+            <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-3">{t('incidents.details')}</h3>
+            <div className="space-y-3">
+              {/* Two-column grid for compact display */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Classification */}
+                {incident.classification && (
+                  <div>
+                    <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                      {t('incidents.classification')}
+                    </label>
+                    <div className="mt-0.5 flex items-center gap-1.5 text-sm text-[hsl(var(--foreground))]">
+                      <Tags className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+                      {incident.classification.name}
+                    </div>
+                  </div>
+                )}
+
+                {/* Department */}
+                {incident.department && (
+                  <div>
+                    <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                      {t('incidents.department')}
+                    </label>
+                    <div className="mt-0.5 flex items-center gap-1.5 text-sm text-[hsl(var(--foreground))]">
+                      <Building2 className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+                      {incident.department.name}
+                    </div>
+                  </div>
+                )}
+
+                {/* Location */}
+                {incident.location && (
+                  <div>
+                    <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                      {t('incidents.location')}
+                    </label>
+                    <div className="mt-0.5 flex items-center gap-1.5 text-sm text-[hsl(var(--foreground))]">
+                      <MapPin className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+                      {incident.location.name}
+                    </div>
+                  </div>
+                )}
+
+                {/* Due Date - only show if set */}
+                {incident.due_date && (
+                  <div>
+                    <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                      {t('incidents.dueDate')}
+                    </label>
+                    <div className="mt-0.5 flex items-center gap-1.5 text-sm text-[hsl(var(--foreground))]">
+                      <Calendar className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+                      {formatDate(incident.due_date)}
+                    </div>
+                  </div>
+                )}
+
+                {/* SLA Deadline */}
+                {incident.sla_deadline && (
+                  <div>
+                    <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                      {t('incidents.slaDeadline')}
+                    </label>
+                    <div className={cn(
+                      "mt-0.5 flex items-center gap-1.5 text-sm",
+                      incident.sla_breached ? 'text-red-600' : 'text-[hsl(var(--foreground))]'
+                    )}>
+                      <Clock className="w-3.5 h-3.5" />
+                      {formatDateTime(incident.sla_deadline)}
+                      {incident.sla_breached && <AlertTriangle className="w-3.5 h-3.5" />}
+                    </div>
+                  </div>
+                )}
+
+                {/* Created */}
+                <div>
+                  <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                    {t('incidents.created')}
+                  </label>
+                  <div className="mt-0.5 text-sm text-[hsl(var(--foreground))]">
+                    {formatDateTime(incident.created_at)}
+                  </div>
                 </div>
               </div>
 
-              {/* Dynamic Lookups */}
-              {Object.entries(groupedLookupValues).map(([category, values]) => (
-                <div key={category}>
-                  <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                    {i18n.language === 'ar' ? (values[0]?.category?.name_ar || category) : category}
-                  </label>
-                  <div className="mt-1 flex flex-wrap gap-2">
-                    {(values as LookupValue[]).map(value => (
-                      <span
-                        key={value.id}
-                        className="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium"
-                        style={{
-                          backgroundColor: value.color ? `${value.color}20` : 'hsl(var(--muted))',
-                          color: value.color || 'hsl(var(--foreground))',
-                        }}
-                      >
-                        {i18n.language === 'ar' && value.name_ar ? value.name_ar : value.name}
-                      </span>
-                    ))}
-                  </div>
+              {/* Dynamic Lookups - full width */}
+              {Object.entries(groupedLookupValues).length > 0 && (
+                <div className="pt-2 border-t border-[hsl(var(--border))]">
+                  {Object.entries(groupedLookupValues).map(([category, values]) => (
+                    <div key={category} className="mb-2 last:mb-0">
+                      <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                        {i18n.language === 'ar' ? (values[0]?.category?.name_ar || category) : category}
+                      </label>
+                      <div className="mt-0.5 flex flex-wrap gap-1.5">
+                        {(values as LookupValue[]).map(value => (
+                          <span
+                            key={value.id}
+                            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                            style={{
+                              backgroundColor: value.color ? `${value.color}20` : 'hsl(var(--muted))',
+                              color: value.color || 'hsl(var(--foreground))',
+                            }}
+                          >
+                            {i18n.language === 'ar' && value.name_ar ? value.name_ar : value.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
 
-              {/* Assignees */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
+              {/* Assignees - full width */}
+              <div className="pt-2 border-t border-[hsl(var(--border))]">
+                <div className="flex items-center justify-between">
                   <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
                     {incident.assignees && incident.assignees.length > 1 ? t('incidents.assignees') : t('incidents.assignee')}
                     {incident.assignees && incident.assignees.length > 0 && (
@@ -1063,134 +1152,128 @@ export const IncidentDetailPage: React.FC = () => {
                     {t('incidents.change')}
                   </button>
                 </div>
-                <div className="mt-1 space-y-2">
+                <div className="mt-1">
                   {incident.assignees && incident.assignees.length > 0 ? (
-                    <div className="space-y-1.5">
+                    <div className="flex flex-wrap gap-1.5">
                       {incident.assignees.map((assignee, index) => (
-                        <div key={assignee.id} className="flex items-center gap-2">
+                        <div key={assignee.id} className="inline-flex items-center gap-1.5 bg-[hsl(var(--muted)/0.5)] px-2 py-1 rounded-md">
                           {assignee.avatar ? (
-                            <img
-                              src={assignee.avatar}
-                              alt={assignee.username}
-                              className="w-6 h-6 rounded-full object-cover"
-                            />
+                            <img src={assignee.avatar} alt={assignee.username} className="w-5 h-5 rounded-full object-cover" />
                           ) : (
-                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent))] flex items-center justify-center">
-                              <span className="text-white text-xs font-semibold">
-                                {assignee.first_name?.[0] || assignee.username[0]}
-                              </span>
+                            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent))] flex items-center justify-center">
+                              <span className="text-white text-[10px] font-semibold">{assignee.first_name?.[0] || assignee.username[0]}</span>
                             </div>
                           )}
-                          <span className="text-sm text-[hsl(var(--foreground))]">
+                          <span className="text-xs text-[hsl(var(--foreground))]">
                             {assignee.first_name || assignee.username}
-                            {index === 0 && incident.assignees!.length > 1 && (
-                              <span className="ml-1 text-xs text-[hsl(var(--muted-foreground))]">({t('incidents.primary')})</span>
-                            )}
+                            {index === 0 && incident.assignees!.length > 1 && <span className="text-[hsl(var(--muted-foreground))]"> (P)</span>}
                           </span>
                         </div>
                       ))}
                     </div>
                   ) : incident.assignee ? (
-                    <div className="flex items-center gap-2">
+                    <div className="inline-flex items-center gap-1.5 bg-[hsl(var(--muted)/0.5)] px-2 py-1 rounded-md">
                       {incident.assignee.avatar ? (
-                        <img
-                          src={incident.assignee.avatar}
-                          alt={incident.assignee.username}
-                          className="w-6 h-6 rounded-full object-cover"
-                        />
+                        <img src={incident.assignee.avatar} alt={incident.assignee.username} className="w-5 h-5 rounded-full object-cover" />
                       ) : (
-                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent))] flex items-center justify-center">
-                          <span className="text-white text-xs font-semibold">
-                            {incident.assignee.first_name?.[0] || incident.assignee.username[0]}
-                          </span>
+                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent))] flex items-center justify-center">
+                          <span className="text-white text-[10px] font-semibold">{incident.assignee.first_name?.[0] || incident.assignee.username[0]}</span>
                         </div>
                       )}
-                      <span className="text-sm text-[hsl(var(--foreground))]">
-                        {incident.assignee.first_name || incident.assignee.username}
-                      </span>
+                      <span className="text-xs text-[hsl(var(--foreground))]">{incident.assignee.first_name || incident.assignee.username}</span>
                     </div>
                   ) : (
-                    <span className="text-sm text-[hsl(var(--muted-foreground))] flex items-center gap-1">
-                      <User className="w-4 h-4" />
+                    <span className="text-xs text-[hsl(var(--muted-foreground))] flex items-center gap-1">
+                      <User className="w-3.5 h-3.5" />
                       {t('incidents.unassigned')}
                     </span>
                   )}
                 </div>
               </div>
 
-              {/* Department */}
-              {incident.department && (
-                <div>
-                  <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                    {t('incidents.department')}
-                  </label>
-                  <div className="mt-1 flex items-center gap-2 text-sm text-[hsl(var(--foreground))]">
-                    <Building2 className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                    {incident.department.name}
-                  </div>
-                </div>
-              )}
-
-              {/* Location */}
-              {incident.location && (
-                <div>
-                  <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                    {t('incidents.location')}
-                  </label>
-                  <div className="mt-1 flex items-center gap-2 text-sm text-[hsl(var(--foreground))]">
-                    <MapPin className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                    {incident.location.name}
-                  </div>
-                </div>
-              )}
-
-              {/* Due Date */}
-              <div>
-                <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                  {t('incidents.dueDate')}
-                </label>
-                <div className="mt-1 flex items-center gap-2 text-sm text-[hsl(var(--foreground))]">
-                  <Calendar className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                  {formatDate(incident.due_date)}
-                </div>
-              </div>
-
-              {/* SLA Deadline */}
-              {incident.sla_deadline && (
-                <div>
-                  <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                    {t('incidents.slaDeadline')}
-                  </label>
-                  <div className={cn(
-                    "mt-1 flex items-center gap-2 text-sm",
-                    incident.sla_breached ? 'text-red-600' : 'text-[hsl(var(--foreground))]'
-                  )}>
-                    <Clock className="w-4 h-4" />
-                    {formatDateTime(incident.sla_deadline)}
-                    {incident.sla_breached && <AlertTriangle className="w-4 h-4" />}
-                  </div>
-                </div>
-              )}
-
-              {/* Created */}
-              <div>
-                <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                  {t('incidents.created')}
-                </label>
-                <div className="mt-1 text-sm text-[hsl(var(--foreground))]">
-                  {formatDateTime(incident.created_at)}
-                </div>
-              </div>
-
-              {/* Reporter */}
-              <div>
+              {/* Reporter - compact */}
+              <div className="pt-2 border-t border-[hsl(var(--border))]">
                 <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
                   {t('incidents.reporter')}
                 </label>
-                <div className="mt-1 text-sm text-[hsl(var(--foreground))]">
-                  {incident.reporter?.first_name || incident.reporter?.username || incident.reporter_name || incident.reporter_email || 'Unknown'}
+                <div className="mt-1 flex items-center gap-3 flex-wrap">
+                  <span className="text-sm text-[hsl(var(--foreground))] flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+                    {incident.reporter?.first_name
+                      ? `${incident.reporter.first_name} ${incident.reporter.last_name || ''}`
+                      : incident.reporter?.username || incident.reporter_name || 'Unknown'}
+                  </span>
+                  {(incident.reporter_email || incident.reporter?.email) && (
+                    <a
+                      href={`mailto:${incident.reporter_email || incident.reporter?.email}`}
+                      className="text-xs text-[hsl(var(--primary))] hover:underline flex items-center gap-1"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      {incident.reporter_email || incident.reporter?.email}
+                    </a>
+                  )}
+                  {incident.reporter?.phone && (
+                    <a
+                      href={`tel:${incident.reporter.phone}`}
+                      className="text-xs text-[hsl(var(--primary))] hover:underline flex items-center gap-1"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                      {incident.reporter.phone}
+                    </a>
+                  )}
                 </div>
               </div>
+
+              {/* Geolocation - only show if has coordinates */}
+              {(incident.latitude !== undefined && incident.longitude !== undefined) && (
+                <div className="pt-2 border-t border-[hsl(var(--border))]">
+                  <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                    {t('incidents.geolocation', 'Geolocation')}
+                  </label>
+                  <div className="mt-1.5 space-y-1.5">
+                    {/* Map - smaller height */}
+                    <div className="h-32 rounded-lg overflow-hidden border border-[hsl(var(--border))]">
+                      <MapContainer
+                        center={[incident.latitude, incident.longitude]}
+                        zoom={15}
+                        className="h-full w-full"
+                        style={{ height: '100%', width: '100%' }}
+                        scrollWheelZoom={false}
+                      >
+                        <TileLayer
+                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                        <Marker
+                          position={[incident.latitude, incident.longitude]}
+                          icon={defaultIcon}
+                        />
+                      </MapContainer>
+                    </div>
+                    {/* Compact location info */}
+                    <div className="text-xs text-[hsl(var(--muted-foreground))]">
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />
+                        <span className="font-medium text-[hsl(var(--foreground))]">
+                          {incident.latitude?.toFixed(6)}, {incident.longitude?.toFixed(6)}
+                        </span>
+                      </div>
+                      {incident.address && (
+                        <p className="mt-0.5 pl-5 break-words">{incident.address}</p>
+                      )}
+                      {(incident.city || incident.state || incident.country) && (
+                        <p className="pl-5">
+                          {[incident.city, incident.state, incident.country, incident.postal_code].filter(Boolean).join(', ')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

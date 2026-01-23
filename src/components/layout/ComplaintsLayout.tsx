@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { authApi } from '../../api/auth';
+import { setLoggingOut } from '../../api/client';
 import { incidentApi } from '../../api/admin';
 import { setLanguage, getCurrentLanguage, supportedLanguages } from '../../i18n';
 import { usePermissions } from '../../hooks/usePermissions';
@@ -76,12 +77,20 @@ export const ComplaintsLayout: React.FC = () => {
   });
 
   const handleLogout = async () => {
+    // Set flag to prevent 401 interceptor from running during logout
+    setLoggingOut(true);
+
+    // Clear auth state first to prevent any race conditions
+    logout();
+
     try {
       await authApi.logout();
     } catch {
       // Continue with logout even if API call fails
+    } finally {
+      setLoggingOut(false);
     }
-    logout();
+
     navigate('/login');
   };
 

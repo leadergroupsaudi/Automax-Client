@@ -473,6 +473,7 @@ export type IncidentFormField =
   | 'assignee_id'
   | 'department_id'
   | 'location_id'
+  | 'geolocation'
   | 'due_date'
   | 'reporter_name'
   | 'reporter_email'
@@ -721,6 +722,11 @@ export interface Incident {
   location?: Location;
   latitude?: number;
   longitude?: number;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postal_code?: string;
   due_date?: string;
   resolved_at?: string;
   closed_at?: string;
@@ -880,6 +886,11 @@ export interface IncidentCreateRequest {
   location_id?: string;
   latitude?: number;
   longitude?: number;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postal_code?: string;
   due_date?: string;
   reporter_email?: string;
   reporter_name?: string;
@@ -896,6 +907,11 @@ export interface IncidentUpdateRequest {
   location_id?: string;
   latitude?: number;
   longitude?: number;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postal_code?: string;
   due_date?: string;
   custom_fields?: string;
   lookup_value_ids?: string[];

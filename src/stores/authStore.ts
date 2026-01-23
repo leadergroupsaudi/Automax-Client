@@ -28,8 +28,10 @@ export const useAuthStore = create<AuthState>()(
       },
       setUser: (user) => set({ user }),
       logout: () => {
+        // Clear all auth-related localStorage items
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
+        localStorage.removeItem('auth-storage'); // Clear zustand persisted state
         set({ user: null, token: null, refreshToken: null, isAuthenticated: false });
       },
     }),

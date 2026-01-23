@@ -167,6 +167,7 @@ export const WorkflowDesignerPage: React.FC = () => {
     { field: 'assignee_id', label: 'Assignee', description: 'User assigned to handle' },
     { field: 'department_id', label: 'Department', description: 'Responsible department' },
     { field: 'location_id', label: 'Location', description: 'Physical location' },
+    { field: 'geolocation', label: 'Geolocation', description: 'GPS coordinates (latitude & longitude)' },
     { field: 'due_date', label: 'Due Date', description: 'Resolution deadline' },
     { field: 'reporter_name', label: 'Reporter Name', description: 'Name of person reporting' },
     { field: 'reporter_email', label: 'Reporter Email', description: 'Email of person reporting' },

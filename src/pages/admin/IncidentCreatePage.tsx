@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Save, AlertTriangle, Info, Zap, Upload, X, Paperclip } from 'lucide-react';
-import { Button, Card, Input, Select, Textarea, TreeSelect } from '../../components/ui';
-import type { TreeSelectNode } from '../../components/ui';
+import { Button, Card, Input, Select, Textarea, TreeSelect, LocationPicker } from '../../components/ui';
+import type { TreeSelectNode, LocationData } from '../../components/ui';
 import { workflowApi, classificationApi, incidentApi, lookupApi } from '../../api/admin';
 import { userApi, departmentApi, locationApi } from '../../api/admin';
 import type { IncidentCreateRequest, User, Department, Location, Workflow, Classification, IncidentSource, LookupValue } from '../../types';
@@ -24,6 +24,13 @@ export function IncidentCreatePage() {
     assignee_id: '',
     department_id: '',
     location_id: '',
+    latitude: undefined,
+    longitude: undefined,
+    address: undefined,
+    city: undefined,
+    state: undefined,
+    country: undefined,
+    postal_code: undefined,
     due_date: '',
     reporter_name: '',
     reporter_email: '',
@@ -235,11 +242,40 @@ export function IncidentCreatePage() {
     setLookupValues(prev => ({ ...prev, [categoryId]: valueId }));
   };
 
+  const handleLocationChange = (location: LocationData | undefined) => {
+    if (location) {
+      setFormData(prev => ({
+        ...prev,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        address: location.address,
+        city: location.city,
+        state: location.state,
+        country: location.country,
+        postal_code: location.postal_code,
+      }));
+      if (errors.geolocation) {
+        setErrors(prev => ({ ...prev, geolocation: '' }));
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        latitude: undefined,
+        longitude: undefined,
+        address: undefined,
+        city: undefined,
+        state: undefined,
+        country: undefined,
+        postal_code: undefined,
+      }));
+    }
+  };
+
   const selectedWorkflow = workflows.find(w => w.id === formData.workflow_id);
   const workflowRequiredFields = selectedWorkflow?.required_fields || [];
 
   // List of valid form data fields for validation
-  const validFormFields = ['description', 'classification_id', 'source', 'assignee_id', 'department_id', 'location_id', 'due_date', 'reporter_name', 'reporter_email'];
+  const validFormFields = ['description', 'classification_id', 'source', 'assignee_id', 'department_id', 'location_id', 'geolocation', 'due_date', 'reporter_name', 'reporter_email'];
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -258,6 +294,11 @@ export function IncidentCreatePage() {
         // Check attachments separately since they're not in formData
         if (attachments.length === 0) {
           newErrors.attachments = t('incidents.fieldRequired', { field: t('incidents.attachments', 'Attachments') });
+        }
+      } else if (field === 'geolocation') {
+        // Check geolocation - both latitude and longitude must be set
+        if (formData.latitude === undefined || formData.longitude === undefined) {
+          newErrors.geolocation = t('incidents.fieldRequired', { field: t('incidents.geolocation', 'Geolocation') });
         }
       } else if (validFormFields.includes(field)) {
         // Standard field validation - only check fields that exist in formData
@@ -425,6 +466,27 @@ export function IncidentCreatePage() {
                     />
                   );
                 })}
+
+                {/* Geolocation field - spans full width */}
+                {workflowRequiredFields.includes('geolocation') && (
+                  <div className="col-span-2">
+                    <LocationPicker
+                      label={t('incidents.geolocation', 'Geolocation')}
+                      value={formData.latitude !== undefined && formData.longitude !== undefined ? {
+                        latitude: formData.latitude,
+                        longitude: formData.longitude,
+                        address: formData.address,
+                        city: formData.city,
+                        state: formData.state,
+                        country: formData.country,
+                        postal_code: formData.postal_code,
+                      } : undefined}
+                      onChange={handleLocationChange}
+                      required
+                      error={errors.geolocation}
+                    />
+                  </div>
+                )}
               </div>
             </Card>
 
