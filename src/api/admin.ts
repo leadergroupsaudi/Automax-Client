@@ -29,6 +29,7 @@ import type {
   Workflow,
   WorkflowCreateRequest,
   WorkflowUpdateRequest,
+  WorkflowImportResponse,
   WorkflowState,
   WorkflowStateCreateRequest,
   WorkflowStateUpdateRequest,
@@ -645,6 +646,23 @@ export const workflowApi = {
     priority_max?: number;
   }): Promise<ApiResponse<Workflow>> => {
     const response = await apiClient.put<ApiResponse<Workflow>>(`/admin/workflows/${workflowId}/match-config`, config);
+    return response.data;
+  },
+
+  // Export/Import
+  export: async (id: string): Promise<Blob> => {
+    const response = await apiClient.get(`/admin/workflows/${id}/export`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
+  import: async (file: File): Promise<ApiResponse<WorkflowImportResponse>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post('/admin/workflows/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   },
 };
