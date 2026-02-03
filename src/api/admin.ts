@@ -950,6 +950,14 @@ export const incidentApi = {
     });
     return response.data;
   },
+
+  // Download Report
+  downloadReport: async (incidentId: string, format: 'pdf' | 'json' | 'txt' = 'pdf'): Promise<Blob> => {
+    const response = await apiClient.get(`/incidents/${incidentId}/report?format=${format}`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
 };
 
 // Complaint API

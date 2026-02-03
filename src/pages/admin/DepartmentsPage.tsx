@@ -362,7 +362,7 @@ export const DepartmentsPage: React.FC = () => {
     try {
       setIsImporting(true);
       const result = await departmentApi.import(file);
-      setImportResult(result.data);
+      setImportResult(result.data || null);
       queryClient.invalidateQueries({ queryKey: ['admin', 'departments'] });
     } catch (error) {
       console.error('Import failed:', error);

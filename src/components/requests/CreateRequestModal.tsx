@@ -36,8 +36,6 @@ import type {
   Incident,
   CreateRequestRequest,
   IncidentSource,
-  Location,
-  LookupValue,
 } from '../../types';
 import { INCIDENT_SOURCES } from '../../types';
 import { cn } from '@/lib/utils';
@@ -193,12 +191,6 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
   // Get selected workflow and its required fields
   const selectedWorkflow = workflows.find(w => w.id === workflowId);
   const workflowRequiredFields = selectedWorkflow?.required_fields || [];
-
-  const getLookupValueFromState = (categoryCode: string): LookupValue | undefined => {
-    const category = requestLookupCategories.find(c => c.code === categoryCode);
-    if (!category || !lookupValues[category.id]) return undefined;
-    return category.values?.find(v => v.id === lookupValues[category.id]);
-  };
 
   // Convert classifications to TreeSelectNode format
   const classificationTreeData: TreeSelectNode[] = useMemo(() => {

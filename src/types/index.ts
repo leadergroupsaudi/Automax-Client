@@ -470,6 +470,7 @@ export type IncidentFormField =
   | 'priority'
   | 'severity'
   | 'source'
+  | 'channel'
   | 'assignee_id'
   | 'department_id'
   | 'location_id'
@@ -478,6 +479,7 @@ export type IncidentFormField =
   | 'reporter_name'
   | 'reporter_email'
   | 'attachments'
+  | 'attachment'
   | `lookup:${string}`; // Dynamic lookup category required fields
 
 // Workflow types

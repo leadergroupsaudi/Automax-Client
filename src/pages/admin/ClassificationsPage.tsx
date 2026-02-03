@@ -313,7 +313,7 @@ export const ClassificationsPage: React.FC = () => {
     try {
       setIsImporting(true);
       const result = await classificationApi.import(file);
-      setImportResult(result.data);
+      setImportResult(result.data || null);
       queryClient.invalidateQueries({ queryKey: ['admin', 'classifications'] });
     } catch (error) {
       console.error('Import failed:', error);

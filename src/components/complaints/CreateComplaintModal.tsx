@@ -36,10 +36,8 @@ import type {
   Department,
   User as UserType,
   Incident,
-  CreateComplaintComplaint,
+  CreateComplaintRequest,
   IncidentSource,
-  Location,
-  LookupValue,
 } from '../../types';
 import { INCIDENT_SOURCES } from '../../types';
 import { cn } from '@/lib/utils';
@@ -201,12 +199,6 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
   const selectedWorkflow = workflows.find(w => w.id === workflowId);
   const workflowRequiredFields = selectedWorkflow?.required_fields || [];
 
-  const getLookupValueFromState = (categoryCode: string): LookupValue | undefined => {
-    const category = requestLookupCategories.find(c => c.code === categoryCode);
-    if (!category || !lookupValues[category.id]) return undefined;
-    return category.values?.find(v => v.id === lookupValues[category.id]);
-  };
-
   // Convert classifications to TreeSelectNode format
   const classificationTreeData: TreeSelectNode[] = useMemo(() => {
     const convertToTreeNode = (items: Classification[]): TreeSelectNode[] => {
@@ -254,7 +246,7 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
 
   // Create request mutation
   const createMutation = useMutation({
-    mutationFn: async ({ data, files }: { data: CreateComplaintComplaint; files: File[] }) => {
+    mutationFn: async ({ data, files }: { data: CreateComplaintRequest; files: File[] }) => {
       const response = await complaintApi.create(data);
       // Upload attachments after request is created
       if (response.data && files.length > 0) {
@@ -409,7 +401,7 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
 
   // Recording timer
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: number;
     if (isRecording) {
       interval = setInterval(() => {
         setRecordingTime(prev => prev + 1);
@@ -425,7 +417,7 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
 
     const lookupIds = Object.values(lookupValues).filter(Boolean);
 
-    const data: CreateComplaintComplaint = {
+    const data: CreateComplaintRequest = {
       title: title.trim(),
       description: description.trim() || undefined,
       classification_id: classificationId,
@@ -659,10 +651,10 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
               <div className="flex items-center justify-between p-3 bg-[hsl(var(--muted)/0.5)] rounded-lg border border-[hsl(var(--border))]">
                 <div>
                   <p className="text-sm font-medium text-[hsl(var(--foreground))]">
-                    {sourceIncident.incident_number}
+                    {sourceIncident?.incident_number}
                   </p>
                   <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                    {sourceIncident.title}
+                    {sourceIncident?.title}
                   </p>
                 </div>
                 <button

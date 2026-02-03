@@ -316,7 +316,7 @@ export const LocationsPage: React.FC = () => {
     try {
       setIsImporting(true);
       const result = await locationApi.import(file);
-      setImportResult(result.data);
+      setImportResult(result.data || null);
       queryClient.invalidateQueries({ queryKey: ['admin', 'locations'] });
     } catch (error) {
       console.error('Import failed:', error);

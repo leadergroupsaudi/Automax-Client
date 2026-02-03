@@ -151,7 +151,7 @@ export const WorkflowsPage: React.FC = () => {
       setIsImportModalOpen(false);
       setImportFile(null);
 
-      if (response.data.warnings && response.data.warnings.length > 0) {
+      if (response.data?.warnings && response.data.warnings.length > 0) {
         setImportWarnings(response.data.warnings);
       }
     },

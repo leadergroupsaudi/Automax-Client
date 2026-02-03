@@ -34,10 +34,8 @@ import type {
   Department,
   User as UserType,
   Incident,
-  CreateQueryQuery,
+  CreateQueryRequest,
   IncidentSource,
-  Location,
-  LookupValue,
 } from '../../types';
 import { INCIDENT_SOURCES } from '../../types';
 import { cn } from '@/lib/utils';
@@ -194,12 +192,6 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
   const selectedWorkflow = workflows.find(w => w.id === workflowId);
   const workflowRequiredFields = selectedWorkflow?.required_fields || [];
 
-  const getLookupValueFromState = (categoryCode: string): LookupValue | undefined => {
-    const category = requestLookupCategories.find(c => c.code === categoryCode);
-    if (!category || !lookupValues[category.id]) return undefined;
-    return category.values?.find(v => v.id === lookupValues[category.id]);
-  };
-
   // Convert classifications to TreeSelectNode format
   const classificationTreeData: TreeSelectNode[] = useMemo(() => {
     const convertToTreeNode = (items: Classification[]): TreeSelectNode[] => {
@@ -247,7 +239,7 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
 
   // Create request mutation
   const createMutation = useMutation({
-    mutationFn: async ({ data, files }: { data: CreateQueryQuery; files: File[] }) => {
+    mutationFn: async ({ data, files }: { data: CreateQueryRequest; files: File[] }) => {
       const response = await queryApi.create(data);
       // Upload attachments after request is created
       if (response.data && files.length > 0) {
@@ -369,7 +361,7 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
 
     const lookupIds = Object.values(lookupValues).filter(Boolean);
 
-    const data: CreateQueryQuery = {
+    const data: CreateQueryRequest = {
       title: title.trim(),
       description: description.trim() || undefined,
       classification_id: classificationId,

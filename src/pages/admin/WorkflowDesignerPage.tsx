@@ -313,6 +313,16 @@ export const WorkflowDesignerPage: React.FC = () => {
     },
   });
 
+  // Canvas layout mutation
+  const updateMutation = useMutation({
+    mutationFn: ({ id: workflowId, data }: { id: string; data: WorkflowUpdateRequest }) =>
+      workflowApi.update(workflowId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'workflow', id] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'workflows'] });
+    },
+  });
+
   // State mutations
   const createStateMutation = useMutation({
     mutationFn: (data: WorkflowStateCreateRequest) => workflowApi.createState(id!, data),
@@ -324,8 +334,8 @@ export const WorkflowDesignerPage: React.FC = () => {
   });
 
   const updateStateMutation = useMutation({
-    mutationFn: ({ stateId, data }: { stateId: string; data: WorkflowStateUpdateRequest }) =>
-      workflowApi.updateState(id!, stateId, data),
+    mutationFn: ({ workflowId, stateId, data }: { workflowId?: string; stateId: string; data: WorkflowStateUpdateRequest }) =>
+      workflowApi.updateState(workflowId || id!, stateId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'workflow', id] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'workflow', id, 'states'] });
@@ -638,11 +648,21 @@ export const WorkflowDesignerPage: React.FC = () => {
     setDeleteTransitionConfirm(transitionId);
   }, []);
 
-  const handleCanvasLayoutSave = useCallback((layout: string) => {
-    // For now, just log it - can be saved to backend with canvas_layout field
-    console.log('Layout saved:', layout);
-    // TODO: Save to backend when API supports it
-  }, []);
+  const handleCanvasLayoutSave = useCallback(
+    async (layout: string) => {
+      if (!workflow) return;
+
+      try {
+        await updateMutation.mutateAsync({
+          id: workflow.id,
+          data: { canvas_layout: layout },
+        });
+      } catch (error) {
+        console.error('Failed to save layout:', error);
+      }
+    },
+    [workflow, updateMutation]
+  );
 
   const handleExport = async () => {
     if (!workflow) return;

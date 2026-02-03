@@ -72,6 +72,7 @@ export const IncidentDetailPage: React.FC = () => {
   const { hasPermission, isSuperAdmin } = usePermissions();
 
   const canEditIncident = isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_UPDATE);
+  const canViewReports = isSuperAdmin || hasPermission(PERMISSIONS.REPORTS_VIEW);
 
   const [activeTab, setActiveTab] = useState<'activity' | 'comments' | 'attachments' | 'revisions'>('activity');
   const [commentText, setCommentText] = useState('');
@@ -103,6 +104,9 @@ export const IncidentDetailPage: React.FC = () => {
   const [selectedForCompare, setSelectedForCompare] = useState<IncidentAttachment[]>([]);
   const [compareModalOpen, setCompareModalOpen] = useState(false);
   const [compareSliderPosition, setCompareSliderPosition] = useState(50);
+
+  // Report download state
+  const [downloadingReport, setDownloadingReport] = useState(false);
 
   // Queries
   const { data: incidentData, isLoading, error, refetch } = useQuery({
@@ -312,6 +316,30 @@ export const IncidentDetailPage: React.FC = () => {
     setCompareMode(false);
     setSelectedForCompare([]);
     setCompareModalOpen(false);
+  };
+
+  const handleDownloadReport = async (format: 'pdf' | 'json' | 'txt' = 'pdf') => {
+    if (!incident || !id) return;
+
+    try {
+      setDownloadingReport(true);
+      const blob = await incidentApi.downloadReport(id, format);
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `incident_${incident.incident_number}_${new Date().toISOString().split('T')[0]}.${format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to download report:', error);
+      alert('Failed to download report. Please try again.');
+    } finally {
+      setDownloadingReport(false);
+    }
   };
 
   const handleTransitionClick = async (transition: AvailableTransition) => {
@@ -571,6 +599,17 @@ export const IncidentDetailPage: React.FC = () => {
               leftIcon={<ArrowRightLeft className="w-4 h-4" />}
             >
               {t('incidents.convertToRequest', 'Convert to Request')}
+            </Button>
+          )}
+          {canViewReports && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleDownloadReport('pdf')}
+              leftIcon={downloadingReport ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              disabled={downloadingReport}
+            >
+              {downloadingReport ? t('incidents.downloading', 'Downloading...') : t('incidents.downloadReport', 'Download PDF Report')}
             </Button>
           )}
           <Button

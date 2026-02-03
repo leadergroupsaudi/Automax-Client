@@ -343,7 +343,7 @@ export const UsersPage: React.FC = () => {
     try {
       setIsImporting(true);
       const result = await userApi.import(file);
-      setImportResult(result.data);
+      setImportResult(result.data || null);
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
     } catch (error) {
       console.error('Import failed:', error);
@@ -413,7 +413,6 @@ export const UsersPage: React.FC = () => {
               size="sm"
               leftIcon={<Upload className="w-4 h-4" />}
               disabled={isImporting}
-              as="span"
             >
               {isImporting ? 'Importing...' : 'Import'}
             </Button>
