@@ -127,6 +127,13 @@ export const ContactsList: React.FC<ContactsListProps> = ({ variant = 'default' 
                                                 {t('users.phone', 'Phone')}
                                             </span>
                                         </th>
+                                        {variant === 'call-centre' && (
+                                            <th className="px-6 py-4 text-start">
+                                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                                    Extension
+                                                </span>
+                                            </th>
+                                        )}
                                         <th className="px-6 py-4 text-start">
                                             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                                                 {t('users.email', 'Email')}
@@ -196,6 +203,18 @@ export const ContactsList: React.FC<ContactsListProps> = ({ variant = 'default' 
                                                     <span className="text-sm text-slate-400 italic">No phone</span>
                                                 )}
                                             </td>
+                                            {variant === 'call-centre' && (
+                                                <td className="px-6 py-4">
+                                                    {(user as any).extension ? (
+                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold bg-violet-50 text-violet-700 rounded-lg border border-violet-200">
+                                                            <Phone className="w-3 h-3" />
+                                                            Ext. {(user as any).extension}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-sm text-slate-400">—</span>
+                                                    )}
+                                                </td>
+                                            )}
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
                                                     <Mail className="w-4 h-4 text-slate-400" />
@@ -268,17 +287,21 @@ export const ContactsList: React.FC<ContactsListProps> = ({ variant = 'default' 
                                                 <td className="px-6 py-4 text-center">
                                                     <button
                                                         onClick={() => {
-                                                            if (user.phone) {
+                                                            const extension = (user as any).extension || user.phone;
+                                                            if (extension) {
                                                                 window.dispatchEvent(new CustomEvent('initiate-call', {
-                                                                    detail: { number: user.phone }
+                                                                    detail: { number: extension }
                                                                 }));
                                                             }
                                                         }}
-                                                        disabled={!user.phone}
-                                                        className="p-2 text-violet-600 hover:bg-violet-50 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                                        title={user.phone ? t('users.call', 'Call') : t('users.noPhone', 'No phone number')}
+                                                        disabled={!(user as any).extension && !user.phone}
+                                                        className="p-2 text-violet-600 hover:bg-violet-50 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                                                        title={(user as any).extension ? `Call ext. ${(user as any).extension}` : user.phone ? `Call ${user.phone}` : 'No extension'}
                                                     >
                                                         <Phone className="w-4 h-4" />
+                                                        {(user as any).extension && (
+                                                            <span className="text-xs font-medium">Ext. {(user as any).extension}</span>
+                                                        )}
                                                     </button>
                                                 </td>
                                             )}
@@ -286,7 +309,7 @@ export const ContactsList: React.FC<ContactsListProps> = ({ variant = 'default' 
                                     ))}
                                     {filteredUsers?.length === 0 && (
                                         <tr>
-                                            <td colSpan={5} className="py-12 text-center text-slate-500">
+                                            <td colSpan={variant === 'call-centre' ? 6 : 5} className="py-12 text-center text-slate-500">
                                                 {t('users.noUsersFound', 'No contacts found')}
                                             </td>
                                         </tr>

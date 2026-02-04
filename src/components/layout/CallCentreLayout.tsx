@@ -261,6 +261,20 @@ export const CallCentreLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Softphone Toggle */}
+            <button
+              onClick={() => setShowSoftphone(!showSoftphone)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all ${
+                showSoftphone
+                  ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/30'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+              title={t('callCentre.softphone', 'Softphone')}
+            >
+              <Phone className="w-4 h-4" />
+              <span className="hidden sm:inline text-sm font-medium">{t('callCentre.phone', 'Phone')}</span>
+            </button>
+
             {/* Search */}
             <div className="hidden md:flex items-center">
               <div className="relative">
@@ -403,7 +417,12 @@ export const CallCentreLayout: React.FC = () => {
         showSip={showSoftphone}
         onClose={() => setShowSoftphone(false)}
         settings={{ domain: "zkff.automaxsw.com", socketURL: "wss://zkff.automaxsw.com:7443" }}
-        auth={{}}
+        auth={{
+          user: {
+            userID: user?.id || '',
+            extension: (user as any)?.extension || '',
+          }
+        }}
       />
     </div >
   );
