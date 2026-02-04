@@ -14,6 +14,7 @@ import {
   FileText,
   MessageSquareWarning,
   HelpCircle,
+  PhoneCallIcon
 } from 'lucide-react';
 
 interface NavigationCard {
@@ -103,6 +104,15 @@ export const DashboardPage: React.FC = () => {
       shadowColor: 'shadow-orange-600/20',
       permissions: [PERMISSIONS.REPORTS_VIEW],
     },
+    {
+      title: t('dashboard.callCentreManagement'),
+      subtitle: t('dashboard.callCentre'),
+      description: t('dashboard.viewCall'),
+      href: '/call-centre',
+      icon: PhoneCallIcon,
+      gradient: 'from-orange-500 to-amber-500',
+      shadowColor: 'shadow-orange-500/20',
+    }
   ];
 
   // Filter cards based on user permissions

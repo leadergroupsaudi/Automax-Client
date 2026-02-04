@@ -180,7 +180,16 @@ export default function SoftPhone({
         audioEl.srcObject = stream;
         audioEl.volume = 1;
         audioEl.muted = false;
-        audioEl.play().catch(() => {});
+        audioEl.play().catch(() => { });
+      }
+    };
+
+    const initiateCallHandler = (e: Event) => {
+      const ce = e as CustomEvent<{ number: string }>;
+      if (ce.detail && ce.detail.number) {
+        setDialedNumber(ce.detail.number);
+        // Optional: auto-dial if desired
+        // makeCall(); 
       }
     };
 
@@ -190,6 +199,7 @@ export default function SoftPhone({
     window.addEventListener("call-connected", callConnectedHandler);
     window.addEventListener("call-ended", callEndedHandler);
     window.addEventListener("remote-stream", remoteStreamHandler as EventListener);
+    window.addEventListener("initiate-call", initiateCallHandler as EventListener);
 
     return () => {
       window.removeEventListener("incoming-call", incomingHandler as EventListener);
@@ -198,6 +208,7 @@ export default function SoftPhone({
       window.removeEventListener("call-connected", callConnectedHandler);
       window.removeEventListener("call-ended", callEndedHandler);
       window.removeEventListener("remote-stream", remoteStreamHandler as EventListener);
+      window.removeEventListener("initiate-call", initiateCallHandler as EventListener);
     };
   }, []);
 
@@ -405,20 +416,19 @@ export default function SoftPhone({
       <div className="px-4 py-2 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div
-            className={`w-2 h-2 rounded-full ${
-              sipConnected
+            className={`w-2 h-2 rounded-full ${sipConnected
                 ? "bg-green-500"
                 : isConnecting
-                ? "bg-yellow-500 animate-pulse"
-                : "bg-red-500"
-            }`}
+                  ? "bg-yellow-500 animate-pulse"
+                  : "bg-red-500"
+              }`}
           />
           <span className="text-xs text-gray-600">
             {sipConnected
               ? t('softphone.connected')
               : isConnecting
-              ? t('softphone.connecting')
-              : t('softphone.disconnected')}
+                ? t('softphone.connecting')
+                : t('softphone.disconnected')}
           </span>
         </div>
         {!sipConnected && !isConnecting && (
@@ -485,21 +495,19 @@ export default function SoftPhone({
           <div className="flex justify-center gap-4 mb-4">
             <button
               onClick={toggleMute}
-              className={`p-3 rounded-full transition-colors ${
-                isMuted
+              className={`p-3 rounded-full transition-colors ${isMuted
                   ? "bg-red-100 text-red-600"
                   : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-              }`}
+                }`}
             >
               {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
             </button>
             <button
               onClick={toggleSpeaker}
-              className={`p-3 rounded-full transition-colors ${
-                !isSpeakerOn
+              className={`p-3 rounded-full transition-colors ${!isSpeakerOn
                   ? "bg-red-100 text-red-600"
                   : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-              }`}
+                }`}
             >
               {isSpeakerOn ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
             </button>
@@ -565,11 +573,10 @@ export default function SoftPhone({
           <button
             onClick={makeCall}
             disabled={!dialedNumber.trim() || !sipConnected}
-            className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-colors ${
-              dialedNumber.trim() && sipConnected
+            className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-colors ${dialedNumber.trim() && sipConnected
                 ? "bg-green-500 hover:bg-green-600 text-white"
                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
-            }`}
+              }`}
           >
             <Phone className="w-5 h-5" />
             {t('softphone.call')}
