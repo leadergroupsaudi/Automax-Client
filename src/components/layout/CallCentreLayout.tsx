@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
   HelpCircle,
@@ -18,8 +17,6 @@ import {
   Languages,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
-import { authApi } from '../../api/auth';
-import { incidentApi } from '../../api/admin';
 import { setLanguage, getCurrentLanguage, supportedLanguages } from '../../i18n';
 import SoftPhone from '../sip/Softphone';
 
