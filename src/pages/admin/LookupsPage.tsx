@@ -279,8 +279,8 @@ export const LookupsPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <div className="p-2 rounded-lg bg-[hsl(var(--primary)/0.1)]">
-              <Database className="w-5 h-5 text-[hsl(var(--primary))]" />
+            <div className="p-2 rounded-lg bg-linear-to-br from-primary to-accent">
+              <Database className="w-5 h-5 text-white" />
             </div>
             <h2 className="text-2xl font-bold text-[hsl(var(--foreground))]">{t('lookups.title')}</h2>
           </div>
@@ -291,7 +291,7 @@ export const LookupsPage: React.FC = () => {
       {/* Two Panel Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Panel - Categories */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1"> 
           <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] overflow-hidden">
             {/* Categories Header */}
             <div className="px-4 py-3 bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] flex items-center justify-between">

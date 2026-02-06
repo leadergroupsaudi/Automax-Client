@@ -135,7 +135,7 @@ export const RequestLayout: React.FC = () => {
               className={({ isActive }) =>
                 `group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 ${
                   isActive
-                    ? 'bg-gradient-primary text-white shadow-lg shadow-emerald-500/20'
+                    ? 'bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-emerald-500/20'
                     : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`
               }
@@ -178,7 +178,7 @@ export const RequestLayout: React.FC = () => {
                     className={({ isActive }) =>
                       `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
                         isActive
-                          ? 'bg-gradient-primary text-white shadow-lg shadow-emerald-500/20'
+                          ? 'bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-emerald-500/20'
                           : 'text-slate-400 hover:text-white hover:bg-white/5'
                       }`
                     }
@@ -192,7 +192,7 @@ export const RequestLayout: React.FC = () => {
                     className={({ isActive }) =>
                       `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
                         isActive
-                          ? 'bg-gradient-primary text-white shadow-lg shadow-emerald-500/20'
+                          ? 'bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-emerald-500/20'
                           : 'text-slate-400 hover:text-white hover:bg-white/5'
                       }`
                     }

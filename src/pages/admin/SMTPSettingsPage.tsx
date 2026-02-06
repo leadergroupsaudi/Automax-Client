@@ -228,12 +228,12 @@ export const SMTPSettingsPage: React.FC = () => {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500">
+            <div className="p-2 rounded-lg bg-linear-to-br from-primary to-accent">
               <Mail className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">{t('smtp.title')}</h1>
+            <h1 className="text-2xl font-bold text-foreground">{t('smtp.title')}</h1>
           </div>
-          <p className="text-[hsl(var(--muted-foreground))] mt-1 ltr:ml-12 rtl:mr-12">
+          <p className="text-muted-foreground mt-1 ltr:ml-12 rtl:mr-12">
             {t('smtp.subtitle')}
           </p>
         </div>
@@ -376,8 +376,8 @@ export const SMTPSettingsPage: React.FC = () => {
                         className={cn(
                           "flex-1 px-4 py-3 rounded-lg border text-sm font-medium transition-all",
                           formData.encryption === opt.value
-                            ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]"
-                            : "border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:border-[hsl(var(--primary)/0.5)]"
+                            ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] dark:text-white"
+                            : "border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:border-[hsl(var(--primary)/0.5)] dark:text-white"
                         )}
                       >
                         {t(opt.labelKey)}

@@ -139,7 +139,7 @@ export const IncidentLayout: React.FC = () => {
               className={({ isActive }) =>
                 `group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 ${
                   isActive
-                    ? 'bg-gradient-primary text-white shadow-lg shadow-blue-500/20'
+                    ? 'bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-blue-500/20'
                     : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`
               }
@@ -163,7 +163,7 @@ export const IncidentLayout: React.FC = () => {
               className={({ isActive }) =>
                 `group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 ${
                   isActive
-                    ? 'bg-gradient-primary text-white shadow-lg shadow-blue-500/20'
+                    ? 'bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-blue-500/20'
                     : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`
               }
@@ -206,7 +206,7 @@ export const IncidentLayout: React.FC = () => {
                     className={({ isActive }) =>
                       `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
                         isActive
-                          ? 'bg-gradient-primary text-white shadow-lg shadow-blue-500/20'
+                          ? 'bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-blue-500/20'
                           : 'text-slate-400 hover:text-white hover:bg-white/5'
                       }`
                     }
@@ -220,7 +220,7 @@ export const IncidentLayout: React.FC = () => {
                     className={({ isActive }) =>
                       `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
                         isActive
-                          ? 'bg-gradient-primary text-white shadow-lg shadow-blue-500/20'
+                          ? 'bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-blue-500/20'
                           : 'text-slate-400 hover:text-white hover:bg-white/5'
                       }`
                     }
@@ -241,7 +241,7 @@ export const IncidentLayout: React.FC = () => {
               className={({ isActive }) =>
                 `group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 ${
                   isActive
-                    ? 'bg-gradient-primary text-white shadow-lg shadow-emerald-500/20'
+                    ? 'bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-emerald-500/20'
                     : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`
               }
@@ -374,7 +374,7 @@ export const IncidentLayout: React.FC = () => {
                   className="w-10 h-10 rounded-xl object-cover ring-2 ring-blue-500/30"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center ring-2 ring-blue-500/30">
+                <div className="w-10 h-10 rounded-xl bg-linear-to-r from-primary to-accent flex items-center justify-center ring-2 ring-blue-500/30">
                   <span className="text-white text-sm font-bold">
                     {user?.first_name?.[0] || user?.username?.[0] || 'U'}
                   </span>
@@ -560,7 +560,7 @@ export const IncidentLayout: React.FC = () => {
                     className="w-9 h-9 rounded-xl object-cover"
                   />
                 ) : (
-                  <div className="w-9 h-9 rounded-xl bg-gradient-primary flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-xl bg-linear-to-r from-primary to-accent flex items-center justify-center">
                     <span className="text-white text-sm font-bold">
                       {user?.first_name?.[0] || user?.username?.[0] || 'U'}
                     </span>
