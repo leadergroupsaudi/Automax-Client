@@ -27,6 +27,7 @@ import type { Workflow } from '../../types';
 import SoftPhone from '../sip/Softphone';
 import { usePermissions } from '../../hooks/usePermissions';
 import { PERMISSIONS } from '../../constants/permissions';
+import ThemeToggle from '../common/ThemeToggle';
 
 export const WorkflowLayout: React.FC = () => {
   const { t } = useTranslation();
@@ -122,7 +123,7 @@ export const WorkflowLayout: React.FC = () => {
             className={({ isActive }) =>
               `group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 ${
                 isActive
-                  ? 'bg-gradient-to-r from-emerald-600/90 to-teal-600/90 text-white shadow-lg shadow-emerald-500/20'
+                  ? 'bg-linear-to-r from-primary/90 to-accent/90 text-white shadow-lg shadow-primary/20'
                   : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`
             }
@@ -145,7 +146,7 @@ export const WorkflowLayout: React.FC = () => {
               className={({ isActive }) =>
                 `group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 ${
                   isActive
-                    ? 'bg-gradient-to-r from-emerald-600/90 to-teal-600/90 text-white shadow-lg shadow-emerald-500/20'
+                    ? 'bg-linear-to-r from-primary/90 to-accent/90 text-white shadow-lg shadow-primary/20'
                     : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`
               }
@@ -183,7 +184,7 @@ export const WorkflowLayout: React.FC = () => {
                   className={({ isActive }) =>
                     `group flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 ${
                       isActive
-                        ? 'bg-gradient-to-r from-emerald-600/90 to-teal-600/90 text-white shadow-lg shadow-emerald-500/20'
+                        ? 'bg-linear-to-r from-primary/90 to-accent/90 text-white shadow-lg shadow-emerald-500/20'
                         : 'text-slate-400 hover:text-white hover:bg-white/5'
                     }`
                   }
@@ -197,7 +198,7 @@ export const WorkflowLayout: React.FC = () => {
                       {!collapsed && (
                         <>
                           <span className="ml-3 font-medium text-sm flex-1 truncate">{workflow.name}</span>
-                          <span className={`text-xs px-1.5 py-0.5 rounded ${workflow.is_active ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-400'}`}>
+                          <span className={`text-xs px-1.5 py-0.5 rounded ${workflow.is_active ? 'bg-primary/50 text-white' : 'bg-slate-700 text-slate-400'}`}>
                             {workflow.states_count || 0}
                           </span>
                         </>
@@ -224,7 +225,7 @@ export const WorkflowLayout: React.FC = () => {
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-slate-400">{t('workflows.active')}</span>
-                <span className="text-emerald-400 font-semibold">
+                <span className="text-primary font-semibold">
                   {workflows.filter(w => w.is_active).length}
                 </span>
               </div>
@@ -267,7 +268,7 @@ export const WorkflowLayout: React.FC = () => {
             <LogOut size={20} />
           </button>
         ) : (
-          <div className="p-3 bg-gradient-to-br from-slate-800/80 to-slate-800/40 rounded-xl border border-white/5">
+          <div className="p-3 bg-linear-to-br from-slate-800/80 to-slate-800/40 rounded-xl border border-white/5">
             <div className="flex items-center gap-3">
               {user?.avatar ? (
                 <img
@@ -276,7 +277,7 @@ export const WorkflowLayout: React.FC = () => {
                   className="w-10 h-10 rounded-xl object-cover ring-2 ring-emerald-500/30"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center ring-2 ring-emerald-500/30">
+                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-primary to-accent flex items-center justify-center ring-2 ring-primary/30">
                   <span className="text-white text-sm font-bold">
                     {user?.first_name?.[0] || user?.username?.[0] || 'U'}
                   </span>
@@ -303,7 +304,7 @@ export const WorkflowLayout: React.FC = () => {
   );
 
   return (
-    <div className="flex h-screen bg-slate-100">
+    <div className="flex h-screen bg-background">
       {/* Desktop Sidebar */}
       <aside
         className={`${
@@ -443,6 +444,8 @@ export const WorkflowLayout: React.FC = () => {
               <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white" />
             </button>
 
+            <ThemeToggle/>
+
             {/* Divider */}
             <div className="hidden sm:block w-px h-8 bg-slate-200" />
 
@@ -518,7 +521,7 @@ export const WorkflowLayout: React.FC = () => {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto bg-slate-100">
+        <main className="flex-1 overflow-y-auto bg-background">
           <div className="p-4 lg:p-8">
             <div className="max-w-7xl mx-auto">
               <Outlet />

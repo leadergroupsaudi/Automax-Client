@@ -274,12 +274,12 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-[hsl(var(--foreground)/0.6)] backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[hsl(var(--card))] rounded-xl shadow-2xl max-w-3xl w-full animate-scale-in max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 bg-background/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-card rounded-xl shadow-2xl max-w-3xl w-full animate-scale-in max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[hsl(var(--border))]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-linear-to-br from-primary to-accent flex items-center justify-center">
               <HelpCircle className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -319,7 +319,7 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder={t('queries.titlePlaceholder', 'Enter query title...')}
                 className={cn(
-                  "w-full px-4 py-2 bg-[hsl(var(--background))] border rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500",
+                  "w-full px-4 py-2 bg-[hsl(var(--background))] border rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
                   errors.title ? "border-red-500" : "border-[hsl(var(--border))]"
                 )}
               />
@@ -338,7 +338,7 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={t('queries.descriptionPlaceholder', 'Describe the query...')}
                 rows={3}
-                className="w-full px-4 py-3 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 resize-none"
+                className="w-full px-4 py-3 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
               />
             </div>
           </div>
@@ -358,7 +358,7 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
                 value={channel}
                 onChange={(e) => setChannel(e.target.value)}
                 placeholder={t('queries.channelPlaceholder', 'e.g., Phone, Email, Web')}
-                className="w-full px-4 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+                className="w-full px-4 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
           </div>
@@ -404,7 +404,7 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
                     }}
                     onFocus={() => setShowIncidentSearch(true)}
                     placeholder={t('queries.searchSourceIncident', 'Search for incident/request number or title...')}
-                    className="w-full pl-10 pr-4 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+                    className="w-full pl-10 pr-4 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   />
                 </div>
 
@@ -413,7 +413,7 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
                   <div className="absolute top-full left-0 right-0 mt-1 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
                     {incidentsLoading ? (
                       <div className="p-4 text-center">
-                        <div className="w-5 h-5 border-2 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                        <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
                       </div>
                     ) : searchedIncidents.length === 0 ? (
                       <div className="p-4 text-center text-sm text-[hsl(var(--muted-foreground))]">
@@ -466,7 +466,7 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
 
               {classificationsLoading ? (
                 <div className="flex items-center justify-center py-4">
-                  <div className="w-5 h-5 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : classifications.length === 0 ? (
                 <div className="p-3 bg-violet-50 border border-violet-200 rounded-lg">
@@ -500,11 +500,11 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
 
               {workflowsLoading ? (
                 <div className="flex items-center justify-center py-4">
-                  <div className="w-5 h-5 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : filteredWorkflows.length === 0 ? (
                 <div className="p-3 bg-violet-50 border border-violet-200 rounded-lg">
-                  <div className="flex items-center gap-2 text-violet-700">
+                  <div className="flex items-center gap-2 text-primary">
                     <AlertTriangle className="w-4 h-4" />
                     <p className="text-xs">
                       {t('queries.noWorkflows', 'No query workflows found.')}
@@ -524,7 +524,7 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
                       className={cn(
                         "w-full p-2 rounded-lg text-left transition-colors text-sm",
                         workflowId === workflow.id
-                          ? "bg-violet-500/10 text-violet-700 border border-violet-500"
+                          ? "bg-primary/10 text-primary border border-primary"
                           : "hover:bg-[hsl(var(--muted)/0.5)]"
                       )}
                     >
@@ -532,7 +532,7 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
                         <div className={cn(
                           "w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0",
                           workflowId === workflow.id
-                            ? "border-violet-500 bg-violet-500"
+                            ? "border-primary bg-primary"
                             : "border-[hsl(var(--muted-foreground))]"
                         )}>
                           {workflowId === workflow.id && (
@@ -574,7 +574,7 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
                   const dept = departments.find(d => d.id === e.target.value);
                   setSelectedDepartment(dept || null);
                 }}
-                className="w-full px-4 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+                className="w-full px-4 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               >
                 <option value="">{t('queries.selectDepartment', 'Select department...')}</option>
                 {flattenDepartments(departments).map((dept) => (
@@ -601,7 +601,7 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
                   const user = users.find(u => u.id === e.target.value);
                   setSelectedAssignee(user || null);
                 }}
-                className="w-full px-4 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+                className="w-full px-4 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               >
                 <option value="">{t('queries.selectAssignee', 'Select assignee...')}</option>
                 {users.map((user) => (
@@ -640,7 +640,7 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
             disabled={createMutation.isPending}
             isLoading={createMutation.isPending}
             leftIcon={!createMutation.isPending ? <CheckCircle2 className="w-4 h-4" /> : undefined}
-            className="bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white"
+            className="bg-gradient-to-r from-primary/90 to-accent/90 hover:from-primary hover:to-accent text-white"
           >
             {t('queries.create', 'Create Query')}
           </Button>
