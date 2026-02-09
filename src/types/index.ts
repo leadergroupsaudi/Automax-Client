@@ -375,48 +375,6 @@ export interface ActionLogFilterOptions {
   actions: string[];
 }
 
-// SMTP Configuration types
-export interface SMTPConfig {
-  id: string;
-  host: string;
-  port: number;
-  username: string;
-  password?: string; // Not returned from API for security
-  from_email: string;
-  from_name: string;
-  encryption: 'none' | 'tls' | 'ssl';
-  is_active: boolean;
-  is_verified: boolean;
-  last_verified_at?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface SMTPConfigCreateRequest {
-  host: string;
-  port: number;
-  username: string;
-  password: string;
-  from_email: string;
-  from_name: string;
-  encryption: 'none' | 'tls' | 'ssl';
-}
-
-export interface SMTPConfigUpdateRequest {
-  host?: string;
-  port?: number;
-  username?: string;
-  password?: string;
-  from_email?: string;
-  from_name?: string;
-  encryption?: 'none' | 'tls' | 'ssl';
-  is_active?: boolean;
-}
-
-export interface SMTPTestRequest {
-  to_email: string;
-}
-
 // Email notification recipients for transitions
 export type EmailRecipient = 'assignee' | 'previous_assignee' | 'reporter' | 'creator' | 'department_head' | 'custom';
 

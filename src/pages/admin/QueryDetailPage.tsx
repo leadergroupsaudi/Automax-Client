@@ -15,7 +15,6 @@ import {
   CheckCircle2,
   XCircle,
   Play,
-  HelpCircle,
   Download,
   X,
   History,
@@ -27,13 +26,13 @@ import {
   AlertTriangle,
   MapPin,
   FileText,
+  Upload,
 } from 'lucide-react';
 import { Button } from '../../components/ui';
 import { MiniWorkflowView } from '../../components/workflow';
 import { RevisionHistory } from '../../components/incidents';
 import { queryApi, userApi } from '../../api/admin';
 import { API_URL } from '../../api/client';
-import { AudioPlayer } from '../../components/common/AudioPlayer';
 import type {
   AvailableTransition,
 } from '../../types';
@@ -214,6 +213,43 @@ export const QueryDetailPage: React.FC = () => {
   const handleTransitionClick = (transition: AvailableTransition) => {
     setSelectedTransition(transition);
     setTransitionModalOpen(true);
+  };
+
+  const executeTransition = () => {
+    if (!selectedTransition) return;
+
+    // Check if comment is required
+    const requiresComment = selectedTransition.requirements?.some(
+      r => r.requirement_type === 'comment' && r.is_mandatory
+    );
+
+    // Check if attachment is required
+    const requiresAttachment = selectedTransition.requirements?.some(
+      r => r.requirement_type === 'attachment' && r.is_mandatory
+    );
+
+    // Check if feedback is required
+    const requiresFeedback = selectedTransition.requirements?.some(
+      r => r.requirement_type === 'feedback' && r.is_mandatory
+    );
+
+    if (requiresComment && !transitionComment.trim()) {
+      alert('A comment is required for this transition');
+      return;
+    }
+
+    if (requiresAttachment && !transitionAttachment) {
+      alert('An attachment is required for this transition');
+      return;
+    }
+
+    if (requiresFeedback && transitionFeedbackRating === 0) {
+      alert('Feedback rating is required for this transition');
+      return;
+    }
+
+    // All validations passed, execute the transition
+    transitionMutation.mutate();
   };
 
   const formatDate = (dateStr?: string) => {
@@ -894,6 +930,9 @@ export const QueryDetailPage: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-[hsl(var(--muted-foreground))] mb-1.5">
                   {t('common.comment', 'Comment')}
+                  {selectedTransition.requirements?.some(r => r.requirement_type === 'comment' && r.is_mandatory) && (
+                    <span className="text-red-500 ml-1">*</span>
+                  )}
                 </label>
                 <textarea
                   value={transitionComment}
@@ -903,6 +942,53 @@ export const QueryDetailPage: React.FC = () => {
                   placeholder={t('common.addOptionalComment', 'Add an optional comment...')}
                 />
               </div>
+
+              {/* Attachment */}
+              {selectedTransition.requirements?.some(r => r.requirement_type === 'attachment') && (
+                <div>
+                  <label className="block text-sm font-medium text-[hsl(var(--muted-foreground))] mb-1.5">
+                    {t('common.attachment', 'Attachment')}
+                    {selectedTransition.requirements?.some(r => r.requirement_type === 'attachment' && r.is_mandatory) && (
+                      <span className="text-red-500 ml-1">*</span>
+                    )}
+                  </label>
+                  {transitionAttachment ? (
+                    <div className="flex items-center justify-between p-3 bg-[hsl(var(--muted)/0.5)] rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Paperclip className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                        <span className="text-sm text-[hsl(var(--foreground))] truncate max-w-[200px]">
+                          {transitionAttachment.name}
+                        </span>
+                        <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                          ({(transitionAttachment.size / 1024).toFixed(1)} KB)
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setTransitionAttachment(null)}
+                        className="p-1 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-[hsl(var(--border))] rounded-lg cursor-pointer hover:border-violet-500 hover:bg-[hsl(var(--muted)/0.3)] transition-colors">
+                      <Upload className="w-5 h-5 text-[hsl(var(--muted-foreground))]" />
+                      <span className="text-sm text-[hsl(var(--muted-foreground))]">{t('common.clickToUpload', 'Click to upload')}</span>
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setTransitionAttachment(file);
+                          }
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
+              )}
 
               {/* Feedback (if required) */}
               {selectedTransition.requirements?.some(r => r.requirement_type === 'feedback') && (
@@ -941,11 +1027,11 @@ export const QueryDetailPage: React.FC = () => {
                 {t('common.cancel', 'Cancel')}
               </Button>
               <Button
-                onClick={() => transitionMutation.mutate()}
+                onClick={executeTransition}
                 isLoading={transitionMutation.isPending || transitionUploading}
                 className="bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600"
               >
-                {t('common.confirm', 'Confirm')}
+                {transitionUploading ? t('common.uploading', 'Uploading...') : t('common.confirm', 'Confirm')}
               </Button>
             </div>
           </div>

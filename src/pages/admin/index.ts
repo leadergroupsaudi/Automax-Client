@@ -21,7 +21,6 @@ export { ComplaintsPage } from './ComplaintsPage';
 export { ComplaintDetailPage } from './ComplaintDetailPage';
 export { QueriesPage } from './QueriesPage';
 export { QueryDetailPage } from './QueryDetailPage';
-export { SMTPSettingsPage } from './SMTPSettingsPage';
 export { ReportBuilderPage } from './ReportBuilderPage';
 export { ReportTemplatesPage } from './ReportTemplatesPage';
 export { default as ReportTemplatesListPage } from './ReportTemplatesListPage';

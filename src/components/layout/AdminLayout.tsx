@@ -16,7 +16,6 @@ import {
   X,
   ChevronDown,
   Sparkles,
-  Mail,
   FileBarChart,
   Languages,
   Database,
@@ -65,7 +64,6 @@ const sidebarSectionsConfig: SidebarSection[] = [
       { icon: Database, labelKey: 'lookups.title', path: '/admin/lookups', permission: 'lookups:view' },
       { icon: FileBarChart, labelKey: 'admin.reports', path: '/admin/reports', permission: 'reports:view' },
       { icon: LayoutTemplate, labelKey: 'admin.reportTemplates', path: '/admin/report-templates', permission: 'reports:view' },
-      { icon: Mail, labelKey: 'admin.smtpSettings', path: '/admin/smtp-settings', permission: 'settings:view' },
     ],
   },
 ];

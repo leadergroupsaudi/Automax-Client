@@ -59,10 +59,6 @@ import type {
   CreateComplaintRequest,
   CreateQueryRequest,
   CreateRequestRequest,
-  SMTPConfig,
-  SMTPConfigCreateRequest,
-  SMTPConfigUpdateRequest,
-  SMTPTestRequest,
   ReportDataSource,
   ReportFieldDefinition,
   DataSourceDefinition,
@@ -1315,45 +1311,6 @@ export const requestApi = {
   // Evaluation
   incrementEvaluation: async (id: string): Promise<ApiResponse<Incident>> => {
     const response = await apiClient.post<ApiResponse<Incident>>(`/incidents/${id}/evaluate`);
-    return response.data;
-  },
-};
-
-// SMTP Configuration API
-export const smtpApi = {
-  // Get current SMTP configuration
-  get: async (): Promise<ApiResponse<SMTPConfig | null>> => {
-    const response = await apiClient.get<ApiResponse<SMTPConfig | null>>('/admin/smtp');
-    return response.data;
-  },
-
-  // Create SMTP configuration
-  create: async (data: SMTPConfigCreateRequest): Promise<ApiResponse<SMTPConfig>> => {
-    const response = await apiClient.post<ApiResponse<SMTPConfig>>('/admin/smtp', data);
-    return response.data;
-  },
-
-  // Update SMTP configuration
-  update: async (data: SMTPConfigUpdateRequest): Promise<ApiResponse<SMTPConfig>> => {
-    const response = await apiClient.put<ApiResponse<SMTPConfig>>('/admin/smtp', data);
-    return response.data;
-  },
-
-  // Delete SMTP configuration
-  delete: async (): Promise<ApiResponse<null>> => {
-    const response = await apiClient.delete<ApiResponse<null>>('/admin/smtp');
-    return response.data;
-  },
-
-  // Test SMTP configuration
-  test: async (data: SMTPTestRequest): Promise<ApiResponse<{ success: boolean; message: string }>> => {
-    const response = await apiClient.post<ApiResponse<{ success: boolean; message: string }>>('/admin/smtp/test', data);
-    return response.data;
-  },
-
-  // Verify SMTP connection
-  verify: async (): Promise<ApiResponse<{ success: boolean; message: string }>> => {
-    const response = await apiClient.post<ApiResponse<{ success: boolean; message: string }>>('/admin/smtp/verify');
     return response.data;
   },
 };

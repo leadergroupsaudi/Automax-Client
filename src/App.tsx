@@ -31,7 +31,6 @@ import {
   ComplaintDetailPage,
   QueriesPage,
   QueryDetailPage,
-  SMTPSettingsPage,
   ReportBuilderPage,
   ReportTemplatesPage,
   ReportTemplatesListPage,
@@ -103,10 +102,6 @@ function App() {
               {/* Action logs - requires action-logs:view permission */}
               <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.ACTION_LOGS_VIEW]} />}>
                 <Route path="/admin/action-logs" element={<ActionLogsPage />} />
-              </Route>
-              {/* SMTP Settings - requires settings:view permission */}
-              <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.SETTINGS_VIEW]} />}>
-                <Route path="/admin/smtp-settings" element={<SMTPSettingsPage />} />
               </Route>
               {/* Reports - requires reports:view permission */}
               <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.REPORTS_VIEW]} />}>

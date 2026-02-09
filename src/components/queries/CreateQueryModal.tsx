@@ -117,13 +117,13 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
       try {
         // Get 'query', 'both', and 'all' types
         const [requestRes, bothRes, allRes] = await Promise.all([
-          workflowApi.listByRecordType('query', true).catch(err => {
+          workflowApi.listByRecordType('query', true).catch(() => {
             return { data: [] };
           }),
-          workflowApi.listByRecordType('both', true).catch(err => {
+          workflowApi.listByRecordType('both', true).catch(() => {
             return { data: [] };
           }),
-          workflowApi.listByRecordType('all', true).catch(err => {
+          workflowApi.listByRecordType('all', true).catch(() => {
             return { data: [] };
           }),
         ]);
