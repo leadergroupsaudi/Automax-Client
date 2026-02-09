@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import {
   Plus,
   Edit2,
@@ -290,6 +291,24 @@ export const WorkflowDesignerPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'workflow', id] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'workflows'] });
+      toast.success('Matching rules updated successfully');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to update matching rules';
+
+      // Check if it's a duplicate workflow conflict
+      if (errorMessage.includes('workflow rules conflict')) {
+        toast.error('Duplicate Workflow Rules', {
+          description: errorMessage,
+          duration: 6000,
+        });
+      } else {
+        toast.error('Failed to update matching rules', {
+          description: errorMessage,
+          duration: 5000,
+        });
+      }
+      console.error('Update matching rules error:', error);
     },
   });
 

@@ -107,6 +107,20 @@ export interface ApiResponse<T> {
 }
 
 // Lookup types
+export type FieldType = 'text' | 'number' | 'date' | 'select' | 'multiselect' | 'checkbox' | 'textarea';
+
+export interface ValidationRules {
+  required?: boolean;
+  minLength?: number;
+  maxLength?: number;
+  minValue?: number;
+  maxValue?: number;
+  pattern?: string;
+  minDate?: string;
+  maxDate?: string;
+  customErrorMessage?: string;
+}
+
 export interface LookupCategory {
   id: string;
   code: string;
@@ -116,6 +130,8 @@ export interface LookupCategory {
   is_system: boolean;
   is_active: boolean;
   add_to_incident_form?: boolean;
+  field_type?: FieldType;
+  validation_rules?: string;
   values_count: number;
   values?: LookupValue[];
   created_at: string;
@@ -145,6 +161,8 @@ export interface LookupCategoryCreateRequest {
   description?: string;
   is_active?: boolean;
   add_to_incident_form?: boolean;
+  field_type?: FieldType;
+  validation_rules?: string;
 }
 
 export interface LookupCategoryUpdateRequest {
@@ -154,6 +172,8 @@ export interface LookupCategoryUpdateRequest {
   description?: string;
   is_active?: boolean;
   add_to_incident_form?: boolean;
+  field_type?: FieldType;
+  validation_rules?: string;
 }
 
 export interface LookupValueCreateRequest {
@@ -864,6 +884,7 @@ export interface IncidentCreateRequest {
   reporter_name?: string;
   custom_fields?: string;
   lookup_value_ids?: string[];
+  custom_lookup_fields?: Record<string, any>;
 }
 
 export interface IncidentUpdateRequest {
@@ -883,6 +904,7 @@ export interface IncidentUpdateRequest {
   due_date?: string;
   custom_fields?: string;
   lookup_value_ids?: string[];
+  custom_lookup_fields?: Record<string, any>;
 }
 
 export interface IncidentTransitionRequest {

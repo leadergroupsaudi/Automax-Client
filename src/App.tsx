@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'sonner';
 import { MainLayout, AuthLayout, ProtectedRoute, AdminLayout, AdminProtectedRoute, PermissionRoute, IncidentLayout, RequestLayout, WorkflowLayout, ComplaintsLayout, QueryLayout, CallCentreLayout } from './components/layout';
 import { PERMISSIONS } from './constants/permissions';
 import {
@@ -52,6 +53,7 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <Toaster position="top-right" richColors closeButton />
       <BrowserRouter>
         <Routes>
           {/* Auth routes */}

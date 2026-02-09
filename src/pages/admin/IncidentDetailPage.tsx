@@ -33,7 +33,7 @@ import {
 import { Button } from '../../components/ui';
 import { MiniWorkflowView } from '../../components/workflow';
 import { RevisionHistory, ConvertToRequestModal } from '../../components/incidents';
-import { incidentApi, userApi, workflowApi, departmentApi } from '../../api/admin';
+import { incidentApi, userApi, workflowApi, departmentApi, lookupApi } from '../../api/admin';
 import { API_URL } from '../../api/client';
 import type {
   IncidentDetail,
@@ -52,6 +52,7 @@ import { PERMISSIONS } from '../../constants/permissions';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import { Icon } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { parseCustomLookupFields, formatCustomLookupValue } from '../../utils/customFields';
 
 // Fix for default marker icon - using local images
 const defaultIcon = new Icon({
@@ -144,6 +145,11 @@ export const IncidentDetailPage: React.FC = () => {
     queryFn: () => userApi.list(1, 100),
   });
 
+  const { data: lookupCategoriesData } = useQuery({
+    queryKey: ['admin', 'lookups', 'categories'],
+    queryFn: () => lookupApi.listCategories(),
+  });
+
   // Check if user can convert incident to request
   const { data: canConvertData } = useQuery({
     queryKey: ['incident', id, 'can-convert'],
@@ -153,6 +159,7 @@ export const IncidentDetailPage: React.FC = () => {
 
   const incident = incidentData?.data as IncidentDetail | undefined;
   const canConvertToRequest = canConvertData?.data?.can_convert ?? false;
+  const lookupCategories = lookupCategoriesData?.data || [];
 
   const groupedLookupValues = useMemo(() => {
     if (!incident?.lookup_values) return {};
@@ -165,6 +172,11 @@ export const IncidentDetailPage: React.FC = () => {
       return acc;
     }, {} as Record<string, LookupValue[]>);
   }, [incident?.lookup_values]);
+
+  // Parse custom lookup fields from custom_fields JSON
+  const customLookupFields = useMemo(() => {
+    return parseCustomLookupFields(incident?.custom_fields, lookupCategories);
+  }, [incident?.custom_fields, lookupCategories]);
 
   // Fetch full workflow with states and transitions for visualization
   const { data: fullWorkflowData } = useQuery({
@@ -1240,6 +1252,30 @@ export const IncidentDetailPage: React.FC = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* Custom Lookup Fields (text, number, date, checkbox, textarea) */}
+              {Object.keys(customLookupFields).length > 0 && (
+                <div className={Object.entries(groupedLookupValues).length > 0 ? "" : "pt-2 border-t border-[hsl(var(--border))]"}>
+                  {Object.entries(customLookupFields).map(([key, field]) => {
+                    const categoryName = i18n.language === 'ar' && field.category_name_ar
+                      ? field.category_name_ar
+                      : field.category_name || key.replace('lookup:', '');
+
+                    const displayValue = formatCustomLookupValue(field, i18n.language, t);
+
+                    return (
+                      <div key={key} className="mb-2 last:mb-0">
+                        <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                          {categoryName}
+                        </label>
+                        <div className="mt-0.5 text-sm text-[hsl(var(--foreground))]">
+                          {displayValue}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 

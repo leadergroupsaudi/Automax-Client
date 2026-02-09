@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import {
   Plus,
   Edit2,
@@ -83,7 +84,16 @@ export const WorkflowsPage: React.FC = () => {
     mutationFn: (data: WorkflowCreateRequest) => workflowApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'workflows'] });
+      toast.success('Workflow created successfully');
       closeModal();
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to create workflow';
+      toast.error('Failed to create workflow', {
+        description: errorMessage,
+        duration: 5000,
+      });
+      console.error('Create workflow error:', error);
     },
   });
 
@@ -91,7 +101,16 @@ export const WorkflowsPage: React.FC = () => {
     mutationFn: ({ id, data }: { id: string; data: WorkflowUpdateRequest }) => workflowApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'workflows'] });
+      toast.success('Workflow updated successfully');
       closeModal();
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to update workflow';
+      toast.error('Failed to update workflow', {
+        description: errorMessage,
+        duration: 5000,
+      });
+      console.error('Update workflow error:', error);
     },
   });
 
@@ -99,7 +118,12 @@ export const WorkflowsPage: React.FC = () => {
     mutationFn: (id: string) => workflowApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'workflows'] });
+      toast.success('Workflow deleted successfully');
       setDeleteConfirm(null);
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to delete workflow';
+      toast.error('Failed to delete workflow', { description: errorMessage });
     },
   });
 
@@ -107,6 +131,11 @@ export const WorkflowsPage: React.FC = () => {
     mutationFn: (id: string) => workflowApi.duplicate(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'workflows'] });
+      toast.success('Workflow duplicated successfully');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to duplicate workflow';
+      toast.error('Failed to duplicate workflow', { description: errorMessage });
     },
   });
 
@@ -115,6 +144,11 @@ export const WorkflowsPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'workflows'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'workflows', 'deleted'] });
+      toast.success('Workflow restored successfully');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to restore workflow';
+      toast.error('Failed to restore workflow', { description: errorMessage });
     },
   });
 
@@ -122,7 +156,12 @@ export const WorkflowsPage: React.FC = () => {
     mutationFn: (id: string) => workflowApi.permanentDelete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'workflows', 'deleted'] });
+      toast.success('Workflow permanently deleted');
       setPermanentDeleteConfirm(null);
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to permanently delete workflow';
+      toast.error('Failed to permanently delete workflow', { description: errorMessage });
     },
   });
 
@@ -195,11 +234,11 @@ export const WorkflowsPage: React.FC = () => {
         },
       });
     } else {
+      // When creating, only send basic info. Classifications/locations are configured later in the designer.
       createMutation.mutate({
         name: formData.name,
         code: formData.code,
         description: formData.description,
-        classification_ids: formData.classification_ids,
       });
     }
   };
@@ -650,71 +689,88 @@ export const WorkflowsPage: React.FC = () => {
                   />
                 </div>
 
-                {editingWorkflow && (
-                  <div className="flex items-center gap-3 p-4 bg-[hsl(var(--muted)/0.5)] rounded-xl">
-                    <input
-                      type="checkbox"
-                      id="is_default"
-                      checked={formData.is_default}
-                      onChange={(e) => setFormData({ ...formData, is_default: e.target.checked })}
-                      className="w-4 h-4 text-[hsl(var(--primary))] border-[hsl(var(--border))] rounded focus:ring-[hsl(var(--primary))]"
-                    />
-                    <label htmlFor="is_default" className="text-sm font-medium text-[hsl(var(--foreground))]">
-                      {t('workflows.setAsDefault')}
-                    </label>
+                {/* Info message for create mode */}
+                {!editingWorkflow && (
+                  <div className="flex items-start gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                    <Settings2 className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-1">
+                        Configure Later
+                      </p>
+                      <p className="text-xs text-blue-600/80 dark:text-blue-400/80">
+                        After creating the workflow, you can configure matching rules (classifications, locations), states, transitions, and required fields in the Workflow Designer.
+                      </p>
+                    </div>
                   </div>
                 )}
 
-                {/* Classifications Section */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <label className="text-sm font-medium text-[hsl(var(--foreground))]">{t('workflows.classificationsLabel')}</label>
-                    <span className="px-2.5 py-1 text-xs font-medium bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] rounded-lg">
-                      {formData.classification_ids.length} {t('workflows.selected')}
-                    </span>
-                  </div>
-                  <p className="text-xs text-[hsl(var(--muted-foreground))] mb-3">
-                    {t('workflows.assignClassifications')}
-                  </p>
+                {editingWorkflow && (
+                  <>
+                    <div className="flex items-center gap-3 p-4 bg-[hsl(var(--muted)/0.5)] rounded-xl">
+                      <input
+                        type="checkbox"
+                        id="is_default"
+                        checked={formData.is_default}
+                        onChange={(e) => setFormData({ ...formData, is_default: e.target.checked })}
+                        className="w-4 h-4 text-[hsl(var(--primary))] border-[hsl(var(--border))] rounded focus:ring-[hsl(var(--primary))]"
+                      />
+                      <label htmlFor="is_default" className="text-sm font-medium text-[hsl(var(--foreground))]">
+                        {t('workflows.setAsDefault')}
+                      </label>
+                    </div>
 
-                  <div className="border border-[hsl(var(--border))] rounded-xl overflow-hidden max-h-64 overflow-y-auto">
-                    {flatClassifications.length === 0 ? (
-                      <div className="p-6 text-center text-[hsl(var(--muted-foreground))] text-sm">
-                        {t('workflows.noClassifications')}
+                    {/* Classifications Section - Only shown in edit mode */}
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="text-sm font-medium text-[hsl(var(--foreground))]">{t('workflows.classificationsLabel')}</label>
+                        <span className="px-2.5 py-1 text-xs font-medium bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] rounded-lg">
+                          {formData.classification_ids.length} {t('workflows.selected')}
+                        </span>
                       </div>
-                    ) : (
-                      <div className="p-3 space-y-2">
-                        {flatClassifications.map((classification) => (
-                          <label
-                            key={classification.id}
-                            className={cn(
-                              "flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all",
-                              formData.classification_ids.includes(classification.id)
-                                ? "bg-[hsl(var(--primary)/0.05)] border-2 border-[hsl(var(--primary)/0.3)]"
-                                : "bg-[hsl(var(--background))] border-2 border-[hsl(var(--border))] hover:border-[hsl(var(--muted-foreground)/0.3)]"
-                            )}
-                            style={{ paddingLeft: `${(classification.level || 0) * 16 + 12}px` }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={formData.classification_ids.includes(classification.id)}
-                              onChange={() => toggleClassification(classification.id)}
-                              className="w-4 h-4 text-[hsl(var(--primary))] border-[hsl(var(--border))] rounded focus:ring-[hsl(var(--primary))]"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <span className="text-sm font-medium text-[hsl(var(--foreground))] block truncate">
-                                {classification.name}
-                              </span>
-                              {classification.description && (
-                                <span className="text-xs text-[hsl(var(--muted-foreground))]">{classification.description}</span>
-                              )}
-                            </div>
-                          </label>
-                        ))}
+                      <p className="text-xs text-[hsl(var(--muted-foreground))] mb-3">
+                        {t('workflows.assignClassifications')}
+                      </p>
+
+                      <div className="border border-[hsl(var(--border))] rounded-xl overflow-hidden max-h-64 overflow-y-auto">
+                        {flatClassifications.length === 0 ? (
+                          <div className="p-6 text-center text-[hsl(var(--muted-foreground))] text-sm">
+                            {t('workflows.noClassifications')}
+                          </div>
+                        ) : (
+                          <div className="p-3 space-y-2">
+                            {flatClassifications.map((classification) => (
+                              <label
+                                key={classification.id}
+                                className={cn(
+                                  "flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all",
+                                  formData.classification_ids.includes(classification.id)
+                                    ? "bg-[hsl(var(--primary)/0.05)] border-2 border-[hsl(var(--primary)/0.3)]"
+                                    : "bg-[hsl(var(--background))] border-2 border-[hsl(var(--border))] hover:border-[hsl(var(--muted-foreground)/0.3)]"
+                                )}
+                                style={{ paddingLeft: `${(classification.level || 0) * 16 + 12}px` }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={formData.classification_ids.includes(classification.id)}
+                                  onChange={() => toggleClassification(classification.id)}
+                                  className="w-4 h-4 text-[hsl(var(--primary))] border-[hsl(var(--border))] rounded focus:ring-[hsl(var(--primary))]"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-sm font-medium text-[hsl(var(--foreground))] block truncate">
+                                    {classification.name}
+                                  </span>
+                                  {classification.description && (
+                                    <span className="text-xs text-[hsl(var(--muted-foreground))]">{classification.description}</span>
+                                  )}
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </div>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Modal Footer */}
