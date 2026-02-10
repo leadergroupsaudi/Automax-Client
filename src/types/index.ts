@@ -761,6 +761,8 @@ export interface Incident {
   attachments_count: number;
   created_at: string;
   updated_at: string;
+  version: number;
+  active_viewers?: number;
 }
 
 export interface IncidentDetail extends Incident {
@@ -933,6 +935,7 @@ export interface IncidentUpdateRequest {
   custom_fields?: string;
   lookup_value_ids?: string[];
   custom_lookup_fields?: Record<string, any>;
+  version: number;
 }
 
 export interface IncidentTransitionRequest {
@@ -946,6 +949,15 @@ export interface IncidentTransitionRequest {
   // Assignment overrides (used when auto-detect finds multiple matches)
   department_id?: string;
   user_id?: string;
+  version: number;
+}
+
+// Presence tracking types
+export interface PresenceInfo {
+  user_id: string;
+  user_name: string;
+  user_email: string;
+  timestamp: string;
 }
 
 // Department Match types

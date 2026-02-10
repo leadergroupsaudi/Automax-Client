@@ -177,6 +177,7 @@ export const RequestDetailPage: React.FC = () => {
           rating: transitionFeedbackRating,
           comment: transitionFeedbackComment || undefined,
         } : undefined,
+        version: request?.version || 1,
       });
     },
     onSuccess: () => {
@@ -205,7 +206,10 @@ export const RequestDetailPage: React.FC = () => {
   });
 
   const assignMutation = useMutation({
-    mutationFn: (assigneeId: string) => incidentApi.update(id!, { assignee_id: assigneeId }),
+    mutationFn: (assigneeId: string) => incidentApi.update(id!, {
+      assignee_id: assigneeId,
+      version: request?.version || 1,
+    }),
     onSuccess: () => {
       refetch();
       setAssignModalOpen(false);

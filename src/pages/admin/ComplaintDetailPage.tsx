@@ -157,6 +157,7 @@ export const ComplaintDetailPage: React.FC = () => {
           rating: transitionFeedbackRating,
           comment: transitionFeedbackComment || undefined,
         } : undefined,
+        version: complaint?.version || 1,
       });
     },
     onSuccess: () => {

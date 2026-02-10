@@ -77,6 +77,7 @@ import type {
   LookupCategoryUpdateRequest,
   LookupValueCreateRequest,
   LookupValueUpdateRequest,
+  PresenceInfo,
 } from '../types';
 
 // User Management
@@ -938,6 +939,22 @@ export const incidentApi = {
     const response = await apiClient.get(`/incidents/${incidentId}/report?format=${format}`, {
       responseType: 'blob',
     });
+    return response.data;
+  },
+
+  // Presence tracking
+  markPresence: async (incidentId: string): Promise<ApiResponse<null>> => {
+    const response = await apiClient.post<ApiResponse<null>>(`/incidents/${incidentId}/presence`);
+    return response.data;
+  },
+
+  getPresence: async (incidentId: string): Promise<ApiResponse<PresenceInfo[]>> => {
+    const response = await apiClient.get<ApiResponse<PresenceInfo[]>>(`/incidents/${incidentId}/presence`);
+    return response.data;
+  },
+
+  removePresence: async (incidentId: string): Promise<ApiResponse<null>> => {
+    const response = await apiClient.delete<ApiResponse<null>>(`/incidents/${incidentId}/presence`);
     return response.data;
   },
 };

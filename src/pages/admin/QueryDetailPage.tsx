@@ -177,6 +177,7 @@ export const QueryDetailPage: React.FC = () => {
           rating: transitionFeedbackRating,
           comment: transitionFeedbackComment || undefined,
         } : undefined,
+        version: query?.version || 1,
       });
     },
     onSuccess: () => {
