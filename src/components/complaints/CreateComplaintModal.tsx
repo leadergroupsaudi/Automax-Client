@@ -41,6 +41,7 @@ import type {
 } from '../../types';
 import { INCIDENT_SOURCES } from '../../types';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '../../stores/authStore';
 
 interface CreateComplaintModalProps {
   isOpen: boolean;
@@ -55,6 +56,7 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -183,12 +185,78 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
     enabled: isOpen && incidentSearch.length >= 2,
   });
 
-  const classifications = classificationsData?.data || [];
+  const rawClassifications = classificationsData?.data || [];
   const workflows = workflowsData?.data || [];
   const departments = departmentsData?.data || [];
   const users = usersData?.data || [];
-  const locations = locationsData?.data || [];
+  const rawLocations = locationsData?.data || [];
   const searchedIncidents = incidentsData?.data || [];
+
+  // Filter classifications based on user's assignments (unless super admin)
+  const classifications = useMemo(() => {
+    if (!user || user.is_super_admin) return rawClassifications;
+    if (!user.classifications || user.classifications.length === 0) return rawClassifications;
+
+    const userClassificationIds = new Set(user.classifications.map(c => c.id));
+
+    const hasUserAccess = (node: any): boolean => {
+      if (userClassificationIds.has(node.id)) return true;
+      if (node.children && node.children.length > 0) {
+        return node.children.some((child: any) => hasUserAccess(child));
+      }
+      return false;
+    };
+
+    const filterByUserAccess = (nodes: any[]): any[] => {
+      return nodes
+        .map(node => {
+          if (!hasUserAccess(node)) return null;
+          const filteredNode = {
+            ...node,
+            children: node.children && node.children.length > 0
+              ? filterByUserAccess(node.children)
+              : undefined,
+          };
+          return filteredNode;
+        })
+        .filter(Boolean);
+    };
+
+    return filterByUserAccess(rawClassifications);
+  }, [rawClassifications, user]);
+
+  // Filter locations based on user's assignments (unless super admin)
+  const locations = useMemo(() => {
+    if (!user || user.is_super_admin) return rawLocations;
+    if (!user.locations || user.locations.length === 0) return rawLocations;
+
+    const userLocationIds = new Set(user.locations.map(l => l.id));
+
+    const hasUserAccess = (node: any): boolean => {
+      if (userLocationIds.has(node.id)) return true;
+      if (node.children && node.children.length > 0) {
+        return node.children.some((child: any) => hasUserAccess(child));
+      }
+      return false;
+    };
+
+    const filterByUserAccess = (nodes: any[]): any[] => {
+      return nodes
+        .map(node => {
+          if (!hasUserAccess(node)) return null;
+          const filteredNode = {
+            ...node,
+            children: node.children && node.children.length > 0
+              ? filterByUserAccess(node.children)
+              : undefined,
+          };
+          return filteredNode;
+        })
+        .filter(Boolean);
+    };
+
+    return filterByUserAccess(rawLocations);
+  }, [rawLocations, user]);
 
   // Filter lookup categories for request form
   const requestLookupCategories = (lookupCategoriesData?.data || []).filter(

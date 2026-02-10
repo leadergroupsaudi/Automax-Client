@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { Button, HierarchicalTreeSelect, type TreeNode } from '../../components/ui';
 import { userApi, departmentApi, locationApi, roleApi, classificationApi } from '../../api/admin';
+import { toast } from 'sonner';
 import type { User, Role, UpdateProfileRequest } from '../../types';
 import { cn } from '@/lib/utils';
 import { FolderTree } from 'lucide-react';
@@ -171,7 +172,14 @@ export const UsersPage: React.FC = () => {
       userApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      toast.success(t('users.userUpdatedSuccessfully', 'User updated successfully'));
       closeModal();
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || t('users.updateFailed', 'Failed to update user');
+      toast.error(t('common.error', 'Error'), {
+        description: errorMessage,
+      });
     },
   });
 
@@ -180,7 +188,14 @@ export const UsersPage: React.FC = () => {
       userApi.create(params.data, params.avatar),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      toast.success(t('users.userCreatedSuccessfully', 'User created successfully'));
       closeCreateModal();
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || t('users.createFailed', 'Failed to create user');
+      toast.error(t('common.error', 'Error'), {
+        description: errorMessage,
+      });
     },
   });
 
@@ -258,6 +273,9 @@ export const UsersPage: React.FC = () => {
   };
 
   const openEditModal = (user: User) => {
+    const classificationIds = user.classifications?.map((c) => c.id) || [];
+    const locationIds = user.locations?.map((l) => l.id) || [];
+
     setEditingUser(user);
     setFormData({
       first_name: user.first_name || '',
@@ -268,8 +286,8 @@ export const UsersPage: React.FC = () => {
       department_id: user.department_id || '',
       location_id: user.location_id || '',
       department_ids: user.departments?.map((d) => d.id) || [],
-      location_ids: user.locations?.map((l) => l.id) || [],
-      classification_ids: user.classifications?.map((c) => c.id) || [],
+      location_ids: locationIds,
+      classification_ids: classificationIds,
       role_ids: user.roles?.map((r) => r.id) || [],
       is_active: user.is_active,
     });
@@ -887,7 +905,35 @@ export const UsersPage: React.FC = () => {
                 <HierarchicalTreeSelect
                   data={departmentsTree}
                   selectedIds={formData.department_ids}
-                  onSelectionChange={(ids) => setFormData({ ...formData, department_ids: ids })}
+                  onSelectionChange={async (ids) => {
+                    setFormData({ ...formData, department_ids: ids });
+
+                    // Auto-populate classifications and locations from departments
+                    try {
+                      const allClassifications = new Set<string>();
+                      const allLocations = new Set<string>();
+
+                      for (const deptId of ids) {
+                        const dept = await departmentApi.getById(deptId);
+                        if (dept.success && dept.data) {
+                          // Add department's classifications
+                          dept.data.classifications?.forEach(c => allClassifications.add(c.id));
+                          // Add department's locations
+                          dept.data.locations?.forEach(l => allLocations.add(l.id));
+                        }
+                      }
+
+                      setFormData(prev => ({
+                        ...prev,
+                        department_ids: ids,
+                        classification_ids: Array.from(allClassifications),
+                        location_ids: Array.from(allLocations),
+                      }));
+                    } catch (error) {
+                      console.error('Error fetching department details:', error);
+                      setFormData({ ...formData, department_ids: ids });
+                    }
+                  }}
                   label={t('users.departments')}
                   icon={<Building2 className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />}
                   emptyMessage={t('users.noDepartmentsAvailable')}
@@ -1170,7 +1216,33 @@ export const UsersPage: React.FC = () => {
                 <HierarchicalTreeSelect
                   data={departmentsTree}
                   selectedIds={createFormData.department_ids}
-                  onSelectionChange={(ids) => setCreateFormData({ ...createFormData, department_ids: ids })}
+                  onSelectionChange={async (ids) => {
+                    // Auto-populate classifications and locations from departments
+                    try {
+                      const allClassifications = new Set<string>();
+                      const allLocations = new Set<string>();
+
+                      for (const deptId of ids) {
+                        const dept = await departmentApi.getById(deptId);
+                        if (dept.success && dept.data) {
+                          // Add department's classifications
+                          dept.data.classifications?.forEach(c => allClassifications.add(c.id));
+                          // Add department's locations
+                          dept.data.locations?.forEach(l => allLocations.add(l.id));
+                        }
+                      }
+
+                      setCreateFormData(prev => ({
+                        ...prev,
+                        department_ids: ids,
+                        classification_ids: Array.from(allClassifications),
+                        location_ids: Array.from(allLocations),
+                      }));
+                    } catch (error) {
+                      console.error('Error fetching department details:', error);
+                      setCreateFormData({ ...createFormData, department_ids: ids });
+                    }
+                  }}
                   label={t('users.departments')}
                   icon={<Building2 className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />}
                   emptyMessage={t('users.noDepartmentsAvailable')}

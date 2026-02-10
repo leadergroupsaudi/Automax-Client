@@ -660,13 +660,6 @@ export const IncidentsPage: React.FC = () => {
                         </span>
                       </th>
                     )}
-                    {isColumnVisible('severity') && (
-                      <th className="px-6 py-4 text-left">
-                        <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                          {t('common.severity')}
-                        </span>
-                      </th>
-                    )}
                     {isColumnVisible('assignee') && (
                       <th className="px-6 py-4 text-left">
                         <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">

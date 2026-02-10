@@ -10,11 +10,13 @@ import { userApi, departmentApi, locationApi } from '../../api/admin';
 import type { IncidentCreateRequest, User, Department, Location, Workflow, Classification, IncidentSource, LookupValue } from '../../types';
 import { INCIDENT_SOURCES } from '../../types';
 import { DynamicLookupField } from '../../components/common/DynamicLookupField';
+import { useAuthStore } from '../../stores/authStore';
 
 export function IncidentCreatePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
 
   const [formData, setFormData] = useState<Omit<IncidentCreateRequest, 'lookup_value_ids' | 'custom_lookup_fields'>>({
     title: '',
@@ -85,10 +87,84 @@ export function IncidentCreatePage() {
   });
 
   const workflows: Workflow[] = workflowsData?.data || [];
-  const classifications: Classification[] = classificationsData?.data || [];
+  const rawClassifications: Classification[] = classificationsData?.data || [];
   const users: User[] = usersData?.data || [];
   const departments: Department[] = departmentsData?.data || [];
-  const locations: Location[] = locationsData?.data || [];
+  const rawLocations: Location[] = locationsData?.data || [];
+
+  // Filter classifications based on user's assignments (unless super admin)
+  const classifications = useMemo(() => {
+    if (!user || user.is_super_admin) return rawClassifications;
+    if (!user.classifications || user.classifications.length === 0) return rawClassifications;
+
+    const userClassificationIds = new Set(user.classifications.map(c => c.id));
+
+    // Helper to check if node or any descendant is assigned to user
+    const hasUserAccess = (node: Classification): boolean => {
+      if (userClassificationIds.has(node.id)) return true;
+      if (node.children && node.children.length > 0) {
+        return node.children.some(child => hasUserAccess(child));
+      }
+      return false;
+    };
+
+    // Filter tree to only include nodes with user access
+    const filterByUserAccess = (nodes: Classification[]): Classification[] => {
+      return nodes
+        .map(node => {
+          if (!hasUserAccess(node)) return null;
+
+          const filteredNode: Classification = {
+            ...node,
+            children: node.children && node.children.length > 0
+              ? filterByUserAccess(node.children)
+              : undefined,
+          };
+
+          return filteredNode;
+        })
+        .filter(Boolean) as Classification[];
+    };
+
+    return filterByUserAccess(rawClassifications);
+  }, [rawClassifications, user]);
+
+  // Filter locations based on user's assignments (unless super admin)
+  const locations = useMemo(() => {
+    if (!user || user.is_super_admin) return rawLocations;
+    if (!user.locations || user.locations.length === 0) return rawLocations;
+
+    const userLocationIds = new Set(user.locations.map(l => l.id));
+
+    // Helper to check if node or any descendant is assigned to user
+    const hasUserAccess = (node: Location): boolean => {
+      if (userLocationIds.has(node.id)) return true;
+      if (node.children && node.children.length > 0) {
+        return node.children.some(child => hasUserAccess(child));
+      }
+      return false;
+    };
+
+    // Filter tree to only include nodes with user access
+    const filterByUserAccess = (nodes: Location[]): Location[] => {
+      return nodes
+        .map(node => {
+          if (!hasUserAccess(node)) return null;
+
+          const filteredNode: Location = {
+            ...node,
+            children: node.children && node.children.length > 0
+              ? filterByUserAccess(node.children)
+              : undefined,
+          };
+
+          return filteredNode;
+        })
+        .filter(Boolean) as Location[];
+    };
+
+    return filterByUserAccess(rawLocations);
+  }, [rawLocations, user]);
 
   const incidentLookupCategories = (lookupCategoriesData?.data || []).filter(
     (cat) => cat.add_to_incident_form
