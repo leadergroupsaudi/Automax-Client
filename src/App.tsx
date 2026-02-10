@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { MainLayout, AuthLayout, ProtectedRoute, AdminLayout, AdminProtectedRoute, PermissionRoute, IncidentLayout, RequestLayout, WorkflowLayout, ComplaintsLayout, QueryLayout, CallCentreLayout } from './components/layout';
 import { PERMISSIONS } from './constants/permissions';
+import { SettingsProvider } from './contexts/SettingsContext';
 import {
   LoginPage,
   RegisterPage,
@@ -37,6 +38,8 @@ import {
   ReportTemplatesListPage,
   ReportTemplateBuilderPage,
   LookupsPage,
+  ApplicationLinksPage,
+  SettingsManagementPage,
   CallCentrePage,
   CallHistory,
 } from './pages';
@@ -53,9 +56,10 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Toaster position="top-right" richColors closeButton />
-      <BrowserRouter>
-        <Routes>
+      <SettingsProvider>
+        <Toaster position="top-right" richColors closeButton />
+        <BrowserRouter>
+          <Routes>
           {/* Auth routes */}
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<LoginPage />} />
@@ -117,6 +121,14 @@ function App() {
               {/* Lookups - requires lookups:view permission */}
               <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.LOOKUPS_VIEW]} />}>
                 <Route path="/admin/lookups" element={<LookupsPage />} />
+              </Route>
+              {/* Application Links - requires application-links:view permission */}
+              <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.APPLICATION_LINKS_VIEW]} />}>
+                <Route path="/admin/application-links" element={<ApplicationLinksPage />} />
+              </Route>
+              {/* Settings - requires settings:update permission */}
+              <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.SETTINGS_UPDATE]} />}>
+                <Route path="/admin/settings" element={<SettingsManagementPage />} />
               </Route>
             </Route>
           </Route>
@@ -203,6 +215,7 @@ function App() {
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
+      </SettingsProvider>
     </QueryClientProvider>
   );
 }

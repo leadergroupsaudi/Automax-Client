@@ -143,8 +143,6 @@ export const WorkflowDesignerPage: React.FC = () => {
     classification_ids: string[];
     location_ids: string[];
     sources: IncidentSource[];
-    severity_min: number;
-    severity_max: number;
     priority_min: number;
     priority_max: number;
     record_type: 'incident' | 'request' | 'complaint' | 'query' | 'both' | 'all';
@@ -152,8 +150,6 @@ export const WorkflowDesignerPage: React.FC = () => {
     classification_ids: [],
     location_ids: [],
     sources: [],
-    severity_min: 1,
-    severity_max: 5,
     priority_min: 1,
     priority_max: 5,
     record_type: 'incident',
@@ -244,9 +240,7 @@ export const WorkflowDesignerPage: React.FC = () => {
   // Get Priority and Severity categories for matching rules
   const allLookupCategories: LookupCategory[] = lookupCategoriesData?.data || [];
   const priorityCategory = allLookupCategories.find(c => c.code === 'PRIORITY');
-  const severityCategory = allLookupCategories.find(c => c.code === 'SEVERITY');
   const priorityValues = (priorityCategory?.values || []).sort((a, b) => a.sort_order - b.sort_order);
-  const severityValues = (severityCategory?.values || []).sort((a, b) => a.sort_order - b.sort_order);
 
   // Available form fields including dynamic lookup categories
   const availableFormFields = React.useMemo(() => {
@@ -265,8 +259,6 @@ export const WorkflowDesignerPage: React.FC = () => {
         classification_ids: workflow.classifications?.map(c => c.id) || [],
         location_ids: workflow.locations?.map(l => l.id) || [],
         sources: workflow.sources || [],
-        severity_min: workflow.severity_min ?? 1,
-        severity_max: workflow.severity_max ?? 5,
         priority_min: workflow.priority_min ?? 1,
         priority_max: workflow.priority_max ?? 5,
         record_type: (workflow.record_type as 'incident' | 'request' | 'complaint' | 'query' | 'both' | 'all') || 'incident',
@@ -282,8 +274,6 @@ export const WorkflowDesignerPage: React.FC = () => {
       classification_ids: config.classification_ids,
       location_ids: config.location_ids,
       sources: config.sources,
-      severity_min: config.severity_min,
-      severity_max: config.severity_max,
       priority_min: config.priority_min,
       priority_max: config.priority_max,
       record_type: config.record_type,
@@ -1081,7 +1071,7 @@ export const WorkflowDesignerPage: React.FC = () => {
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
                 <h3 className="text-sm font-medium text-blue-800 mb-1">Auto-Workflow Matching</h3>
                 <p className="text-xs text-blue-700">
-                  Configure which incidents should automatically use this workflow based on classification, location, source, and severity.
+                  Configure which incidents should automatically use this workflow based on classification, location, and source.
                 </p>
               </div>
 
@@ -1377,53 +1367,11 @@ export const WorkflowDesignerPage: React.FC = () => {
 
                 {/* Severity & Priority Ranges */}
                 <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-4">
-                  <h4 className="text-sm font-semibold text-[hsl(var(--foreground))] mb-3">Severity & Priority Range</h4>
+                  <h4 className="text-sm font-semibold text-[hsl(var(--foreground))] mb-3">Priority Range</h4>
                   <p className="text-xs text-[hsl(var(--muted-foreground))] mb-3">
-                    Define the severity and priority range this workflow applies to.
+                    Define the priority range this workflow applies to.
                   </p>
                   <div className="space-y-4">
-                    <div>
-                      <label className="text-xs font-medium text-[hsl(var(--muted-foreground))]">Severity Range</label>
-                      <div className="flex items-center gap-2 mt-1">
-                        <select
-                          value={matchingConfig.severity_min}
-                          onChange={(e) => setMatchingConfig(prev => ({ ...prev, severity_min: parseInt(e.target.value) || 1 }))}
-                          className="flex-1 px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm"
-                        >
-                          {severityValues.map(v => (
-                            <option key={v.id} value={v.sort_order}>{v.name}</option>
-                          ))}
-                          {severityValues.length === 0 && (
-                            <>
-                              <option value={1}>1 - Critical</option>
-                              <option value={2}>2 - Major</option>
-                              <option value={3}>3 - Moderate</option>
-                              <option value={4}>4 - Minor</option>
-                              <option value={5}>5 - Cosmetic</option>
-                            </>
-                          )}
-                        </select>
-                        <span className="text-[hsl(var(--muted-foreground))]">to</span>
-                        <select
-                          value={matchingConfig.severity_max}
-                          onChange={(e) => setMatchingConfig(prev => ({ ...prev, severity_max: parseInt(e.target.value) || 5 }))}
-                          className="flex-1 px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm"
-                        >
-                          {severityValues.map(v => (
-                            <option key={v.id} value={v.sort_order}>{v.name}</option>
-                          ))}
-                          {severityValues.length === 0 && (
-                            <>
-                              <option value={1}>1 - Critical</option>
-                              <option value={2}>2 - Major</option>
-                              <option value={3}>3 - Moderate</option>
-                              <option value={4}>4 - Minor</option>
-                              <option value={5}>5 - Cosmetic</option>
-                            </>
-                          )}
-                        </select>
-                      </div>
-                    </div>
                     <div>
                       <label className="text-xs font-medium text-[hsl(var(--muted-foreground))]">Priority Range</label>
                       <div className="flex items-center gap-2 mt-1">

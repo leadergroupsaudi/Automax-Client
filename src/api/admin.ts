@@ -660,7 +660,6 @@ export const workflowApi = {
       classification_id?: string;
       location_id?: string;
       source?: string;
-      severity?: number;
       priority?: number;
     }
   ): Workflow | null => {
@@ -694,16 +693,6 @@ export const workflowApi = {
       if (criteria.source && workflow.sources?.length) {
         if (workflow.sources.includes(criteria.source as IncidentSource)) {
           score += 10;
-          matchCount++;
-        }
-      }
-
-      // Check severity range
-      if (criteria.severity !== undefined) {
-        const minSev = workflow.severity_min ?? 1;
-        const maxSev = workflow.severity_max ?? 5;
-        if (criteria.severity >= minSev && criteria.severity <= maxSev) {
-          score += 5;
           matchCount++;
         }
       }
@@ -743,8 +732,6 @@ export const workflowApi = {
     classification_ids?: string[];
     location_ids?: string[];
     sources?: string[];
-    severity_min?: number;
-    severity_max?: number;
     priority_min?: number;
     priority_max?: number;
   }): Promise<ApiResponse<Workflow>> => {
@@ -786,7 +773,6 @@ export const incidentApi = {
     if (filter.current_state_id) params.append('current_state_id', filter.current_state_id);
     if (filter.classification_id) params.append('classification_id', filter.classification_id);
     if (filter.priority) params.append('priority', String(filter.priority));
-    if (filter.severity) params.append('severity', String(filter.severity));
     if (filter.assignee_id) params.append('assignee_id', filter.assignee_id);
     if (filter.department_id) params.append('department_id', filter.department_id);
     if (filter.location_id) params.append('location_id', filter.location_id);

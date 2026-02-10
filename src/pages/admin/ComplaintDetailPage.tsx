@@ -24,6 +24,7 @@ import {
   ExternalLink,
   Phone,
   ThumbsUp,
+  Radio,
 } from 'lucide-react';
 import { Button } from '../../components/ui';
 import { MiniWorkflowView } from '../../components/workflow';
@@ -662,6 +663,19 @@ export const ComplaintDetailPage: React.FC = () => {
                   <div>
                     <p className="text-xs text-[hsl(var(--muted-foreground))]">{t('common.department', 'Department')}</p>
                     <p className="text-sm font-medium text-[hsl(var(--foreground))]">{complaint.department.name}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Channel */}
+              {complaint.channel && (
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                    <Radio className="w-4 h-4 text-amber-500" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-[hsl(var(--muted-foreground))]">{t('complaints.channel', 'Channel')}</p>
+                    <p className="text-sm font-medium text-[hsl(var(--foreground))] capitalize">{complaint.channel.replace('_', ' ')}</p>
                   </div>
                 </div>
               )}

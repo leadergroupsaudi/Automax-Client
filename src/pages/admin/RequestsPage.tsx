@@ -45,7 +45,6 @@ const defaultColumns: ColumnConfig[] = [
   { id: 'source', label: 'Source Incident', visible: true },
   { id: 'state', label: 'State', visible: true },
   { id: 'priority', label: 'Priority', visible: true },
-  { id: 'severity', label: 'Severity', visible: false },
   { id: 'assignee', label: 'Assignee', visible: true },
   { id: 'department', label: 'Department', visible: false },
   { id: 'due_date', label: 'Due Date', visible: true },
@@ -623,13 +622,6 @@ export const RequestsPage: React.FC = () => {
                         </span>
                       </th>
                     )}
-                    {isColumnVisible('severity') && (
-                      <th className="px-6 py-4 text-left">
-                        <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                          {t('common.severity', 'Severity')}
-                        </span>
-                      </th>
-                    )}
                     {isColumnVisible('assignee') && (
                       <th className="px-6 py-4 text-left">
                         <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
@@ -677,7 +669,6 @@ export const RequestsPage: React.FC = () => {
                 <tbody className="divide-y divide-[hsl(var(--border))]">
                   {requests.map((request: Incident) => {
                     const priority = getLookupValue(request, 'PRIORITY');
-                    const severity = getLookupValue(request, 'SEVERITY');
                     return (
                     <tr
                       key={request.id}
@@ -744,16 +735,6 @@ export const RequestsPage: React.FC = () => {
                             <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium text-white"
                                   style={{ backgroundColor: priority.color || 'bg-gray-400' }}>
                               {getLookupLabel(priority)}
-                            </span>
-                          ) : <span className="text-sm text-[hsl(var(--muted-foreground))]">-</span>}
-                        </td>
-                      )}
-                      {isColumnVisible('severity') && (
-                        <td className="px-6 py-4">
-                          {severity ? (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium text-white"
-                                  style={{ backgroundColor: severity.color || 'bg-gray-400' }}>
-                              {getLookupLabel(severity)}
                             </span>
                           ) : <span className="text-sm text-[hsl(var(--muted-foreground))]">-</span>}
                         </td>

@@ -26,5 +26,7 @@ export { ReportTemplatesPage } from './ReportTemplatesPage';
 export { default as ReportTemplatesListPage } from './ReportTemplatesListPage';
 export { default as ReportTemplateBuilderPage } from './ReportTemplateBuilderPage';
 export { LookupsPage } from './LookupsPage';
+export { default as ApplicationLinksPage } from './ApplicationLinksPage';
+export { SettingsManagementPage } from './SettingsManagementPage';
 export { CallCentrePage } from './CallCentrePage';
 export { CallHistory } from './components/CallHistory';

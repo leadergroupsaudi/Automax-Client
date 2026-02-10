@@ -29,6 +29,7 @@ import {
   Star,
   ArrowRightLeft,
   ExternalLink,
+  Radio,
 } from 'lucide-react';
 import { Button } from '../../components/ui';
 import { MiniWorkflowView } from '../../components/workflow';
@@ -1187,6 +1188,19 @@ export const IncidentDetailPage: React.FC = () => {
                   </div>
                 )}
 
+                {/* Source */}
+                {incident.source && (
+                  <div>
+                    <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                      {t('incidents.source')}
+                    </label>
+                    <div className="mt-0.5 flex items-center gap-1.5 text-sm text-[hsl(var(--foreground))]">
+                      <Radio className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+                      <span className="capitalize">{incident.source.replace('_', ' ')}</span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Due Date - only show if set */}
                 {incident.due_date && (
                   <div>
@@ -1226,58 +1240,50 @@ export const IncidentDetailPage: React.FC = () => {
                     {formatDateTime(incident.created_at)}
                   </div>
                 </div>
-              </div>
 
-              {/* Dynamic Lookups - full width */}
-              {Object.entries(groupedLookupValues).length > 0 && (
-                <div className="pt-2 border-t border-[hsl(var(--border))]">
-                  {Object.entries(groupedLookupValues).map(([category, values]) => (
-                    <div key={category} className="mb-2 last:mb-0">
+                {/* Dynamic Lookups - in 2-column grid */}
+                {Object.entries(groupedLookupValues).map(([category, values]) => (
+                  <div key={category}>
+                    <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                      {i18n.language === 'ar' ? (values[0]?.category?.name_ar || category) : category}
+                    </label>
+                    <div className="mt-0.5 flex flex-wrap gap-1.5">
+                      {(values as LookupValue[]).map(value => (
+                        <span
+                          key={value.id}
+                          className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                          style={{
+                            backgroundColor: value.color ? `${value.color}20` : 'hsl(var(--muted))',
+                            color: value.color || 'hsl(var(--foreground))',
+                          }}
+                        >
+                          {i18n.language === 'ar' && value.name_ar ? value.name_ar : value.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Custom Lookup Fields (text, number, date, checkbox, textarea) - inside main grid */}
+                {Object.entries(customLookupFields).map(([key, field]) => {
+                  const categoryName = i18n.language === 'ar' && field.category_name_ar
+                    ? field.category_name_ar
+                    : field.category_name || key.replace('lookup:', '');
+
+                  const displayValue = formatCustomLookupValue(field, i18n.language, (key: string, defaultValue?: string) => t(key, { defaultValue }));
+
+                  return (
+                    <div key={key}>
                       <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                        {i18n.language === 'ar' ? (values[0]?.category?.name_ar || category) : category}
+                        {categoryName}
                       </label>
-                      <div className="mt-0.5 flex flex-wrap gap-1.5">
-                        {(values as LookupValue[]).map(value => (
-                          <span
-                            key={value.id}
-                            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-                            style={{
-                              backgroundColor: value.color ? `${value.color}20` : 'hsl(var(--muted))',
-                              color: value.color || 'hsl(var(--foreground))',
-                            }}
-                          >
-                            {i18n.language === 'ar' && value.name_ar ? value.name_ar : value.name}
-                          </span>
-                        ))}
+                      <div className="mt-0.5 text-sm text-[hsl(var(--foreground))]">
+                        {displayValue}
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Custom Lookup Fields (text, number, date, checkbox, textarea) */}
-              {Object.keys(customLookupFields).length > 0 && (
-                <div className={Object.entries(groupedLookupValues).length > 0 ? "" : "pt-2 border-t border-[hsl(var(--border))]"}>
-                  {Object.entries(customLookupFields).map(([key, field]) => {
-                    const categoryName = i18n.language === 'ar' && field.category_name_ar
-                      ? field.category_name_ar
-                      : field.category_name || key.replace('lookup:', '');
-
-                    const displayValue = formatCustomLookupValue(field, i18n.language, t);
-
-                    return (
-                      <div key={key} className="mb-2 last:mb-0">
-                        <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                          {categoryName}
-                        </label>
-                        <div className="mt-0.5 text-sm text-[hsl(var(--foreground))]">
-                          {displayValue}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                  );
+                })}
+              </div>
 
               {/* Assignees - full width */}
               <div className="pt-2 border-t border-[hsl(var(--border))]">

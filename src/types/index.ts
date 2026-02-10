@@ -198,6 +198,43 @@ export interface LookupValueUpdateRequest {
   is_active?: boolean;
 }
 
+// Application Link types
+export interface ApplicationLink {
+  id: string;
+  name: string;
+  description: string;
+  url: string;
+  icon: string;
+  image_url: string;
+  color: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApplicationLinkCreateRequest {
+  name: string;
+  description?: string;
+  url: string;
+  icon?: string;
+  image_url?: string;
+  color?: string;
+  sort_order?: number;
+  is_active?: boolean;
+}
+
+export interface ApplicationLinkUpdateRequest {
+  name?: string;
+  description?: string;
+  url?: string;
+  icon?: string;
+  image_url?: string;
+  color?: string;
+  sort_order?: number;
+  is_active?: boolean;
+}
+
 export interface PaginatedResponse<T> {
   success: boolean;
   data: T[];
@@ -434,8 +471,6 @@ export interface WorkflowMatchConfig {
   classification_ids?: string[];
   location_ids?: string[];
   sources?: IncidentSource[];
-  severity_min?: number;
-  severity_max?: number;
   priority_min?: number;
   priority_max?: number;
 }
@@ -446,7 +481,6 @@ export type IncidentFormField =
   | 'description'
   | 'classification_id'
   | 'priority'
-  | 'severity'
   | 'source'
   | 'source_incident_id'
   | 'channel'
@@ -479,8 +513,6 @@ export interface Workflow {
   convert_to_request_roles?: Role[];
   locations?: Location[];
   sources?: IncidentSource[];
-  severity_min?: number;
-  severity_max?: number;
   priority_min?: number;
   priority_max?: number;
   match_config?: WorkflowMatchConfig;
@@ -571,8 +603,6 @@ export interface WorkflowCreateRequest {
   classification_ids?: string[];
   location_ids?: string[];
   sources?: IncidentSource[];
-  severity_min?: number;
-  severity_max?: number;
   priority_min?: number;
   priority_max?: number;
   required_fields?: IncidentFormField[];
@@ -590,8 +620,6 @@ export interface WorkflowUpdateRequest {
   convert_to_request_role_ids?: string[];
   location_ids?: string[];
   sources?: IncidentSource[];
-  severity_min?: number;
-  severity_max?: number;
   priority_min?: number;
   priority_max?: number;
   required_fields?: IncidentFormField[];
@@ -958,7 +986,6 @@ export interface IncidentFilter {
   current_state_id?: string;
   classification_id?: string;
   priority?: number;
-  severity?: number;
   assignee_id?: string;
   department_id?: string;
   location_id?: string;
@@ -1235,6 +1262,59 @@ export interface ReportTemplateUpdateRequest {
 export interface ReportTemplateShareRequest {
   user_ids: string[];
   can_edit: boolean;
+}
+
+// Settings Types
+export interface Settings {
+  id: string;
+  app_name: string;
+  app_tagline: string;
+  app_description: string;
+  logo_url: string;
+  logo_small_url: string;
+  favicon_url: string;
+  logo_alt_text: string;
+  primary_color: string;
+  secondary_color: string;
+  accent_color: string;
+  copyright_text: string;
+  contact_email: string;
+  contact_phone: string;
+  feature1_title: string;
+  feature1_description: string;
+  feature2_title: string;
+  feature2_description: string;
+  feature3_title: string;
+  feature3_description: string;
+  date_format: string;
+  time_format: string;
+  default_language: string;
+  updated_at: string;
+}
+
+export interface SettingsUpdateRequest {
+  app_name?: string;
+  app_tagline?: string;
+  app_description?: string;
+  logo_url?: string;
+  logo_small_url?: string;
+  favicon_url?: string;
+  logo_alt_text?: string;
+  primary_color?: string;
+  secondary_color?: string;
+  accent_color?: string;
+  copyright_text?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  feature1_title?: string;
+  feature1_description?: string;
+  feature2_title?: string;
+  feature2_description?: string;
+  feature3_title?: string;
+  feature3_description?: string;
+  date_format?: string;
+  time_format?: string;
+  default_language?: string;
 }
 
 // Re-export report template builder types

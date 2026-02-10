@@ -12,7 +12,7 @@ import { INCIDENT_SOURCES } from '../../types';
 import { DynamicLookupField } from '../../components/common/DynamicLookupField';
 
 export function IncidentCreatePage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -173,14 +173,12 @@ export function IncidentCreatePage() {
     if (filteredWorkflows.length === 0) return;
 
     const priorityValue = getLookupValueFromState('PRIORITY');
-    const severityValue = getLookupValueFromState('SEVERITY');
 
     const matched = workflowApi.findMatchingWorkflow(filteredWorkflows, {
       classification_id: formData.classification_id || undefined,
       location_id: formData.location_id || undefined,
       source: formData.source || undefined,
       priority: priorityValue ? priorityValue.sort_order : undefined,
-      severity: severityValue ? severityValue.sort_order : undefined,
     });
 
     if (matched) {

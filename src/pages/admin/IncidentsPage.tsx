@@ -42,7 +42,6 @@ const defaultColumns: ColumnConfig[] = [
   { id: 'incident', label: 'Incident', visible: true, required: true },
   { id: 'state', label: 'State', visible: true },
   { id: 'priority', label: 'Priority', visible: true },
-  { id: 'severity', label: 'Severity', visible: false },
   { id: 'assignee', label: 'Assignee', visible: true },
   { id: 'department', label: 'Department', visible: false },
   { id: 'due_date', label: 'Due Date', visible: true },
@@ -715,7 +714,6 @@ export const IncidentsPage: React.FC = () => {
                 <tbody className="divide-y divide-[hsl(var(--border))]">
                   {incidents.map((incident: Incident) => {
                     const priority = getLookupValue(incident, 'PRIORITY');
-                    const severity = getLookupValue(incident, 'SEVERITY');
                     return (
                     <tr
                       key={incident.id}
@@ -757,16 +755,6 @@ export const IncidentsPage: React.FC = () => {
                             <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium text-white"
                                   style={{ backgroundColor: priority.color || 'bg-gray-400' }}>
                               {getLookupLabel(priority)}
-                            </span>
-                          ) : <span className="text-sm text-[hsl(var(--muted-foreground))]">-</span>}
-                        </td>
-                      )}
-                      {isColumnVisible('severity') && (
-                        <td className="px-6 py-4">
-                          {severity ? (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium text-white"
-                                  style={{ backgroundColor: severity.color || 'bg-gray-400' }}>
-                              {getLookupLabel(severity)}
                             </span>
                           ) : <span className="text-sm text-[hsl(var(--muted-foreground))]">-</span>}
                         </td>

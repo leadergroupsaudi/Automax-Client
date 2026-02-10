@@ -25,6 +25,7 @@ import {
   Tags,
   Star,
   ExternalLink,
+  Radio,
 } from 'lucide-react';
 import { Button } from '../../components/ui';
 import { MiniWorkflowView } from '../../components/workflow';
@@ -262,7 +263,6 @@ export const RequestDetailPage: React.FC = () => {
   }
 
   const priority = request.lookup_values?.find(lv => lv.category?.code === 'PRIORITY');
-  const severity = request.lookup_values?.find(lv => lv.category?.code === 'SEVERITY');
 
   return (
     <div className="space-y-6">
@@ -656,19 +656,6 @@ export const RequestDetailPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Severity */}
-              {severity && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-[hsl(var(--muted-foreground))]">{t('requests.severity', 'Severity')}</span>
-                  <span
-                    className="px-2.5 py-1 rounded-md text-xs font-medium text-white"
-                    style={{ backgroundColor: severity.color || '#6b7280' }}
-                  >
-                    {getLookupLabel(severity)}
-                  </span>
-                </div>
-              )}
-
               {/* Assignee */}
               <div className="flex items-center justify-between">
                 <span className="text-sm text-[hsl(var(--muted-foreground))]">{t('requests.assignee', 'Assignee')}</span>
@@ -730,6 +717,17 @@ export const RequestDetailPage: React.FC = () => {
                   <span className="text-sm text-[hsl(var(--foreground))] flex items-center gap-1">
                     <Tags className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
                     {request.classification.name}
+                  </span>
+                </div>
+              )}
+
+              {/* Source */}
+              {request.source && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-[hsl(var(--muted-foreground))]">{t('requests.source', 'Source')}</span>
+                  <span className="text-sm text-[hsl(var(--foreground))] flex items-center gap-1 capitalize">
+                    <Radio className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                    {request.source.replace('_', ' ')}
                   </span>
                 </div>
               )}
