@@ -1,13 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Outlet, NavLink, useNavigate, useLocation, Link } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
-  Users,
-  Shield,
-  Key,
-  Building2,
-  MapPin,
-  FolderTree,
   ChevronLeft,
   LogOut,
   Home,
@@ -16,60 +11,29 @@ import {
   Menu,
   X,
   ChevronDown,
+  ChevronRight,
   Sparkles,
-  Mail,
-  FileBarChart,
+  List,
+  Circle,
+  User,
+  UserCheck,
+  PenLine,
   Languages,
-  Database,
+  Link2,
   Phone,
+  FileBarChart,
   LayoutTemplate,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { authApi } from '../../api/auth';
 import { setLoggingOut } from '../../api/client';
+import { incidentApi } from '../../api/admin';
 import { setLanguage, getCurrentLanguage, supportedLanguages } from '../../i18n';
+import { usePermissions } from '../../hooks/usePermissions';
+import { PERMISSIONS } from '../../constants/permissions';
 import SoftPhone from '../sip/Softphone';
 
-interface SidebarItem {
-  icon: React.ElementType;
-  labelKey: string;
-  path: string;
-  permission?: string;
-  badge?: number;
-}
-
-interface SidebarSection {
-  titleKey: string;
-  items: SidebarItem[];
-}
-
-const sidebarSectionsConfig: SidebarSection[] = [
-  {
-    titleKey: 'admin.userManagement',
-    items: [
-      { icon: Users, labelKey: 'admin.users', path: '/admin/users', permission: 'users:view' },
-      { icon: Shield, labelKey: 'admin.roles', path: '/admin/roles', permission: 'roles:view' },
-      { icon: Key, labelKey: 'admin.permissions', path: '/admin/permissions', permission: 'permissions:view' },
-    ],
-  },
-  {
-    titleKey: 'admin.organization',
-    items: [
-      { icon: Building2, labelKey: 'admin.departments', path: '/admin/departments', permission: 'departments:view' },
-      { icon: MapPin, labelKey: 'admin.locations', path: '/admin/locations', permission: 'locations:view' },
-      { icon: FolderTree, labelKey: 'admin.classifications', path: '/admin/classifications', permission: 'classifications:view' },
-    ],
-  },
-  {
-    titleKey: 'admin.system',
-    items: [
-      { icon: Database, labelKey: 'lookups.title', path: '/admin/lookups', permission: 'lookups:view' },
-      { icon: Mail, labelKey: 'admin.smtpSettings', path: '/admin/smtp-settings', permission: 'settings:view' },
-    ],
-  },
-];
-
-export const AdminLayout: React.FC = () => {
+export const ReportLayout: React.FC = () => {
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -79,8 +43,9 @@ export const AdminLayout: React.FC = () => {
   const [showSoftphone, setShowSoftphone] = useState(false);
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
-  const location = useLocation();
   const langRef = useRef<HTMLDivElement>(null);
+  const { hasPermission, isSuperAdmin } = usePermissions();
+  const canViewAllReports = hasPermission(PERMISSIONS.REPORTS_VIEW) || isSuperAdmin;
 
   const handleLanguageChange = async (langCode: string) => {
     if (langCode === currentLang) {
@@ -103,6 +68,8 @@ export const AdminLayout: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  
+
   const handleLogout = async () => {
     // Set flag to prevent 401 interceptor from running during logout
     setLoggingOut(true);
@@ -121,27 +88,7 @@ export const AdminLayout: React.FC = () => {
     navigate('/login');
   };
 
-  const hasPermission = (permission?: string): boolean => {
-    if (!permission) return true;
-    if (user?.is_super_admin) return true;
-    return user?.permissions?.includes(permission) ?? false;
-  };
-
-  // Filter sections based on permissions
-  const filteredSections = sidebarSectionsConfig.map(section => ({
-    ...section,
-    items: section.items.filter(item => hasPermission(item.permission)),
-  })).filter(section => section.items.length > 0);
-
-  // Flat list for page title
-  const allSidebarItems = sidebarSectionsConfig.flatMap(s => s.items);
-
-  const getPageTitle = () => {
-    const path = location.pathname;
-    if (path === '/admin' || path === '/admin/users') return t('admin.title');
-    const item = allSidebarItems.find(i => path.startsWith(i.path));
-    return item ? t(item.labelKey) : t('admin.title');
-  };
+ 
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -155,63 +102,78 @@ export const AdminLayout: React.FC = () => {
       {/* Collapse Button - Desktop */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className={`hidden lg:flex absolute top-[75px] ${collapsed ? 'left-[60px]' : 'left-[248px]'} z-50 w-6 h-6 bg-slate-800 border border-slate-700 rounded-full items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-all shadow-lg`}
+        className={`hidden lg:flex absolute top-[75px] ${collapsed ? 'start-[60px]' : 'start-[248px]'} z-50 w-6 h-6 bg-slate-800 border border-slate-700 rounded-full items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-all shadow-lg`}
       >
-        <ChevronLeft className={`w-3.5 h-3.5 transition-transform ${collapsed ? 'rotate-180' : ''}`} />
+        <ChevronLeft className={`w-3.5 h-3.5 transition-transform ${collapsed ? 'ltr:rotate-180 rtl:rotate-0' : 'ltr:rotate-0 rtl:rotate-180'}`} />
       </button>
 
       {/* Navigation */}
       <nav className="flex-1 py-6 px-3 overflow-y-auto">
-        {filteredSections.map((section, sectionIndex) => (
-          <div key={section.titleKey} className={sectionIndex > 0 ? 'mt-6' : ''}>
-            {!collapsed && (
-              <p className="px-3 mb-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
-                {t(section.titleKey)}
-              </p>
-            )}
-            <div className="space-y-1">
-              {section.items.map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={({ isActive }) =>
-                    `group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 ${
-                      isActive
-                        ? 'bg-gradient-to-r from-violet-600/90 to-purple-600/90 text-white shadow-lg shadow-purple-500/20'
-                        : 'text-slate-400 hover:text-white hover:bg-white/5'
-                    }`
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      {isActive && (
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />
-                      )}
-                      <item.icon size={20} className="flex-shrink-0" />
-                      {!collapsed && (
-                        <>
-                          <span className="ml-3 font-medium text-sm">{t(item.labelKey)}</span>
-                          {item.badge && (
-                            <span className="ml-auto bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">
-                              {item.badge}
-                            </span>
-                          )}
-                        </>
-                      )}
-                    </>
+        {/* Main Actions */}
+        {!collapsed && (
+          <p className="px-3 mb-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+            {t('sidebar.actions', 'Actions')}
+          </p>
+        )}
+        <div className="space-y-1">
+          {canViewAllReports && (
+            <NavLink
+              to="/reports"
+              end
+              onClick={() => setMobileMenuOpen(false)}
+              className={({ isActive }) =>
+                `group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 ${
+                  isActive
+                    ? 'bg-linear-to-r from-primary/90 to-accent/90 text-white shadow-lg shadow-primary/20'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <div className="absolute start-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white ltr:rounded-r-full rtl:rounded-l-full" />
                   )}
-                </NavLink>
-              ))}
-            </div>
-          </div>
-        ))}
+                  <FileBarChart size={20} className="flex-shrink-0" />
+                  {!collapsed && <span className="ms-3 font-medium text-sm">{t('admin.reports', 'All Reports')}</span>}
+                </>
+              )}
+            </NavLink>
+          )}
+
+          {canViewAllReports && (
+             <NavLink
+              to="/report-templates"
+              end
+              onClick={() => setMobileMenuOpen(false)}
+              className={({ isActive }) =>
+                `group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 ${
+                  isActive
+                    ? 'bg-linear-to-r from-primary/90 to-accent/90 text-white shadow-lg shadow-primary/20'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <div className="absolute start-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white ltr:rounded-r-full rtl:rounded-l-full" />
+                  )}
+                  <LayoutTemplate size={20} className="flex-shrink-0" />
+                  {!collapsed && <span className="ms-3 font-medium text-sm">{t('admin.reportTemplates', 'Report Templates')}</span>}
+                </>
+              )}
+            </NavLink>
+          )}
+
+         
+        </div>
 
         {!collapsed && (
           <>
             <div className="my-6 border-t border-white/5" />
             <p className="px-3 mb-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
-              {t('admin.quickLinks')}
+              {t('sidebar.quickLinks', 'Quick Links')}
             </p>
           </>
         )}
@@ -222,7 +184,7 @@ export const AdminLayout: React.FC = () => {
           className={`group flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 text-slate-400 hover:text-white rounded-xl hover:bg-white/5 transition-colors`}
         >
           <Home size={20} />
-          {!collapsed && <span className="ml-3 font-medium text-sm">{t('admin.backToApp')}</span>}
+          {!collapsed && <span className="ms-3 font-medium text-sm">{t('sidebar.backToHome', 'Back to Home')}</span>}
         </NavLink>
       </nav>
 
@@ -242,10 +204,10 @@ export const AdminLayout: React.FC = () => {
                 <img
                   src={user.avatar}
                   alt={user.username}
-                  className="w-10 h-10 rounded-xl object-cover ring-2 ring-purple-500/30"
+                  className="w-10 h-10 rounded-xl object-cover ring-2 ring-violet-500/30"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center ring-2 ring-purple-500/30">
+                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-primary to-accent flex items-center justify-center ring-2 ring-violet-500/30">
                   <span className="text-white text-sm font-bold">
                     {user?.first_name?.[0] || user?.username?.[0] || 'U'}
                   </span>
@@ -263,7 +225,7 @@ export const AdminLayout: React.FC = () => {
               className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-slate-300 hover:text-rose-400 bg-slate-900/50 hover:bg-rose-500/10 rounded-lg transition-colors"
             >
               <LogOut size={16} />
-              {t('auth.logout')}
+              {t('sidebar.signOut', 'Sign Out')}
             </button>
           </div>
         )}
@@ -292,13 +254,13 @@ export const AdminLayout: React.FC = () => {
 
       {/* Mobile Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 w-[264px] bg-slate-900 z-50 transform transition-transform duration-300 lg:hidden ${
-          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed inset-y-0 start-0 w-[264px] bg-slate-900 z-50 transform transition-transform duration-300 lg:hidden ${
+          mobileMenuOpen ? 'translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full'
         }`}
       >
         <button
           onClick={() => setMobileMenuOpen(false)}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white"
+          className="absolute top-4 end-4 p-2 text-slate-400 hover:text-white"
         >
           <X size={20} />
         </button>
@@ -319,26 +281,23 @@ export const AdminLayout: React.FC = () => {
 
             {/* Breadcrumb / Title */}
             <div className="hidden sm:flex items-center gap-2 text-sm">
-              <span className="text-slate-400">{t('admin.title')}</span>
+              <span className="text-slate-400">{t('admin.reports', 'Reports')}</span>
               <span className="text-slate-300">/</span>
-              <span className="font-semibold text-slate-700">{getPageTitle()}</span>
+              <span className="font-semibold text-slate-700">{t('sidebar.management', 'Management')}</span>
             </div>
-            <h1 className="text-lg font-bold text-slate-800 sm:hidden">{getPageTitle()}</h1>
+            <h1 className="text-lg font-bold text-slate-800 sm:hidden">{t('admin.reports', 'Reports')}</h1>
           </div>
 
           <div className="flex items-center gap-3">
             {/* Search - Commented out for now
             <div className="hidden md:flex items-center">
               <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute start-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
-                  placeholder={t('common.search') + '...'}
-                  className="w-64 pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all placeholder:text-slate-400"
+                  placeholder={t('sidebar.searchQueries', 'Search queries...')}
+                  className="w-64 ps-10 pe-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all placeholder:text-slate-400"
                 />
-                <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-medium text-slate-400 bg-white border border-slate-200 rounded">
-                  ⌘K
-                </kbd>
               </div>
             </div>
             */}
@@ -346,7 +305,7 @@ export const AdminLayout: React.FC = () => {
             {/* Back to Home */}
             <Link
               to="/"
-              className="flex items-center gap-2 px-3 py-2 text-slate-600 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-slate-600 hover:text-primary hover:bg-violet-50 rounded-xl transition-colors"
               title={t('sidebar.backToHome', 'Back to Home')}
             >
               <Home className="w-5 h-5" />
@@ -358,16 +317,16 @@ export const AdminLayout: React.FC = () => {
               <button
                 onClick={() => setIsLangOpen(!isLangOpen)}
                 className="flex items-center gap-1.5 p-2.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
-                title={t('settings.language')}
+                title={t('settings.language', 'Language')}
               >
                 <Languages className="w-5 h-5" />
                 <span className="text-xs font-medium uppercase">{currentLang}</span>
               </button>
 
               {isLangOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-scale-in origin-top-right">
+                <div className="absolute end-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-scale-in ltr:origin-top-right rtl:origin-top-left">
                   <div className="px-3 py-2 border-b border-slate-100">
-                    <p className="text-xs font-medium text-slate-500 uppercase">{t('settings.selectLanguage')}</p>
+                    <p className="text-xs font-medium text-slate-500 uppercase">{t('settings.selectLanguage', 'Select Language')}</p>
                   </div>
                   {supportedLanguages.map((lang) => (
                     <button
@@ -375,12 +334,12 @@ export const AdminLayout: React.FC = () => {
                       onClick={() => handleLanguageChange(lang.code)}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${
                         currentLang === lang.code
-                          ? 'bg-purple-50 text-purple-600'
+                          ? 'bg-primary/50 text-primary'
                           : 'text-slate-700 hover:bg-slate-50'
                       }`}
                     >
                       <span className="text-lg">{lang.code === 'en' ? '🇺🇸' : '🇸🇦'}</span>
-                      <div className="text-left">
+                      <div className="text-start">
                         <p className="font-medium">{lang.nativeName}</p>
                         <p className="text-xs text-slate-500">{lang.name}</p>
                       </div>
@@ -395,7 +354,7 @@ export const AdminLayout: React.FC = () => {
               onClick={() => setShowSoftphone(!showSoftphone)}
               className={`relative p-2.5 rounded-xl transition-colors focus:outline-none focus:ring-0 ${
                 showSoftphone
-                  ? 'text-purple-600 bg-purple-50'
+                  ? 'text-emerald-600 bg-emerald-50'
                   : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
               }`}
             >
@@ -410,11 +369,10 @@ export const AdminLayout: React.FC = () => {
             />
 
             {/* Notifications */}
-            <button className="relative p-2.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors focus:outline-none focus:ring-0">
+            <button className="relative p-2.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors">
               <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white" />
+              <span className="absolute top-2 end-2 w-2 h-2 bg-primary rounded-full ring-2 ring-white" />
             </button>
-
             {/* Divider */}
             <div className="hidden sm:block w-px h-8 bg-slate-200" />
 
@@ -422,7 +380,7 @@ export const AdminLayout: React.FC = () => {
             <div className="relative">
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-3 p-1.5 pr-3 hover:bg-slate-50 rounded-xl transition-colors"
+                className="flex items-center gap-3 p-1.5 pe-3 hover:bg-slate-50 rounded-xl transition-colors"
               >
                 {user?.avatar ? (
                   <img
@@ -431,19 +389,19 @@ export const AdminLayout: React.FC = () => {
                     className="w-9 h-9 rounded-xl object-cover"
                   />
                 ) : (
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-xl bg-linear-to-br from-primary to-accent flex items-center justify-center">
                     <span className="text-white text-sm font-bold">
                       {user?.first_name?.[0] || user?.username?.[0] || 'U'}
                     </span>
                   </div>
                 )}
-                <div className="hidden sm:block text-left">
+                <div className="hidden sm:block text-start">
                   <p className="text-sm font-semibold text-slate-700 leading-tight">
                     {user?.first_name || user?.username}
                   </p>
                   <p className="text-xs text-slate-400 leading-tight flex items-center gap-1">
-                    {user?.is_super_admin && <Sparkles className="w-3 h-3 text-amber-500" />}
-                    {user?.is_super_admin ? t('profile.superAdmin') : user?.roles?.[0]?.name || t('sidebar.user')}
+                    {user?.is_super_admin && <Sparkles className="w-3 h-3 text-primary" />}
+                    {user?.is_super_admin ? t('profile.superAdmin', 'Super Admin') : user?.roles?.[0]?.name || t('sidebar.user', 'User')}
                   </p>
                 </div>
                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
@@ -456,27 +414,18 @@ export const AdminLayout: React.FC = () => {
                     className="fixed inset-0 z-40"
                     onClick={() => setUserMenuOpen(false)}
                   />
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 animate-scale-in origin-top-right">
+                  <div className="absolute end-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 animate-scale-in ltr:origin-top-right rtl:origin-top-left">
                     <div className="px-4 py-3 border-b border-slate-100">
                       <p className="text-sm font-medium text-slate-700">{user?.email}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{user?.roles?.[0]?.name || t('sidebar.user')}</p>
                     </div>
                     <div className="py-2">
-                      <NavLink
-                        to="/profile"
-                        onClick={() => setUserMenuOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
-                      >
-                        <Users className="w-4 h-4" />
-                        {t('nav.viewProfile')}
-                      </NavLink>
                       <NavLink
                         to="/dashboard"
                         onClick={() => setUserMenuOpen(false)}
                         className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
                       >
                         <Home className="w-4 h-4" />
-                        {t('admin.backToApp')}
+                        {t('sidebar.backToHome', 'Back to Home')}
                       </NavLink>
                     </div>
                     <div className="border-t border-slate-100 pt-2">
@@ -488,7 +437,7 @@ export const AdminLayout: React.FC = () => {
                         className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 transition-colors"
                       >
                         <LogOut className="w-4 h-4" />
-                        {t('auth.logout')}
+                        {t('sidebar.signOut', 'Sign Out')}
                       </button>
                     </div>
                   </div>
@@ -499,7 +448,7 @@ export const AdminLayout: React.FC = () => {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto bg-slate-100">
+        <main className="flex-1 overflow-y-auto bg-background">
           <div className="p-4 lg:p-8">
             <div className="max-w-7xl mx-auto">
               <Outlet />

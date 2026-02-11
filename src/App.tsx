@@ -38,6 +38,7 @@ import {
   ReportTemplateBuilderPage,
   LookupsPage,
 } from './pages';
+import { ReportLayout } from './components/layout/ReportLayout';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -105,16 +106,7 @@ function App() {
               {/* SMTP Settings - requires settings:view permission */}
               <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.SETTINGS_VIEW]} />}>
                 <Route path="/admin/smtp-settings" element={<SMTPSettingsPage />} />
-              </Route>
-              {/* Reports - requires reports:view permission */}
-              <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.REPORTS_VIEW]} />}>
-                <Route path="/admin/reports" element={<ReportTemplatesPage />} />
-                <Route path="/admin/reports/builder" element={<ReportBuilderPage />} />
-                <Route path="/admin/reports/builder/:templateId" element={<ReportBuilderPage />} />
-                {/* Report Template Builder */}
-                <Route path="/admin/report-templates" element={<ReportTemplatesListPage />} />
-                <Route path="/admin/report-templates/:id/edit" element={<ReportTemplateBuilderPage />} />
-              </Route>
+              </Route> 
               {/* Lookups - requires lookups:view permission */}
               <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.LOOKUPS_VIEW]} />}>
                 <Route path="/admin/lookups" element={<LookupsPage />} />
@@ -184,8 +176,23 @@ function App() {
             </Route>
           </Route>
 
+           {/* Reports routes - dedicated layout */}
+          <Route element={<AdminProtectedRoute />}>
+            <Route element={<ReportLayout />}>
+              {/* Base route requires view permission, page handles redirect if no view_all */}
+                 <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.REPORTS_VIEW]} />}>
+                <Route path="/reports" element={<ReportTemplatesPage />} />
+                <Route path="/reports/builder" element={<ReportBuilderPage />} />
+                <Route path="/reports/builder/:templateId" element={<ReportBuilderPage />} />
+                {/* Report Template Builder */}
+                <Route path="/report-templates" element={<ReportTemplatesListPage />} />
+                <Route path="/report-templates/:id/edit" element={<ReportTemplateBuilderPage />} />
+              </Route>
+            </Route>
+          </Route>
+
           {/* Clean URL redirects */}
-          <Route path="/reports" element={<Navigate to="/admin/reports" replace />} />
+          {/* <Route path="/reports" element={<Navigate to="/admin/reports" replace />} /> */}
 
           {/* Redirect root to dashboard or login */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
