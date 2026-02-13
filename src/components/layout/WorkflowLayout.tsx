@@ -7,7 +7,6 @@ import {
   LogOut,
   Home,
   Bell,
-  Search,
   Menu,
   X,
   ChevronDown,
@@ -434,7 +433,12 @@ export const WorkflowLayout: React.FC = () => {
               showSip={showSoftphone}
               onClose={() => setShowSoftphone(false)}
               settings={{ domain: "zkff.automaxsw.com", socketURL: "wss://zkff.automaxsw.com:7443" }}
-              auth={{}}
+              auth={{
+                user: {
+                  userID: user?.id || '',
+                  extension: (user as any)?.extension || '',
+                }
+              }}
             />
 
             {/* Notifications */}

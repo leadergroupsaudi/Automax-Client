@@ -12,17 +12,17 @@ import {
   LogOut,
   Home,
   Bell,
-  Search,
   Menu,
   X,
   ChevronDown,
   Sparkles,
-  Mail,
   FileBarChart,
   Languages,
   Database,
   Phone,
   LayoutTemplate,
+  Link2,
+  Settings,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { authApi } from '../../api/auth';
@@ -64,7 +64,8 @@ const sidebarSectionsConfig: SidebarSection[] = [
     titleKey: 'admin.system',
     items: [
       { icon: Database, labelKey: 'lookups.title', path: '/admin/lookups', permission: 'lookups:view' },
-      { icon: Mail, labelKey: 'admin.smtpSettings', path: '/admin/smtp-settings', permission: 'settings:view' },
+      { icon: Link2, labelKey: 'admin.applicationLinks', path: '/admin/application-links', permission: 'application-links:view' },
+      { icon: Settings, labelKey: 'admin.systemSettings', path: '/admin/settings', permission: 'settings:update' },
     ],
   },
 ];
@@ -406,7 +407,12 @@ export const AdminLayout: React.FC = () => {
               showSip={showSoftphone}
               onClose={() => setShowSoftphone(false)}
               settings={{ domain: "zkff.automaxsw.com", socketURL: "wss://zkff.automaxsw.com:7443" }}
-              auth={{}}
+              auth={{
+                user: {
+                  userID: user?.id || '',
+                  extension: (user as any)?.extension || '',
+                }
+              }}
             />
 
             {/* Notifications */}
