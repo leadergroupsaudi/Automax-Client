@@ -38,6 +38,7 @@ import type {
   WorkflowTransitionUpdateRequest,
   TransitionRequirementRequest,
   TransitionActionRequest,
+  TransitionFieldChangeRequest,
   Incident,
   IncidentDetail,
   IncidentCreateRequest,
@@ -658,6 +659,11 @@ export const workflowApi = {
 
   setTransitionActions: async (transitionId: string, actions: TransitionActionRequest[]): Promise<ApiResponse<WorkflowTransition>> => {
     const response = await apiClient.put<ApiResponse<WorkflowTransition>>(`/admin/transitions/${transitionId}/actions`, { actions });
+    return response.data;
+  },
+
+  setTransitionFieldChanges: async (transitionId: string, fieldChanges: TransitionFieldChangeRequest[]): Promise<ApiResponse<WorkflowTransition>> => {
+    const response = await apiClient.put<ApiResponse<WorkflowTransition>>(`/admin/transitions/${transitionId}/field-changes`, { field_changes: fieldChanges });
     return response.data;
   },
 

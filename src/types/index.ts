@@ -585,6 +585,7 @@ export interface WorkflowTransition {
 
   requirements?: TransitionRequirement[];
   actions?: TransitionAction[];
+  field_changes?: TransitionFieldChange[];
   is_active: boolean;
   sort_order: number;
   created_at: string;
@@ -610,6 +611,22 @@ export interface TransitionAction {
   execution_order: number;
   is_async: boolean;
   is_active: boolean;
+}
+
+export interface TransitionFieldChange {
+  id: string;
+  transition_id: string;
+  field_name: string;
+  label: string;
+  is_required: boolean;
+  sort_order: number;
+}
+
+export interface TransitionFieldChangeRequest {
+  field_name: string;
+  label?: string;
+  is_required: boolean;
+  sort_order?: number;
 }
 
 // Workflow request types
@@ -965,6 +982,10 @@ export interface IncidentTransitionRequest {
   // Assignment overrides (used when auto-detect finds multiple matches)
   department_id?: string;
   user_id?: string;
+
+  // Field changes configured on the transition (user-editable fields)
+  field_changes?: Record<string, string>;
+
   version: number;
 }
 
