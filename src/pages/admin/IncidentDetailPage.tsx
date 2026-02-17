@@ -113,9 +113,6 @@ export const IncidentDetailPage: React.FC = () => {
   const [compareModalOpen, setCompareModalOpen] = useState(false);
   const [compareSliderPosition, setCompareSliderPosition] = useState(50);
 
-  // Report download state
-  const [downloadingReport, setDownloadingReport] = useState(false);
-
   // Queries
   const { data: incidentData, isLoading, error, refetch } = useQuery({
     queryKey: ['incident', id],
@@ -468,27 +465,24 @@ export const IncidentDetailPage: React.FC = () => {
     setCompareModalOpen(false);
   };
 
-  const handleDownloadReport = async (format: 'pdf' | 'json' | 'txt' = 'pdf') => {
-    if (!incident || !id) return;
+  const [generatingReport, setGeneratingReport] = useState(false);
 
+  const handleDownloadReport = async () => {
+    if (!id || !incident) return;
     try {
-      setDownloadingReport(true);
-      const blob = await incidentApi.downloadReport(id, format);
-
-      // Create download link
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `incident_${incident.incident_number}_${new Date().toISOString().split('T')[0]}.${format}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Failed to download report:', error);
-      alert('Failed to download report. Please try again.');
+      setGeneratingReport(true);
+      const lang = i18n.language.startsWith('ar') ? 'ar' : 'en';
+      const blob = await incidentApi.downloadReport(id, 'pdf', lang);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `incident_${incident.incident_number}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download report:', err);
     } finally {
-      setDownloadingReport(false);
+      setGeneratingReport(false);
     }
   };
 
@@ -805,11 +799,11 @@ export const IncidentDetailPage: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleDownloadReport('pdf')}
-              leftIcon={downloadingReport ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-              disabled={downloadingReport}
+              onClick={handleDownloadReport}
+              disabled={generatingReport}
+              leftIcon={generatingReport ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             >
-              {downloadingReport ? t('incidents.downloading', 'Downloading...') : t('incidents.downloadReport', 'Download PDF Report')}
+              {generatingReport ? t('incidents.generating', 'Generating...') : t('incidents.downloadReport', 'Download Report')}
             </Button>
           )}
           <Button

@@ -981,8 +981,8 @@ export const incidentApi = {
   },
 
   // Download Report
-  downloadReport: async (incidentId: string, format: 'pdf' | 'json' | 'txt' = 'pdf'): Promise<Blob> => {
-    const response = await apiClient.get(`/incidents/${incidentId}/report?format=${format}`, {
+  downloadReport: async (incidentId: string, format: 'pdf' | 'html' | 'json' | 'txt' = 'pdf', lang: 'ar' | 'en' = 'ar'): Promise<Blob> => {
+    const response = await apiClient.get(`/incidents/${incidentId}/report?format=${format}&lang=${lang}`, {
       responseType: 'blob',
     });
     return response.data;
