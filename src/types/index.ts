@@ -1415,13 +1415,27 @@ export interface Email {
   status: string;
   recipients: EmailRecipient[];
   attachments?: EmailAttachment[];
-  sender?: string; // Optional as it might not be in the root object for all types
-  sent_by?: string; // UUID of user
+  sender?: string;
+  sent_by?: string;
+  sent_by_user?: {
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+  };
+  received_by?: string;
+  received_by_user?: {
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+  };
   sent_at?: string;
   created_at: string;
   updated_at?: string;
   is_read: boolean;
   is_starred: boolean;
+  is_draft?: boolean;
   has_attachments?: boolean;
   provider?: string;
   template_code?: string;
@@ -1441,6 +1455,9 @@ export interface EmailFilter {
   category?: string;
   direction?: string;
   is_read?: boolean;
+  is_draft?: boolean;
+  received_by?: string;
+  deleted_at?: string | null;
 }
 
 // SMS types (using same notification structure as Email)

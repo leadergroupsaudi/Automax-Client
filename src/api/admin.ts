@@ -1491,6 +1491,8 @@ export const emailApi = {
     if (filter.category) params.append('category', filter.category);
     if (filter.direction) params.append('direction', filter.direction);
     if (filter.is_read !== undefined) params.append('is_read', String(filter.is_read));
+    if (filter.received_by) params.append('received_by', String(filter.received_by));
+    if (filter.is_draft !== undefined) params.append('is_draft', String(filter.is_draft));
 
     // Determine endpoint based on channel if needed, but here we use the one provided by user
     const response = await apiClient.get<PaginatedResponse<Email>>(`/notifications?${params.toString()}`);
@@ -1546,6 +1548,57 @@ export const emailApi = {
     return response.data;
   },
 
+  // Save a new draft — POST /notifications/drafts with JSON body
+  saveDraft: async (data: {
+    to?: string;
+    subject?: string;
+    body?: string;
+    cc?: string;
+    bcc?: string;
+    language?: string;
+  }): Promise<ApiResponse<any>> => {
+    const payload: Record<string, any> = {
+      channel: 'email',
+      language: data.language || 'en',
+    };
+    // API expects arrays for recipients
+    if (data.to) payload.to = data.to.split(',').map(s => s.trim()).filter(Boolean);
+    if (data.subject) payload.subject = data.subject;
+    if (data.body) payload.body = data.body;
+    if (data.cc) payload.cc = data.cc.split(',').map(s => s.trim()).filter(Boolean);
+    if (data.bcc) payload.bcc = data.bcc.split(',').map(s => s.trim()).filter(Boolean);
+    const response = await apiClient.post<ApiResponse<any>>('/notifications/drafts', payload);
+    return response.data;
+  },
+
+  // Update an existing draft — PUT /notifications/drafts/:id
+  updateDraft: async (id: string, data: {
+    to?: string;
+    subject?: string;
+    body?: string;
+    cc?: string;
+    bcc?: string;
+    language?: string;
+  }): Promise<ApiResponse<any>> => {
+    const payload: Record<string, any> = {
+      channel: 'email',
+      language: data.language || 'en',
+    };
+    if (data.to) payload.to = data.to.split(',').map(s => s.trim()).filter(Boolean);
+    if (data.subject) payload.subject = data.subject;
+    if (data.body) payload.body = data.body;
+    if (data.cc) payload.cc = data.cc.split(',').map(s => s.trim()).filter(Boolean);
+    if (data.bcc) payload.bcc = data.bcc.split(',').map(s => s.trim()).filter(Boolean);
+    const response = await apiClient.put<ApiResponse<any>>(`/notifications/drafts/${id}`, payload);
+    return response.data;
+  },
+
+  // Send a saved draft — POST /notifications/drafts/:id/send
+  sendDraft: async (id: string): Promise<ApiResponse<any>> => {
+    const response = await apiClient.post<ApiResponse<any>>(`/notifications/drafts/${id}/send`);
+    return response.data;
+  },
+
   star: async (id: string, is_starred: boolean): Promise<ApiResponse<any>> => {
     const response = await apiClient.patch<ApiResponse<any>>(`/notifications/${id}/star`, {
       is_starred
@@ -1555,6 +1608,11 @@ export const emailApi = {
 
   delete: async (id: string): Promise<ApiResponse<any>> => {
     const response = await apiClient.delete<ApiResponse<any>>(`/notifications/${id}`);
+    return response.data;
+  },
+
+  hardDelete: async (id: string): Promise<ApiResponse<any>> => {
+    const response = await apiClient.delete<ApiResponse<any>>(`/notifications/${id}/permanent`);
     return response.data;
   },
 
