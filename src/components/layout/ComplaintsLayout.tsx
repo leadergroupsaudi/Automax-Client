@@ -31,6 +31,7 @@ import { usePermissions } from '../../hooks/usePermissions';
 import { PERMISSIONS } from '../../constants/permissions';
 import SoftPhone from '../sip/Softphone';
 import { CreateComplaintModal } from '@/components/complaints/CreateComplaintModal';
+import ThemeToggle from '../common/ThemeToggle';
 
 export const ComplaintsLayout: React.FC = () => {
   const { t } = useTranslation();
@@ -138,7 +139,7 @@ export const ComplaintsLayout: React.FC = () => {
               className={({ isActive }) =>
                 `group relative flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2.5 rounded-xl transition-all duration-200 ${
                   isActive
-                    ? 'bg-gradient-to-r from-amber-600/90 to-orange-600/90 text-white shadow-lg shadow-amber-500/20'
+                    ? 'bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-primary/20'
                     : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`
               }
@@ -194,7 +195,7 @@ export const ComplaintsLayout: React.FC = () => {
                     className={({ isActive }) =>
                       `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
                         isActive
-                          ? 'bg-gradient-to-r from-amber-600/90 to-orange-600/90 text-white shadow-lg shadow-amber-500/20'
+                          ? 'bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-primary/20'
                           : 'text-slate-400 hover:text-white hover:bg-white/5'
                       }`
                     }
@@ -208,7 +209,7 @@ export const ComplaintsLayout: React.FC = () => {
                     className={({ isActive }) =>
                       `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
                         isActive
-                          ? 'bg-gradient-to-r from-amber-600/90 to-orange-600/90 text-white shadow-lg shadow-amber-500/20'
+                          ? 'bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-primary/20'
                           : 'text-slate-400 hover:text-white hover:bg-white/5'
                       }`
                     }
@@ -505,6 +506,8 @@ export const ComplaintsLayout: React.FC = () => {
               <span className="absolute top-2 end-2 w-2 h-2 bg-amber-500 rounded-full ring-2 ring-white" />
             </button>
 
+            <ThemeToggle/>
+
             {/* Divider */}
             <div className="hidden sm:block w-px h-8 bg-slate-200" />
 
@@ -580,7 +583,7 @@ export const ComplaintsLayout: React.FC = () => {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto bg-slate-100">
+        <main className="flex-1 overflow-y-auto bg-background">
           <div className="p-4 lg:p-8">
             <div className="max-w-7xl mx-auto">
               <Outlet />

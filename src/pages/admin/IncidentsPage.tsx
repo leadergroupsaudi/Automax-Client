@@ -20,8 +20,9 @@ import {
   Building2,
   Settings2,
   Check,
+  Repeat,
 } from 'lucide-react';
-import { Button } from '../../components/ui';
+import { Button, Checkbox } from '../../components/ui';
 import { incidentApi, workflowApi, userApi, departmentApi, classificationApi, locationApi } from '../../api/admin';
 import type { Incident, IncidentFilter, Workflow, User as UserType, Department, WorkflowState, Classification, Location } from '../../types';
 import { useIncidentListWebSocket } from '../../lib/services/incidentListWebSocket';
@@ -83,6 +84,7 @@ export const IncidentsPage: React.FC = () => {
   const [columns, setColumns] = useState<ColumnConfig[]>(loadColumnsFromStorage);
   const [showColumnConfig, setShowColumnConfig] = useState(false);
   const columnConfigRef = useRef<HTMLDivElement>(null);
+  const [selectedIncidents, setSelectedIncidents] = useState<any[]>([]);
 
   const canViewAllIncidents = isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_VIEW_ALL);
   const canCreateIncident = isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_CREATE);
@@ -292,6 +294,29 @@ export const IncidentsPage: React.FC = () => {
     });
   };
 
+ const handleCheckboxChange = (
+  e: React.ChangeEvent<HTMLInputElement>,
+  item: Incident
+) => {
+  const { checked } = e.target;
+
+  setSelectedIncidents((prev) =>
+    checked
+      ? [...prev, item]
+      : prev.filter((i) => i.id !== item.id)
+  );
+};
+
+
+  const isDisabled = (item: Incident) =>
+    selectedIncidents?.length > 0 &&
+    selectedIncidents[0]?.current_state?.name !== item?.current_state?.name;
+
+  const isSelected = (item: Incident) =>
+    selectedIncidents.some((i) => i?.id === item?.id);
+
+
+
   if (error) {
     return (
       <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-12 shadow-sm">
@@ -334,6 +359,10 @@ export const IncidentsPage: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
+        {selectedIncidents?.length ? 
+          <Button leftIcon={<Repeat className="w-4 h-4" />} onClick={() => {}}>
+            {t('incidents.convertToRequest')}
+          </Button> : null }
           <Button
             variant="outline"
             size="sm"
@@ -643,6 +672,7 @@ export const IncidentsPage: React.FC = () => {
               <table className="min-w-full">
                 <thead>
                   <tr className="border-b border-[hsl(var(--border))]">
+                    <th className='ps-4'/>
                     {isColumnVisible('incident') && (
                       <th className="px-6 py-4 text-left">
                         <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
@@ -717,6 +747,14 @@ export const IncidentsPage: React.FC = () => {
                       className="hover:bg-[hsl(var(--muted)/0.5)] transition-colors cursor-pointer"
                       onClick={() => navigate(`/incidents/${incident.id}`)}
                     >
+                    <td  onClick={(e) => e.stopPropagation()} className='ps-4'>
+                       <Checkbox
+                        id={incident.id}
+                        checked={isSelected(incident)}
+                        disabled={isDisabled(incident)}
+                        onChange={(e) => handleCheckboxChange(e, incident)}
+                      />
+                    </td>
                       {isColumnVisible('incident') && (
                         <td className="px-6 py-4">
                           <div className="max-w-xs">
@@ -907,7 +945,7 @@ export const IncidentsPage: React.FC = () => {
                         className={cn(
                           "w-10 h-10 rounded-lg text-sm font-semibold transition-all",
                           currentPage === pageNum
-                            ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg shadow-[hsl(var(--primary)/0.3)]"
+                            ? "bg-linear-to-br from-primary to-accent text-[hsl(var(--primary-foreground))] shadow-lg shadow-[hsl(var(--primary)/0.3)]"
                             : "text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))] hover:border-[hsl(var(--border))] border border-transparent"
                         )}
                       >
