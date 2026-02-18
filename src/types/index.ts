@@ -485,6 +485,25 @@ export const INCIDENT_SOURCES: { value: IncidentSource; label: string }[] = [
   { value: 'other', label: 'Other' },
 ];
 
+// Workflow matching API request/response
+export interface WorkflowMatchRequest {
+  classification_id?: string;
+  location_id?: string;
+  source?: string;
+  priority?: number;
+}
+
+export interface WorkflowMatchResponse {
+  matched: boolean;
+  workflow_id?: string;
+  workflow_name?: string;
+  workflow_code?: string;
+  record_type?: string;
+  required_fields: string[];
+  initial_state_id?: string;
+  initial_state?: string;
+}
+
 // Workflow matching configuration
 export interface WorkflowMatchConfig {
   classification_ids?: string[];

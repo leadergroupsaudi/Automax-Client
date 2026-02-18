@@ -678,101 +678,15 @@ export const workflowApi = {
     return response.data;
   },
 
-  // Find matching workflow based on criteria
-  findMatchingWorkflow: (
-    workflows: Workflow[],
-    criteria: {
-      classification_id?: string;
-      location_id?: string;
-      source?: string;
-      priority?: number;
-    }
-  ): Workflow | null => {
-    // Filter only active workflows
-    const activeWorkflows = workflows.filter(w => w.is_active);
-
-    // Score-based matching - higher score = better match
-    let bestMatch: { workflow: Workflow; score: number } | null = null;
-
-    for (const workflow of activeWorkflows) {
-      let score = 0;
-      let matchCount = 0;
-      let isExcluded = false;
-
-      // Check classification match
-      if (criteria.classification_id && workflow.classifications?.length) {
-        const matches = workflow.classifications.some(c => c.id === criteria.classification_id);
-        if (matches) {
-          score += 10;
-          matchCount++;
-        } else {
-          // Workflow has specific classifications and this one doesn't match - EXCLUDE
-          isExcluded = true;
-        }
-      }
-
-      // Check location match
-      if (criteria.location_id && workflow.locations?.length) {
-        const matches = workflow.locations.some(l => l.id === criteria.location_id);
-        if (matches) {
-          score += 10;
-          matchCount++;
-        } else {
-          // Workflow has specific locations and this one doesn't match - EXCLUDE
-          isExcluded = true;
-        }
-      }
-
-      // Check source match - if workflow defines sources, criteria MUST match
-      if (criteria.source && workflow.sources?.length) {
-        const matches = workflow.sources.includes(criteria.source as IncidentSource);
-        if (matches) {
-          score += 10;
-          matchCount++;
-        } else {
-          // Workflow has specific sources and this one doesn't match - EXCLUDE
-          isExcluded = true;
-        }
-      }
-
-      // Check priority - if workflow defines priorities, criteria MUST match
-      if (criteria.priority !== undefined) {
-        // If workflow has no priorities specified, it matches all priorities
-        if (!workflow.priorities || workflow.priorities.length === 0) {
-          score += 5;
-          matchCount++;
-        } else if (workflow.priorities.includes(criteria.priority)) {
-          score += 5;
-          matchCount++;
-        } else {
-          // Workflow has specific priorities and this one doesn't match - EXCLUDE
-          isExcluded = true;
-        }
-      }
-
-      // Skip excluded workflows
-      if (isExcluded) {
-        continue;
-      }
-
-      // Prefer workflows with more specific matching (more criteria matched)
-      // Also prefer workflows that are marked as default if no match
-      if (workflow.is_default && score === 0) {
-        score = 1; // Default workflow gets lowest priority score
-      }
-
-      if (score > 0 && (!bestMatch || score > bestMatch.score)) {
-        bestMatch = { workflow, score };
-      }
-    }
-
-    // If no match found, return the default workflow
-    if (!bestMatch) {
-      const defaultWorkflow = activeWorkflows.find(w => w.is_default);
-      return defaultWorkflow || activeWorkflows[0] || null;
-    }
-
-    return bestMatch.workflow;
+  // Match workflow via backend API based on incident criteria
+  matchWorkflow: async (criteria: {
+    classification_id?: string;
+    location_id?: string;
+    source?: string;
+    priority?: number;
+  }): Promise<ApiResponse<{ matched: boolean; workflow_id?: string; workflow_name?: string; workflow_code?: string; record_type?: string; required_fields: string[]; initial_state_id?: string; initial_state?: string }>> => {
+    const response = await apiClient.post('/admin/workflows/match', criteria);
+    return response.data;
   },
 
   // Update workflow matching configuration
