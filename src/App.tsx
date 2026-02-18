@@ -60,7 +60,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <SettingsProvider>
         <Toaster position="top-right" richColors closeButton />
-        <BrowserRouter>
+        <BrowserRouter basename={window.APP_CONFIG?.BASE_PATH || import.meta.env.VITE_BASE_PATH || '/'}>
           <Routes>
           {/* Auth routes */}
           <Route element={<AuthLayout />}>
