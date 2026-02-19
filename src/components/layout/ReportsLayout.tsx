@@ -24,6 +24,7 @@ import { setLanguage, getCurrentLanguage, supportedLanguages } from '../../i18n'
 import SoftPhone from '../sip/Softphone';
 import { usePermissions } from '../../hooks/usePermissions';
 import { PERMISSIONS } from '../../constants/permissions';
+import ThemeToggle from '../common/ThemeToggle';
 
 export const ReportsLayout: React.FC = () => {
   const { t } = useTranslation();
@@ -207,7 +208,7 @@ export const ReportsLayout: React.FC = () => {
   );
 
   return (
-    <div className="flex h-screen bg-slate-100">
+    <div className="flex h-screen bg-background">
       {/* Desktop Sidebar */}
       <aside className={`${collapsed ? 'w-[72px]' : 'w-[264px]'} bg-slate-900 transition-all duration-300 flex-col hidden lg:flex relative`}>
         <SidebarContent />
@@ -309,6 +310,8 @@ export const ReportsLayout: React.FC = () => {
               <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white" />
             </button>
 
+            <ThemeToggle/>
+
             <div className="hidden sm:block w-px h-8 bg-slate-200" />
 
             {/* User Menu */}
@@ -370,7 +373,7 @@ export const ReportsLayout: React.FC = () => {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto bg-slate-100">
+        <main className="flex-1 overflow-y-auto bg-background">
           <div className="p-4 lg:p-8">
             <div className="max-w-7xl mx-auto">
               <Outlet />
