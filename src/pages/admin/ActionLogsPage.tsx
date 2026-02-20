@@ -693,25 +693,83 @@ export const ActionLogsPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Old/New Values */}
+              {/* Old/New Values - Diff View */}
               {(selectedLog.old_value || selectedLog.new_value) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {selectedLog.old_value && (
-                    <div>
-                      <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1">Old Value</p>
-                      <pre className="text-xs text-[hsl(var(--foreground))] bg-[hsl(var(--muted))] px-3 py-2 rounded-lg overflow-auto max-h-40">
-                        {JSON.stringify(JSON.parse(selectedLog.old_value), null, 2)}
-                      </pre>
+                <div>
+                  <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-2">Changes</p>
+                  <div className="bg-[hsl(var(--muted)/0.5)] rounded-xl border border-[hsl(var(--border))] overflow-hidden">
+                    <div className="grid grid-cols-3 gap-0 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))] px-4 py-2">
+                      <div className="text-xs font-semibold text-[hsl(var(--muted-foreground))]">Field</div>
+                      <div className="text-xs font-semibold text-[hsl(var(--destructive))]">Old Value</div>
+                      <div className="text-xs font-semibold text-[hsl(var(--success))]">New Value</div>
                     </div>
-                  )}
-                  {selectedLog.new_value && (
-                    <div>
-                      <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1">New Value</p>
-                      <pre className="text-xs text-[hsl(var(--foreground))] bg-[hsl(var(--muted))] px-3 py-2 rounded-lg overflow-auto max-h-40">
-                        {JSON.stringify(JSON.parse(selectedLog.new_value), null, 2)}
-                      </pre>
+                    <div className="divide-y divide-[hsl(var(--border))]">
+                      {(() => {
+                        try {
+                          const oldData = selectedLog.old_value ? JSON.parse(selectedLog.old_value) : {};
+                          const newData = selectedLog.new_value ? JSON.parse(selectedLog.new_value) : {};
+                          const allKeys = new Set([...Object.keys(oldData), ...Object.keys(newData)]);
+                          const rows: React.ReactNode[] = [];
+
+                          // Helper to format values nicely
+                          const formatValue = (val: any) => {
+                            if (val === null || val === undefined) return '-';
+                            if (typeof val === 'boolean') return val ? 'Yes' : 'No';
+                            if (Array.isArray(val)) {
+                              // Handle arrays of objects (classifications, locations, roles, etc.)
+                              if (val.length === 0) return '-';
+                              const formatted = val.map((item: any) => {
+                                if (typeof item === 'string') return item;
+                                if (typeof item === 'number') return item.toString();
+                                // Extract name from objects
+                                return item?.name || item?.code || item?.id || JSON.stringify(item);
+                              });
+                              return formatted.join(', ');
+                            }
+                            if (typeof val === 'object') {
+                              // Handle single objects
+                              return val?.name || val?.code || val?.id || JSON.stringify(val);
+                            }
+                            return String(val);
+                          };
+
+                          allKeys.forEach((key) => {
+                            const oldValue = oldData[key];
+                            const newValue = newData[key];
+                            const hasChanged = JSON.stringify(oldValue) !== JSON.stringify(newValue);
+                            
+                            if (!hasChanged) return;
+
+                            rows.push(
+                              <div key={key} className="grid grid-cols-3 gap-0 px-4 py-2 hover:bg-[hsl(var(--muted)/0.5)] transition-colors">
+                                <div className="text-sm font-medium text-[hsl(var(--foreground))] capitalize">
+                                  {key.replace(/_/g, ' ')}
+                                </div>
+                                <div className="text-sm text-[hsl(var(--destructive))] font-mono break-words">
+                                  {formatValue(oldValue)}
+                                </div>
+                                <div className="text-sm text-[hsl(var(--success))] font-mono break-words">
+                                  {formatValue(newValue)}
+                                </div>
+                              </div>
+                            );
+                          });
+
+                          return rows.length > 0 ? rows : (
+                            <div className="px-4 py-3 text-sm text-[hsl(var(--muted-foreground))] text-center">
+                              No changes detected
+                            </div>
+                          );
+                        } catch (e) {
+                          return (
+                            <div className="px-4 py-3 text-sm text-[hsl(var(--muted-foreground))]">
+                              Unable to parse change data
+                            </div>
+                          );
+                        }
+                      })()}
                     </div>
-                  )}
+                  </div>
                 </div>
               )}
             </div>
