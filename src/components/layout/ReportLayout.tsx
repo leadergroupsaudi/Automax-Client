@@ -1,25 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
   ChevronLeft,
   LogOut,
   Home,
   Bell,
-  Search,
   Menu,
   X,
   ChevronDown,
-  ChevronRight,
   Sparkles,
-  List,
-  Circle,
-  User,
-  UserCheck,
-  PenLine,
   Languages,
-  Link2,
   Phone,
   FileBarChart,
   LayoutTemplate,
@@ -27,7 +18,6 @@ import {
 import { useAuthStore } from '../../stores/authStore';
 import { authApi } from '../../api/auth';
 import { setLoggingOut } from '../../api/client';
-import { incidentApi } from '../../api/admin';
 import { setLanguage, getCurrentLanguage, supportedLanguages } from '../../i18n';
 import { usePermissions } from '../../hooks/usePermissions';
 import { PERMISSIONS } from '../../constants/permissions';

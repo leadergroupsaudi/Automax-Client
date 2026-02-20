@@ -37,7 +37,7 @@ import { Button } from '../../components/ui';
 import { TreeSelect, type TreeSelectNode } from '../../components/ui/TreeSelect';
 import { MiniWorkflowView } from '../../components/workflow';
 import { RevisionHistory, ConvertToRequestModal, UnmergeIncidentsModal, BulkUnmergeModal } from '../../components/incidents';
-import { incidentApi, userApi, workflowApi, departmentApi, lookupApi, incidentMergeApi } from '../../api/admin';
+import { incidentApi, userApi, workflowApi, departmentApi, lookupApi, incidentMergeApi, locationApi, classificationApi } from '../../api/admin';
 import { API_URL } from '../../api/client';
 import type {
   IncidentDetail,
