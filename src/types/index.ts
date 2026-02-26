@@ -58,8 +58,21 @@ export interface Classification {
   path: string;
   is_active: boolean;
   sort_order: number;
+  criticalities?: ClassificationCriticality[];
   children?: Classification[];
   created_at: string;
+}
+
+export interface ClassificationCriticality {
+  id: string;
+  classification_id: string;
+  criticality_id: string;
+  criticality?: LookupValue;
+  max_closing_hours: number;
+  max_closing_minutes: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Location {
@@ -210,6 +223,8 @@ export interface ApplicationLink {
   color: string;
   sort_order: number;
   is_active: boolean;
+  sso_enabled: boolean;
+  sso_callback_url: string;
   created_at: string;
   updated_at: string;
 }
@@ -223,6 +238,8 @@ export interface ApplicationLinkCreateRequest {
   color?: string;
   sort_order?: number;
   is_active?: boolean;
+  sso_enabled?: boolean;
+  sso_callback_url?: string;
 }
 
 export interface ApplicationLinkUpdateRequest {
@@ -234,6 +251,8 @@ export interface ApplicationLinkUpdateRequest {
   color?: string;
   sort_order?: number;
   is_active?: boolean;
+  sso_enabled?: boolean;
+  sso_callback_url?: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -298,6 +317,13 @@ export interface ClassificationCreateRequest {
   type?: ClassificationType;
   parent_id?: string;
   sort_order?: number;
+  criticalities?: ClassificationCriticalityCreateRequest[];
+}
+
+export interface ClassificationCriticalityCreateRequest {
+  criticality_id: string;
+  max_closing_hours: number;
+  max_closing_minutes: number;
 }
 
 export interface ClassificationUpdateRequest {
@@ -1587,5 +1613,12 @@ export interface IncidentBulkUnmergeResponse {
 
 export interface CanMergeResponse {
   can_merge: boolean;
+}
+
+export interface iLocationOption {
+  name: string,
+  lat: number,
+  lon: number,
+  type: string
 }
 
