@@ -1060,7 +1060,7 @@ export const IncidentsPage: React.FC = () => {
         <MergeIncidentsModal
           isOpen={showMergeModal}
           onClose={() => setShowMergeModal(false)}
-          selectedIncidents={incidents.filter(i => selectedIncidents.includes(i.id))}
+          selectedIncidents={selectedIncidents}
           onMergeSuccess={handleMergeSuccess}
         />
       )}
