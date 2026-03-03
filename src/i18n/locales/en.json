@@ -370,7 +370,10 @@
       "currentMaster": "Current Master",
       "comment": "Comment",
       "commentPlaceholder": "Add a comment (optional)"
-    }
+    },
+    "readyToCloseDuration": "Auto-Revert Duration",
+    "readyToCloseDurationHint": "The incident will automatically revert if not closed within the selected period.",
+    "selectDuration": "Select a duration..."
   },
   "incidentMerge": {
     "title": "Merge Incidents",
