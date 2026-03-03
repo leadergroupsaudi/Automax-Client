@@ -32,7 +32,6 @@ import {
   ArrowRightLeft,
   ExternalLink,
   Radio,
-  Save,
 } from 'lucide-react';
 import { Button } from '../../components/ui';
 import { TreeSelect, type TreeSelectNode } from '../../components/ui/TreeSelect';
@@ -52,10 +51,7 @@ import type {
   LookupValue,
   Department,
   IncidentRejectionLog,
-  LookupCategory,
-  IncidentUpdateRequest,
 } from '../../types';
-import { DynamicLookupField } from '../../components/common/DynamicLookupField';
 import { cn } from '@/lib/utils';
 import { usePermissions } from '../../hooks/usePermissions';
 import { PERMISSIONS } from '../../constants/permissions';
@@ -109,20 +105,6 @@ export const IncidentDetailPage: React.FC = () => {
   const [showMergedIncidents, setShowMergedIncidents] = useState(false);
   const [selectedForUnmerge, setSelectedForUnmerge] = useState<Set<string>>(new Set());
   const [bulkUnmergeModalOpen, setBulkUnmergeModalOpen] = useState(false);
-
-  // Edit incident modal state
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editForm, setEditForm] = useState({
-    title: '',
-    description: '',
-    classification_id: '',
-    location_id: '',
-    department_id: '',
-    assignee_id: '',
-    due_date: '',
-  });
-  const [editLookupValues, setEditLookupValues] = useState<Record<string, any>>({});
-  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
   // Assignment matching state
   const [matchLoading, setMatchLoading] = useState(false);
@@ -450,26 +432,6 @@ export const IncidentDetailPage: React.FC = () => {
     },
   });
 
-  const updateMutation = useMutation({
-    mutationFn: (data: IncidentUpdateRequest) => incidentApi.update(id!, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['incident', id] });
-      setIsEditModalOpen(false);
-      toast.success('Incident updated successfully');
-    },
-    onError: (error: any) => {
-      const msg = error.response?.data?.error || error.message || 'Failed to update incident';
-      if (msg.includes('conflict') || msg.includes('modified by another user')) {
-        toast.error('Conflict Detected', {
-          description: 'This incident was modified by another user. Please refresh and try again.',
-        });
-        queryClient.invalidateQueries({ queryKey: ['incident', id] });
-      } else {
-        toast.error('Update Failed', { description: msg });
-      }
-    },
-  });
-
   const availableTransitions = transitionsData?.data || [];
   const history = historyData?.data || [];
   const comments = commentsData?.data || [];
@@ -494,46 +456,6 @@ export const IncidentDetailPage: React.FC = () => {
       day: 'numeric',
       year: 'numeric',
     });
-  };
-
-  const incidentLookupCategories: LookupCategory[] = (lookupCategoriesData?.data || []).filter(
-    (cat: LookupCategory) => cat.add_to_incident_form
-  );
-
-  const handleEditSubmit = () => {
-    if (!incident) return;
-    const errors: Record<string, string> = {};
-    if (!editForm.title.trim()) errors.title = 'Title is required';
-    if (Object.keys(errors).length > 0) { setEditErrors(errors); return; }
-
-    // Build lookup_value_ids and custom_lookup_fields
-    const selectLookupIds: string[] = [];
-    const customLookupFields: Record<string, any> = {};
-    for (const [categoryId, value] of Object.entries(editLookupValues)) {
-      const cat = incidentLookupCategories.find((c: LookupCategory) => c.id === categoryId);
-      if (!cat || value === null || value === undefined || value === '') continue;
-      const fieldType = cat.field_type || 'select';
-      if (fieldType === 'select' || fieldType === 'multiselect') {
-        if (Array.isArray(value)) selectLookupIds.push(...value.filter(Boolean));
-        else selectLookupIds.push(value as string);
-      } else {
-        customLookupFields[`lookup:${cat.code}`] = { value, field_type: fieldType, category_id: categoryId };
-      }
-    }
-
-    const payload: IncidentUpdateRequest = {
-      title: editForm.title,
-      description: editForm.description,
-      classification_id: editForm.classification_id || undefined,
-      location_id: editForm.location_id || undefined,
-      department_id: editForm.department_id || undefined,
-      assignee_id: editForm.assignee_id || undefined,
-      due_date: editForm.due_date ? new Date(editForm.due_date).toISOString() : undefined,
-      lookup_value_ids: selectLookupIds.length > 0 ? selectLookupIds : undefined,
-      custom_lookup_fields: Object.keys(customLookupFields).length > 0 ? customLookupFields : undefined,
-      version: incident.version,
-    };
-    updateMutation.mutate(payload);
   };
 
   // Helper to check if attachment is an image
@@ -2706,160 +2628,6 @@ export const IncidentDetailPage: React.FC = () => {
           refetchMergedIncidents();
         }}
       />
-
-      {/* Edit Incident Modal */}
-      {isEditModalOpen && (
-        <div className="fixed inset-0 bg-[hsl(var(--foreground)/0.6)] backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[hsl(var(--card))] rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col animate-scale-in">
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[hsl(var(--border))] flex-shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-[hsl(var(--primary)/0.1)]">
-                  <Edit2 className="w-4 h-4 text-[hsl(var(--primary))]" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">Edit Incident</h3>
-                  <p className="text-xs text-[hsl(var(--muted-foreground))]">{incident?.incident_number}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsEditModalOpen(false)}
-                className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Scrollable body */}
-            <div className="overflow-y-auto flex-1 p-6 space-y-5">
-              {/* Title */}
-              <div>
-                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">
-                  Title <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={editForm.title}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
-                  className={cn(
-                    "w-full px-4 py-2.5 bg-[hsl(var(--background))] border rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all",
-                    editErrors.title ? "border-red-500" : "border-[hsl(var(--border))]"
-                  )}
-                />
-                {editErrors.title && <p className="mt-1 text-xs text-red-500">{editErrors.title}</p>}
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">Description</label>
-                <textarea
-                  rows={4}
-                  value={editForm.description}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all resize-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Classification */}
-                <TreeSelect
-                  label="Classification"
-                  data={(editClassificationsData?.data || []) as unknown as TreeSelectNode[]}
-                  value={editForm.classification_id}
-                  onChange={(val) => setEditForm(prev => ({ ...prev, classification_id: val }))}
-                  placeholder="Select classification"
-                  leafOnly={true}
-                />
-
-                {/* Location */}
-                <TreeSelect
-                  label="Location"
-                  data={(editLocationsData?.data || []) as unknown as TreeSelectNode[]}
-                  value={editForm.location_id}
-                  onChange={(val) => setEditForm(prev => ({ ...prev, location_id: val }))}
-                  placeholder="Select location"
-                  leafOnly={true}
-                />
-
-                {/* Department */}
-                <div>
-                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">Department</label>
-                  <select
-                    value={editForm.department_id}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, department_id: e.target.value }))}
-                    className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
-                  >
-                    <option value="">No department</option>
-                    {(editDepartmentsData?.data || []).map((d: Department) => (
-                      <option key={d.id} value={d.id}>{d.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Assignee */}
-                <div>
-                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">Assignee</label>
-                  <select
-                    value={editForm.assignee_id}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, assignee_id: e.target.value }))}
-                    className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
-                  >
-                    <option value="">Unassigned</option>
-                    {(usersData?.data || []).map((u: UserType) => (
-                      <option key={u.id} value={u.id}>{u.first_name} {u.last_name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Due Date */}
-                <div>
-                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">Due Date</label>
-                  <input
-                    type="datetime-local"
-                    value={editForm.due_date}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, due_date: e.target.value }))}
-                    className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Lookup fields (e.g. Priority, Severity, etc.) */}
-              {incidentLookupCategories.length > 0 && (
-                <div>
-                  <p className="text-sm font-medium text-[hsl(var(--foreground))] mb-3">Additional Fields</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {incidentLookupCategories.map((cat: LookupCategory) => (
-                      <DynamicLookupField
-                        key={cat.id}
-                        category={cat}
-                        value={editLookupValues[cat.id]}
-                        onChange={(categoryId, value) =>
-                          setEditLookupValues(prev => ({ ...prev, [categoryId]: value }))
-                        }
-                        error={editErrors[`lookup:${cat.code}`]}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[hsl(var(--border))] flex-shrink-0">
-              <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleEditSubmit}
-                isLoading={updateMutation.isPending}
-                leftIcon={!updateMutation.isPending ? <Save className="w-4 h-4" /> : undefined}
-              >
-                Save Changes
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
