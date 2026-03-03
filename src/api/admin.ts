@@ -94,6 +94,8 @@ import type {
   IncidentBulkUnmergeResponse,
   CanMergeResponse,
   BulkConvertToRequestRequest,
+  IncidentRejectionLog,
+  RejectionLogListResponse,
 } from '../types';
 
 // User Management
@@ -1773,6 +1775,36 @@ export const incidentMergeApi = {
 
   getMergedIncidents: async (masterIncidentId: string): Promise<ApiResponse<Incident[]>> => {
     const response = await apiClient.get<ApiResponse<Incident[]>>(`/incidents/merge/${masterIncidentId}/merged`);
+    return response.data;
+  },
+};
+
+// Rejection Log API
+export const rejectionLogApi = {
+  // Get all rejection logs for a specific incident
+  getByIncident: async (incidentId: string): Promise<ApiResponse<IncidentRejectionLog[]>> => {
+    const response = await apiClient.get<ApiResponse<IncidentRejectionLog[]>>(
+      `/incidents/${incidentId}/rejection-logs`
+    );
+    return response.data;
+  },
+
+  // List all rejection logs with filters (admin reporting)
+  list: async (params?: {
+    page?: number;
+    limit?: number;
+    record_type?: string;
+    sla_status?: string;
+    incident_id?: string;
+    rejected_by_id?: string;
+    department_id?: string;
+    classification_id?: string;
+    start_date?: string;
+    end_date?: string;
+  }): Promise<RejectionLogListResponse> => {
+    const response = await apiClient.get<RejectionLogListResponse>('/admin/rejection-logs', {
+      params,
+    });
     return response.data;
   },
 };

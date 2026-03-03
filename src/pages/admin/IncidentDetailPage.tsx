@@ -32,12 +32,13 @@ import {
   ArrowRightLeft,
   ExternalLink,
   Radio,
+  Save,
 } from 'lucide-react';
 import { Button } from '../../components/ui';
 import { TreeSelect, type TreeSelectNode } from '../../components/ui/TreeSelect';
 import { MiniWorkflowView } from '../../components/workflow';
 import { RevisionHistory, ConvertToRequestModal, UnmergeIncidentsModal, BulkUnmergeModal } from '../../components/incidents';
-import { incidentApi, userApi, workflowApi, departmentApi, lookupApi, incidentMergeApi, locationApi, classificationApi } from '../../api/admin';
+import { incidentApi, userApi, workflowApi, departmentApi, lookupApi, incidentMergeApi, locationApi, classificationApi, rejectionLogApi } from '../../api/admin';
 import { API_URL } from '../../api/client';
 import type {
   IncidentDetail,
@@ -50,7 +51,11 @@ import type {
   UserMatchResponse,
   LookupValue,
   Department,
+  IncidentRejectionLog,
+  LookupCategory,
+  IncidentUpdateRequest,
 } from '../../types';
+import { DynamicLookupField } from '../../components/common/DynamicLookupField';
 import { cn } from '@/lib/utils';
 import { usePermissions } from '../../hooks/usePermissions';
 import { PERMISSIONS } from '../../constants/permissions';
@@ -83,7 +88,7 @@ export const IncidentDetailPage: React.FC = () => {
   const canViewReports = isSuperAdmin || hasPermission(PERMISSIONS.REPORTS_VIEW);
   const canMergeIncidents = isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_UPDATE);
 
-  const [activeTab, setActiveTab] = useState<'activity' | 'comments' | 'attachments' | 'revisions'>('activity');
+  const [activeTab, setActiveTab] = useState<'activity' | 'comments' | 'attachments' | 'revisions' | 'rejections'>('activity');
   const [commentText, setCommentText] = useState('');
   const [isInternalComment, setIsInternalComment] = useState(false);
   const [transitionModalOpen, setTransitionModalOpen] = useState(false);
@@ -104,6 +109,20 @@ export const IncidentDetailPage: React.FC = () => {
   const [showMergedIncidents, setShowMergedIncidents] = useState(false);
   const [selectedForUnmerge, setSelectedForUnmerge] = useState<Set<string>>(new Set());
   const [bulkUnmergeModalOpen, setBulkUnmergeModalOpen] = useState(false);
+
+  // Edit incident modal state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    description: '',
+    classification_id: '',
+    location_id: '',
+    department_id: '',
+    assignee_id: '',
+    due_date: '',
+  });
+  const [editLookupValues, setEditLookupValues] = useState<Record<string, any>>({});
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
   // Assignment matching state
   const [matchLoading, setMatchLoading] = useState(false);
@@ -150,6 +169,12 @@ export const IncidentDetailPage: React.FC = () => {
   const { data: attachmentsData, refetch: refetchAttachments } = useQuery({
     queryKey: ['incident', id, 'attachments'],
     queryFn: () => incidentApi.listAttachments(id!),
+    enabled: !!id,
+  });
+
+  const { data: rejectionLogsData } = useQuery({
+    queryKey: ['incident', id, 'rejection-logs'],
+    queryFn: () => rejectionLogApi.getByIncident(id!),
     enabled: !!id,
   });
 
@@ -425,6 +450,26 @@ export const IncidentDetailPage: React.FC = () => {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: (data: IncidentUpdateRequest) => incidentApi.update(id!, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['incident', id] });
+      setIsEditModalOpen(false);
+      toast.success('Incident updated successfully');
+    },
+    onError: (error: any) => {
+      const msg = error.response?.data?.error || error.message || 'Failed to update incident';
+      if (msg.includes('conflict') || msg.includes('modified by another user')) {
+        toast.error('Conflict Detected', {
+          description: 'This incident was modified by another user. Please refresh and try again.',
+        });
+        queryClient.invalidateQueries({ queryKey: ['incident', id] });
+      } else {
+        toast.error('Update Failed', { description: msg });
+      }
+    },
+  });
+
   const availableTransitions = transitionsData?.data || [];
   const history = historyData?.data || [];
   const comments = commentsData?.data || [];
@@ -449,6 +494,46 @@ export const IncidentDetailPage: React.FC = () => {
       day: 'numeric',
       year: 'numeric',
     });
+  };
+
+  const incidentLookupCategories: LookupCategory[] = (lookupCategoriesData?.data || []).filter(
+    (cat: LookupCategory) => cat.add_to_incident_form
+  );
+
+  const handleEditSubmit = () => {
+    if (!incident) return;
+    const errors: Record<string, string> = {};
+    if (!editForm.title.trim()) errors.title = 'Title is required';
+    if (Object.keys(errors).length > 0) { setEditErrors(errors); return; }
+
+    // Build lookup_value_ids and custom_lookup_fields
+    const selectLookupIds: string[] = [];
+    const customLookupFields: Record<string, any> = {};
+    for (const [categoryId, value] of Object.entries(editLookupValues)) {
+      const cat = incidentLookupCategories.find((c: LookupCategory) => c.id === categoryId);
+      if (!cat || value === null || value === undefined || value === '') continue;
+      const fieldType = cat.field_type || 'select';
+      if (fieldType === 'select' || fieldType === 'multiselect') {
+        if (Array.isArray(value)) selectLookupIds.push(...value.filter(Boolean));
+        else selectLookupIds.push(value as string);
+      } else {
+        customLookupFields[`lookup:${cat.code}`] = { value, field_type: fieldType, category_id: categoryId };
+      }
+    }
+
+    const payload: IncidentUpdateRequest = {
+      title: editForm.title,
+      description: editForm.description,
+      classification_id: editForm.classification_id || undefined,
+      location_id: editForm.location_id || undefined,
+      department_id: editForm.department_id || undefined,
+      assignee_id: editForm.assignee_id || undefined,
+      due_date: editForm.due_date ? new Date(editForm.due_date).toISOString() : undefined,
+      lookup_value_ids: selectLookupIds.length > 0 ? selectLookupIds : undefined,
+      custom_lookup_fields: Object.keys(customLookupFields).length > 0 ? customLookupFields : undefined,
+      version: incident.version,
+    };
+    updateMutation.mutate(payload);
   };
 
   // Helper to check if attachment is an image
@@ -1094,6 +1179,25 @@ export const IncidentDetailPage: React.FC = () => {
                   {t('incidents.revisions')}
                 </span>
               </button>
+              <button
+                onClick={() => setActiveTab('rejections')}
+                className={cn(
+                  "flex-1 px-4 py-3 text-sm font-medium transition-colors",
+                  activeTab === 'rejections'
+                    ? 'text-[hsl(var(--destructive))] border-b-2 border-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.05)]'
+                    : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
+                )}
+              >
+                <span className="flex items-center justify-center gap-2">
+                  <XCircle className="w-4 h-4" />
+                  Rejection History
+                  {(rejectionLogsData?.data?.length ?? 0) > 0 && (
+                    <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))]">
+                      {rejectionLogsData?.data?.length ?? 0}
+                    </span>
+                  )}
+                </span>
+              </button>
             </div>
 
             <div className="p-4">
@@ -1519,6 +1623,96 @@ export const IncidentDetailPage: React.FC = () => {
               {/* Revisions Tab */}
               {activeTab === 'revisions' && (
                 <RevisionHistory incidentId={id!} />
+              )}
+
+              {/* Rejection History Tab */}
+              {activeTab === 'rejections' && (
+                <div className="space-y-3">
+                  {!(rejectionLogsData?.data?.length) ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-[hsl(var(--muted-foreground))]">
+                      <XCircle className="w-10 h-10 mb-3 opacity-30" />
+                      <p className="text-sm">No rejection records for this incident.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                        This incident has been rejected <span className="font-semibold text-[hsl(var(--destructive))]">{rejectionLogsData?.data?.length ?? 0}</span> time{(rejectionLogsData?.data?.length ?? 0) !== 1 ? 's' : ''}.
+                      </p>
+                      {(rejectionLogsData?.data ?? []).map((log: IncidentRejectionLog) => (
+                        <div
+                          key={log.id}
+                          className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--destructive)/0.03)] p-4 space-y-3"
+                        >
+                          {/* Header row */}
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))] text-xs font-bold">
+                                #{log.rejection_sequence}
+                              </span>
+                              <div>
+                                <p className="text-sm font-medium text-[hsl(var(--foreground))]">
+                                  {log.from_state?.name ?? '—'} → {log.to_state?.name ?? '—'}
+                                </p>
+                                <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                                  Rejected by <span className="font-medium">{log.rejected_by?.first_name ?? log.rejected_by_username}</span>
+                                  {log.rejected_by_roles_snapshot?.length > 0 && (
+                                    <span className="ml-1">({log.rejected_by_roles_snapshot.join(', ')})</span>
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              {/* SLA status badge */}
+                              <span className={cn(
+                                "px-2 py-0.5 rounded-full text-xs font-medium",
+                                log.sla_status === 'breached'
+                                  ? 'bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))]'
+                                  : 'bg-[hsl(var(--success,142_76%_36%)/0.1)] text-green-600 dark:text-green-400'
+                              )}>
+                                {log.sla_status === 'breached' ? 'SLA Breached' : 'Within SLA'}
+                              </span>
+                              <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                                {formatDateTime(log.rejected_at)}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Metrics row */}
+                          <div className="grid grid-cols-3 gap-3 text-xs">
+                            <div className="bg-[hsl(var(--muted)/0.4)] rounded p-2">
+                              <p className="text-[hsl(var(--muted-foreground))] mb-0.5">Reaction Time</p>
+                              <p className="font-semibold text-[hsl(var(--foreground))]">
+                                {log.reaction_time_minutes < 60
+                                  ? `${log.reaction_time_minutes}m`
+                                  : `${Math.floor(log.reaction_time_minutes / 60)}h ${log.reaction_time_minutes % 60}m`}
+                              </p>
+                            </div>
+                            <div className="bg-[hsl(var(--muted)/0.4)] rounded p-2">
+                              <p className="text-[hsl(var(--muted-foreground))] mb-0.5">SLA Threshold</p>
+                              <p className="font-semibold text-[hsl(var(--foreground))]">
+                                {log.sla_threshold_hours != null ? `${log.sla_threshold_hours}h` : '—'}
+                              </p>
+                            </div>
+                            <div className="bg-[hsl(var(--muted)/0.4)] rounded p-2">
+                              <p className="text-[hsl(var(--muted-foreground))] mb-0.5">Total Rejections</p>
+                              <p className="font-semibold text-[hsl(var(--foreground))]">{log.total_rejection_count}</p>
+                            </div>
+                          </div>
+
+                          {/* Rejection reason */}
+                          {log.rejection_reason && (
+                            <div className="text-xs">
+                              <p className="text-[hsl(var(--muted-foreground))] mb-1 font-medium">Rejection Reason</p>
+                              <p className="text-[hsl(var(--foreground))] bg-[hsl(var(--muted)/0.3)] rounded p-2 leading-relaxed">
+                                {log.rejection_reason}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -2512,6 +2706,160 @@ export const IncidentDetailPage: React.FC = () => {
           refetchMergedIncidents();
         }}
       />
+
+      {/* Edit Incident Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-[hsl(var(--foreground)/0.6)] backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[hsl(var(--card))] rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col animate-scale-in">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[hsl(var(--border))] flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-[hsl(var(--primary)/0.1)]">
+                  <Edit2 className="w-4 h-4 text-[hsl(var(--primary))]" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">Edit Incident</h3>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))]">{incident?.incident_number}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Scrollable body */}
+            <div className="overflow-y-auto flex-1 p-6 space-y-5">
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">
+                  Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={editForm.title}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                  className={cn(
+                    "w-full px-4 py-2.5 bg-[hsl(var(--background))] border rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all",
+                    editErrors.title ? "border-red-500" : "border-[hsl(var(--border))]"
+                  )}
+                />
+                {editErrors.title && <p className="mt-1 text-xs text-red-500">{editErrors.title}</p>}
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">Description</label>
+                <textarea
+                  rows={4}
+                  value={editForm.description}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Classification */}
+                <TreeSelect
+                  label="Classification"
+                  data={(editClassificationsData?.data || []) as unknown as TreeSelectNode[]}
+                  value={editForm.classification_id}
+                  onChange={(val) => setEditForm(prev => ({ ...prev, classification_id: val }))}
+                  placeholder="Select classification"
+                  leafOnly={true}
+                />
+
+                {/* Location */}
+                <TreeSelect
+                  label="Location"
+                  data={(editLocationsData?.data || []) as unknown as TreeSelectNode[]}
+                  value={editForm.location_id}
+                  onChange={(val) => setEditForm(prev => ({ ...prev, location_id: val }))}
+                  placeholder="Select location"
+                  leafOnly={true}
+                />
+
+                {/* Department */}
+                <div>
+                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">Department</label>
+                  <select
+                    value={editForm.department_id}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, department_id: e.target.value }))}
+                    className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
+                  >
+                    <option value="">No department</option>
+                    {(editDepartmentsData?.data || []).map((d: Department) => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Assignee */}
+                <div>
+                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">Assignee</label>
+                  <select
+                    value={editForm.assignee_id}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, assignee_id: e.target.value }))}
+                    className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
+                  >
+                    <option value="">Unassigned</option>
+                    {(usersData?.data || []).map((u: UserType) => (
+                      <option key={u.id} value={u.id}>{u.first_name} {u.last_name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Due Date */}
+                <div>
+                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">Due Date</label>
+                  <input
+                    type="datetime-local"
+                    value={editForm.due_date}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, due_date: e.target.value }))}
+                    className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Lookup fields (e.g. Priority, Severity, etc.) */}
+              {incidentLookupCategories.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-[hsl(var(--foreground))] mb-3">Additional Fields</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {incidentLookupCategories.map((cat: LookupCategory) => (
+                      <DynamicLookupField
+                        key={cat.id}
+                        category={cat}
+                        value={editLookupValues[cat.id]}
+                        onChange={(categoryId, value) =>
+                          setEditLookupValues(prev => ({ ...prev, [categoryId]: value }))
+                        }
+                        error={editErrors[`lookup:${cat.code}`]}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[hsl(var(--border))] flex-shrink-0">
+              <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleEditSubmit}
+                isLoading={updateMutation.isPending}
+                leftIcon={!updateMutation.isPending ? <Save className="w-4 h-4" /> : undefined}
+              >
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

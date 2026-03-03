@@ -641,6 +641,7 @@ export interface WorkflowTransition {
   requirements?: TransitionRequirement[];
   actions?: TransitionAction[];
   field_changes?: TransitionFieldChange[];
+  is_rejection: boolean;
   is_active: boolean;
   sort_order: number;
   created_at: string;
@@ -756,6 +757,7 @@ export interface WorkflowTransitionCreateRequest {
   to_state_id: string;
   role_ids?: string[];
   sort_order?: number;
+  is_rejection?: boolean;
 
   // Department Assignment
   assign_department_id?: string;
@@ -778,6 +780,7 @@ export interface WorkflowTransitionUpdateRequest {
   role_ids?: string[];
   sort_order?: number;
   is_active?: boolean;
+  is_rejection?: boolean;
 
   // Department Assignment
   assign_department_id?: string | null;
@@ -1630,6 +1633,44 @@ export interface IncidentBulkUnmergeResponse {
 
 export interface CanMergeResponse {
   can_merge: boolean;
+}
+
+// Rejection Logs
+
+export interface IncidentRejectionLog {
+  id: string;
+  incident_id: string;
+  incident_number: string;
+  incident_title: string;
+  record_type: string;
+  rejection_sequence: number;
+  total_rejection_count: number;
+  received_at: string;
+  rejected_at: string;
+  reaction_time_minutes: number;
+  rejection_reason: string;
+  from_state?: WorkflowState;
+  to_state?: WorkflowState;
+  rejected_by?: User;
+  rejected_by_username: string;
+  rejected_by_roles_snapshot: string[];
+  sla_threshold_hours?: number;
+  sla_threshold_minutes?: number;
+  sla_breached_at_rejection: boolean;
+  sla_status: 'within_sla' | 'breached';
+  department_id?: string;
+  classification_id?: string;
+  transition_history_id: string;
+  created_at: string;
+}
+
+export interface RejectionLogListResponse {
+  success: boolean;
+  data: IncidentRejectionLog[];
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
 }
 
 export interface iLocationOption {
