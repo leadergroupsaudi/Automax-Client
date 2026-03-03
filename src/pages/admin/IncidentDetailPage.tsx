@@ -32,6 +32,7 @@ import {
   ArrowRightLeft,
   ExternalLink,
   Radio,
+  Copy
 } from 'lucide-react';
 import { Button } from '../../components/ui';
 import { TreeSelect, type TreeSelectNode } from '../../components/ui/TreeSelect';
@@ -82,6 +83,7 @@ export const IncidentDetailPage: React.FC = () => {
   const canEditIncident = isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_UPDATE);
   const canViewReports = isSuperAdmin || hasPermission(PERMISSIONS.REPORTS_VIEW);
   const canMergeIncidents = isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_UPDATE);
+  const canCloneIncident = isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_CREATE);
 
   const [activeTab, setActiveTab] = useState<'activity' | 'comments' | 'attachments' | 'revisions'>('activity');
   const [commentText, setCommentText] = useState('');
@@ -182,8 +184,8 @@ export const IncidentDetailPage: React.FC = () => {
   // Merge state-specific options with global defaults (state-specific takes priority)
   const readyToCloseDurationOptions: string[] = isReadyToCloseTransition
     ? (selectedTransition.transition.to_state?.duration_options?.length
-        ? selectedTransition.transition.to_state.duration_options
-        : rtcDurationOptionsData?.data ?? [])
+      ? selectedTransition.transition.to_state.duration_options
+      : rtcDurationOptionsData?.data ?? [])
     : [];
 
   // Tree data for field change selectors — fetch trees so the TreeSelect component can show hierarchy
@@ -888,6 +890,11 @@ export const IncidentDetailPage: React.FC = () => {
           {canEditIncident && (
             <Button variant="ghost" size="sm" leftIcon={<Edit2 className="w-4 h-4" />} onClick={() => navigate(`/incidents/${incident.id}/edit`)}>
               {t('incidents.edit')}
+            </Button>
+          )}
+          {canCloneIncident && (
+            <Button variant="ghost" size="sm" leftIcon={<Copy className="w-4 h-4" />} onClick={() => navigate(`/incidents/${incident.id}/clone`)}>
+              {t('incidents.clone')}
             </Button>
           )}
           {canMergeIncidents && incident?.is_merged && (
