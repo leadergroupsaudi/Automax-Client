@@ -130,7 +130,7 @@ export const IncidentDetailPage: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<IncidentAttachment | null>(null);
 
   // Queries
-  const { data: incidentData, isLoading, error, refetch } = useQuery({
+  const { data: incidentData, isLoading, error, refetch, isRefetching } = useQuery({
     queryKey: ['incident', id],
     queryFn: () => incidentApi.getById(id!),
     enabled: !!id,
@@ -954,6 +954,7 @@ export const IncidentDetailPage: React.FC = () => {
             variant="ghost"
             size="sm"
             onClick={() => refetch()}
+            isLoading={isRefetching}
             leftIcon={<RefreshCw className="w-4 h-4" />}
           >
             {t('incidents.refresh')}
@@ -2308,18 +2309,18 @@ export const IncidentDetailPage: React.FC = () => {
               {isReadyToCloseTransition && (
                 <div>
                   <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-                    {t('incidents.readyToCloseDuration') || 'Auto-Revert Duration'}
+                    {t('incidents.readyToCloseDuration', 'Auto-Revert Duration')}
                     <span className="text-red-500 ml-1">*</span>
                   </label>
                   <p className="text-xs text-[hsl(var(--muted-foreground))] mb-2">
-                    {t('incidents.readyToCloseDurationHint') || 'The incident will automatically revert if not closed within the selected period.'}
+                    {t('incidents.readyToCloseDurationHint','The incident will automatically revert if not closed within the selected period.')}
                   </p>
                   <select
                     value={readyToCloseDuration}
                     onChange={(e) => setReadyToCloseDuration(e.target.value)}
                     className="w-full px-3 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
                   >
-                    <option value="">{t('incidents.selectDuration') || 'Select a duration...'}</option>
+                    <option value="">{t('incidents.selectDuration', 'Select a duration...')}</option>
                     {readyToCloseDurationOptions.map((opt) => (
                       <option key={opt} value={opt}>{opt}</option>
                     ))}
