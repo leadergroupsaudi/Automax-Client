@@ -83,7 +83,6 @@ export const IncidentDetailPage: React.FC = () => {
 
   const canEditIncident = isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_UPDATE);
   const canViewReports = isSuperAdmin || hasPermission(PERMISSIONS.REPORTS_VIEW);
-  const canMergeIncidents = isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_UPDATE);
   const canCloneIncident = isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_CREATE);
 
   const [activeTab, setActiveTab] = useState<'activity' | 'comments' | 'attachments' | 'revisions'>('activity');

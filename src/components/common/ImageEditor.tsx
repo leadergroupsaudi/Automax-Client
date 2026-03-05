@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Canvas, FabricImage, Rect, Textbox } from "fabric";
 import {
     X,
