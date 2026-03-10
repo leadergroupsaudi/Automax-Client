@@ -1,7 +1,7 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
+import React from "react";
+import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import {
   Users,
   Shield,
@@ -16,11 +16,17 @@ import {
   Zap,
   AlertTriangle,
   GitBranch,
-} from 'lucide-react';
-import { useAuthStore } from '../../stores/authStore';
-import { userApi, roleApi, departmentApi, incidentApi, workflowApi } from '../../api/admin';
-import { usePermissions } from '../../hooks/usePermissions';
-import { PERMISSIONS } from '../../constants/permissions';
+} from "lucide-react";
+import { useAuthStore } from "../../stores/authStore";
+import {
+  userApi,
+  roleApi,
+  departmentApi,
+  incidentApi,
+  workflowApi,
+} from "../../api/admin";
+import { usePermissions } from "../../hooks/usePermissions";
+import { PERMISSIONS } from "../../constants/permissions";
 
 interface StatCardProps {
   title: string;
@@ -44,17 +50,23 @@ const StatCard: React.FC<StatCardProps> = ({
   hasPermission = true,
 }) => {
   const CardContent = (
-    <div className={`relative overflow-hidden bg-card rounded-2xl border border-slate-200/60 p-6 transition-all duration-300 ${
-      hasPermission
-        ? 'hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-card hover:border-slate-300/60 cursor-pointer'
-        : 'opacity-50 cursor-not-allowed'
-    }`}>
+    <div
+      className={`relative overflow-hidden bg-card rounded-2xl border border-slate-200/60 p-6 transition-all duration-300 ${
+        hasPermission
+          ? "hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-card hover:border-slate-300/60 cursor-pointer"
+          : "opacity-50 cursor-not-allowed"
+      }`}
+    >
       {/* Background gradient decoration */}
-      <div className={`absolute -top-12 -end-12 w-32 h-32 rounded-full ${gradient} opacity-10 ${hasPermission ? 'group-hover:opacity-20 group-hover:scale-125' : ''} transition-all duration-500`} />
+      <div
+        className={`absolute -top-12 -end-12 w-32 h-32 rounded-full ${gradient} opacity-10 ${hasPermission ? "group-hover:opacity-20 group-hover:scale-125" : ""} transition-all duration-500`}
+      />
 
       <div className="relative">
         <div className="flex items-start justify-between mb-4">
-          <div className={`w-12 h-12 rounded-xl ${gradient} flex items-center justify-center shadow-lg`}>
+          <div
+            className={`w-12 h-12 rounded-xl ${gradient} flex items-center justify-center shadow-lg`}
+          >
             <Icon className="w-6 h-6 text-white" />
           </div>
           {hasPermission && (
@@ -74,7 +86,9 @@ const StatCard: React.FC<StatCardProps> = ({
         {change && (
           <div className="mt-3 flex items-center gap-1.5">
             <TrendingUp className="w-4 h-4 text-emerald-500" />
-            <span className="text-sm font-medium text-emerald-600">{change}</span>
+            <span className="text-sm font-medium text-emerald-600">
+              {change}
+            </span>
             <span className="text-sm text-slate-400">vs last month</span>
           </div>
         )}
@@ -99,156 +113,198 @@ export const AdminDashboard: React.FC = () => {
   const { hasPermission, isSuperAdmin } = usePermissions();
 
   const { data: usersData, isLoading: usersLoading } = useQuery({
-    queryKey: ['admin', 'users'],
+    queryKey: ["admin", "users"],
     queryFn: () => userApi.list(1, 1),
   });
 
   const { data: rolesData, isLoading: rolesLoading } = useQuery({
-    queryKey: ['admin', 'roles'],
+    queryKey: ["admin", "roles"],
     queryFn: () => roleApi.list(),
   });
 
   const { data: departmentsData, isLoading: departmentsLoading } = useQuery({
-    queryKey: ['admin', 'departments'],
+    queryKey: ["admin", "departments"],
     queryFn: () => departmentApi.list(),
   });
 
-  const { data: incidentStatsData, isLoading: incidentStatsLoading } = useQuery({
-    queryKey: ['incidents', 'stats'],
-    queryFn: () => incidentApi.getStats(),
-  });
+  const { data: incidentStatsData, isLoading: incidentStatsLoading } = useQuery(
+    {
+      queryKey: ["incidents", "stats", "incident"],
+      queryFn: () => incidentApi.getStats("incident"),
+    },
+  );
 
   const { data: workflowsData, isLoading: workflowsLoading } = useQuery({
-    queryKey: ['workflows'],
+    queryKey: ["workflows"],
     queryFn: () => workflowApi.list(),
   });
 
   // Dashboard-level permission checks
-  const canViewAdminDashboard = isSuperAdmin || hasPermission(PERMISSIONS.DASHBOARD_ADMIN);
-  const canViewIncidentsDashboard = isSuperAdmin || hasPermission(PERMISSIONS.DASHBOARD_INCIDENTS);
-  const canViewWorkflowsDashboard = isSuperAdmin || hasPermission(PERMISSIONS.DASHBOARD_WORKFLOWS);
+  const canViewAdminDashboard =
+    isSuperAdmin || hasPermission(PERMISSIONS.DASHBOARD_ADMIN);
+  const canViewIncidentsDashboard =
+    isSuperAdmin || hasPermission(PERMISSIONS.DASHBOARD_INCIDENTS);
+  const canViewWorkflowsDashboard =
+    isSuperAdmin || hasPermission(PERMISSIONS.DASHBOARD_WORKFLOWS);
 
   const stats: StatCardProps[] = [
     {
-      title: t('dashboard.openIncidents'),
+      title: t("dashboard.openIncidents"),
       icon: AlertTriangle,
-      gradient: 'bg-gradient-to-br from-red-500 to-orange-600',
-      count: (incidentStatsData?.data?.open ?? 0) + (incidentStatsData?.data?.in_progress ?? 0),
+      gradient: "bg-gradient-to-br from-red-500 to-orange-600",
+      count:
+        (incidentStatsData?.data?.open ?? 0) +
+        (incidentStatsData?.data?.in_progress ?? 0),
       isLoading: incidentStatsLoading,
-      href: '/incidents',
+      href: "/incidents",
       hasPermission: canViewIncidentsDashboard,
     },
     {
-      title: t('dashboard.totalIncidents'),
+      title: t("dashboard.totalIncidents"),
       icon: AlertTriangle,
-      gradient: 'bg-gradient-to-br from-amber-500 to-yellow-600',
+      gradient: "bg-gradient-to-br from-amber-500 to-yellow-600",
       count: incidentStatsData?.data?.total ?? 0,
       isLoading: incidentStatsLoading,
-      href: '/incidents',
+      href: "/incidents",
       hasPermission: canViewIncidentsDashboard,
     },
     {
-      title: t('nav.workflows'),
+      title: t("nav.workflows"),
       icon: GitBranch,
-      gradient: 'bg-gradient-to-br from-cyan-500 to-teal-600',
+      gradient: "bg-gradient-to-br from-cyan-500 to-teal-600",
       count: workflowsData?.data?.length ?? 0,
       isLoading: workflowsLoading,
-      href: '/workflows',
+      href: "/workflows",
       hasPermission: canViewWorkflowsDashboard,
     },
     {
-      title: t('admin.totalUsers'),
+      title: t("admin.totalUsers"),
       icon: Users,
-      gradient: 'bg-gradient-to-br from-blue-500 to-blue-600',
+      gradient: "bg-gradient-to-br from-blue-500 to-blue-600",
       count: usersData?.total_items ?? 0,
       isLoading: usersLoading,
-      href: '/admin/users',
+      href: "/admin/users",
       hasPermission: canViewAdminDashboard,
     },
     {
-      title: t('admin.totalRoles'),
+      title: t("admin.totalRoles"),
       icon: Shield,
-      gradient: 'bg-gradient-to-br from-emerald-500 to-teal-600',
+      gradient: "bg-gradient-to-br from-emerald-500 to-teal-600",
       count: rolesData?.data?.length ?? 0,
       isLoading: rolesLoading,
-      href: '/admin/roles',
+      href: "/admin/roles",
       hasPermission: canViewAdminDashboard,
     },
     {
-      title: t('admin.departments'),
+      title: t("admin.departments"),
       icon: Building2,
-      gradient: 'bg-gradient-to-br from-purple-500 to-violet-600',
+      gradient: "bg-gradient-to-br from-purple-500 to-violet-600",
       count: departmentsData?.data?.length ?? 0,
       isLoading: departmentsLoading,
-      href: '/admin/departments',
+      href: "/admin/departments",
       hasPermission: canViewAdminDashboard,
     },
   ];
 
   const quickActions = [
     {
-      title: t('incidents.title'),
-      description: t('dashboard.createTrackManage'),
+      title: t("incidents.title"),
+      description: t("dashboard.createTrackManage"),
       icon: AlertTriangle,
-      href: '/incidents',
-      color: 'text-red-600 dark:text-red-400',
-      bg: 'bg-red-50 hover:bg-red-100 dark:border-red-500/40 ',
+      href: "/incidents",
+      color: "text-red-600 dark:text-red-400",
+      bg: "bg-red-50 hover:bg-red-100 dark:border-red-500/40 ",
       hasPermission: canViewIncidentsDashboard,
     },
     {
-      title: t('nav.workflows'),
-      description: t('dashboard.designConfigure'),
+      title: t("nav.workflows"),
+      description: t("dashboard.designConfigure"),
       icon: GitBranch,
-      href: '/workflows',
-      color: 'text-cyan-600 dark:text-cyan-400', 
-      bg: 'bg-cyan-50 hover:bg-cyan-100 dark:border-cyan-500/40 ',
+      href: "/workflows",
+      color: "text-cyan-600 dark:text-cyan-400",
+      bg: "bg-cyan-50 hover:bg-cyan-100 dark:border-cyan-500/40 ",
       hasPermission: canViewWorkflowsDashboard,
     },
     {
-      title: t('admin.users'),
-      description: t('dashboard.userAccessControl'),
+      title: t("admin.users"),
+      description: t("dashboard.userAccessControl"),
       icon: Users,
-      href: '/admin/users',
-      color: 'text-blue-600 dark:text-blue-400',
-      bg: 'bg-blue-50 hover:bg-blue-100 dark:border-blue-500/40',
+      href: "/admin/users",
+      color: "text-blue-600 dark:text-blue-400",
+      bg: "bg-blue-50 hover:bg-blue-100 dark:border-blue-500/40",
       hasPermission: canViewAdminDashboard,
     },
     {
-      title: t('admin.roles'),
-      description: t('admin.permissions'),
+      title: t("admin.roles"),
+      description: t("admin.permissions"),
       icon: Shield,
-      href: '/admin/roles',
-      color: 'text-emerald-600 dark:text-emerald-400',
-      bg: 'bg-emerald-50 hover:bg-emerald-100 dark:border-emerald-500/40',
+      href: "/admin/roles",
+      color: "text-emerald-600 dark:text-emerald-400",
+      bg: "bg-emerald-50 hover:bg-emerald-100 dark:border-emerald-500/40",
       hasPermission: canViewAdminDashboard,
     },
   ];
 
   const recentActivity = [
-    { action: 'New user registered', target: 'john.doe@example.com', time: '2 min ago', type: 'user' },
-    { action: 'Role permissions updated', target: 'Content Manager', time: '15 min ago', type: 'role' },
-    { action: 'Department created', target: 'Engineering', time: '1 hour ago', type: 'department' },
-    { action: 'User deactivated', target: 'jane.smith@example.com', time: '3 hours ago', type: 'user' },
-    { action: 'New location added', target: 'San Francisco Office', time: '5 hours ago', type: 'location' },
+    {
+      action: "New user registered",
+      target: "john.doe@example.com",
+      time: "2 min ago",
+      type: "user",
+    },
+    {
+      action: "Role permissions updated",
+      target: "Content Manager",
+      time: "15 min ago",
+      type: "role",
+    },
+    {
+      action: "Department created",
+      target: "Engineering",
+      time: "1 hour ago",
+      type: "department",
+    },
+    {
+      action: "User deactivated",
+      target: "jane.smith@example.com",
+      time: "3 hours ago",
+      type: "user",
+    },
+    {
+      action: "New location added",
+      target: "San Francisco Office",
+      time: "5 hours ago",
+      type: "location",
+    },
   ];
 
   const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'user': return <Users className="w-4 h-4" />;
-      case 'role': return <Shield className="w-4 h-4" />;
-      case 'department': return <Building2 className="w-4 h-4" />;
-      case 'location': return <MapPin className="w-4 h-4" />;
-      default: return <Activity className="w-4 h-4" />;
+      case "user":
+        return <Users className="w-4 h-4" />;
+      case "role":
+        return <Shield className="w-4 h-4" />;
+      case "department":
+        return <Building2 className="w-4 h-4" />;
+      case "location":
+        return <MapPin className="w-4 h-4" />;
+      default:
+        return <Activity className="w-4 h-4" />;
     }
   };
 
   const getActivityColor = (type: string) => {
     switch (type) {
-      case 'user': return 'bg-blue-100 text-blue-600';
-      case 'role': return 'bg-emerald-100 text-emerald-600';
-      case 'department': return 'bg-purple-100 text-purple-600';
-      case 'location': return 'bg-rose-100 text-rose-600';
-      default: return 'bg-slate-100 text-slate-600';
+      case "user":
+        return "bg-blue-100 text-blue-600";
+      case "role":
+        return "bg-emerald-100 text-emerald-600";
+      case "department":
+        return "bg-purple-100 text-purple-600";
+      case "location":
+        return "bg-rose-100 text-rose-600";
+      default:
+        return "bg-slate-100 text-slate-600";
     }
   };
 
@@ -265,21 +321,25 @@ export const AdminDashboard: React.FC = () => {
             <div className="flex items-center gap-3 mb-3">
               <div className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full backdrop-blur-sm">
                 <Sparkles className="w-4 h-4 text-amber-400" />
-                <span className="text-sm font-medium text-slate-200">{t('admin.dashboard')}</span>
+                <span className="text-sm font-medium text-slate-200">
+                  {t("admin.dashboard")}
+                </span>
               </div>
             </div>
             <h1 className="text-3xl lg:text-4xl font-bold mb-2">
-              {t('dashboard.welcome')}, {user?.first_name || user?.username}
+              {t("dashboard.welcome")}, {user?.first_name || user?.username}
             </h1>
             <p className="text-slate-300 text-lg max-w-xl">
-              {t('dashboard.whatToWorkOn')}
+              {t("dashboard.whatToWorkOn")}
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/20 border border-emerald-500/30 rounded-xl backdrop-blur-sm">
               <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-              <span className="text-sm font-medium text-emerald-300">{t('dashboard.allSystemsOperational')}</span>
+              <span className="text-sm font-medium text-emerald-300">
+                {t("dashboard.allSystemsOperational")}
+              </span>
             </div>
           </div>
         </div>
@@ -289,14 +349,18 @@ export const AdminDashboard: React.FC = () => {
       <div>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-bold ">{t('dashboard.title')}</h2>
-            <p className="text-slate-500 text-sm">{t('dashboard.insightsLogs')}</p>
+            <h2 className="text-xl font-bold ">{t("dashboard.title")}</h2>
+            <p className="text-slate-500 text-sm">
+              {t("dashboard.insightsLogs")}
+            </p>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {stats.filter((stat) => stat.hasPermission).map((stat) => (
-            <StatCard key={stat.title} {...stat} />
-          ))}
+          {stats
+            .filter((stat) => stat.hasPermission)
+            .map((stat) => (
+              <StatCard key={stat.title} {...stat} />
+            ))}
         </div>
       </div>
 
@@ -307,8 +371,10 @@ export const AdminDashboard: React.FC = () => {
           <div className="bg-card rounded-2xl border border-slate-200/60 p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-lg font-bold ">{t('dashboard.quickActions')}</h3>
-                <p className="text-sm text-slate-500">{t('common.actions')}</p>
+                <h3 className="text-lg font-bold ">
+                  {t("dashboard.quickActions")}
+                </h3>
+                <p className="text-sm text-slate-500">{t("common.actions")}</p>
               </div>
               <Zap className="w-5 h-5 text-amber-500" />
             </div>
@@ -322,8 +388,12 @@ export const AdminDashboard: React.FC = () => {
                       className="group p-4 rounded-xl bg-slate-100 opacity-50 cursor-not-allowed transition-all duration-200"
                     >
                       <action.icon className="w-6 h-6 text-slate-400 mb-3" />
-                      <p className="font-semibold text-slate-500 text-sm">{action.title}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{action.description}</p>
+                      <p className="font-semibold text-slate-500 text-sm">
+                        {action.title}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        {action.description}
+                      </p>
                     </div>
                   );
                 }
@@ -335,7 +405,9 @@ export const AdminDashboard: React.FC = () => {
                   >
                     <action.icon className={`w-6 h-6 ${action.color}  mb-3`} />
                     <p className="font-semibold  text-sm">{action.title}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">{action.description}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {action.description}
+                    </p>
                   </Link>
                 );
               })}
@@ -348,12 +420,17 @@ export const AdminDashboard: React.FC = () => {
           <div className="bg-card rounded-2xl border border-slate-200/60 p-6 h-full">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-lg font-bold ">{t('admin.actionLogs')}</h3>
-                <p className="text-sm text-slate-500">{t('dashboard.insightsLogs')}</p>
+                <h3 className="text-lg font-bold ">{t("admin.actionLogs")}</h3>
+                <p className="text-sm text-slate-500">
+                  {t("dashboard.insightsLogs")}
+                </p>
               </div>
               {hasPermission(PERMISSIONS.ACTION_LOGS_VIEW) && (
-                <Link to="/admin/action-logs" className="text-sm font-medium text-violet-600 hover:text-violet-700 flex items-center gap-1 transition-colors">
-                  {t('dashboard.viewAll')}
+                <Link
+                  to="/admin/action-logs"
+                  className="text-sm font-medium text-violet-600 hover:text-violet-700 flex items-center gap-1 transition-colors"
+                >
+                  {t("dashboard.viewAll")}
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               )}
@@ -365,14 +442,18 @@ export const AdminDashboard: React.FC = () => {
                   key={index}
                   className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors group"
                 >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${getActivityColor(activity.type)}`}>
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${getActivityColor(activity.type)}`}
+                  >
                     {getActivityIcon(activity.type)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition-colors">
                       {activity.action}
                     </p>
-                    <p className="text-sm text-slate-500 truncate">{activity.target}</p>
+                    <p className="text-sm text-slate-500 truncate">
+                      {activity.target}
+                    </p>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-slate-400 flex-shrink-0">
                     <Clock className="w-3.5 h-3.5" />
@@ -389,33 +470,65 @@ export const AdminDashboard: React.FC = () => {
       <div className="bg-card rounded-2xl border border-slate-200/60 p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-lg font-bold ">{t('admin.systemSettings')}</h3>
-            <p className="text-sm text-slate-500">{t('dashboard.allSystemsOperational')}</p>
+            <h3 className="text-lg font-bold ">{t("admin.systemSettings")}</h3>
+            <p className="text-sm text-slate-500">
+              {t("dashboard.allSystemsOperational")}
+            </p>
           </div>
           <span className=" relative inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 backdrop-blur-md dark:bg-emerald-400/10 dark:text-emerald-300 dark:border-emerald-400/20">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+            </span>
+            {t("profile.active")}
           </span>
-          {t('profile.active')}
-        </span>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { name: 'Database', status: 'Connected', latency: '12ms', color: 'emerald' },
-            { name: 'Storage', status: '2.4TB free', latency: '8ms', color: 'emerald' },
-            { name: 'Cache', status: 'Redis active', latency: '3ms', color: 'emerald' },
-            { name: 'API Server', status: 'Operational', latency: '45ms', color: 'emerald' },
+            {
+              name: "Database",
+              status: "Connected",
+              latency: "12ms",
+              color: "emerald",
+            },
+            {
+              name: "Storage",
+              status: "2.4TB free",
+              latency: "8ms",
+              color: "emerald",
+            },
+            {
+              name: "Cache",
+              status: "Redis active",
+              latency: "3ms",
+              color: "emerald",
+            },
+            {
+              name: "API Server",
+              status: "Operational",
+              latency: "45ms",
+              color: "emerald",
+            },
           ].map((service) => (
-            <div key={service.name} className=" relative overflow-hidden p-4 rounded-2xl  bg-white/70 dark:bg-white/5 backdrop-blur-xl  dark:border border-slate-200/60 dark:border-white/10 shadow-sm hover:shadow-lg transition-all duration-300  hover:-translate-y-0.5"
+            <div
+              key={service.name}
+              className=" relative overflow-hidden p-4 rounded-2xl  bg-white/70 dark:bg-white/5 backdrop-blur-xl  dark:border border-slate-200/60 dark:border-white/10 shadow-sm hover:shadow-lg transition-all duration-300  hover:-translate-y-0.5"
             >
               <div className="flex items-center gap-2 mb-2">
-                <div className={`w-2.5 h-2.5 bg-${service.color}-500 rounded-full`} />
-                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{service.name}</span>
+                <div
+                  className={`w-2.5 h-2.5 bg-${service.color}-500 rounded-full`}
+                />
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  {service.name}
+                </span>
               </div>
-              <p className="text-lg font-bold text-slate-900 dark:text-white">{service.status}</p>
-              <p className="text-xs text-slate-400 dark:text-slate-400 mt-1">Latency: {service.latency}</p>
+              <p className="text-lg font-bold text-slate-900 dark:text-white">
+                {service.status}
+              </p>
+              <p className="text-xs text-slate-400 dark:text-slate-400 mt-1">
+                Latency: {service.latency}
+              </p>
             </div>
           ))}
         </div>
