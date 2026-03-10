@@ -749,8 +749,8 @@ export const IncidentDetailPage: React.FC = () => {
       if (trans.assign_user_id) {
         // Static assignment
         userId = trans.assign_user_id;
-      } else if (trans.auto_match_user && selectedUserId) {
-        // Auto-match with selection
+      } else if ((trans.manual_select_user || trans.auto_match_user) && selectedUserId) {
+        // Manual selection or auto-match with user selection
         userId = selectedUserId;
       }
 
@@ -1786,19 +1786,18 @@ export const IncidentDetailPage: React.FC = () => {
                 </div>
                 <div className="mt-1">
                   {incident.assignees && incident.assignees.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5">
-                      {incident.assignees.map((assignee, index) => (
-                        <div key={assignee.id} className="inline-flex items-center gap-1.5 bg-[hsl(var(--muted)/0.5)] px-2 py-1 rounded-md">
+                    <div className="flex flex-col gap-1">
+                      {incident.assignees.map((assignee) => (
+                        <div key={assignee.id} className="inline-flex items-center gap-1.5">
                           {assignee.avatar ? (
                             <img src={assignee.avatar} alt={assignee.username} className="w-5 h-5 rounded-full object-cover" />
                           ) : (
-                            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent))] flex items-center justify-center">
+                            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent))] flex items-center justify-center flex-shrink-0">
                               <span className="text-white text-[10px] font-semibold">{assignee.first_name?.[0] || assignee.username[0]}</span>
                             </div>
                           )}
                           <span className="text-xs text-[hsl(var(--foreground))]">
-                            {assignee.first_name || assignee.username}
-                            {index === 0 && incident.assignees!.length > 1 && <span className="text-[hsl(var(--muted-foreground))]"> (P)</span>}
+                            {assignee.first_name ? `${assignee.first_name} ${assignee.last_name || ''}`.trim() : assignee.username}
                           </span>
                         </div>
                       ))}
