@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   Save,
   AlertTriangle,
+  AlertCircle,
   Info,
   Zap,
   Upload,
@@ -134,11 +135,20 @@ export function IncidentCreatePage() {
     queryFn: () => lookupApi.listCategories(),
   });
 
-  const workflows: Workflow[] = workflowsData?.data || [];
-  const rawClassifications: Classification[] = classificationsData?.data || [];
+  const workflows: Workflow[] = useMemo(
+    () => workflowsData?.data || [],
+    [workflowsData?.data],
+  );
+  const rawClassifications: Classification[] = useMemo(
+    () => classificationsData?.data || [],
+    [classificationsData?.data],
+  );
   const users: User[] = usersData?.data || [];
   const departments: Department[] = departmentsData?.data || [];
-  const rawLocations: Location[] = locationsData?.data || [];
+  const rawLocations: Location[] = useMemo(
+    () => locationsData?.data || [],
+    [locationsData?.data],
+  );
 
   // Filter classifications based on user's assignments (unless super admin)
   const classifications = useMemo(() => {
@@ -647,6 +657,11 @@ export function IncidentCreatePage() {
     if (!formData.title.trim()) newErrors.title = t("incidents.titleRequired");
     if (!formData.workflow_id)
       newErrors.workflow_id = t("incidents.workflowRequired");
+    if (
+      workflowRequiredFields.includes("description") &&
+      !formData.description?.trim()
+    )
+      newErrors.description = t("incidents.descriptionRequired");
     if (workflowRequiredFields.includes("comment") && !comment.trim())
       newErrors.comment = t("incidents.fieldRequired", {
         field: t("incidents.comment", "Comment"),
@@ -654,9 +669,7 @@ export function IncidentCreatePage() {
 
     // Always require classification, location, source on web client
     if (!formData.classification_id || !formData.classification_id.trim()) {
-      newErrors.classification_id = t("incidents.fieldRequired", {
-        field: t("incidents.classification"),
-      });
+      newErrors.classification_id = t("incidents.classificationRequired");
     }
     if (!formData.location_id || !formData.location_id.trim()) {
       newErrors.location_id = t("incidents.fieldRequired", {
@@ -864,7 +877,7 @@ export function IncidentCreatePage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Card className="p-6">
@@ -883,28 +896,36 @@ export function IncidentCreatePage() {
                       value={formData.title}
                       readOnly
                       placeholder="Auto-generated from classification, location, and area"
-                      className="w-full px-4 py-2 bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] cursor-not-allowed"
+                      className={`w-full px-4 py-3 bg-[hsl(var(--muted)/0.3)] border-2 rounded-xl text-sm text-[hsl(var(--foreground))] cursor-not-allowed pr-12 transition-all duration-200 ${errors.title ? "border-[hsl(var(--destructive)/0.5)]" : "border-[hsl(var(--border))]"}`}
                     />
-                    <svg
-                      className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                      />
-                    </svg>
+                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                      {errors.title ? (
+                        <AlertCircle className="w-5 h-5 text-[hsl(var(--destructive))]" />
+                      ) : (
+                        <svg
+                          className="w-4 h-4 text-[hsl(var(--muted-foreground))]"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                          />
+                        </svg>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-xs text-[hsl(var(--muted-foreground))] italic">
+                  <p className="text-xs text-[hsl(var(--muted-foreground))] italic mt-1">
                     Title is automatically generated from selected
                     classification, location, and area
                   </p>
                   {errors.title && (
-                    <p className="text-xs text-red-500">{errors.title}</p>
+                    <p className="mt-2 text-sm text-[hsl(var(--destructive))]">
+                      {errors.title}
+                    </p>
                   )}
                 </div>
                 {workflowRequiredFields.includes("description") && (
@@ -1127,9 +1148,11 @@ export function IncidentCreatePage() {
                         ))}
                       </div>
                     )}
-                    <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors">
-                      <Upload className="w-5 h-5 text-gray-500" />
-                      <span className="text-sm text-gray-600">
+                    <label
+                      className={`flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-xl cursor-pointer hover:border-[hsl(var(--primary))] hover:bg-[hsl(var(--muted)/0.3)] transition-colors ${errors.attachments ? "border-[hsl(var(--destructive)/0.5)]" : "border-[hsl(var(--border))]"}`}
+                    >
+                      <Upload className="w-5 h-5 text-[hsl(var(--muted-foreground))]" />
+                      <span className="text-sm text-[hsl(var(--muted-foreground))]">
                         {t("incidents.clickToUpload", "Click to upload files")}
                       </span>
                       <input
@@ -1152,7 +1175,7 @@ export function IncidentCreatePage() {
                       />
                     </label>
                     {errors.attachments && (
-                      <p className="text-sm text-red-500">
+                      <p className="mt-2 text-sm text-[hsl(var(--destructive))]">
                         {errors.attachments}
                       </p>
                     )}

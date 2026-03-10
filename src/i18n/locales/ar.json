@@ -276,6 +276,8 @@
     "selectClassification": "اختر التصنيف...",
     "selectSource": "اختر المصدر...",
     "titleRequired": "العنوان مطلوب",
+    "descriptionRequired": "الوصف مطلوب",
+    "classificationRequired": "التصنيف مطلوب",
     "workflowRequired": "سير العمل مطلوب. يرجى اختيار التصنيف أو الموقع أو المصدر أو الخطورة للمطابقة التلقائية.",
     "fieldRequired": "{{field}} مطلوب",
     "loadingIncident": "جاري تحميل الحادثة...",

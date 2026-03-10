@@ -274,6 +274,8 @@
     "selectClassification": "Select classification...",
     "selectSource": "Select source...",
     "titleRequired": "Title is required",
+    "descriptionRequired": "Description is required",
+    "classificationRequired": "Classification is required",
     "workflowRequired": "Workflow is required. Please select classification, location, or source to auto-match.",
     "fieldRequired": "{{field}} is required",
     "loadingIncident": "Loading incident...",
