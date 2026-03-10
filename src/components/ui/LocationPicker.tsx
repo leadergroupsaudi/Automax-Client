@@ -364,9 +364,7 @@ export function LocationPicker({
             )
           }
         >
-          {isLoading
-            ? t("locationPicker.gettingLocation")
-            : t("locationPicker.getCurrentLocation")}
+          {isLoading ? "Getting location..." : "Get Current Location"}
         </Button>
 
         {value && (
@@ -434,7 +432,7 @@ export function LocationPicker({
           </div>
 
           {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute z-[1001] mt-1 w-full max-w-md left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden max-h-60 overflow-y-auto">
+            <div className="absolute z-11 mt-1 w-full max-w-md left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden max-h-60 overflow-y-auto">
               {suggestions.map((suggestion, index) => (
                 <button
                   key={index}
