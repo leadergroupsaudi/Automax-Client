@@ -1,6 +1,12 @@
 // Record Type definitions
-export type RecordType = 'incident' | 'request' | 'complaint' | 'query';
-export type ClassificationType = 'incident' | 'request' | 'complaint' | 'query' | 'both' | 'all';
+export type RecordType = "incident" | "request" | "complaint" | "query";
+export type ClassificationType =
+  | "incident"
+  | "request"
+  | "complaint"
+  | "query"
+  | "both"
+  | "all";
 
 // Base types
 export interface User {
@@ -98,7 +104,7 @@ export interface Department {
   name: string;
   code: string;
   description: string;
-  type: 'internal' | 'external';
+  type: "internal" | "external";
   parent_id: string | null;
   level: number;
   path: string;
@@ -121,7 +127,14 @@ export interface ApiResponse<T> {
 }
 
 // Lookup types
-export type FieldType = 'text' | 'number' | 'date' | 'select' | 'multiselect' | 'checkbox' | 'textarea';
+export type FieldType =
+  | "text"
+  | "number"
+  | "date"
+  | "select"
+  | "multiselect"
+  | "checkbox"
+  | "textarea";
 
 export interface ValidationRules {
   required?: boolean;
@@ -364,7 +377,7 @@ export interface DepartmentCreateRequest {
   name: string;
   code: string;
   description?: string;
-  type?: 'internal' | 'external';
+  type?: "internal" | "external";
   parent_id?: string;
   manager_id?: string;
   location_ids?: string[];
@@ -377,7 +390,7 @@ export interface DepartmentUpdateRequest {
   name?: string;
   code?: string;
   description?: string;
-  type?: 'internal' | 'external';
+  type?: "internal" | "external";
   manager_id?: string;
   location_ids?: string[];
   classification_ids?: string[];
@@ -462,15 +475,49 @@ export interface ActionLogFilterOptions {
 }
 
 // Email notification recipients for transitions
-export type EmailRecipientType = 'assignee' | 'previous_assignee' | 'reporter' | 'creator' | 'department_head' | 'custom';
+export type EmailRecipientType =
+  | "assignee"
+  | "previous_assignee"
+  | "reporter"
+  | "creator"
+  | "department_head"
+  | "custom";
 
-export const EMAIL_RECIPIENTS: { value: EmailRecipientType; label: string; description: string }[] = [
-  { value: 'assignee', label: 'Current Assignee', description: 'The user currently assigned to the incident' },
-  { value: 'previous_assignee', label: 'Previous Assignee', description: 'The user who was previously assigned' },
-  { value: 'reporter', label: 'Reporter', description: 'The person who reported the incident' },
-  { value: 'creator', label: 'Creator', description: 'The user who created the incident' },
-  { value: 'department_head', label: 'Department Head', description: 'The head of the assigned department' },
-  { value: 'custom', label: 'Custom Email', description: 'Specify a custom email address' },
+export const EMAIL_RECIPIENTS: {
+  value: EmailRecipientType;
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: "assignee",
+    label: "Current Assignee",
+    description: "The user currently assigned to the incident",
+  },
+  {
+    value: "previous_assignee",
+    label: "Previous Assignee",
+    description: "The user who was previously assigned",
+  },
+  {
+    value: "reporter",
+    label: "Reporter",
+    description: "The person who reported the incident",
+  },
+  {
+    value: "creator",
+    label: "Creator",
+    description: "The user who created the incident",
+  },
+  {
+    value: "department_head",
+    label: "Department Head",
+    description: "The head of the assigned department",
+  },
+  {
+    value: "custom",
+    label: "Custom Email",
+    description: "Specify a custom email address",
+  },
 ];
 
 export interface TransitionEmailConfig {
@@ -486,32 +533,34 @@ export interface TransitionEmailConfig {
 
 // Incident Source types
 export type IncidentSource =
-  | 'web'
-  | 'mobile'
-  | 'email'
-  | 'phone'
-  | 'walk_in'
-  | 'api'
-  | 'social_media'
-  | '940_system'
-  | '940_manual'
-  | 'field'
-  | 'manual'
-  | 'other';
+  | "web"
+  | "mobile"
+  | "email"
+  | "phone"
+  | "walk_in"
+  | "api"
+  | "social_media"
+  | "940_system"
+  | "940_manual"
+  | "field"
+  | "manual"
+  | "viusional"
+  | "other";
 
 export const INCIDENT_SOURCES: { value: IncidentSource; label: string }[] = [
-  { value: 'web', label: 'Web Portal' },
-  { value: 'mobile', label: 'Mobile App' },
-  { value: 'email', label: 'Email' },
-  { value: 'phone', label: 'Phone' },
-  { value: 'walk_in', label: 'Walk-in' },
-  { value: 'api', label: 'API Integration' },
-  { value: 'social_media', label: 'Social Media' },
-  { value: '940_system', label: '940 System' },
-  { value: '940_manual', label: '940 Manual' },
-  { value: 'field', label: 'Field' },
-  { value: 'manual', label: 'Manual Entry' },
-  { value: 'other', label: 'Other' },
+  { value: "web", label: "Web Portal" },
+  { value: "mobile", label: "Mobile App" },
+  { value: "email", label: "Email" },
+  { value: "phone", label: "Phone" },
+  { value: "walk_in", label: "Walk-in" },
+  { value: "api", label: "API Integration" },
+  { value: "social_media", label: "Social Media" },
+  { value: "940_system", label: "940 System" },
+  { value: "940_manual", label: "940 Manual" },
+  { value: "field", label: "Field" },
+  { value: "manual", label: "Manual Entry" },
+  { value: "viusional", label: "Viusional" },
+  { value: "other", label: "Other" },
 ];
 
 // Workflow matching API request/response
@@ -545,21 +594,22 @@ export interface WorkflowMatchConfig {
 // Incident form field names that can be made required
 // Includes standard fields and lookup category codes (e.g., 'lookup:PRIORITY', 'lookup:NATIONALITY')
 export type IncidentFormField =
-  | 'description'
-  | 'classification_id'
-  | 'priority'
-  | 'source'
-  | 'source_incident_id'
-  | 'channel'
-  | 'assignee_id'
-  | 'department_id'
-  | 'location_id'
-  | 'geolocation'
-  | 'due_date'
-  | 'reporter_name'
-  | 'reporter_email'
-  | 'attachments'
-  | 'attachment'
+  | "description"
+  | "classification_id"
+  | "priority"
+  | "source"
+  | "source_incident_id"
+  | "channel"
+  | "assignee_id"
+  | "department_id"
+  | "location_id"
+  | "geolocation"
+  | "due_date"
+  | "reporter_name"
+  | "reporter_email"
+  | "attachments"
+  | "attachment"
+  | "comment"
   | `lookup:${string}`; // Dynamic lookup category required fields
 
 // Workflow types
@@ -596,7 +646,7 @@ export interface WorkflowState {
   name: string;
   code: string;
   description: string;
-  state_type: 'initial' | 'normal' | 'terminal';
+  state_type: "initial" | "normal" | "terminal";
   color: string;
   position_x: number;
   position_y: number;
@@ -629,7 +679,7 @@ export interface WorkflowTransition {
   assign_department_id?: string;
   assign_department?: Department;
   auto_detect_department: boolean;
-  department_type_filter?: 'internal' | 'external' | '';
+  department_type_filter?: "internal" | "external" | "";
 
   // User Assignment
   assign_user_id?: string;
@@ -650,7 +700,7 @@ export interface WorkflowTransition {
 export interface TransitionRequirement {
   id: string;
   transition_id: string;
-  requirement_type: 'comment' | 'attachment' | 'feedback' | 'field_value';
+  requirement_type: "comment" | "attachment" | "feedback" | "field_value";
   field_name?: string;
   field_value?: string;
   is_mandatory: boolean;
@@ -660,7 +710,7 @@ export interface TransitionRequirement {
 export interface TransitionAction {
   id: string;
   transition_id: string;
-  action_type: 'email' | 'field_update' | 'webhook' | 'notification';
+  action_type: "email" | "field_update" | "webhook" | "notification";
   name: string;
   description?: string;
   config?: string;
@@ -721,7 +771,7 @@ export interface WorkflowStateCreateRequest {
   name: string;
   code: string;
   description?: string;
-  state_type?: 'initial' | 'normal' | 'terminal';
+  state_type?: "initial" | "normal" | "terminal";
   color?: string;
   position_x?: number;
   position_y?: number;
@@ -737,7 +787,7 @@ export interface WorkflowStateUpdateRequest {
   name?: string;
   code?: string;
   description?: string;
-  state_type?: 'initial' | 'normal' | 'terminal';
+  state_type?: "initial" | "normal" | "terminal";
   color?: string;
   position_x?: number;
   position_y?: number;
@@ -762,7 +812,7 @@ export interface WorkflowTransitionCreateRequest {
   // Department Assignment
   assign_department_id?: string;
   auto_detect_department?: boolean;
-  department_type_filter?: 'internal' | 'external' | '';
+  department_type_filter?: "internal" | "external" | "";
 
   // User Assignment
   assign_user_id?: string;
@@ -784,7 +834,7 @@ export interface WorkflowTransitionUpdateRequest {
   // Department Assignment
   assign_department_id?: string | null;
   auto_detect_department?: boolean;
-  department_type_filter?: 'internal' | 'external' | '';
+  department_type_filter?: "internal" | "external" | "";
 
   // User Assignment
   assign_user_id?: string | null;
@@ -799,7 +849,7 @@ export interface WorkflowImportResponse {
 }
 
 export interface TransitionRequirementRequest {
-  requirement_type: 'comment' | 'attachment' | 'feedback' | 'field_value';
+  requirement_type: "comment" | "attachment" | "feedback" | "field_value";
   field_name?: string;
   field_value?: string;
   is_mandatory: boolean;
@@ -807,7 +857,7 @@ export interface TransitionRequirementRequest {
 }
 
 export interface TransitionActionRequest {
-  action_type: 'email' | 'field_update' | 'webhook' | 'notification';
+  action_type: "email" | "field_update" | "webhook" | "notification";
   name: string;
   description?: string;
   config?: string;
@@ -936,15 +986,15 @@ export interface TransitionHistory {
 
 // Incident Revision Types
 export type IncidentRevisionActionType =
-  | 'field_change'
-  | 'comment_added'
-  | 'comment_modified'
-  | 'comment_deleted'
-  | 'attachment_added'
-  | 'attachment_removed'
-  | 'assignee_changed'
-  | 'status_changed'
-  | 'created';
+  | "field_change"
+  | "comment_added"
+  | "comment_modified"
+  | "comment_deleted"
+  | "attachment_added"
+  | "attachment_removed"
+  | "assignee_changed"
+  | "status_changed"
+  | "created";
 
 export interface IncidentFieldChange {
   field_name: string;
@@ -991,6 +1041,7 @@ export interface StateStatDetail {
   id: string;
   name: string;
   count: number;
+  state_type?: string;
 }
 
 export interface IncidentStats {
@@ -1009,7 +1060,7 @@ export interface IncidentCreateRequest {
   title: string;
   description?: string;
   classification_id?: string;
-  workflow_id?: string;  // Now optional - can be auto-matched
+  workflow_id?: string; // Now optional - can be auto-matched
   source?: IncidentSource;
   assignee_id?: string;
   department_id?: string;
@@ -1027,6 +1078,7 @@ export interface IncidentCreateRequest {
   custom_fields?: string;
   lookup_value_ids?: string[];
   custom_lookup_fields?: Record<string, any>;
+  comment?: string;
 }
 
 export interface IncidentUpdateRequest {
@@ -1084,7 +1136,7 @@ export interface PresenceInfo {
 export interface DepartmentMatchRequest {
   classification_id?: string;
   location_id?: string;
-  department_type?: 'internal' | 'external';
+  department_type?: "internal" | "external";
 }
 
 export interface DepartmentMatchResponse {
@@ -1125,7 +1177,7 @@ export interface IncidentFilter {
   reporter_id?: string;
   sla_breached?: boolean;
   record_type?: RecordType;
-  channel?: string;  // For complaints
+  channel?: string; // For complaints
   start_date?: string;
   end_date?: string;
   page?: number;
@@ -1157,7 +1209,7 @@ export interface BulkConvertToRequestRequest {
     incident_id: string;
     transition_id?: string;
     transition_comment?: string;
-  }
+  };
 }
 
 export interface ConvertToRequestResponse {
@@ -1243,28 +1295,34 @@ export interface CreateRequestRequest {
 // ===========================================
 
 // Report Data Sources
-export type ReportDataSource = 'incidents' | 'action_logs' | 'users' | 'departments' | 'locations' | 'workflows';
+export type ReportDataSource =
+  | "incidents"
+  | "action_logs"
+  | "users"
+  | "departments"
+  | "locations"
+  | "workflows";
 
 // Filter Operators
 export type FilterOperator =
-  | 'equals'
-  | 'not_equals'
-  | 'contains'
-  | 'not_contains'
-  | 'starts_with'
-  | 'ends_with'
-  | 'greater_than'
-  | 'less_than'
-  | 'greater_than_or_equal'
-  | 'less_than_or_equal'
-  | 'between'
-  | 'in'
-  | 'not_in'
-  | 'is_empty'
-  | 'is_not_empty'
-  | 'before'
-  | 'after'
-  | 'on_date';
+  | "equals"
+  | "not_equals"
+  | "contains"
+  | "not_contains"
+  | "starts_with"
+  | "ends_with"
+  | "greater_than"
+  | "less_than"
+  | "greater_than_or_equal"
+  | "less_than_or_equal"
+  | "between"
+  | "in"
+  | "not_in"
+  | "is_empty"
+  | "is_not_empty"
+  | "before"
+  | "after"
+  | "on_date";
 
 // Filter Value Types
 export type FilterValue =
@@ -1281,7 +1339,14 @@ export type FilterValue =
 export interface ReportFieldDefinition {
   field: string;
   label: string;
-  type: 'string' | 'number' | 'date' | 'datetime' | 'boolean' | 'enum' | 'relation';
+  type:
+    | "string"
+    | "number"
+    | "date"
+    | "datetime"
+    | "boolean"
+    | "enum"
+    | "relation";
   category: string;
   sortable: boolean;
   filterable: boolean;
@@ -1289,7 +1354,7 @@ export interface ReportFieldDefinition {
   options?: { value: string | number; label: string }[];
   relationField?: string;
   description?: string;
-  dynamicOptions?: 'departments' | 'locations' | 'classifications'; // For hierarchical dropdowns
+  dynamicOptions?: "departments" | "locations" | "classifications"; // For hierarchical dropdowns
 }
 
 // Data Source Definition
@@ -1312,7 +1377,7 @@ export interface ReportFilter {
 // Report Sort
 export interface ReportSort {
   field: string;
-  direction: 'asc' | 'desc';
+  direction: "asc" | "desc";
 }
 
 // Report Column Config
@@ -1326,7 +1391,7 @@ export interface ReportColumnConfig {
 // Report Template Config
 export interface ReportTemplateConfig {
   columns: ReportColumnConfig[];
-  filters: Omit<ReportFilter, 'id'>[];
+  filters: Omit<ReportFilter, "id">[];
   sorting: ReportSort[];
   options?: {
     includeSubDepartments?: boolean;
@@ -1355,7 +1420,7 @@ export interface ReportTemplate {
 export interface ReportQueryRequest {
   data_source: ReportDataSource;
   columns: string[];
-  filters: Omit<ReportFilter, 'id'>[];
+  filters: Omit<ReportFilter, "id">[];
   sorting: ReportSort[];
   page?: number;
   limit?: number;
@@ -1380,9 +1445,9 @@ export interface ReportQueryResponse<T = Record<string, unknown>> {
 export interface ReportExportRequest {
   data_source: ReportDataSource;
   columns: string[];
-  filters: Omit<ReportFilter, 'id'>[];
+  filters: Omit<ReportFilter, "id">[];
   sorting: ReportSort[];
-  format: 'xlsx' | 'pdf';
+  format: "xlsx" | "pdf";
   options?: {
     title?: string;
     includeFilters?: boolean;
@@ -1465,12 +1530,12 @@ export interface SettingsUpdateRequest {
 }
 
 // Re-export report template builder types
-export * from './reportTemplate';
+export * from "./reportTemplate";
 
 // Communication types
 export interface EmailRecipient {
   email: string;
-  type: 'to' | 'cc' | 'bcc';
+  type: "to" | "cc" | "bcc";
   status?: string;
   error?: string;
 }
@@ -1542,7 +1607,7 @@ export interface EmailFilter {
 // SMS types (using same notification structure as Email)
 export interface SMSRecipient {
   email: string; // Actually phone number, but API uses 'email' field
-  type: 'to' | 'cc' | 'bcc';
+  type: "to" | "cc" | "bcc";
   status?: string;
   error?: string;
 }
@@ -1635,9 +1700,8 @@ export interface CanMergeResponse {
 }
 
 export interface iLocationOption {
-  name: string,
-  lat: number,
-  lon: number,
-  type: string
+  name: string;
+  lat: number;
+  lon: number;
+  type: string;
 }
-
