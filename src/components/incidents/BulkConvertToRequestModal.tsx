@@ -262,11 +262,7 @@ export const BulkConvertToRequestModal: React.FC<
     enabled: isOpen && currentStep === "workflow",
   });
 
-  const {
-    data: requestsData,
-    isLoading: requestsLoading,
-    error,
-  } = useQuery({
+  const { data: requestsData, isLoading: requestsLoading } = useQuery({
     queryKey: ["requests", requestSearch],
     queryFn: () =>
       incidentApi.list({
