@@ -1354,7 +1354,7 @@ export interface ReportFieldDefinition {
   options?: { value: string | number; label: string }[];
   relationField?: string;
   description?: string;
-  dynamicOptions?: "departments" | "locations" | "classifications"; // For hierarchical dropdowns
+  dynamicOptions?: "departments" | "locations" | "classifications" | any; // For hierarchical dropdowns
 }
 
 // Data Source Definition

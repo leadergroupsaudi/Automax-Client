@@ -156,7 +156,6 @@ export const ReportTemplateCard: React.FC<ReportTemplateCardProps> = ({
                 }
             })
         }
-        console.log(dateFilter)
         const request: ReportQueryRequest = {
             data_source: template.data_source,
             columns: template.config.columns,
