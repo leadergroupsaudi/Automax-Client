@@ -402,6 +402,7 @@
     "selectLocationModal": "Select Location",
     "selectLocationModalDesc": "Please select a location",
     "searchRequests": "Search by request number or title..."
+    "createdSuccess": "Incident created successfully"
   },
   "incidentMerge": {
     "title": "Merge Incidents",

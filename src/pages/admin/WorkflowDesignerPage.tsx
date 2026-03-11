@@ -93,7 +93,7 @@ interface TransitionFormData {
   department_type_filter: "" | "internal" | "external";
   // User Assignment
   assign_user_id: string;
-  assignment_role_id: string;
+  assignment_role_ids: string[];
   auto_match_user: boolean;
   manual_select_user: boolean;
 }
@@ -124,7 +124,7 @@ const initialTransitionFormData: TransitionFormData = {
   department_type_filter: "",
   // User Assignment
   assign_user_id: "",
-  assignment_role_id: "",
+  assignment_role_ids: [],
   auto_match_user: false,
   manual_select_user: false,
 };
@@ -679,7 +679,7 @@ export const WorkflowDesignerPage: React.FC = () => {
         "",
       // User Assignment
       assign_user_id: transition.assign_user_id || "",
-      assignment_role_id: transition.assignment_role_id || "",
+      assignment_role_ids: transition.assignment_roles?.map((r) => r.id) || [],
       auto_match_user: transition.auto_match_user || false,
       manual_select_user: transition.manual_select_user || false,
     });
@@ -779,7 +779,7 @@ export const WorkflowDesignerPage: React.FC = () => {
         transitionFormData.department_type_filter || undefined,
       // User Assignment
       assign_user_id: transitionFormData.assign_user_id || undefined,
-      assignment_role_id: transitionFormData.assignment_role_id || undefined,
+      assignment_role_ids: transitionFormData.assignment_role_ids,
       auto_match_user: transitionFormData.auto_match_user,
       manual_select_user: transitionFormData.manual_select_user,
     };
@@ -2893,7 +2893,7 @@ export const WorkflowDesignerPage: React.FC = () => {
                             auto_match_user: false,
                             manual_select_user: false,
                             assign_user_id: "",
-                            assignment_role_id: "",
+                            assignment_role_ids: [],
                           });
                         }}
                         className="w-4 h-4 text-[hsl(var(--primary))] border-[hsl(var(--border))]"
@@ -2980,7 +2980,7 @@ export const WorkflowDesignerPage: React.FC = () => {
                             ...transitionFormData,
                             auto_match_user: false,
                             manual_select_user: false,
-                            assignment_role_id: "",
+                            assignment_role_ids: [],
                           });
                         }}
                         className="w-4 h-4 text-[hsl(var(--primary))] border-[hsl(var(--border))]"
@@ -3000,25 +3000,54 @@ export const WorkflowDesignerPage: React.FC = () => {
                       transitionFormData.manual_select_user) && (
                       <div className="ml-7">
                         <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">
-                          Role to match (required):
+                          Roles to match (select one or more):
                         </label>
-                        <select
-                          value={transitionFormData.assignment_role_id}
-                          onChange={(e) =>
-                            setTransitionFormData({
-                              ...transitionFormData,
-                              assignment_role_id: e.target.value,
-                            })
-                          }
-                          className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
-                        >
-                          <option value="">Select a role...</option>
-                          {roles.map((role) => (
-                            <option key={role.id} value={role.id}>
-                              {role.name}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="border border-[hsl(var(--border))] rounded-xl overflow-hidden bg-[hsl(var(--background))]">
+                          {roles.map((role) => {
+                            const isSelected =
+                              transitionFormData.assignment_role_ids.includes(
+                                role.id,
+                              );
+                            return (
+                              <label
+                                key={role.id}
+                                className="flex items-center gap-2 px-3 py-2 hover:bg-[hsl(var(--muted)/0.4)] cursor-pointer border-b border-[hsl(var(--border))] last:border-b-0"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => {
+                                    const updated = isSelected
+                                      ? transitionFormData.assignment_role_ids.filter(
+                                          (id) => id !== role.id,
+                                        )
+                                      : [
+                                          ...transitionFormData.assignment_role_ids,
+                                          role.id,
+                                        ];
+                                    setTransitionFormData({
+                                      ...transitionFormData,
+                                      assignment_role_ids: updated,
+                                    });
+                                  }}
+                                  className="w-4 h-4 text-[hsl(var(--primary))] border-[hsl(var(--border))] rounded"
+                                />
+                                <span className="text-sm text-[hsl(var(--foreground))]">
+                                  {role.name}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                        {transitionFormData.assignment_role_ids.length > 0 && (
+                          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
+                            {transitionFormData.assignment_role_ids.length} role
+                            {transitionFormData.assignment_role_ids.length > 1
+                              ? "s"
+                              : ""}{" "}
+                            selected
+                          </p>
+                        )}
                       </div>
                     )}
 

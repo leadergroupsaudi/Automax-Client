@@ -684,8 +684,7 @@ export interface WorkflowTransition {
   // User Assignment
   assign_user_id?: string;
   assign_user?: User;
-  assignment_role_id?: string;
-  assignment_role?: Role;
+  assignment_roles?: Role[];
   auto_match_user: boolean;
   manual_select_user: boolean;
 
@@ -816,7 +815,7 @@ export interface WorkflowTransitionCreateRequest {
 
   // User Assignment
   assign_user_id?: string;
-  assignment_role_id?: string;
+  assignment_role_ids?: string[];
   auto_match_user?: boolean;
   manual_select_user?: boolean;
 }
@@ -838,7 +837,7 @@ export interface WorkflowTransitionUpdateRequest {
 
   // User Assignment
   assign_user_id?: string | null;
-  assignment_role_id?: string | null;
+  assignment_role_ids?: string[];
   auto_match_user?: boolean;
   manual_select_user?: boolean;
 }
@@ -1112,7 +1111,7 @@ export interface IncidentTransitionRequest {
 
   // Assignment overrides (used when auto-detect finds multiple matches)
   department_id?: string;
-  user_id?: string;
+  user_ids?: string[];
 
   // Field changes configured on the transition (user-editable fields)
   field_changes?: Record<string, string>;
@@ -1147,7 +1146,7 @@ export interface DepartmentMatchResponse {
 
 // User Match types
 export interface UserMatchRequest {
-  role_id?: string;
+  role_ids?: string[];
   classification_id?: string;
   location_id?: string;
   department_id?: string;

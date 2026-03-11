@@ -33,6 +33,8 @@ import {
   ExternalLink,
   Radio,
   Copy,
+  Search,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "../../components/ui";
 import {
@@ -154,7 +156,15 @@ export const IncidentDetailPage: React.FC = () => {
   const [userMatchResult, setUserMatchResult] =
     useState<UserMatchResponse | null>(null);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>("");
-  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [deptSearchQuery, setDeptSearchQuery] = useState("");
+  const [collapsedDeptIds, setCollapsedDeptIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [collapsedUserGroups, setCollapsedUserGroups] = useState<Set<string>>(
+    new Set(),
+  );
 
   // Image lightbox state
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -355,7 +365,7 @@ export const IncidentDetailPage: React.FC = () => {
         setDepartmentMatchResult(null);
         setUserMatchResult(null);
         setSelectedDepartmentId("");
-        setSelectedUserId("");
+        setSelectedUserIds([]);
         toast.info("Incident Updated", {
           description:
             "This incident was updated by another user. Please review the changes.",
@@ -446,7 +456,7 @@ export const IncidentDetailPage: React.FC = () => {
       attachments,
       feedback,
       department_id,
-      user_id,
+      user_ids,
       field_changes,
       ready_to_close_duration,
     }: {
@@ -455,7 +465,7 @@ export const IncidentDetailPage: React.FC = () => {
       attachments?: string[];
       feedback?: { rating: number; comment?: string };
       department_id?: string;
-      user_id?: string;
+      user_ids?: string[];
       field_changes?: Record<string, string>;
       ready_to_close_duration?: string;
     }) =>
@@ -468,7 +478,7 @@ export const IncidentDetailPage: React.FC = () => {
           comment: feedback?.comment || "Missing Incident Information",
         },
         department_id,
-        user_id,
+        user_ids,
         field_changes,
         ready_to_close_duration,
         version: incident?.version || 1, // Include current version for optimistic locking
@@ -488,7 +498,7 @@ export const IncidentDetailPage: React.FC = () => {
       setDepartmentMatchResult(null);
       setUserMatchResult(null);
       setSelectedDepartmentId("");
-      setSelectedUserId("");
+      setSelectedUserIds([]);
       toast.success("Transition completed successfully");
     },
     onError: (error: any) => {
@@ -673,7 +683,11 @@ export const IncidentDetailPage: React.FC = () => {
     setDepartmentMatchResult(null);
     setUserMatchResult(null);
     setSelectedDepartmentId("");
-    setSelectedUserId("");
+    setSelectedUserIds([]);
+    setUserSearchQuery("");
+    setDeptSearchQuery("");
+    setCollapsedDeptIds(new Set());
+    setCollapsedUserGroups(new Set());
 
     // Check if we need to fetch assignment matches
     const trans = transition.transition;
@@ -682,7 +696,8 @@ export const IncidentDetailPage: React.FC = () => {
     // Fetch users for both auto_match_user AND manual_select_user
     const needsUserMatch =
       (trans.auto_match_user || trans.manual_select_user) &&
-      trans.assignment_role_id &&
+      trans.assignment_roles &&
+      trans.assignment_roles.length > 0 &&
       !trans.assign_user_id;
 
     if ((needsDeptMatch || needsUserMatch) && incident) {
@@ -716,7 +731,7 @@ export const IncidentDetailPage: React.FC = () => {
         // Fetch user matches if needed
         if (needsUserMatch) {
           const userResult = await userApi.match({
-            role_id: trans.assignment_role_id,
+            role_ids: trans.assignment_roles?.map((r) => r.id),
             classification_id: incident.classification?.id,
             location_id: incident.location?.id,
             department_id: incident.department?.id,
@@ -729,7 +744,7 @@ export const IncidentDetailPage: React.FC = () => {
               userResult.data.single_match &&
               userResult.data.matched_user_id
             ) {
-              setSelectedUserId(userResult.data.matched_user_id);
+              setSelectedUserIds([userResult.data.matched_user_id]);
             }
           }
         }
@@ -865,6 +880,37 @@ export const IncidentDetailPage: React.FC = () => {
         );
     }
 
+    // Validate department selection when auto-detect is on and multiple matches exist
+    const trans = selectedTransition.transition;
+    if (
+      trans.auto_detect_department &&
+      !trans.assign_department_id &&
+      departmentMatchResult &&
+      departmentMatchResult.departments.length > 0 &&
+      !departmentMatchResult.single_match &&
+      !selectedDepartmentId
+    ) {
+      newTransitionErrors.department = t(
+        "incidents.departmentSelectionRequired",
+        "Please select a department",
+      );
+    }
+
+    // Validate user selection when manual_select_user is on and users are available
+    if (
+      trans.manual_select_user &&
+      trans.assignment_roles &&
+      trans.assignment_roles.length > 0 &&
+      userMatchResult &&
+      userMatchResult.users.length > 0 &&
+      selectedUserIds.length === 0
+    ) {
+      newTransitionErrors.user = t(
+        "incidents.userSelectionRequired",
+        "Please select a user to assign",
+      );
+    }
+
     if (Object.keys(newTransitionErrors).length > 0) {
       setTransitionErrors(newTransitionErrors);
       return;
@@ -888,9 +934,7 @@ export const IncidentDetailPage: React.FC = () => {
       }
 
       // Determine assignment IDs
-      const trans = selectedTransition.transition;
       let departmentId: string | undefined;
-      let userId: string | undefined;
 
       // Department assignment
       if (trans.assign_department_id) {
@@ -901,17 +945,12 @@ export const IncidentDetailPage: React.FC = () => {
         departmentId = selectedDepartmentId;
       }
 
-      // User assignment
-      if (trans.assign_user_id) {
-        // Static assignment
-        userId = trans.assign_user_id;
-      } else if (
+      // User assignment — static assign_user_id is handled server-side from transition config
+      const userIds =
         (trans.manual_select_user || trans.auto_match_user) &&
-        selectedUserId
-      ) {
-        // Manual selection or auto-match with user selection
-        userId = selectedUserId;
-      }
+        selectedUserIds.length > 0
+          ? selectedUserIds
+          : undefined;
 
       transitionMutation.mutate({
         transitionId: selectedTransition.transition.id,
@@ -925,7 +964,7 @@ export const IncidentDetailPage: React.FC = () => {
               }
             : undefined,
         department_id: departmentId,
-        user_id: userId,
+        user_ids: userIds,
         field_changes:
           Object.keys(transitionFieldValues).length > 0
             ? transitionFieldValues
@@ -2544,6 +2583,11 @@ export const IncidentDetailPage: React.FC = () => {
                       <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase mb-2 flex items-center gap-1">
                         <Building2 className="w-3 h-3" />
                         {t("incidents.departmentAssignment")}
+                        {selectedTransition.transition.auto_detect_department &&
+                          !selectedTransition.transition
+                            .assign_department_id && (
+                            <span className="text-red-500 font-bold">*</span>
+                          )}
                       </p>
                       {selectedTransition.transition.assign_department_id ? (
                         <p className="text-sm text-[hsl(var(--foreground))]">
@@ -2566,22 +2610,254 @@ export const IncidentDetailPage: React.FC = () => {
                             </span>
                           </p>
                         ) : (
-                          <select
-                            value={selectedDepartmentId}
-                            onChange={(e) =>
-                              setSelectedDepartmentId(e.target.value)
-                            }
-                            className="w-full px-3 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-md text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
-                          >
-                            <option value="">
-                              {t("incidents.selectDepartment")}
-                            </option>
-                            {departmentMatchResult.departments.map((dept) => (
-                              <option key={dept.id} value={dept.id}>
-                                {dept.name}
-                              </option>
-                            ))}
-                          </select>
+                          (() => {
+                            const allDepts = departmentMatchResult.departments;
+                            // IDs present in the result set
+                            const deptIdSet = new Set(
+                              allDepts.map((d) => d.id),
+                            );
+                            // A dept is a parent if any other dept in the list has parent_id === dept.id
+                            const parentIds = new Set(
+                              allDepts
+                                .map((d) => d.parent_id)
+                                .filter(
+                                  (pid): pid is string =>
+                                    pid !== null && deptIdSet.has(pid),
+                                ),
+                            );
+                            const isLeaf = (id: string) => !parentIds.has(id);
+
+                            // Build tree from flat list
+                            const childrenMap = new Map<
+                              string | null,
+                              Department[]
+                            >();
+                            allDepts.forEach((d) => {
+                              const key =
+                                d.parent_id && deptIdSet.has(d.parent_id)
+                                  ? d.parent_id
+                                  : null;
+                              if (!childrenMap.has(key))
+                                childrenMap.set(key, []);
+                              childrenMap.get(key)!.push(d);
+                            });
+
+                            // Search: flat filtered list ignoring hierarchy
+                            const searchActive =
+                              deptSearchQuery.trim().length > 0;
+                            const filteredFlat = searchActive
+                              ? allDepts.filter((d) =>
+                                  d.name
+                                    .toLowerCase()
+                                    .includes(deptSearchQuery.toLowerCase()),
+                                )
+                              : [];
+
+                            const toggleDept = (id: string) =>
+                              setCollapsedDeptIds((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(id)) next.delete(id);
+                                else next.add(id);
+                                return next;
+                              });
+
+                            const renderDeptRow = (
+                              dept: Department,
+                              depth: number,
+                            ) => {
+                              const selectable = isLeaf(dept.id);
+                              const isSelected =
+                                selectedDepartmentId === dept.id;
+                              const children = childrenMap.get(dept.id) ?? [];
+                              const isCollapsed = collapsedDeptIds.has(dept.id);
+                              return (
+                                <React.Fragment key={dept.id}>
+                                  {selectable ? (
+                                    <label
+                                      className={`flex items-center gap-2 py-2 pr-3 cursor-pointer hover:bg-[hsl(var(--muted)/0.5)] select-none border-b border-[hsl(var(--border))] last:border-0 ${isSelected ? "bg-[hsl(var(--primary)/0.04)]" : ""}`}
+                                      style={{
+                                        paddingLeft: `${12 + depth * 16}px`,
+                                      }}
+                                    >
+                                      <input
+                                        type="radio"
+                                        name="dept-selection"
+                                        value={dept.id}
+                                        checked={isSelected}
+                                        onChange={() => {
+                                          setSelectedDepartmentId(dept.id);
+                                          if (transitionErrors.department)
+                                            setTransitionErrors((prev) => ({
+                                              ...prev,
+                                              department: "",
+                                            }));
+                                        }}
+                                        className="accent-[hsl(var(--primary))] flex-shrink-0"
+                                      />
+                                      <span className="text-sm text-[hsl(var(--foreground))] truncate">
+                                        {dept.name}
+                                      </span>
+                                    </label>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleDept(dept.id)}
+                                      className="w-full flex items-center gap-1.5 py-2 pr-3 border-b border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.3)] transition-colors"
+                                      style={{
+                                        paddingLeft: `${12 + depth * 16}px`,
+                                      }}
+                                    >
+                                      {isCollapsed ? (
+                                        <ChevronRight className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))] flex-shrink-0" />
+                                      ) : (
+                                        <ChevronDown className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))] flex-shrink-0" />
+                                      )}
+                                      <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide truncate">
+                                        {dept.name}
+                                      </span>
+                                      <span className="ml-auto text-xs text-[hsl(var(--muted-foreground))] flex-shrink-0">
+                                        {children.length}
+                                      </span>
+                                    </button>
+                                  )}
+                                  {!isCollapsed &&
+                                    children.map((child) =>
+                                      renderDeptRow(child, depth + 1),
+                                    )}
+                                </React.Fragment>
+                              );
+                            };
+
+                            const roots = childrenMap.get(null) ?? [];
+
+                            return (
+                              <>
+                                {/* Search + expand/collapse controls */}
+                                <div className="flex items-center gap-2 mb-1">
+                                  <div className="relative flex-1">
+                                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+                                    <input
+                                      type="text"
+                                      value={deptSearchQuery}
+                                      onChange={(e) =>
+                                        setDeptSearchQuery(e.target.value)
+                                      }
+                                      placeholder={t(
+                                        "incidents.searchDepartments",
+                                        "Search departments...",
+                                      )}
+                                      className="w-full pl-8 pr-3 py-1.5 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-md text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                                    />
+                                  </div>
+                                  {parentIds.size > 0 && !searchActive && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setCollapsedDeptIds(
+                                          collapsedDeptIds.size ===
+                                            parentIds.size
+                                            ? new Set()
+                                            : new Set(parentIds),
+                                        )
+                                      }
+                                      className="flex-shrink-0 text-xs text-[hsl(var(--primary))] hover:underline whitespace-nowrap"
+                                    >
+                                      {collapsedDeptIds.size === parentIds.size
+                                        ? t("common.expandAll", "Expand all")
+                                        : t(
+                                            "common.collapseAll",
+                                            "Collapse all",
+                                          )}
+                                    </button>
+                                  )}
+                                </div>
+                                <div
+                                  className={`border rounded-md overflow-y-auto max-h-52 bg-[hsl(var(--background))] ${transitionErrors.department ? "border-red-500" : "border-[hsl(var(--border))]"}`}
+                                >
+                                  {searchActive ? (
+                                    filteredFlat.length === 0 ? (
+                                      <p className="px-3 py-3 text-sm text-[hsl(var(--muted-foreground))] text-center">
+                                        {t(
+                                          "common.noResults",
+                                          "No results found",
+                                        )}
+                                      </p>
+                                    ) : (
+                                      filteredFlat.map((dept) => {
+                                        const selectable = isLeaf(dept.id);
+                                        const isSelected =
+                                          selectedDepartmentId === dept.id;
+                                        return selectable ? (
+                                          <label
+                                            key={dept.id}
+                                            className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-[hsl(var(--muted)/0.5)] select-none border-b border-[hsl(var(--border))] last:border-0 ${isSelected ? "bg-[hsl(var(--primary)/0.04)]" : ""}`}
+                                          >
+                                            <input
+                                              type="radio"
+                                              name="dept-selection"
+                                              value={dept.id}
+                                              checked={isSelected}
+                                              onChange={() => {
+                                                setSelectedDepartmentId(
+                                                  dept.id,
+                                                );
+                                                if (transitionErrors.department)
+                                                  setTransitionErrors(
+                                                    (prev) => ({
+                                                      ...prev,
+                                                      department: "",
+                                                    }),
+                                                  );
+                                              }}
+                                              className="accent-[hsl(var(--primary))]"
+                                            />
+                                            <div className="flex flex-col min-w-0">
+                                              <span className="text-sm text-[hsl(var(--foreground))] truncate">
+                                                {dept.name}
+                                              </span>
+                                              {dept.parent_id &&
+                                                deptIdSet.has(
+                                                  dept.parent_id,
+                                                ) && (
+                                                  <span className="text-xs text-[hsl(var(--muted-foreground))] truncate">
+                                                    {
+                                                      allDepts.find(
+                                                        (d) =>
+                                                          d.id ===
+                                                          dept.parent_id,
+                                                      )?.name
+                                                    }
+                                                  </span>
+                                                )}
+                                            </div>
+                                          </label>
+                                        ) : (
+                                          <div
+                                            key={dept.id}
+                                            className="flex items-center gap-1.5 px-3 py-2 border-b border-[hsl(var(--border))] last:border-0 opacity-50"
+                                          >
+                                            <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">
+                                              {dept.name}
+                                            </span>
+                                            <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                                              ({t("common.group", "group")})
+                                            </span>
+                                          </div>
+                                        );
+                                      })
+                                    )
+                                  ) : (
+                                    roots.map((d) => renderDeptRow(d, 0))
+                                  )}
+                                </div>
+                                {transitionErrors.department && (
+                                  <p className="text-xs text-red-500 mt-1">
+                                    {transitionErrors.department}
+                                  </p>
+                                )}
+                              </>
+                            );
+                          })()
                         )
                       ) : (
                         <p className="text-sm text-[hsl(var(--muted-foreground))]">
@@ -2595,11 +2871,16 @@ export const IncidentDetailPage: React.FC = () => {
                   {(selectedTransition.transition.assign_user_id ||
                     ((selectedTransition.transition.auto_match_user ||
                       selectedTransition.transition.manual_select_user) &&
-                      selectedTransition.transition.assignment_role_id)) && (
+                      selectedTransition.transition.assignment_roles &&
+                      selectedTransition.transition.assignment_roles.length >
+                        0)) && (
                     <div className="bg-[hsl(var(--muted)/0.5)] rounded-lg p-3">
                       <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase mb-2 flex items-center gap-1">
                         <User className="w-3 h-3" />
                         {t("incidents.userAssignment")}
+                        {selectedTransition.transition.manual_select_user && (
+                          <span className="text-red-500 font-bold">*</span>
+                        )}
                         {selectedTransition.transition.manual_select_user && (
                           <span className="text-amber-500">
                             ({t("incidents.manualSelectionRequired")})
@@ -2611,12 +2892,16 @@ export const IncidentDetailPage: React.FC = () => {
                               ({t("incidents.autoAssignAllMatched")})
                             </span>
                           )}
-                        {selectedTransition.transition.assignment_role && (
-                          <span className="text-[hsl(var(--primary))] ml-1">
-                            {t("incidents.role")}:{" "}
-                            {selectedTransition.transition.assignment_role.name}
-                          </span>
-                        )}
+                        {selectedTransition.transition.assignment_roles &&
+                          selectedTransition.transition.assignment_roles
+                            .length > 0 && (
+                            <span className="text-[hsl(var(--primary))] ml-1">
+                              {t("incidents.role")}:{" "}
+                              {selectedTransition.transition.assignment_roles
+                                .map((r) => r.name)
+                                .join(", ")}
+                            </span>
+                          )}
                       </p>
                       {selectedTransition.transition.assign_user_id ? (
                         <p className="text-sm text-[hsl(var(--foreground))]">
@@ -2650,26 +2935,389 @@ export const IncidentDetailPage: React.FC = () => {
                               </span>
                             </div>
                           ) : (
-                            // Multiple matches — show dropdown
-                            <select
-                              value={selectedUserId}
-                              onChange={(e) =>
-                                setSelectedUserId(e.target.value)
-                              }
-                              className="w-full px-3 py-2 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-md text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
-                            >
-                              <option value="">
-                                {t("incidents.selectAssignee")}
-                              </option>
-                              {userMatchResult.users.map((user) => (
-                                <option key={user.id} value={user.id}>
-                                  {user.first_name
-                                    ? `${user.first_name} ${user.last_name || ""}`
-                                    : user.username}{" "}
-                                  ({user.email})
-                                </option>
-                              ))}
-                            </select>
+                            // Multiple matches — grouped by role checkbox list
+                            (() => {
+                              const allUsers = userMatchResult.users;
+                              const assignmentRoles =
+                                selectedTransition.transition
+                                  .assignment_roles ?? [];
+                              const searchActive =
+                                userSearchQuery.trim().length > 0;
+                              const filteredUsers = searchActive
+                                ? allUsers.filter((u) =>
+                                    `${u.first_name || ""} ${u.last_name || ""} ${u.username} ${u.email}`
+                                      .toLowerCase()
+                                      .includes(userSearchQuery.toLowerCase()),
+                                  )
+                                : allUsers;
+
+                              // Group users by assignment role (user may appear in multiple groups)
+                              const roleGroups: Array<{
+                                role: (typeof assignmentRoles)[0];
+                                users: typeof allUsers;
+                              }> = assignmentRoles.map((role) => ({
+                                role,
+                                users: allUsers.filter((u) =>
+                                  u.roles?.some((r) => r.id === role.id),
+                                ),
+                              }));
+
+                              const allGroupKeys = roleGroups.map(
+                                (g) => g.role.id,
+                              );
+                              const allCollapsed =
+                                allGroupKeys.length > 0 &&
+                                allGroupKeys.every((k) =>
+                                  collapsedUserGroups.has(k),
+                                );
+
+                              const allUsersSelected =
+                                allUsers.length > 0 &&
+                                allUsers.every((u) =>
+                                  selectedUserIds.includes(u.id),
+                                );
+                              const someSelected = selectedUserIds.length > 0;
+                              const allFilteredSelected =
+                                filteredUsers.length > 0 &&
+                                filteredUsers.every((u) =>
+                                  selectedUserIds.includes(u.id),
+                                );
+                              const someFilteredSelected = filteredUsers.some(
+                                (u) => selectedUserIds.includes(u.id),
+                              );
+
+                              const toggleSelectUser = (
+                                userId: string,
+                                isChecked: boolean,
+                              ) => {
+                                setSelectedUserIds((prev) =>
+                                  isChecked
+                                    ? prev.filter((id) => id !== userId)
+                                    : [...prev, userId],
+                                );
+                                if (transitionErrors.user)
+                                  setTransitionErrors((prev) => ({
+                                    ...prev,
+                                    user: "",
+                                  }));
+                              };
+
+                              const renderUserRow = (
+                                user: UserType,
+                                indent = false,
+                              ) => {
+                                const isChecked = selectedUserIds.includes(
+                                  user.id,
+                                );
+                                return (
+                                  <label
+                                    key={user.id}
+                                    className={`flex items-center gap-2 py-2 pr-3 cursor-pointer hover:bg-[hsl(var(--muted)/0.5)] select-none border-b border-[hsl(var(--border))] last:border-0 ${isChecked ? "bg-[hsl(var(--primary)/0.04)]" : ""}`}
+                                    style={{
+                                      paddingLeft: indent ? "28px" : "12px",
+                                    }}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={() =>
+                                        toggleSelectUser(user.id, isChecked)
+                                      }
+                                      className="rounded flex-shrink-0"
+                                    />
+                                    <div className="flex flex-col min-w-0">
+                                      <span className="text-sm text-[hsl(var(--foreground))] font-medium truncate">
+                                        {user.first_name
+                                          ? `${user.first_name} ${user.last_name || ""}`.trim()
+                                          : user.username}
+                                      </span>
+                                      <span className="text-xs text-[hsl(var(--muted-foreground))] truncate">
+                                        {user.email}
+                                      </span>
+                                    </div>
+                                  </label>
+                                );
+                              };
+
+                              return (
+                                <>
+                                  {/* Selected summary chips */}
+                                  {selectedUserIds.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mb-2">
+                                      {selectedUserIds.map((id) => {
+                                        const u = allUsers.find(
+                                          (x) => x.id === id,
+                                        );
+                                        if (!u) return null;
+                                        return (
+                                          <span
+                                            key={id}
+                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)]"
+                                          >
+                                            {u.first_name
+                                              ? `${u.first_name} ${u.last_name || ""}`.trim()
+                                              : u.username}
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                setSelectedUserIds((prev) =>
+                                                  prev.filter((x) => x !== id),
+                                                )
+                                              }
+                                              className="hover:text-red-500 leading-none"
+                                            >
+                                              ×
+                                            </button>
+                                          </span>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                  {/* Search + collapse controls */}
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <div className="relative flex-1">
+                                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+                                      <input
+                                        type="text"
+                                        value={userSearchQuery}
+                                        onChange={(e) =>
+                                          setUserSearchQuery(e.target.value)
+                                        }
+                                        placeholder={t(
+                                          "incidents.searchUsers",
+                                          "Search users...",
+                                        )}
+                                        className="w-full pl-8 pr-3 py-1.5 text-sm bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-md text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                                      />
+                                    </div>
+                                    {!searchActive && roleGroups.length > 1 && (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setCollapsedUserGroups(
+                                            allCollapsed
+                                              ? new Set()
+                                              : new Set(allGroupKeys),
+                                          )
+                                        }
+                                        className="flex-shrink-0 text-xs text-[hsl(var(--primary))] hover:underline whitespace-nowrap"
+                                      >
+                                        {allCollapsed
+                                          ? t("common.expandAll", "Expand all")
+                                          : t(
+                                              "common.collapseAll",
+                                              "Collapse all",
+                                            )}
+                                      </button>
+                                    )}
+                                  </div>
+                                  {/* List */}
+                                  <div
+                                    className={`border rounded-md overflow-y-auto max-h-52 bg-[hsl(var(--background))] ${transitionErrors.user ? "border-red-500" : "border-[hsl(var(--border))]"}`}
+                                  >
+                                    {/* Sticky Select All header */}
+                                    <label className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))] select-none sticky top-0 bg-[hsl(var(--background))] z-10">
+                                      <input
+                                        type="checkbox"
+                                        checked={
+                                          searchActive
+                                            ? allFilteredSelected
+                                            : allUsersSelected
+                                        }
+                                        ref={(el) => {
+                                          if (el)
+                                            el.indeterminate = searchActive
+                                              ? !allFilteredSelected &&
+                                                someFilteredSelected
+                                              : !allUsersSelected &&
+                                                someSelected;
+                                        }}
+                                        onChange={() => {
+                                          const targets = searchActive
+                                            ? filteredUsers
+                                            : allUsers;
+                                          const allSel = targets.every((u) =>
+                                            selectedUserIds.includes(u.id),
+                                          );
+                                          if (allSel) {
+                                            setSelectedUserIds((prev) =>
+                                              prev.filter(
+                                                (id) =>
+                                                  !targets.some(
+                                                    (u) => u.id === id,
+                                                  ),
+                                              ),
+                                            );
+                                          } else {
+                                            setSelectedUserIds((prev) => [
+                                              ...prev,
+                                              ...targets
+                                                .filter(
+                                                  (u) => !prev.includes(u.id),
+                                                )
+                                                .map((u) => u.id),
+                                            ]);
+                                          }
+                                          if (transitionErrors.user)
+                                            setTransitionErrors((prev) => ({
+                                              ...prev,
+                                              user: "",
+                                            }));
+                                        }}
+                                        className="rounded"
+                                      />
+                                      <span className="text-sm font-medium text-[hsl(var(--foreground))]">
+                                        {searchActive
+                                          ? t(
+                                              "common.selectAllFiltered",
+                                              "Select all filtered",
+                                            )
+                                          : t("common.selectAll", "Select All")}
+                                      </span>
+                                      <span className="ml-auto text-xs text-[hsl(var(--muted-foreground))]">
+                                        {selectedUserIds.length}/
+                                        {allUsers.length}{" "}
+                                        {t("common.selected", "selected")}
+                                      </span>
+                                    </label>
+                                    {/* Search results — flat */}
+                                    {searchActive ? (
+                                      filteredUsers.length === 0 ? (
+                                        <p className="px-3 py-3 text-sm text-[hsl(var(--muted-foreground))] text-center">
+                                          {t(
+                                            "common.noResults",
+                                            "No results found",
+                                          )}
+                                        </p>
+                                      ) : (
+                                        filteredUsers.map((u) =>
+                                          renderUserRow(u, false),
+                                        )
+                                      )
+                                    ) : (
+                                      /* Grouped by role */
+                                      roleGroups.map(({ role, users }) => {
+                                        const isCollapsed =
+                                          collapsedUserGroups.has(role.id);
+                                        const groupAllSelected =
+                                          users.length > 0 &&
+                                          users.every((u) =>
+                                            selectedUserIds.includes(u.id),
+                                          );
+                                        const groupSomeSelected = users.some(
+                                          (u) => selectedUserIds.includes(u.id),
+                                        );
+                                        return (
+                                          <React.Fragment key={role.id}>
+                                            {/* Role group header */}
+                                            <div className="flex items-center border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
+                                              <button
+                                                type="button"
+                                                onClick={() =>
+                                                  setCollapsedUserGroups(
+                                                    (prev) => {
+                                                      const next = new Set(
+                                                        prev,
+                                                      );
+                                                      if (next.has(role.id))
+                                                        next.delete(role.id);
+                                                      else next.add(role.id);
+                                                      return next;
+                                                    },
+                                                  )
+                                                }
+                                                className="flex items-center gap-1.5 px-3 py-1.5 flex-1 hover:bg-[hsl(var(--muted)/0.5)] transition-colors min-w-0"
+                                              >
+                                                {isCollapsed ? (
+                                                  <ChevronRight className="w-3 h-3 text-[hsl(var(--muted-foreground))] flex-shrink-0" />
+                                                ) : (
+                                                  <ChevronDown className="w-3 h-3 text-[hsl(var(--muted-foreground))] flex-shrink-0" />
+                                                )}
+                                                <span className="text-xs font-semibold text-[hsl(var(--foreground))] truncate">
+                                                  {role.name}
+                                                </span>
+                                                <span className="text-xs text-[hsl(var(--muted-foreground))] ml-1 flex-shrink-0">
+                                                  ({users.length})
+                                                </span>
+                                              </button>
+                                              {/* Group select-all checkbox */}
+                                              <label className="flex items-center pr-3 cursor-pointer select-none flex-shrink-0">
+                                                <input
+                                                  type="checkbox"
+                                                  checked={groupAllSelected}
+                                                  disabled={users.length === 0}
+                                                  ref={(el) => {
+                                                    if (el)
+                                                      el.indeterminate =
+                                                        !groupAllSelected &&
+                                                        groupSomeSelected;
+                                                  }}
+                                                  onChange={() => {
+                                                    if (groupAllSelected) {
+                                                      setSelectedUserIds(
+                                                        (prev) =>
+                                                          prev.filter(
+                                                            (id) =>
+                                                              !users.some(
+                                                                (u) =>
+                                                                  u.id === id,
+                                                              ),
+                                                          ),
+                                                      );
+                                                    } else {
+                                                      setSelectedUserIds(
+                                                        (prev) => [
+                                                          ...prev,
+                                                          ...users
+                                                            .filter(
+                                                              (u) =>
+                                                                !prev.includes(
+                                                                  u.id,
+                                                                ),
+                                                            )
+                                                            .map((u) => u.id),
+                                                        ],
+                                                      );
+                                                    }
+                                                    if (transitionErrors.user)
+                                                      setTransitionErrors(
+                                                        (prev) => ({
+                                                          ...prev,
+                                                          user: "",
+                                                        }),
+                                                      );
+                                                  }}
+                                                  className="rounded"
+                                                />
+                                              </label>
+                                            </div>
+                                            {/* Users in this role */}
+                                            {!isCollapsed &&
+                                              (users.length === 0 ? (
+                                                <p className="px-6 py-2 text-xs text-[hsl(var(--muted-foreground))]">
+                                                  {t(
+                                                    "incidents.noUsersWithRole",
+                                                    "No users with this role",
+                                                  )}
+                                                </p>
+                                              ) : (
+                                                users.map((u) =>
+                                                  renderUserRow(u, true),
+                                                )
+                                              ))}
+                                          </React.Fragment>
+                                        );
+                                      })
+                                    )}
+                                  </div>
+                                  {transitionErrors.user && (
+                                    <p className="text-xs text-red-500 mt-1">
+                                      {transitionErrors.user}
+                                    </p>
+                                  )}
+                                </>
+                              );
+                            })()
                           )
                         ) : (
                           <p className="text-sm text-[hsl(var(--muted-foreground))]">
@@ -2690,16 +3338,24 @@ export const IncidentDetailPage: React.FC = () => {
                                   count: userMatchResult.users.length,
                                 })}
                               </p>
-                              <div className="flex flex-wrap gap-1">
+                              <div className="border border-[hsl(var(--border))] rounded-md overflow-y-auto max-h-40 divide-y divide-[hsl(var(--border))]">
                                 {userMatchResult.users.map((user) => (
-                                  <span
+                                  <div
                                     key={user.id}
-                                    className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]"
+                                    className="flex items-center gap-2 px-3 py-2"
                                   >
-                                    {user.first_name
-                                      ? `${user.first_name} ${user.last_name || ""}`
-                                      : user.username}
-                                  </span>
+                                    <User className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))] flex-shrink-0" />
+                                    <div className="flex flex-col min-w-0">
+                                      <span className="text-sm text-[hsl(var(--foreground))] font-medium truncate">
+                                        {user.first_name
+                                          ? `${user.first_name} ${user.last_name || ""}`.trim()
+                                          : user.username}
+                                      </span>
+                                      <span className="text-xs text-[hsl(var(--muted-foreground))] truncate">
+                                        {user.email}
+                                      </span>
+                                    </div>
+                                  </div>
                                 ))}
                               </div>
                             </div>
