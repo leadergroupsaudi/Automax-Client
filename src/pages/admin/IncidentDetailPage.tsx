@@ -456,7 +456,6 @@ export const IncidentDetailPage: React.FC = () => {
       attachments,
       feedback,
       department_id,
-      user_id,
       user_ids,
       field_changes,
       ready_to_close_duration,
@@ -466,7 +465,6 @@ export const IncidentDetailPage: React.FC = () => {
       attachments?: string[];
       feedback?: { rating: number; comment?: string };
       department_id?: string;
-      user_id?: string;
       user_ids?: string[];
       field_changes?: Record<string, string>;
       ready_to_close_duration?: string;
@@ -480,7 +478,6 @@ export const IncidentDetailPage: React.FC = () => {
           comment: feedback?.comment || "Missing Incident Information",
         },
         department_id,
-        user_id,
         user_ids,
         field_changes,
         ready_to_close_duration,
@@ -938,7 +935,6 @@ export const IncidentDetailPage: React.FC = () => {
 
       // Determine assignment IDs
       let departmentId: string | undefined;
-      let userId: string | undefined;
 
       // Department assignment
       if (trans.assign_department_id) {
@@ -949,17 +945,12 @@ export const IncidentDetailPage: React.FC = () => {
         departmentId = selectedDepartmentId;
       }
 
-      // User assignment
-      let userIds: string[] | undefined;
-      if (trans.assign_user_id) {
-        // Static assignment
-        userId = trans.assign_user_id;
-      } else if (
+      // User assignment — static assign_user_id is handled server-side from transition config
+      const userIds =
         (trans.manual_select_user || trans.auto_match_user) &&
         selectedUserIds.length > 0
-      ) {
-        userIds = selectedUserIds;
-      }
+          ? selectedUserIds
+          : undefined;
 
       transitionMutation.mutate({
         transitionId: selectedTransition.transition.id,
@@ -973,7 +964,6 @@ export const IncidentDetailPage: React.FC = () => {
               }
             : undefined,
         department_id: departmentId,
-        user_id: userId,
         user_ids: userIds,
         field_changes:
           Object.keys(transitionFieldValues).length > 0
