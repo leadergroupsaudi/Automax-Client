@@ -847,6 +847,7 @@
     "filterBuilder": {
       "noFilterableFields": "لا توجد حقول قابلة للتصفية",
       "noFiltersAdded": "لم تُضف فلاتر. انقر \"إضافة فلتر\" لإضافة واحد.",
+      "clickAddFilter": "Click \"Add Filter\" to add one.",
       "addFilter": "إضافة فلتر",
       "clearAll": "مسح الكل",
       "selectField": "اختر الحقل...",

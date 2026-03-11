@@ -7,8 +7,8 @@ import { groupFieldsByCategory } from '../../constants/reportFields';
 
 interface ColumnSelectorProps {
   fields: ReportFieldDefinition[];
-  selectedColumns: string[];
-  onChange: (columns: string[]) => void;
+  selectedColumns: { field: string, label: string }[];
+  onChange: (columns: { field: string, label: string }[]) => void;
 }
 
 export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
@@ -56,15 +56,16 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   };
 
   const toggleColumn = (field: string) => {
-    if (selectedColumns.includes(field)) {
-      onChange(selectedColumns.filter((c) => c !== field));
+    const found = selectedColumns.findIndex((c) => c.field === field)
+    if (found !== -1) {
+      onChange(selectedColumns.filter((c) => c.field !== field));
     } else {
-      onChange([...selectedColumns, field]);
+      onChange([...selectedColumns, { field: field, label: field }]);
     }
   };
 
   const selectAll = () => {
-    onChange(fields.map((f) => f.field));
+    onChange(fields.map((f) => ({ field: f.field, label: f.label })));
   };
 
   const selectNone = () => {
@@ -72,7 +73,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   };
 
   const selectDefaults = () => {
-    onChange(fields.filter((f) => f.defaultSelected).map((f) => f.field));
+    onChange(fields.filter((f) => f.defaultSelected).map((f) => ({ field: f.field, label: f.label })));
   };
 
   // Auto-expand all categories when searching
@@ -80,6 +81,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
     if (search.trim()) {
       setExpandedCategories(new Set(Object.keys(filteredGroups)));
     }
+    console.log(filteredGroups)
   }, [search, filteredGroups]);
 
   return (
@@ -134,7 +136,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
 
           const isExpanded = expandedCategories.has(category) || search.trim();
           const selectedInCategory = categoryFields.filter((f) =>
-            selectedColumns.includes(f.field)
+            selectedColumns.findIndex((c) => c.field === f.field) !== -1
           ).length;
 
           return (
@@ -164,7 +166,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
               {isExpanded && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1 p-2 bg-[hsl(var(--card))]">
                   {categoryFields.map((field) => {
-                    const isSelected = selectedColumns.includes(field.field);
+                    const isSelected = selectedColumns.findIndex((c) => c.field === field.field) !== -1;
                     return (
                       <label
                         key={field.field}

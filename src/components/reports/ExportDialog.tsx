@@ -15,7 +15,7 @@ interface ExportDialogProps {
   recordCount: number;
   // Preview data
   previewData?: Record<string, unknown>[];
-  columns?: string[];
+  columns?: { field: string, label: string }[];
   fields?: ReportFieldDefinition[];
 }
 
@@ -52,9 +52,9 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
 
   // Build column definitions — always produce a label, never drop a column
   const columnDefs: ReportFieldDefinition[] = columns.map((col) => {
-    const found = fields.find((f) => f.field === col);
+    const found = fields.find((f) => f.field === col.field);
     if (found) return found;
-    return { field: col, label: toHumanReadable(col), type: 'string' } as ReportFieldDefinition;
+    return { field: col.field, label: toHumanReadable(col.field), type: 'string' } as ReportFieldDefinition;
   });
 
   const previewRows = previewData.slice(0, PREVIEW_ROWS);

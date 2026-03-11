@@ -150,7 +150,7 @@ export const ReportBuilderPage: React.FC = () => {
 
   // State
   const [dataSource, setDataSource] = useState<ReportDataSource | null>(null);
-  const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
+  const [selectedColumns, setSelectedColumns] = useState<{ field: string, label: string }[]>([]);
   const [filters, setFilters] = useState<ReportFilter[]>([]);
   const [sorting, setSorting] = useState<ReportSort[]>([]);
   // recordLimit — how many rows the query should return (sent as the API limit)
@@ -246,7 +246,7 @@ export const ReportBuilderPage: React.FC = () => {
     if (templateData?.data) {
       const template = templateData.data;
       setDataSource(template.data_source);
-      setSelectedColumns(template.config.columns.map((c) => c.field));
+      setSelectedColumns(template.config.columns.map((c) => ({ field: c.field, label: c.label })));
       setFilters(
         template.config.filters.map((f, i) => ({ ...f, id: `filter_${i}` })),
       );
@@ -332,15 +332,15 @@ export const ReportBuilderPage: React.FC = () => {
       if (format === "xlsx") {
         // Build headers — use field label, fall back to human-readable key
         const headers = selectedColumns.map((col) => {
-          const field = fields.find((f) => f.field === col);
-          return field?.label || toHumanReadable(col);
+          const field = fields.find((f) => f.field === col.field);
+          return field?.label || toHumanReadable(col.field);
         });
 
         // Build rows from previewData
         const rows = previewData.map((row) => {
           return selectedColumns.map((col) => {
-            const fieldDef = fields.find((f) => f.field === col);
-            const value = getNestedValue(row, col);
+            const fieldDef = fields.find((f) => f.field === col.field);
+            const value = getNestedValue(row, col.field);
             if (!fieldDef) return value == null ? "" : String(value);
             return formatCellValue(value, fieldDef);
           });
@@ -398,8 +398,8 @@ export const ReportBuilderPage: React.FC = () => {
 
       const config = {
         columns: selectedColumns.map((col) => {
-          const field = fields.find((f) => f.field === col);
-          return { field: col, label: field?.label || col };
+          const field = fields.find((f) => f.field === col.field);
+          return { field: col.field, label: field?.label || col.field };
         }),
         filters: filters.map(({ field, operator, value }) => ({
           field,
@@ -455,7 +455,7 @@ export const ReportBuilderPage: React.FC = () => {
   // Load a template
   const loadTemplate = (template: ReportTemplate) => {
     setDataSource(template.data_source);
-    setSelectedColumns(template.config.columns.map((c) => c.field));
+    setSelectedColumns(template.config.columns);
     setFilters(
       template.config.filters.map((f, i) => ({ ...f, id: `filter_${i}` })),
     );

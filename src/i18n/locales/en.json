@@ -885,7 +885,8 @@
     },
     "filterBuilder": {
       "noFilterableFields": "No filterable fields available",
-      "noFiltersAdded": "No filters added. Click \"Add Filter\" to add one.",
+      "noFiltersAdded": "No filters added.",
+      "clickAddFilter": "Click \"Add Filter\" to add one.",
       "addFilter": "Add Filter",
       "clearAll": "Clear All",
       "selectField": "Select field...",
