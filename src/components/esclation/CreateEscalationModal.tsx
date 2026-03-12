@@ -15,7 +15,7 @@ import type { TreeSelectNode } from "../ui";
 import {
   classificationApi,
   userApi,
-  locationApi,
+  // locationApi,
   escalationApi,
 } from "../../api/admin";
 import type {
@@ -90,15 +90,15 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
   });
 
   // Query for locations
-  const { data: locationsData } = useQuery({
-    queryKey: ["locations", "tree"],
-    queryFn: () => locationApi.getTree(),
-    enabled: isOpen,
-  });
+  // const { data: locationsData } = useQuery({
+  //   queryKey: ["locations", "tree"],
+  //   queryFn: () => locationApi.getTree(),
+  //   enabled: isOpen,
+  // });
 
   const rawClassifications = classificationsData?.data || [];
   const users = usersData?.data || [];
-  const rawLocations = locationsData?.data || [];
+  // const rawLocations = locationsData?.data || [];
 
   // Filter classifications based on user's assignments (unless super admin)
   const classifications = useMemo(() => {
