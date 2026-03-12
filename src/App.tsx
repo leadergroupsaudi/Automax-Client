@@ -1,9 +1,23 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'sonner';
-import { MainLayout, AuthLayout, ProtectedRoute, AdminLayout, AdminProtectedRoute, PermissionRoute, IncidentLayout, RequestLayout, WorkflowLayout, ComplaintsLayout, QueryLayout, CallCentreLayout, ReportsLayout } from './components/layout';
-import { PERMISSIONS } from './constants/permissions';
-import { SettingsProvider } from './contexts/SettingsContext';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "sonner";
+import {
+  MainLayout,
+  AuthLayout,
+  ProtectedRoute,
+  AdminLayout,
+  AdminProtectedRoute,
+  PermissionRoute,
+  IncidentLayout,
+  RequestLayout,
+  WorkflowLayout,
+  ComplaintsLayout,
+  QueryLayout,
+  CallCentreLayout,
+  ReportsLayout,
+} from "./components/layout";
+import { PERMISSIONS } from "./constants/permissions";
+import { SettingsProvider } from "./contexts/SettingsContext";
 import {
   LoginPage,
   RegisterPage,
@@ -46,7 +60,7 @@ import {
   CallHistory,
   EmailPage,
   SMSPage,
-} from './pages';
+} from "./pages";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -62,7 +76,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <SettingsProvider>
         <Toaster position="top-right" richColors closeButton />
-        <BrowserRouter basename={window.APP_CONFIG?.BASE_PATH || import.meta.env.VITE_BASE_PATH || '/'}>
+        <BrowserRouter
+          basename={
+            window.APP_CONFIG?.BASE_PATH ||
+            import.meta.env.VITE_BASE_PATH ||
+            "/"
+          }
+        >
           <Routes>
             {/* Auth routes */}
             <Route element={<AuthLayout />}>
@@ -87,56 +107,149 @@ function App() {
               <Route element={<AdminLayout />}>
                 <Route path="/admin" element={<AdminDashboard />} />
                 {/* User management - requires users:view permission */}
-                <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.USERS_VIEW]} />}>
+                <Route
+                  element={
+                    <PermissionRoute
+                      requiredPermissions={[PERMISSIONS.USERS_VIEW]}
+                    />
+                  }
+                >
                   <Route path="/admin/users" element={<UsersPage />} />
                 </Route>
                 {/* Role management - requires roles:view permission */}
-                <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.ROLES_VIEW]} />}>
+                <Route
+                  element={
+                    <PermissionRoute
+                      requiredPermissions={[PERMISSIONS.ROLES_VIEW]}
+                    />
+                  }
+                >
                   <Route path="/admin/roles" element={<RolesPage />} />
                 </Route>
                 {/* Permission management - requires permissions:view permission */}
-                <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.PERMISSIONS_VIEW]} />}>
-                  <Route path="/admin/permissions" element={<PermissionsPage />} />
+                <Route
+                  element={
+                    <PermissionRoute
+                      requiredPermissions={[PERMISSIONS.PERMISSIONS_VIEW]}
+                    />
+                  }
+                >
+                  <Route
+                    path="/admin/permissions"
+                    element={<PermissionsPage />}
+                  />
                 </Route>
                 {/* Department management - requires departments:view permission */}
-                <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.DEPARTMENTS_VIEW]} />}>
-                  <Route path="/admin/departments" element={<DepartmentsPage />} />
-                  <Route path="/admin/departments/:id" element={<DepartmentDetailPage />} />
+                <Route
+                  element={
+                    <PermissionRoute
+                      requiredPermissions={[PERMISSIONS.DEPARTMENTS_VIEW]}
+                    />
+                  }
+                >
+                  <Route
+                    path="/admin/departments"
+                    element={<DepartmentsPage />}
+                  />
+                  <Route
+                    path="/admin/departments/:id"
+                    element={<DepartmentDetailPage />}
+                  />
                 </Route>
                 {/* Location management - requires locations:view permission */}
-                <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.LOCATIONS_VIEW]} />}>
+                <Route
+                  element={
+                    <PermissionRoute
+                      requiredPermissions={[PERMISSIONS.LOCATIONS_VIEW]}
+                    />
+                  }
+                >
                   <Route path="/admin/locations" element={<LocationsPage />} />
-                  <Route path="/admin/locations/map" element={<LocationMapPage />} />
+                  <Route
+                    path="/admin/locations/map"
+                    element={<LocationMapPage />}
+                  />
                 </Route>
                 {/* Classification management - requires classifications:view permission */}
-                <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.CLASSIFICATIONS_VIEW]} />}>
-                  <Route path="/admin/classifications" element={<ClassificationsPage />} />
+                <Route
+                  element={
+                    <PermissionRoute
+                      requiredPermissions={[PERMISSIONS.CLASSIFICATIONS_VIEW]}
+                    />
+                  }
+                >
+                  <Route
+                    path="/admin/classifications"
+                    element={<ClassificationsPage />}
+                  />
                 </Route>
                 {/* Action logs - requires action-logs:view permission */}
-                <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.ACTION_LOGS_VIEW]} />}>
-                  <Route path="/admin/action-logs" element={<ActionLogsPage />} />
+                <Route
+                  element={
+                    <PermissionRoute
+                      requiredPermissions={[PERMISSIONS.ACTION_LOGS_VIEW]}
+                    />
+                  }
+                >
+                  <Route
+                    path="/admin/action-logs"
+                    element={<ActionLogsPage />}
+                  />
                 </Route>
                 {/* Lookups - requires lookups:view permission */}
-                <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.LOOKUPS_VIEW]} />}>
+                <Route
+                  element={
+                    <PermissionRoute
+                      requiredPermissions={[PERMISSIONS.LOOKUPS_VIEW]}
+                    />
+                  }
+                >
                   <Route path="/admin/lookups" element={<LookupsPage />} />
                 </Route>
                 {/* Application Links - requires application-links:view permission */}
-                <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.APPLICATION_LINKS_VIEW]} />}>
-                  <Route path="/admin/application-links" element={<ApplicationLinksPage />} />
+                <Route
+                  element={
+                    <PermissionRoute
+                      requiredPermissions={[PERMISSIONS.APPLICATION_LINKS_VIEW]}
+                    />
+                  }
+                >
+                  <Route
+                    path="/admin/application-links"
+                    element={<ApplicationLinksPage />}
+                  />
                 </Route>
                 {/* Settings - requires settings:update permission */}
-                <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.SETTINGS_UPDATE]} />}>
-                  <Route path="/admin/settings" element={<SettingsManagementPage />} />
+                <Route
+                  element={
+                    <PermissionRoute
+                      requiredPermissions={[PERMISSIONS.SETTINGS_UPDATE]}
+                    />
+                  }
+                >
+                  <Route
+                    path="/admin/settings"
+                    element={<SettingsManagementPage />}
+                  />
                 </Route>
               </Route>
             </Route>
 
             {/* Workflow routes - separate layout */}
             <Route element={<AdminProtectedRoute />}>
-              <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.WORKFLOWS_VIEW]} />}>
+              <Route
+                element={
+                  <PermissionRoute
+                    requiredPermissions={[PERMISSIONS.WORKFLOWS_VIEW]}
+                  />
+                }
+              >
                 <Route element={<WorkflowLayout />}>
                   <Route path="/workflows" element={<WorkflowsPage />} />
-                  <Route path="/workflows/:id" element={<WorkflowDesignerPage />} />
+                  <Route
+                    path="/workflows/:id"
+                    element={<WorkflowDesignerPage />}
+                  />
                 </Route>
               </Route>
             </Route>
@@ -145,17 +258,54 @@ function App() {
             <Route element={<AdminProtectedRoute />}>
               <Route element={<IncidentLayout />}>
                 {/* Base route requires view permission, page handles redirect if no view_all */}
-                <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.INCIDENTS_VIEW]} />}>
+                <Route
+                  element={
+                    <PermissionRoute
+                      requiredPermissions={[PERMISSIONS.INCIDENTS_VIEW]}
+                    />
+                  }
+                >
                   <Route path="/incidents" element={<IncidentsPage />} />
-                  <Route path="/incidents/my-assigned" element={<MyIncidentsPage type="assigned" />} />
-                  <Route path="/incidents/my-created" element={<MyIncidentsPage type="created" />} />
-                  <Route path="/incidents/:id" element={<IncidentDetailPage />} />
-                  <Route path="/incidents/:id/edit" element={<IncidentEditPage />} />
+                  <Route
+                    path="/incidents/:id"
+                    element={<IncidentDetailPage />}
+                  />
+                  <Route
+                    path="/incidents/:id/edit"
+                    element={<IncidentEditPage />}
+                  />
                 </Route>
-                {/* Create incident - requires create permission */}
-                <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.INCIDENTS_CREATE]} />}>
-                  <Route path="/incidents/new" element={<IncidentCreatePage />} />
-                  <Route path="/incidents/:id/clone" element={<IncidentCreatePage />} />
+                <Route
+                  element={
+                    <PermissionRoute
+                      requiredPermissions={[PERMISSIONS.INCIDENTS_TRANSITION]}
+                    />
+                  }
+                >
+                  <Route
+                    path="/incidents/my-assigned"
+                    element={<MyIncidentsPage type="assigned" />}
+                  />
+                </Route>
+                <Route
+                  element={
+                    <PermissionRoute
+                      requiredPermissions={[PERMISSIONS.INCIDENTS_CREATE]}
+                    />
+                  }
+                >
+                  <Route
+                    path="/incidents/my-created"
+                    element={<MyIncidentsPage type="created" />}
+                  />
+                  <Route
+                    path="/incidents/new"
+                    element={<IncidentCreatePage />}
+                  />
+                  <Route
+                    path="/incidents/:id/clone"
+                    element={<IncidentCreatePage />}
+                  />
                 </Route>
               </Route>
             </Route>
@@ -164,11 +314,39 @@ function App() {
             <Route element={<AdminProtectedRoute />}>
               <Route element={<RequestLayout />}>
                 {/* Base route requires view permission, page handles redirect if no view_all */}
-                <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.REQUESTS_VIEW]} />}>
+                <Route
+                  element={
+                    <PermissionRoute
+                      requiredPermissions={[PERMISSIONS.REQUESTS_VIEW]}
+                    />
+                  }
+                >
                   <Route path="/requests" element={<RequestsPage />} />
-                  <Route path="/requests/my-assigned" element={<MyRequestsPage type="assigned" />} />
-                  <Route path="/requests/my-created" element={<MyRequestsPage type="created" />} />
                   <Route path="/requests/:id" element={<RequestDetailPage />} />
+                </Route>
+                <Route
+                  element={
+                    <PermissionRoute
+                      requiredPermissions={[PERMISSIONS.REQUESTS_TRANSITION]}
+                    />
+                  }
+                >
+                  <Route
+                    path="/requests/my-assigned"
+                    element={<MyRequestsPage type="assigned" />}
+                  />
+                </Route>
+                <Route
+                  element={
+                    <PermissionRoute
+                      requiredPermissions={[PERMISSIONS.REQUESTS_CREATE]}
+                    />
+                  }
+                >
+                  <Route
+                    path="/requests/my-created"
+                    element={<MyRequestsPage type="created" />}
+                  />
                 </Route>
               </Route>
             </Route>
@@ -177,9 +355,18 @@ function App() {
             <Route element={<AdminProtectedRoute />}>
               <Route element={<ComplaintsLayout />}>
                 {/* Base route requires view permission, page handles redirect if no view_all */}
-                <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.COMPLAINTS_VIEW]} />}>
+                <Route
+                  element={
+                    <PermissionRoute
+                      requiredPermissions={[PERMISSIONS.COMPLAINTS_VIEW]}
+                    />
+                  }
+                >
                   <Route path="/complaints" element={<ComplaintsPage />} />
-                  <Route path="/complaints/:id" element={<ComplaintDetailPage />} />
+                  <Route
+                    path="/complaints/:id"
+                    element={<ComplaintDetailPage />}
+                  />
                 </Route>
               </Route>
             </Route>
@@ -188,7 +375,13 @@ function App() {
             <Route element={<AdminProtectedRoute />}>
               <Route element={<QueryLayout />}>
                 {/* Base route requires view permission, page handles redirect if no view_all */}
-                <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.QUERIES_VIEW]} />}>
+                <Route
+                  element={
+                    <PermissionRoute
+                      requiredPermissions={[PERMISSIONS.QUERIES_VIEW]}
+                    />
+                  }
+                >
                   <Route path="/queries" element={<QueriesPage />} />
                   <Route path="/queries/:id" element={<QueryDetailPage />} />
                 </Route>
@@ -197,13 +390,31 @@ function App() {
 
             {/* Reports routes - dedicated layout */}
             <Route element={<AdminProtectedRoute />}>
-              <Route element={<PermissionRoute requiredPermissions={[PERMISSIONS.REPORTS_VIEW]} />}>
+              <Route
+                element={
+                  <PermissionRoute
+                    requiredPermissions={[PERMISSIONS.REPORTS_VIEW]}
+                  />
+                }
+              >
                 <Route element={<ReportsLayout />}>
                   <Route path="/reports" element={<ReportTemplatesPage />} />
-                  <Route path="/reports/builder" element={<ReportBuilderPage />} />
-                  <Route path="/reports/builder/:templateId" element={<ReportBuilderPage />} />
-                  <Route path="/reports/templates" element={<ReportTemplatesListPage />} />
-                  <Route path="/reports/templates/:id/edit" element={<ReportTemplateBuilderPage />} />
+                  <Route
+                    path="/reports/builder"
+                    element={<ReportBuilderPage />}
+                  />
+                  <Route
+                    path="/reports/builder/:templateId"
+                    element={<ReportBuilderPage />}
+                  />
+                  <Route
+                    path="/reports/templates"
+                    element={<ReportTemplatesListPage />}
+                  />
+                  <Route
+                    path="/reports/templates/:id/edit"
+                    element={<ReportTemplateBuilderPage />}
+                  />
                 </Route>
               </Route>
             </Route>
@@ -211,8 +422,14 @@ function App() {
             {/* Call Centre Management - dedicated layout */}
             <Route element={<AdminProtectedRoute />}>
               <Route element={<CallCentreLayout />}>
-                <Route path="/call-centre" element={<Navigate to="/call-centre/contacts" replace />} />
-                <Route path="/call-centre/contacts" element={<CallCentrePage />} />
+                <Route
+                  path="/call-centre"
+                  element={<Navigate to="/call-centre/contacts" replace />}
+                />
+                <Route
+                  path="/call-centre/contacts"
+                  element={<CallCentrePage />}
+                />
                 <Route path="/call-centre/history" element={<CallHistory />} />
                 <Route path="/call-centre/email" element={<EmailPage />} />
                 <Route path="/call-centre/sms" element={<SMSPage />} />
