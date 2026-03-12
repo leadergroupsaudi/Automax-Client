@@ -76,12 +76,18 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
     onChange(fields.filter((f) => f.defaultSelected).map((f) => ({ field: f.field, label: f.label })));
   };
 
+  const updateLabel = (field: string, label: string) => {
+    const updatedColumns = selectedColumns.map((c) =>
+      c.field === field ? { ...c, label } : c
+    );
+    onChange(updatedColumns);
+  };
+
   // Auto-expand all categories when searching
   React.useEffect(() => {
     if (search.trim()) {
       setExpandedCategories(new Set(Object.keys(filteredGroups)));
     }
-    console.log(filteredGroups)
   }, [search, filteredGroups]);
 
   return (
@@ -167,6 +173,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1 p-2 bg-[hsl(var(--card))]">
                   {categoryFields.map((field) => {
                     const isSelected = selectedColumns.findIndex((c) => c.field === field.field) !== -1;
+                    const labelVal = selectedColumns.find((c) => c.field === field.field);
                     return (
                       <label
                         key={field.field}
@@ -187,15 +194,20 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                         >
                           {isSelected && <Check className="w-3 h-3 text-white" />}
                         </div>
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleColumn(field.field)}
-                          className="sr-only"
-                        />
-                        <span className="text-sm truncate" title={field.label}>
-                          {field.label}
-                        </span>
+                        <div className='flex flex-col gap-2'>
+                          <div className='flex gap-2 items-center'>
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleColumn(field.field)}
+                              className="sr-only"
+                            />
+                            <span className="text-sm truncate" title={field.label}>
+                              {field.label}
+                            </span>
+                          </div>
+                          <input type="text" value={labelVal?.label} onChange={(e) => updateLabel(field.field, e.target.value)} placeholder='Label Name' disabled={!isSelected} className='border border-gray-300 text-gray-700 rounded-sm text-sm px-2 py-2 w-full' />
+                        </div>
                       </label>
                     );
                   })}

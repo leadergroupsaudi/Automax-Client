@@ -71,23 +71,28 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
         hasPreview ? "max-w-5xl max-h-[90vh]" : "max-w-md"
       )}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[hsl(var(--border))] shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-[hsl(var(--primary)/0.1)]">
-              <Download className="w-5 h-5 text-[hsl(var(--primary))]" />
+        <div className="flex items-center justify-between px-8 py-5 border-b border-[hsl(var(--border))] shrink-0 bg-gradient-to-r from-[hsl(var(--primary)/0.05)] to-transparent">
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-[hsl(var(--primary)/0.1)] shadow-sm">
+              <Download className="w-6 h-6 text-[hsl(var(--primary))]" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">
+              <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">
                 {t('reports.exportDialog.title')}
               </h2>
-              <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                {recordCount.toLocaleString()} {t('reports.exportDialog.records')}
-              </p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-xs font-bold text-[hsl(var(--primary))] uppercase tracking-wider">
+                  {recordCount.toLocaleString()}
+                </span>
+                <span className="text-xs text-[hsl(var(--muted-foreground))] font-medium uppercase tracking-wider">
+                  {t('reports.exportDialog.records')}
+                </span>
+              </div>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] rounded-lg transition-colors"
+            className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] rounded-xl transition-all duration-200"
           >
             <X className="w-5 h-5" />
           </button>

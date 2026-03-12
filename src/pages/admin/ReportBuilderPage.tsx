@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from "react";
+import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -395,11 +395,11 @@ export const ReportBuilderPage: React.FC = () => {
       isPublic: boolean;
     }) => {
       if (!dataSource) throw new Error("No data source selected");
+      console.log(selectedColumns)
 
       const config = {
         columns: selectedColumns.map((col) => {
-          const field = fields.find((f) => f.field === col.field);
-          return { field: col.field, label: field?.label || col.field };
+          return { field: col.field, label: col.label };
         }),
         filters: filters.map(({ field, operator, value }) => ({
           field,
@@ -408,6 +408,8 @@ export const ReportBuilderPage: React.FC = () => {
         })),
         sorting,
       };
+
+      console.log(config)
 
       if (loadedTemplate) {
         // Update existing

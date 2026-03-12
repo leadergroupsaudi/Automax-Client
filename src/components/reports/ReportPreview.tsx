@@ -200,8 +200,8 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
   // definition is not found (e.g. relation fields returned differently by API)
   const columnDefs: ReportFieldDefinition[] = columns.map((col) => {
     const found = fields.find((f) => f.field === col.field);
-    if (found) return found;
-    return { field: col.field, label: toHumanReadable(col.field), type: 'string' } as ReportFieldDefinition;
+    if (found) return { ...found, label: toHumanReadable(col.label) };
+    return { field: col.field, label: toHumanReadable(col.label), type: 'string' } as ReportFieldDefinition;
   });
 
   if (isLoading) {
@@ -234,15 +234,15 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
       </div>
 
       {/* Table */}
-      <div className="border border-[hsl(var(--border))] rounded-lg overflow-hidden">
+      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-[hsl(var(--muted)/0.5)] border-b border-[hsl(var(--border))]">
+              <tr className="bg-[hsl(var(--muted)/0.4)] border-b border-[hsl(var(--border))]">
                 {columnDefs.map((col) => (
                   <th
                     key={col.field}
-                    className="px-4 py-3 text-left text-xs font-semibold text-[hsl(var(--foreground))] uppercase tracking-wider whitespace-nowrap"
+                    className="px-5 py-4 text-left text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-[0.1em] whitespace-nowrap"
                   >
                     {col.label}
                   </th>
@@ -253,14 +253,14 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
               {data.map((row, rowIndex) => (
                 <tr
                   key={rowIndex}
-                  className="hover:bg-[hsl(var(--muted)/0.3)] transition-colors"
+                  className="hover:bg-[hsl(var(--primary)/0.02)] transition-colors group/row"
                 >
                   {columnDefs.map((col) => {
                     const value = getNestedValue(row, col.label);
                     return (
                       <td
                         key={col.field}
-                        className="px-4 py-3 text-sm text-[hsl(var(--foreground))] whitespace-nowrap"
+                        className="px-5 py-4 text-sm text-[hsl(var(--foreground))] whitespace-nowrap transition-colors group-hover/row:text-[hsl(var(--primary))] font-medium"
                       >
                         {renderStyledCell(value, col)}
                       </td>
