@@ -60,6 +60,8 @@ export const ComplaintsLayout: React.FC = () => {
     isSuperAdmin || hasPermission(PERMISSIONS.COMPLAINTS_VIEW_ALL);
   const canCreateComplaint =
     isSuperAdmin || hasPermission(PERMISSIONS.COMPLAINTS_CREATE);
+  const canTransitionComplaint =
+    isSuperAdmin || hasPermission(PERMISSIONS.COMPLAINTS_TRANSITION);
 
   const handleLanguageChange = async (langCode: string) => {
     if (langCode === currentLang) {
@@ -195,7 +197,7 @@ export const ComplaintsLayout: React.FC = () => {
           )}
 
           {/* My Complaints - Collapsible */}
-          {canViewComplaints && (
+          {(canTransitionComplaint || canCreateComplaint) && (
             <div>
               <button
                 onClick={() => setMyComplaintsOpen(!myComplaintsOpen)}
@@ -216,38 +218,42 @@ export const ComplaintsLayout: React.FC = () => {
               </button>
               {myComplaintsOpen && !collapsed && (
                 <div className="ms-4 mt-1 space-y-1 border-s border-white/10 ps-2">
-                  <NavLink
-                    to="/complaints/my-assigned"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
-                        isActive
-                          ? "bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-primary/20"
-                          : "text-slate-400 hover:text-white hover:bg-white/5"
-                      }`
-                    }
-                  >
-                    <UserCheck size={16} className="flex-shrink-0" />
-                    <span className="ms-2 font-medium text-sm">
-                      {t("sidebar.assignedToMe", "Assigned to Me")}
-                    </span>
-                  </NavLink>
-                  <NavLink
-                    to="/complaints/my-created"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
-                        isActive
-                          ? "bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-primary/20"
-                          : "text-slate-400 hover:text-white hover:bg-white/5"
-                      }`
-                    }
-                  >
-                    <PenLine size={16} className="flex-shrink-0" />
-                    <span className="ms-2 font-medium text-sm">
-                      {t("sidebar.createdByMe", "Created by Me")}
-                    </span>
-                  </NavLink>
+                  {canTransitionComplaint && (
+                    <NavLink
+                      to="/complaints/my-assigned"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={({ isActive }) =>
+                        `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
+                          isActive
+                            ? "bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-primary/20"
+                            : "text-slate-400 hover:text-white hover:bg-white/5"
+                        }`
+                      }
+                    >
+                      <UserCheck size={16} className="flex-shrink-0" />
+                      <span className="ms-2 font-medium text-sm">
+                        {t("sidebar.assignedToMe", "Assigned to Me")}
+                      </span>
+                    </NavLink>
+                  )}
+                  {canCreateComplaint && (
+                    <NavLink
+                      to="/complaints/my-created"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={({ isActive }) =>
+                        `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
+                          isActive
+                            ? "bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-primary/20"
+                            : "text-slate-400 hover:text-white hover:bg-white/5"
+                        }`
+                      }
+                    >
+                      <PenLine size={16} className="flex-shrink-0" />
+                      <span className="ms-2 font-medium text-sm">
+                        {t("sidebar.createdByMe", "Created by Me")}
+                      </span>
+                    </NavLink>
+                  )}
                 </div>
               )}
             </div>
