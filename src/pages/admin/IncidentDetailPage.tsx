@@ -3541,69 +3541,146 @@ export const IncidentDetailPage: React.FC = () => {
                     trans.field_changes &&
                     trans.field_changes.length > 0 && (
                       <div className="space-y-3">
-                        {selectedTransition.transition.field_changes.map(
-                          (fc) => (
-                            <div key={fc.id}>
-                              <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">
-                                {fc.label || fc.field_name}
-                                {fc.is_required && (
-                                  <span className="text-red-500 ml-1">*</span>
+                        {trans.field_changes!.map((fc) => (
+                          <div key={fc.id}>
+                            <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">
+                              {fc.label || fc.field_name}
+                              {fc.is_required && (
+                                <span className="text-red-500 ml-1">*</span>
+                              )}
+                            </label>
+                            {fc.field_name === "priority" && (
+                              <>
+                                <select
+                                  value={
+                                    transitionFieldValues[fc.field_name] || ""
+                                  }
+                                  onChange={(e) => {
+                                    setTransitionFieldValues((prev) => ({
+                                      ...prev,
+                                      [fc.field_name]: e.target.value,
+                                    }));
+                                    if (transitionErrors[fc.field_name])
+                                      setTransitionErrors((prev) => ({
+                                        ...prev,
+                                        [fc.field_name]: "",
+                                      }));
+                                  }}
+                                  className={`w-full px-3 py-2 text-sm bg-[hsl(var(--background))] border rounded-lg text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] ${transitionErrors[fc.field_name] ? "border-red-500" : "border-[hsl(var(--border))]"}`}
+                                >
+                                  <option value="">Select priority...</option>
+                                  <option value="1">Low</option>
+                                  <option value="2">Medium</option>
+                                  <option value="3">High</option>
+                                  <option value="4">Urgent</option>
+                                  <option value="5">Critical</option>
+                                </select>
+                                {transitionErrors[fc.field_name] && (
+                                  <p className="text-xs text-red-500 mt-1">
+                                    {transitionErrors[fc.field_name]}
+                                  </p>
                                 )}
-                              </label>
-                              {fc.field_name === "priority" && (
-                                <>
-                                  <select
-                                    value={
-                                      transitionFieldValues[fc.field_name] || ""
-                                    }
-                                    onChange={(e) => {
-                                      setTransitionFieldValues((prev) => ({
-                                        ...prev,
-                                        [fc.field_name]: e.target.value,
-                                      }));
-                                      if (transitionErrors[fc.field_name])
-                                        setTransitionErrors((prev) => ({
-                                          ...prev,
-                                          [fc.field_name]: "",
-                                        }));
-                                    }}
-                                    className={`w-full px-3 py-2 text-sm bg-[hsl(var(--background))] border rounded-lg text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] ${transitionErrors[fc.field_name] ? "border-red-500" : "border-[hsl(var(--border))]"}`}
-                                  >
-                                    <option value="">Select priority...</option>
-                                    <option value="1">Low</option>
-                                    <option value="2">Medium</option>
-                                    <option value="3">High</option>
-                                    <option value="4">Urgent</option>
-                                    <option value="5">Critical</option>
-                                  </select>
-                                  {transitionErrors[fc.field_name] && (
-                                    <p className="text-xs text-red-500 mt-1">
-                                      {transitionErrors[fc.field_name]}
-                                    </p>
-                                  )}
-                                </>
-                              )}
-                              {fc.field_name === "department_id" && (
-                                <TreeSelect
-                                  data={(() => {
-                                    const allDepts =
-                                      (fcDepartmentsData?.data as unknown as Department[]) ||
-                                      [];
-                                    const filtered = fc.department_type_filter
-                                      ? filterDeptTree(
-                                          allDepts,
-                                          fc.department_type_filter,
-                                        )
-                                      : allDepts;
-                                    return filtered as unknown as TreeSelectNode[];
-                                  })()}
+                              </>
+                            )}
+                            {fc.field_name === "department_id" && (
+                              <TreeSelect
+                                data={(() => {
+                                  const allDepts =
+                                    (fcDepartmentsData?.data as unknown as Department[]) ||
+                                    [];
+                                  const filtered = fc.department_type_filter
+                                    ? filterDeptTree(
+                                        allDepts,
+                                        fc.department_type_filter,
+                                      )
+                                    : allDepts;
+                                  return filtered as unknown as TreeSelectNode[];
+                                })()}
+                                value={
+                                  transitionFieldValues[fc.field_name] || ""
+                                }
+                                onChange={(id) => {
+                                  setTransitionFieldValues((prev) => ({
+                                    ...prev,
+                                    [fc.field_name]: id,
+                                  }));
+                                  if (transitionErrors[fc.field_name])
+                                    setTransitionErrors((prev) => ({
+                                      ...prev,
+                                      [fc.field_name]: "",
+                                    }));
+                                }}
+                                placeholder={`Select ${fc.department_type_filter || ""} department...`
+                                  .replace("  ", " ")
+                                  .trim()}
+                                leafOnly={false}
+                                error={transitionErrors[fc.field_name]}
+                                maxHeight="240px"
+                              />
+                            )}
+                            {fc.field_name === "location_id" && (
+                              <TreeSelect
+                                data={
+                                  (fcLocationsData?.data as unknown as TreeSelectNode[]) ||
+                                  []
+                                }
+                                value={
+                                  transitionFieldValues[fc.field_name] || ""
+                                }
+                                onChange={(id) => {
+                                  setTransitionFieldValues((prev) => ({
+                                    ...prev,
+                                    [fc.field_name]: id,
+                                  }));
+                                  if (transitionErrors[fc.field_name])
+                                    setTransitionErrors((prev) => ({
+                                      ...prev,
+                                      [fc.field_name]: "",
+                                    }));
+                                }}
+                                placeholder="Select location..."
+                                leafOnly={false}
+                                maxHeight="240px"
+                                error={transitionErrors[fc.field_name]}
+                              />
+                            )}
+                            {fc.field_name === "classification_id" && (
+                              <TreeSelect
+                                data={
+                                  (fcClassificationsData?.data as unknown as TreeSelectNode[]) ||
+                                  []
+                                }
+                                value={
+                                  transitionFieldValues[fc.field_name] || ""
+                                }
+                                onChange={(id) => {
+                                  setTransitionFieldValues((prev) => ({
+                                    ...prev,
+                                    [fc.field_name]: id,
+                                  }));
+                                  if (transitionErrors[fc.field_name])
+                                    setTransitionErrors((prev) => ({
+                                      ...prev,
+                                      [fc.field_name]: "",
+                                    }));
+                                }}
+                                placeholder="Select classification..."
+                                leafOnly={false}
+                                maxHeight="240px"
+                                error={transitionErrors[fc.field_name]}
+                              />
+                            )}
+                            {fc.field_name === "title" && (
+                              <>
+                                <input
+                                  type="text"
                                   value={
                                     transitionFieldValues[fc.field_name] || ""
                                   }
-                                  onChange={(id) => {
+                                  onChange={(e) => {
                                     setTransitionFieldValues((prev) => ({
                                       ...prev,
-                                      [fc.field_name]: id,
+                                      [fc.field_name]: e.target.value,
                                     }));
                                     if (transitionErrors[fc.field_name])
                                       setTransitionErrors((prev) => ({
@@ -3611,27 +3688,26 @@ export const IncidentDetailPage: React.FC = () => {
                                         [fc.field_name]: "",
                                       }));
                                   }}
-                                  placeholder={`Select ${fc.department_type_filter || ""} department...`
-                                    .replace("  ", " ")
-                                    .trim()}
-                                  leafOnly={false}
-                                  error={transitionErrors[fc.field_name]}
-                                  maxHeight="240px"
+                                  placeholder="Enter title..."
+                                  className={`w-full px-3 py-2 text-sm bg-[hsl(var(--background))] border rounded-lg text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] ${transitionErrors[fc.field_name] ? "border-red-500" : "border-[hsl(var(--border))]"}`}
                                 />
-                              )}
-                              {fc.field_name === "location_id" && (
-                                <TreeSelect
-                                  data={
-                                    (fcLocationsData?.data as unknown as TreeSelectNode[]) ||
-                                    []
-                                  }
+                                {transitionErrors[fc.field_name] && (
+                                  <p className="text-xs text-red-500 mt-1">
+                                    {transitionErrors[fc.field_name]}
+                                  </p>
+                                )}
+                              </>
+                            )}
+                            {fc.field_name === "description" && (
+                              <>
+                                <textarea
                                   value={
                                     transitionFieldValues[fc.field_name] || ""
                                   }
-                                  onChange={(id) => {
+                                  onChange={(e) => {
                                     setTransitionFieldValues((prev) => ({
                                       ...prev,
-                                      [fc.field_name]: id,
+                                      [fc.field_name]: e.target.value,
                                     }));
                                     if (transitionErrors[fc.field_name])
                                       setTransitionErrors((prev) => ({
@@ -3639,97 +3715,19 @@ export const IncidentDetailPage: React.FC = () => {
                                         [fc.field_name]: "",
                                       }));
                                   }}
-                                  placeholder="Select location..."
-                                  leafOnly={false}
-                                  maxHeight="240px"
-                                  error={transitionErrors[fc.field_name]}
+                                  placeholder="Enter description..."
+                                  rows={3}
+                                  className={`w-full px-3 py-2 text-sm bg-[hsl(var(--background))] border rounded-lg text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] resize-none ${transitionErrors[fc.field_name] ? "border-red-500" : "border-[hsl(var(--border))]"}`}
                                 />
-                              )}
-                              {fc.field_name === "classification_id" && (
-                                <TreeSelect
-                                  data={
-                                    (fcClassificationsData?.data as unknown as TreeSelectNode[]) ||
-                                    []
-                                  }
-                                  value={
-                                    transitionFieldValues[fc.field_name] || ""
-                                  }
-                                  onChange={(id) => {
-                                    setTransitionFieldValues((prev) => ({
-                                      ...prev,
-                                      [fc.field_name]: id,
-                                    }));
-                                    if (transitionErrors[fc.field_name])
-                                      setTransitionErrors((prev) => ({
-                                        ...prev,
-                                        [fc.field_name]: "",
-                                      }));
-                                  }}
-                                  placeholder="Select classification..."
-                                  leafOnly={false}
-                                  maxHeight="240px"
-                                  error={transitionErrors[fc.field_name]}
-                                />
-                              )}
-                              {fc.field_name === "title" && (
-                                <>
-                                  <input
-                                    type="text"
-                                    value={
-                                      transitionFieldValues[fc.field_name] || ""
-                                    }
-                                    onChange={(e) => {
-                                      setTransitionFieldValues((prev) => ({
-                                        ...prev,
-                                        [fc.field_name]: e.target.value,
-                                      }));
-                                      if (transitionErrors[fc.field_name])
-                                        setTransitionErrors((prev) => ({
-                                          ...prev,
-                                          [fc.field_name]: "",
-                                        }));
-                                    }}
-                                    placeholder="Enter title..."
-                                    className={`w-full px-3 py-2 text-sm bg-[hsl(var(--background))] border rounded-lg text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] ${transitionErrors[fc.field_name] ? "border-red-500" : "border-[hsl(var(--border))]"}`}
-                                  />
-                                  {transitionErrors[fc.field_name] && (
-                                    <p className="text-xs text-red-500 mt-1">
-                                      {transitionErrors[fc.field_name]}
-                                    </p>
-                                  )}
-                                </>
-                              )}
-                              {fc.field_name === "description" && (
-                                <>
-                                  <textarea
-                                    value={
-                                      transitionFieldValues[fc.field_name] || ""
-                                    }
-                                    onChange={(e) => {
-                                      setTransitionFieldValues((prev) => ({
-                                        ...prev,
-                                        [fc.field_name]: e.target.value,
-                                      }));
-                                      if (transitionErrors[fc.field_name])
-                                        setTransitionErrors((prev) => ({
-                                          ...prev,
-                                          [fc.field_name]: "",
-                                        }));
-                                    }}
-                                    placeholder="Enter description..."
-                                    rows={3}
-                                    className={`w-full px-3 py-2 text-sm bg-[hsl(var(--background))] border rounded-lg text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] resize-none ${transitionErrors[fc.field_name] ? "border-red-500" : "border-[hsl(var(--border))]"}`}
-                                  />
-                                  {transitionErrors[fc.field_name] && (
-                                    <p className="text-xs text-red-500 mt-1">
-                                      {transitionErrors[fc.field_name]}
-                                    </p>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                          ),
-                        )}
+                                {transitionErrors[fc.field_name] && (
+                                  <p className="text-xs text-red-500 mt-1">
+                                    {transitionErrors[fc.field_name]}
+                                  </p>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     )}
 
