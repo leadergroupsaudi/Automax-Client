@@ -141,8 +141,8 @@ export const ReportTemplateCard: React.FC<ReportTemplateCardProps> = ({
         let dateFilter: ReportFilter[] = []
         if (fromDate && toDate) {
             dateFilter.push({
-                id: "Created At",
-                field: "Created At",
+                id: "created_at",
+                field: "created_at",
                 operator: "between",
                 value: {
                     "from": new Date(fromDate).toISOString(),
