@@ -138,38 +138,38 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
   }, [rawClassifications, user]);
 
   // Filter locations based on user's assignments (unless super admin)
-  const locations = useMemo(() => {
-    if (!user || user.is_super_admin) return rawLocations;
-    if (!user.locations || user.locations.length === 0) return rawLocations;
+  // const locations = useMemo(() => {
+  //   if (!user || user.is_super_admin) return rawLocations;
+  //   if (!user.locations || user.locations.length === 0) return rawLocations;
 
-    const userLocationIds = new Set(user.locations.map((l) => l.id));
+  //   const userLocationIds = new Set(user.locations.map((l) => l.id));
 
-    const hasUserAccess = (node: any): boolean => {
-      if (userLocationIds.has(node.id)) return true;
-      if (node.children && node.children.length > 0) {
-        return node.children.some((child: any) => hasUserAccess(child));
-      }
-      return false;
-    };
+  //   const hasUserAccess = (node: any): boolean => {
+  //     if (userLocationIds.has(node.id)) return true;
+  //     if (node.children && node.children.length > 0) {
+  //       return node.children.some((child: any) => hasUserAccess(child));
+  //     }
+  //     return false;
+  //   };
 
-    const filterByUserAccess = (nodes: any[]): any[] => {
-      return nodes
-        .map((node) => {
-          if (!hasUserAccess(node)) return null;
-          const filteredNode = {
-            ...node,
-            children:
-              node.children && node.children.length > 0
-                ? filterByUserAccess(node.children)
-                : undefined,
-          };
-          return filteredNode;
-        })
-        .filter(Boolean);
-    };
+  //   const filterByUserAccess = (nodes: any[]): any[] => {
+  //     return nodes
+  //       .map((node) => {
+  //         if (!hasUserAccess(node)) return null;
+  //         const filteredNode = {
+  //           ...node,
+  //           children:
+  //             node.children && node.children.length > 0
+  //               ? filterByUserAccess(node.children)
+  //               : undefined,
+  //         };
+  //         return filteredNode;
+  //       })
+  //       .filter(Boolean);
+  //   };
 
-    return filterByUserAccess(rawLocations);
-  }, [rawLocations, user]);
+  //   return filterByUserAccess(rawLocations);
+  // }, [rawLocations, user]);
 
   // Convert classifications to TreeSelectNode format
   const classificationTreeData: TreeSelectNode[] = useMemo(() => {
