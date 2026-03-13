@@ -166,7 +166,7 @@ export const incidentFields: ReportFieldDefinition[] = [
   { field: "reporter_id", label: "Reporter Id", type: "string", category: "Core", sortable: true, filterable: true },
   { field: "reporter_email", label: "Reporter Email", type: "string", category: "Core", sortable: true, filterable: true },
   { field: "reporter_name", label: "Reporter Name", type: "string", category: "Core", sortable: true, filterable: true },
-  { field: "custom_fields", label: "Custom Fields", type: "string", category: "Core", sortable: true, filterable: true },
+  // { field: "custom_fields", label: "Custom Fields", type: "string", category: "Core", sortable: true, filterable: true },
   { field: "created_at", label: "Created At", type: "datetime", category: "Core", sortable: true, filterable: true },
   { field: "updated_at", label: "Updated At", type: "datetime", category: "Core", sortable: true, filterable: true },
   { field: "deleted_at", label: "Deleted At", type: "datetime", category: "Core", sortable: true, filterable: true },
@@ -354,7 +354,8 @@ export const departmentFields: ReportFieldDefinition[] = [
 
   // Relations
   { field: 'manager_username', label: 'Manager Username', type: 'string', category: 'Relations', sortable: true, filterable: true, relationField: 'manager' },
-  { field: 'manager_full_name', label: 'Manager Name', type: 'string', category: 'Relations', sortable: true, filterable: true, relationField: 'manager' },
+  { field: 'manager_first_name', label: 'Manager First Name', type: 'string', category: 'Relations', sortable: true, filterable: true, relationField: 'manager' },
+  { field: 'manager_last_name', label: 'Manager Last Name', type: 'string', category: 'Relations', sortable: true, filterable: true, relationField: 'manager' },
 
   // Status
   { field: 'is_active', label: 'Active', type: 'boolean', category: 'Status', sortable: true, filterable: true, defaultSelected: true },
