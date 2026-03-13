@@ -234,9 +234,17 @@ function App() {
                   />
                 </Route>
                 <Route
-                  path="/admin/esclation"
-                  element={<EscalationConfigPage />}
-                />
+                  element={
+                    <PermissionRoute
+                      requiredPermissions={[PERMISSIONS.SETTINGS_UPDATE]}
+                    />
+                  }
+                >
+                  <Route
+                    path="/admin/escalation-groups"
+                    element={<EscalationConfigPage />}
+                  />
+                </Route>
               </Route>
             </Route>
 

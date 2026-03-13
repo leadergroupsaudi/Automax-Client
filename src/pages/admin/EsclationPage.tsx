@@ -20,6 +20,9 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { escalationApi } from "@/api/admin";
 import CreateEscalationModal from "@/components/esclation/CreateEscalationModal";
 import { TooltipPopover } from "@/components/ui/TooltipPopover";
+import { toast } from "sonner";
+import usePermissions from "@/hooks/usePermissions";
+import { PERMISSIONS } from "@/constants/permissions";
 
 interface EscalationUser {
   id: string;
@@ -118,20 +121,16 @@ const DeleteModal: React.FC<{
           </div>
           <div>
             <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">
-              {t("escalation.deleteTitle", "Delete Escalation Config")}
+              {t("escalation.deleteTitle")}
             </h3>
             <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
-              {t(
-                "escalation.deleteDescription",
-                'Are you sure you want to delete "{{name}}"? This action cannot be undone.',
-                { name: item.name },
-              )}
+              {t("escalation.deleteDescription", { name: item.name })}
             </p>
           </div>
         </div>
         <div className="flex justify-end gap-3 mt-6">
           <Button variant="outline" onClick={onCancel} disabled={isLoading}>
-            {t("common.cancel", "Cancel")}
+            {t("common.cancel")}
           </Button>
           <Button
             variant="destructive"
@@ -139,7 +138,7 @@ const DeleteModal: React.FC<{
             isLoading={isLoading}
             leftIcon={!isLoading ? <Trash2 className="w-4 h-4" /> : undefined}
           >
-            {t("common.delete", "Delete")}
+            {t("common.delete")}
           </Button>
         </div>
       </div>
@@ -151,6 +150,7 @@ const DeleteModal: React.FC<{
 
 export const EscalationConfigPage: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const { hasPermission, isSuperAdmin } = usePermissions();
 
   const [page, setPage] = useState(1);
   const LIMIT = 10;
@@ -161,6 +161,13 @@ export const EscalationConfigPage: React.FC = () => {
   );
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editData, setEditData] = useState();
+
+  const canCreateEscalation =
+    isSuperAdmin || hasPermission(PERMISSIONS.ESCALATION_GROUPS_CREATE);
+  const canDeleteEscalation =
+    isSuperAdmin || hasPermission(PERMISSIONS.ESCALATION_GROUPS_DELETE);
+  const canUpdateEscalation =
+    isSuperAdmin || hasPermission(PERMISSIONS.ESCALATION_GROUPS_UPDATE);
 
   const handleSearchChange = (val: string) => {
     setSearchTerm(val);
@@ -192,8 +199,12 @@ export const EscalationConfigPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => escalationApi.delete(id),
     onSuccess: () => {
+      toast.success(t("escalation.deletedSuccess"));
       setDeleteTarget(null);
       refetch();
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || t("escalation.deleteError"));
     },
   });
 
@@ -211,13 +222,15 @@ export const EscalationConfigPage: React.FC = () => {
   };
 
   const columns = [
-    { key: "escalation.name", fallback: "Name" },
-    { key: "escalation.users", fallback: "Users" },
-    { key: "escalation.classification", fallback: "Classification" },
-    { key: "escalation.channel", fallback: "Channel" },
-    { key: "common.status", fallback: "Status" },
-    { key: "common.updated", fallback: "Updated" },
-    { key: "common.actions", fallback: "Actions" },
+    { key: "escalation.name" },
+    { key: "escalation.users" },
+    { key: "escalation.classification" },
+    { key: "escalation.channel" },
+    { key: "common.status" },
+    { key: "escalation.updatedAt" },
+    ...(canUpdateEscalation || canDeleteEscalation
+      ? [{ key: "common.actions" }]
+      : []),
   ];
 
   // ── Error ─────────────────────────────────────────────────────────────────
@@ -265,14 +278,11 @@ export const EscalationConfigPage: React.FC = () => {
                 <ShieldAlert className="w-5 h-5 text-[hsl(var(--primary))]" />
               </div>
               <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">
-                {t("escalation.pageTitle", "Escalation Configuration")}
+                {t("escalation.pageTitle")}
               </h1>
             </div>
             <p className="text-[hsl(var(--muted-foreground))] mt-1 ml-12">
-              {t(
-                "escalation.pageDescription",
-                "Manage escalation triggers for incidents.",
-              )}
+              {t("escalation.pageDescription")}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -285,15 +295,17 @@ export const EscalationConfigPage: React.FC = () => {
                 !isLoading ? <RefreshCw className="w-4 h-4" /> : undefined
               }
             >
-              {t("common.refresh", "Refresh")}
+              {t("common.refresh")}
             </Button>
-            <Button
-              size="sm"
-              leftIcon={<Plus className="w-4 h-4" />}
-              onClick={() => setShowCreateModal(true)}
-            >
-              {t("escalation.addNew", "Add Escalation")}
-            </Button>
+            {canCreateEscalation ? (
+              <Button
+                size="sm"
+                leftIcon={<Plus className="w-4 h-4" />}
+                onClick={() => setShowCreateModal(true)}
+              >
+                {t("escalation.addNew")}
+              </Button>
+            ) : null}
           </div>
         </div>
 
@@ -303,7 +315,7 @@ export const EscalationConfigPage: React.FC = () => {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] w-5 h-5" />
             <input
               type="text"
-              placeholder={t("escalation.searchPlaceholder", "Search by name…")}
+              placeholder={t("escalation.searchPlaceholder")}
               value={searchTerm}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="w-full pl-12 pr-4 py-3 bg-[hsl(var(--muted)/0.5)] border border-[hsl(var(--border))] rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] focus:bg-[hsl(var(--background))] transition-all text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))]"
@@ -319,7 +331,7 @@ export const EscalationConfigPage: React.FC = () => {
                 <div className="w-6 h-6 border-2 border-[hsl(var(--primary))] border-t-transparent rounded-full animate-spin" />
               </div>
               <p className="text-[hsl(var(--muted-foreground))]">
-                {t("escalation.loading", "Loading escalation configurations…")}
+                {t("escalation.loading")}
               </p>
             </div>
           ) : filteredEscalations?.length === 0 ? (
@@ -328,18 +340,12 @@ export const EscalationConfigPage: React.FC = () => {
                 <ShieldAlert className="w-6 h-6 text-[hsl(var(--muted-foreground))]" />
               </div>
               <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">
-                {t("escalation.noConfigs", "No Escalation Configurations")}
+                {t("escalation.noGroups")}
               </h3>
               <p className="text-[hsl(var(--muted-foreground))] mb-6">
                 {searchTerm
-                  ? t(
-                      "escalation.noMatch",
-                      "No configurations match your search.",
-                    )
-                  : t(
-                      "escalation.noConfigsHint",
-                      "Get started by adding your first escalation rule.",
-                    )}
+                  ? t("escalation.noMatch")
+                  : t("escalation.noGroupsHint")}
               </p>
               {searchTerm ? (
                 <Button
@@ -348,16 +354,16 @@ export const EscalationConfigPage: React.FC = () => {
                     setSearchTerm("");
                   }}
                 >
-                  {t("requests.clearSearch", "Clear Search")}
+                  {t("common.clearSearch")}
                 </Button>
-              ) : (
+              ) : canCreateEscalation ? (
                 <Button
                   leftIcon={<Plus className="w-4 h-4" />}
                   onClick={() => setShowCreateModal(true)}
                 >
-                  {t("escalation.addNew", "Add Escalation")}
+                  {t("escalation.addNew")}
                 </Button>
-              )}
+              ) : null}
             </div>
           ) : (
             <>
@@ -366,18 +372,18 @@ export const EscalationConfigPage: React.FC = () => {
                   {/* ── Head ── */}
                   <thead>
                     <tr className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
-                      {columns.map(({ key, fallback }, i) => (
+                      {columns.map(({ key }, i) => (
                         <th
                           key={key}
                           className={cn(
                             "px-5 py-3.5",
                             i === columns.length - 1
-                              ? "text-right"
-                              : "text-left",
+                              ? "text-center"
+                              : "text-start",
                           )}
                         >
                           <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider whitespace-nowrap">
-                            {t(key, fallback)}
+                            {t(key)}
                           </span>
                         </th>
                       ))}
@@ -456,8 +462,8 @@ export const EscalationConfigPage: React.FC = () => {
                               )}
                             />
                             {cfg.is_active
-                              ? t("escalation.active", "Active")
-                              : t("escalation.inactive", "Inactive")}
+                              ? t("escalation.active")
+                              : t("escalation.inactive")}
                           </span>
                         </td>
 
@@ -470,30 +476,36 @@ export const EscalationConfigPage: React.FC = () => {
                         </td>
 
                         {/* Actions */}
-                        <td className="px-5 py-3.5 whitespace-nowrap text-right">
-                          <div className="inline-flex items-center justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              leftIcon={<Pencil className="w-3.5 h-3.5" />}
-                              onClick={() => {
-                                setEditData(cfg);
-                                setShowCreateModal(true);
-                              }}
-                            >
-                              {t("common.edit", "Edit")}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)]"
-                              leftIcon={<Trash2 className="w-3.5 h-3.5" />}
-                              onClick={() => setDeleteTarget(cfg)}
-                            >
-                              {t("common.delete", "Delete")}
-                            </Button>
-                          </div>
-                        </td>
+                        {canUpdateEscalation || canDeleteEscalation ? (
+                          <td className="px-5 py-3.5 whitespace-nowrap text-right">
+                            <div className="inline-flex items-center justify-end gap-1">
+                              {canUpdateEscalation ? (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  leftIcon={<Pencil className="w-3.5 h-3.5" />}
+                                  onClick={() => {
+                                    setEditData(cfg);
+                                    setShowCreateModal(true);
+                                  }}
+                                >
+                                  {t("common.edit")}
+                                </Button>
+                              ) : null}
+                              {canDeleteEscalation ? (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)]"
+                                  leftIcon={<Trash2 className="w-3.5 h-3.5" />}
+                                  onClick={() => setDeleteTarget(cfg)}
+                                >
+                                  {t("common.delete")}
+                                </Button>
+                              ) : null}
+                            </div>
+                          </td>
+                        ) : null}
                       </tr>
                     ))}
                   </tbody>
@@ -504,7 +516,7 @@ export const EscalationConfigPage: React.FC = () => {
               {totalPages > 1 && (
                 <div className="px-6 py-4 border-t border-[hsl(var(--border))] flex flex-col sm:flex-row items-center justify-between gap-4 bg-[hsl(var(--muted)/0.3)]">
                   <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                    {t("requests.showingResults", {
+                    {t("common.showingResults", {
                       from: (page - 1) * LIMIT + 1,
                       to: Math.min(page * LIMIT, totalItems),
                       total: totalItems,

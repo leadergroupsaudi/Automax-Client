@@ -245,8 +245,12 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
     onSuccess: (result) => {
       if (result.data?.id) {
         onSuccess(result.data.id);
+        toast.success(t("escalation.createdSuccess"));
       }
       onClose();
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || t("escalation.createError"));
     },
   });
 
@@ -254,18 +258,13 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
     mutationFn: (data: CreateEscalationRequest) =>
       escalationApi.update(editData?.id, data),
     onSuccess: (result) => {
-      toast.success(
-        t("escalation.updatedSuccess", "Escalation updated successfully"),
-      );
+      toast.success(t("escalation.updatedSuccess"));
       queryClient.invalidateQueries({ queryKey: ["admin", "escalations"] });
       onSuccess(result.data.id);
       onClose();
     },
     onError: (err: Error) => {
-      toast.error(
-        err.message ||
-          t("escalation.updateError", "Failed to update escalation"),
-      );
+      toast.error(err.message || t("escalation.updateError"));
     },
   });
 
@@ -273,8 +272,6 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
     if (!isOpen) return;
 
     if (editData) {
-      console.log("editad::>>>", editData);
-
       setTitle(editData.name ?? "");
       setChannel(editData.channel ?? "");
       setClassificationId(editData.classification?.id ?? "");
@@ -296,12 +293,12 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!title.trim()) {
-      newErrors.title = t("escalations.titleRequired");
+      newErrors.title = t("escalation.titleRequired");
     }
 
     if (!classificationId) {
-      newErrors.classification = t("escalations.fieldRequired", {
-        field: t("escalations.classification"),
+      newErrors.classification = t("escalation.fieldRequired", {
+        field: t("escalation.classification"),
       });
     }
     // if (!locationId) {
@@ -310,14 +307,14 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
     //   });
     // }
     if (!channel) {
-      newErrors.channel = t("escalations.fieldRequired", {
-        field: t("escalations.channel"),
+      newErrors.channel = t("escalation.fieldRequired", {
+        field: t("escalation.channel"),
       });
     }
 
     if (!selectedUsers?.length) {
-      newErrors.assignee = t("escalations.fieldRequired", {
-        field: t("escalations.users", "Users"),
+      newErrors.assignee = t("escalation.fieldRequired", {
+        field: t("escalation.users", "Users"),
       });
     }
 
@@ -358,20 +355,12 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
             </div>
             <div>
               <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">
-                {editData?.id
-                  ? t("escalation.edit", "Edit Escalation")
-                  : t("escalation.create", "Create Escalation")}
+                {editData?.id ? t("escalation.edit") : t("escalation.create")}
               </h3>
               <p className="text-sm text-[hsl(var(--muted-foreground))]">
                 {editData?.id
-                  ? t(
-                      "escalation.editDescription",
-                      "Edit the existing escalation record",
-                    )
-                  : t(
-                      "escalation.createDescription",
-                      "Create a new escalation record",
-                    )}
+                  ? t("escalation.editDescription")
+                  : t("escalation.createDescription")}
               </p>
             </div>
           </div>
@@ -388,18 +377,14 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1">
-                {t("escalation.title", "Escalation Title")}{" "}
-                <span className="text-red-500">*</span>
+                {t("escalation.title")} <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder={t(
-                    "escalation.titlePlaceholder",
-                    "Enter escalation title...",
-                  )}
+                  placeholder={t("escalation.titlePlaceholder")}
                   className={cn(
                     "w-full px-4 py-2 bg-[hsl(var(--background))] border rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500",
                     errors.title
@@ -420,7 +405,7 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
               <div className="space-y-2">
                 <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                   <User className="w-4 h-4" />
-                  {t("requests.users", "Users")}
+                  {t("escalation.users")}
                   <span className="text-red-500">*</span>
                 </h4>
 
@@ -436,7 +421,7 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
                     );
                     setSelectedUsers(selectedUsers);
                   }}
-                  placeholder="Select Users..."
+                  placeholder={t("escalation.userPlaceholder")}
                   error={errors?.assignee}
                   maxTagCount={1}
                   searchable
@@ -445,8 +430,8 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
               {/* Classification */}
               <div className="space-y-2">
                 <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))]">
-                  <Tags className="w-3 h-3 inline mr-1" />
-                  {t("requests.classification", "Classification")}{" "}
+                  <Tags className="w-3 h-3 inline me-1" />
+                  {t("escalation.classification")}{" "}
                   <span className="text-red-500">*</span>
                 </label>
                 {classificationsLoading ? (
@@ -458,16 +443,10 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
                     data={classificationTreeData}
                     value={classificationId}
                     onChange={(id) => setClassificationId(id)}
-                    placeholder={t(
-                      "requests.selectClassification",
-                      "Select classification...",
-                    )}
+                    placeholder={t("escalation.selectClassification")}
                     error={errors.classification}
                     leafOnly={true}
-                    emptyMessage={t(
-                      "requests.noClassifications",
-                      "No request classifications found.",
-                    )}
+                    emptyMessage={t("escalation.noClassifications")}
                     maxHeight="200px"
                   />
                 )}
@@ -498,7 +477,7 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
               <div className="space-y-2">
                 <label className="block text-xs font-medium text-muted-foreground">
                   <Radio className="w-3 h-3 inline me-1" />
-                  {t("requests.channel", "Channel")}
+                  {t("escalation.channel")}
                   <span className="text-red-500 ms-1">*</span>
                 </label>
 
@@ -510,14 +489,14 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
                   ]}
                   value={channel}
                   onChange={(value) => setChannel(value)}
-                  placeholder="Choose a channel"
+                  placeholder={t("escalation.channelPlaceholder")}
                   error={errors?.channel}
                 />
               </div>
               <div className="space-y-2">
                 <label className="block text-xs font-medium text-muted-foreground">
                   <Calendar className="w-3 h-3 inline me-1" />
-                  Report Frequency
+                  {t("escalation.reportFrequency")}
                 </label>
 
                 <div className="flex items-center gap-6">
@@ -530,7 +509,7 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
                       onChange={(e) => setFrequency(e.target.value)}
                       className="accent-blue-500"
                     />
-                    Daily
+                    {t("escalation.daily")}
                   </label>
 
                   <label className="flex items-center gap-2 text-sm">
@@ -542,7 +521,7 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
                       onChange={(e) => setFrequency(e.target.value)}
                       className="accent-blue-500"
                     />
-                    Weekly
+                    {t("escalation.weekly")}
                   </label>
                 </div>
               </div>
@@ -556,7 +535,7 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
                 <AlertTriangle className="w-4 h-4" />
                 <p className="text-sm">
                   {(createMutation.error as Error)?.message ||
-                    t("requests.createError", "Failed to create request")}
+                    t("escalation.createError")}
                 </p>
               </div>
             </div>
@@ -570,7 +549,7 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
             onClick={onClose}
             disabled={createMutation.isPending}
           >
-            {t("common.cancel", "Cancel")}
+            {t("common.cancel")}
           </Button>
           <Button
             onClick={handleSubmit}
@@ -582,9 +561,7 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
               ) : undefined
             }
           >
-            {editData?.id
-              ? t("escalations.update", "Update Escalation")
-              : t("escalations.create", "Create Escalation")}
+            {editData?.id ? t("escalation.update") : t("escalation.create")}
           </Button>
         </div>
       </div>
