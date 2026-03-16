@@ -1321,19 +1321,22 @@ export const IncidentDetailPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {availableTransitions
-            .filter((t) => t.can_execute)
-            .map((transition) => (
-              <Button
-                key={transition.transition.id}
-                variant="outline"
-                size="sm"
-                onClick={() => handleTransitionClick(transition)}
-                leftIcon={<Play className="w-4 h-4" />}
-              >
-                {transition.transition.name}
-              </Button>
-            ))}
+          {(!incident?.is_merged ||
+            (incident?.is_merged &&
+              incident?.master_incident_id === incident?.id)) &&
+            availableTransitions
+              .filter((t) => t.can_execute)
+              .map((transition) => (
+                <Button
+                  key={transition.transition.id}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleTransitionClick(transition)}
+                  leftIcon={<Play className="w-4 h-4" />}
+                >
+                  {transition.transition.name}
+                </Button>
+              ))}
           {(!incident.record_type || incident.record_type === "incident") &&
             canConvertToRequest && (
               <Button
