@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { X, AlertCircle, Crown } from 'lucide-react';
-import { incidentMergeApi } from '../../api/admin';
-import type { Incident, IncidentMergeOption } from '../../types';
-import { Button } from '../ui';
+import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { X, AlertCircle, Crown } from "lucide-react";
+import { incidentMergeApi } from "../../api/admin";
+import type { Incident, IncidentMergeOption } from "../../types";
+import { Button } from "../ui";
 
 interface MergeIncidentsModalProps {
   isOpen: boolean;
@@ -26,21 +26,21 @@ export const MergeIncidentsModal: React.FC<MergeIncidentsModalProps> = ({
     errors: string[];
     masterOptions: IncidentMergeOption[];
   } | null>(null);
-  const [masterIncidentId, setMasterIncidentId] = useState<string>('');
-  const [comment, setComment] = useState<string>('');
-  const [error, setError] = useState<string>('');
+  const [masterIncidentId, setMasterIncidentId] = useState<string>("");
+  const [comment, setComment] = useState<string>("");
+  const [error, setError] = useState<string>("");
 
   useEffect(() => {
     if (isOpen && selectedIncidents.length >= 2) {
       validateMerge();
       // Default to first incident as master
-      setMasterIncidentId(selectedIncidents[0]?.id || '');
+      setMasterIncidentId(selectedIncidents[0]?.id || "");
     }
   }, [isOpen]);
 
   const validateMerge = async () => {
     setIsValidationLoading(true);
-    setError('');
+    setError("");
     try {
       const incidentIds = selectedIncidents.map((inc) => inc.id);
       const response = await incidentMergeApi.validateMerge(incidentIds);
@@ -52,7 +52,9 @@ export const MergeIncidentsModal: React.FC<MergeIncidentsModalProps> = ({
         masterOptions: data?.master_options || [],
       });
     } catch (err: any) {
-      setError(err.response?.data?.error || t('incidentMerge.validationFailed'));
+      setError(
+        err.response?.data?.error || t("incidentMerge.validationFailed"),
+      );
     } finally {
       setIsValidationLoading(false);
     }
@@ -60,12 +62,12 @@ export const MergeIncidentsModal: React.FC<MergeIncidentsModalProps> = ({
 
   const handleMerge = async () => {
     if (!masterIncidentId) {
-      setError(t('incidentMerge.selectMaster'));
+      setError(t("incidentMerge.selectMaster"));
       return;
     }
 
     setIsMerging(true);
-    setError('');
+    setError("");
 
     try {
       await incidentMergeApi.mergeIncidents({
@@ -77,7 +79,7 @@ export const MergeIncidentsModal: React.FC<MergeIncidentsModalProps> = ({
       onMergeSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.error || t('incidentMerge.mergeFailed'));
+      setError(err.response?.data?.error || t("incidentMerge.mergeFailed"));
     } finally {
       setIsMerging(false);
     }
@@ -86,16 +88,16 @@ export const MergeIncidentsModal: React.FC<MergeIncidentsModalProps> = ({
   if (!isOpen) return null;
 
   return (
-     <div className="fixed inset-0 bg-[hsl(var(--foreground)/0.6)] backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-[hsl(var(--foreground)/0.6)] backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-[hsl(var(--card))] rounded-xl shadow-2xl max-w-2xl w-full animate-scale-in max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">
-            {t('incidents.merge.title')}
+          <h2 className="text-xl font-semibold">
+            {t("incidents.merge.title")}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-muted-foreground hover:text-gray-500 transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
@@ -106,7 +108,7 @@ export const MergeIncidentsModal: React.FC<MergeIncidentsModalProps> = ({
           {/* Validation Loading */}
           {isValidationLoading && (
             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-              <p className="text-gray-600">{t('common.loading')}</p>
+              <p className="text-gray-600">{t("common.loading")}</p>
             </div>
           )}
 
@@ -117,7 +119,7 @@ export const MergeIncidentsModal: React.FC<MergeIncidentsModalProps> = ({
                 <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <h4 className="font-medium text-red-900 mb-2">
-                    {t('incidents.merge.cannotMerge')}
+                    {t("incidents.merge.cannotMerge")}
                   </h4>
                   <ul className="text-sm text-red-700 space-y-1">
                     {validationResult.errors.map((err, idx) => (
@@ -133,11 +135,12 @@ export const MergeIncidentsModal: React.FC<MergeIncidentsModalProps> = ({
             <>
               {/* Master Incident Selection */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('incidentMerge.masterIncidentNumber')} <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
+                  {t("incidentMerge.masterIncidentNumber")}{" "}
+                  <span className="text-red-500">*</span>
                 </label>
                 <p className="text-xs text-gray-500 mb-3">
-                  {t('incidentMerge.masterIncidentHint')}
+                  {t("incidentMerge.masterIncidentHint")}
                 </p>
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {selectedIncidents.map((incident) => (
@@ -145,8 +148,8 @@ export const MergeIncidentsModal: React.FC<MergeIncidentsModalProps> = ({
                       key={incident.id}
                       className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
                         masterIncidentId === incident.id
-                          ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500'
-                          : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                          ? "border-primary bg-indigo-50 ring-1 ring-primary"
+                          : "border-gray-200 bg-gray-50 hover:border-gray-300"
                       }`}
                     >
                       <input
@@ -155,7 +158,7 @@ export const MergeIncidentsModal: React.FC<MergeIncidentsModalProps> = ({
                         value={incident.id}
                         checked={masterIncidentId === incident.id}
                         onChange={() => setMasterIncidentId(incident.id)}
-                        className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                        className="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
@@ -165,12 +168,13 @@ export const MergeIncidentsModal: React.FC<MergeIncidentsModalProps> = ({
                           {masterIncidentId === incident.id && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
                               <Crown className="w-3 h-3" />
-                              {t('incidentMerge.master')}
+                              {t("incidentMerge.master")}
                             </span>
                           )}
                         </div>
                         <p className="text-sm text-gray-500">
-                          {t('incidents.status')}: {incident.current_state?.name}
+                          {t("incidents.status")}:{" "}
+                          {incident.current_state?.name}
                         </p>
                       </div>
                     </label>
@@ -181,19 +185,22 @@ export const MergeIncidentsModal: React.FC<MergeIncidentsModalProps> = ({
               {/* Info */}
               <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-800">
-                  {t('incidentMerge.masterRetainInfo')}
+                  {t("incidentMerge.masterRetainInfo")}
                 </p>
               </div>
 
               {/* Comment */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('incidentMerge.comment')} <span className="text-gray-400">({t('common.optional')})</span>
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
+                  {t("incidentMerge.comment")}{" "}
+                  <span className="text-gray-400">
+                    ({t("common.optional")})
+                  </span>
                 </label>
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
-                  placeholder={t('incidentMerge.commentPlaceholder')}
+                  placeholder={t("incidentMerge.commentPlaceholder")}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
@@ -209,13 +216,9 @@ export const MergeIncidentsModal: React.FC<MergeIncidentsModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t bg-gray-50 rounded-b-lg">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            disabled={isMerging}
-          >
-            {t('common.cancel')}
+        <div className="flex items-center justify-end gap-3 p-6 border-t bg-card rounded-b-lg">
+          <Button variant="outline" onClick={onClose} disabled={isMerging}>
+            {t("common.cancel")}
           </Button>
           {validationResult?.canMerge && (
             <Button
@@ -224,7 +227,7 @@ export const MergeIncidentsModal: React.FC<MergeIncidentsModalProps> = ({
               isLoading={isMerging}
               disabled={!masterIncidentId}
             >
-              {t('incidentMerge.confirmMerge')}
+              {t("incidentMerge.confirmMerge")}
             </Button>
           )}
         </div>
