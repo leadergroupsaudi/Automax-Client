@@ -1154,6 +1154,11 @@ export const incidentApi = {
     if (filter.record_type) params.append("record_type", filter.record_type);
     if (filter.start_date) params.append("start_date", filter.start_date);
     if (filter.end_date) params.append("end_date", filter.end_date);
+    if (filter.custom_field_key)
+      params.append("custom_field_key", filter.custom_field_key);
+    if (filter.custom_field_value)
+      params.append("custom_field_value", filter.custom_field_value);
+    if (filter.task_id) params.append("task_id", filter.task_id);
 
     const response = await apiClient.get<PaginatedResponse<Incident>>(
       `/incidents?${params.toString()}`,
@@ -1509,6 +1514,11 @@ export const complaintApi = {
     if (filter.channel) params.append("channel", filter.channel);
     if (filter.start_date) params.append("start_date", filter.start_date);
     if (filter.end_date) params.append("end_date", filter.end_date);
+    if (filter.custom_field_key)
+      params.append("custom_field_key", filter.custom_field_key);
+    if (filter.custom_field_value)
+      params.append("custom_field_value", filter.custom_field_value);
+    if (filter.task_id) params.append("task_id", filter.task_id);
 
     const response = await apiClient.get<PaginatedResponse<Incident>>(
       `/complaints?${params.toString()}`,
@@ -1702,6 +1712,11 @@ export const queryApi = {
     if (filter.channel) params.append("channel", filter.channel);
     if (filter.start_date) params.append("start_date", filter.start_date);
     if (filter.end_date) params.append("end_date", filter.end_date);
+    if (filter.custom_field_key)
+      params.append("custom_field_key", filter.custom_field_key);
+    if (filter.custom_field_value)
+      params.append("custom_field_value", filter.custom_field_value);
+    if (filter.task_id) params.append("task_id", filter.task_id);
 
     const response = await apiClient.get<PaginatedResponse<Incident>>(
       `/queries?${params.toString()}`,
@@ -1898,6 +1913,11 @@ export const requestApi = {
     if (filter.channel) params.append("channel", filter.channel);
     if (filter.start_date) params.append("start_date", filter.start_date);
     if (filter.end_date) params.append("end_date", filter.end_date);
+    if (filter.custom_field_key)
+      params.append("custom_field_key", filter.custom_field_key);
+    if (filter.custom_field_value)
+      params.append("custom_field_value", filter.custom_field_value);
+    if (filter.task_id) params.append("task_id", filter.task_id);
 
     const response = await apiClient.get<PaginatedResponse<Incident>>(
       `/incidents?${params.toString()}`,
