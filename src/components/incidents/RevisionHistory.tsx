@@ -12,6 +12,7 @@ import {
   Download,
   Filter,
   ArrowRight,
+  Workflow
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui";
@@ -99,7 +100,7 @@ export const RevisionHistory: React.FC<RevisionHistoryProps> = ({
       Action: rev.action_description,
       "Action Taken By": rev.performed_by
         ? `${rev.performed_by.first_name || ""} ${rev.performed_by.last_name || ""}`.trim() ||
-          rev.performed_by.username
+        rev.performed_by.username
         : "System",
       Role: rev.performed_by_roles?.join(", ") || "",
       Mobile: rev.performed_by_phone || rev.performed_by?.phone || "",
@@ -245,10 +246,18 @@ export const RevisionHistory: React.FC<RevisionHistoryProps> = ({
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 flex flex-col gap-2">
                       <span className="text-sm text-[hsl(var(--foreground))]">
                         {revision.action_description}
                       </span>
+                      {
+                        revision.transition?.name && (
+                          <span className="text-xs bg-[hsl(var(--background))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] flex items-center gap-1 px-2 py-1 rounded-full w-fit">
+                            <Workflow className="w-4 h-4 text-[hsl(var(--muted-foreground))] flex-shrink-0" />
+                            {revision.transition?.name || revision.transition?.code}
+                          </span>
+                        )
+                      }
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -262,7 +271,7 @@ export const RevisionHistory: React.FC<RevisionHistoryProps> = ({
                         <span className="text-sm font-medium text-[hsl(var(--foreground))]">
                           {revision.performed_by
                             ? `${revision.performed_by.first_name || ""} ${revision.performed_by.last_name || ""}`.trim() ||
-                              revision.performed_by.username
+                            revision.performed_by.username
                             : t("revisionHistory.system")}
                         </span>
                       </div>
@@ -280,15 +289,15 @@ export const RevisionHistory: React.FC<RevisionHistoryProps> = ({
                         ))}
                         {(!revision.performed_by_roles ||
                           revision.performed_by_roles.length === 0) && (
-                          <span className="text-sm text-[hsl(var(--muted-foreground))]">
-                            -
-                          </span>
-                        )}
+                            <span className="text-sm text-[hsl(var(--muted-foreground))]">
+                              -
+                            </span>
+                          )}
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       {revision.performed_by_phone ||
-                      revision.performed_by?.phone ? (
+                        revision.performed_by?.phone ? (
                         <div className="flex items-center gap-1.5 text-sm text-[hsl(var(--foreground))]">
                           <Phone className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
                           {revision.performed_by_phone ||

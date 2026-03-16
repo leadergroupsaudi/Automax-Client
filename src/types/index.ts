@@ -1016,6 +1016,7 @@ export interface IncidentRevision {
   comment_id?: string;
   attachment_id?: string;
   transition_history_id?: string;
+  transition?: WorkflowTransition;
   created_at: string;
 }
 
