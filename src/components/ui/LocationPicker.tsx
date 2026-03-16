@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { publicUrl } from "../../utils/publicUrl";
 import { useTranslation } from "react-i18next";
 import {
   MapContainer,
@@ -24,9 +25,9 @@ import "leaflet/dist/leaflet.css";
 
 // Fix for default marker icon - using local images
 const defaultIcon = new Icon({
-  iconUrl: "/images/leaflet/marker-icon.png",
-  iconRetinaUrl: "/images/leaflet/marker-icon-2x.png",
-  shadowUrl: "/images/leaflet/marker-shadow.png",
+  iconUrl: publicUrl("images/leaflet/marker-icon.png"),
+  iconRetinaUrl: publicUrl("images/leaflet/marker-icon-2x.png"),
+  shadowUrl: publicUrl("images/leaflet/marker-shadow.png"),
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
@@ -45,7 +46,8 @@ export interface LocationData {
 
 interface LocationPickerProps {
   value?: LocationData;
-  onChange: (location: LocationData | undefined) => void;
+  // eslint-disable-next-line no-unused-vars
+  onChange: (_location: LocationData | undefined) => void;
   required?: boolean;
   error?: string;
   label?: string;
@@ -74,7 +76,8 @@ interface NominatimResponse {
 function MapClickHandler({
   onLocationSelect,
 }: {
-  onLocationSelect: (latlng: LatLng) => void;
+  // eslint-disable-next-line no-unused-vars
+  onLocationSelect: (_latlng: LatLng) => void;
 }) {
   useMapEvents({
     click: (e) => {
@@ -125,6 +128,7 @@ async function reverseGeocode(
       postal_code: data.address.postcode,
     };
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Reverse geocoding error:", error);
     return {};
   }
@@ -153,6 +157,7 @@ export function LocationPicker({
   );
 
   const searchRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const searchTimeout = useRef<any>(null);
 
   // Default center
@@ -194,6 +199,7 @@ export function LocationPicker({
         setShowSuggestions(true);
       }
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error("Search error:", err);
     } finally {
       setIsSearching(false);
@@ -337,6 +343,7 @@ export function LocationPicker({
     if (value?.latitude && value.longitude) {
       reverseAndSetLatLong();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value?.latitude, value?.longitude]);
 
   return (

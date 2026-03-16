@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { publicUrl } from "../../utils/publicUrl";
 import { toast } from "sonner";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -43,9 +44,9 @@ import "leaflet/dist/leaflet.css";
 
 // Fix for default marker icon - using local images
 const defaultIcon = new Icon({
-  iconUrl: "/images/leaflet/marker-icon.png",
-  iconRetinaUrl: "/images/leaflet/marker-icon-2x.png",
-  shadowUrl: "/images/leaflet/marker-shadow.png",
+  iconUrl: publicUrl("images/leaflet/marker-icon.png"),
+  iconRetinaUrl: publicUrl("images/leaflet/marker-icon-2x.png"),
+  shadowUrl: publicUrl("images/leaflet/marker-shadow.png"),
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
@@ -155,6 +156,7 @@ export const QueryDetailPage: React.FC = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Error downloading attachment:", error);
       toast.error("Failed to download attachment");
     }

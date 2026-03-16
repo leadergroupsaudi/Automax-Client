@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { publicUrl } from "../../utils/publicUrl";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -87,9 +88,9 @@ import ImageEditor from "@/components/common/ImageEditor";
 
 // Fix for default marker icon - using local images
 const defaultIcon = new Icon({
-  iconUrl: "/images/leaflet/marker-icon.png",
-  iconRetinaUrl: "/images/leaflet/marker-icon-2x.png",
-  shadowUrl: "/images/leaflet/marker-shadow.png",
+  iconUrl: publicUrl("images/leaflet/marker-icon.png"),
+  iconRetinaUrl: publicUrl("images/leaflet/marker-icon-2x.png"),
+  shadowUrl: publicUrl("images/leaflet/marker-shadow.png"),
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
@@ -142,6 +143,7 @@ export const IncidentDetailPage: React.FC = () => {
   const [selectedAssignee, setSelectedAssignee] = useState<string>("");
   const [convertModalOpen, setConvertModalOpen] = useState(false);
   const [unmergeModalOpen, setUnmergeModalOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [mergedIncidents, setMergedIncidents] = useState<any[]>([]);
   const [showMergedIncidents, setShowMergedIncidents] = useState(false);
   const [selectedForUnmerge, setSelectedForUnmerge] = useState<Set<string>>(
@@ -398,12 +400,14 @@ export const IncidentDetailPage: React.FC = () => {
 
     // Mark initial presence
     incidentApi.markPresence(id).catch((err) => {
+      // eslint-disable-next-line no-console
       console.error("Failed to mark presence:", err);
     });
 
     // Update presence every 3 minutes as backup (WebSocket is primary)
     const presenceInterval = setInterval(() => {
       incidentApi.markPresence(id).catch((err) => {
+        // eslint-disable-next-line no-console
         console.error("Failed to mark presence:", err);
       });
     }, 180000); // 3 minutes (increased from 2 min since WebSocket handles this)
@@ -412,6 +416,7 @@ export const IncidentDetailPage: React.FC = () => {
     return () => {
       clearInterval(presenceInterval);
       incidentApi.removePresence(id).catch((err) => {
+        // eslint-disable-next-line no-console
         console.error("Failed to remove presence:", err);
       });
     };
@@ -502,6 +507,7 @@ export const IncidentDetailPage: React.FC = () => {
       setSelectedUserIds([]);
       toast.success("Transition completed successfully");
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       const errorMessage =
         error.response?.data?.error ||
@@ -672,6 +678,7 @@ export const IncidentDetailPage: React.FC = () => {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error("Failed to download report:", err);
     } finally {
       setGeneratingReport(false);
@@ -904,6 +911,7 @@ export const IncidentDetailPage: React.FC = () => {
           }
         }
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error("Failed to fetch assignment matches:", error);
       } finally {
         setMatchLoading(false);
@@ -947,6 +955,7 @@ export const IncidentDetailPage: React.FC = () => {
       setOpenImageEditor(false);
       refetch(); // Reload incident data to show new attachment
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Failed to save edited image:", error);
       toast.error(t("incidents.saveFailed", "Failed to save edited image"));
       setOpenImageEditor(false);
@@ -976,6 +985,7 @@ export const IncidentDetailPage: React.FC = () => {
       setOpenImageEditor(false);
       refetch(); // Reload incident data to show new attachment
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Failed to save edited image:", error);
       toast.error(t("incidents.saveFailed", "Failed to save edited image"));
       setOpenImageEditor(false);
@@ -1475,6 +1485,7 @@ export const IncidentDetailPage: React.FC = () => {
                     onChange={(e) => {
                       if (e.target.checked) {
                         setSelectedForUnmerge(
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           new Set(mergedIncidents.map((m: any) => m.id)),
                         );
                       } else {
@@ -4098,6 +4109,7 @@ export const IncidentDetailPage: React.FC = () => {
       <BulkUnmergeModal
         isOpen={bulkUnmergeModalOpen}
         onClose={() => setBulkUnmergeModalOpen(false)}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         incidents={mergedIncidents.filter((m: any) =>
           selectedForUnmerge.has(m.id),
         )}

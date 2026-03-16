@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { publicUrl } from "../../utils/publicUrl";
 import { Outlet, NavLink, useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -89,7 +90,7 @@ export const ReportLayout: React.FC = () => {
       >
         <div className="flex items-center gap-3">
           <img
-            src="/epm-logo.png"
+            src={publicUrl("epm-logo.png")}
             alt="Automax"
             className={collapsed ? "h-8 w-auto" : "h-10 w-auto"}
           />

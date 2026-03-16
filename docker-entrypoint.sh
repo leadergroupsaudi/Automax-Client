@@ -1,5 +1,13 @@
 #!/bin/sh
 
+# Patch index.html: replace build-time placeholder with the real base path.
+# e.g. VITE_BASE_PATH=/ax3/ → /BASEPATHPLACEHOLDER/ becomes /ax3/
+BASE_PATH="${VITE_BASE_PATH:-/}"
+# Strip trailing slash for sed replacement, then re-add via the literal '/'
+# in the original placeholder. This handles both "/" and "/ax3/" correctly.
+BASE_NO_SLASH=$(echo "$BASE_PATH" | sed 's|/$||')
+sed -i "s|/BASEPATHPLACEHOLDER|${BASE_NO_SLASH}|g" /app/dist/index.html
+
 # Generate runtime config from environment variables
 cat <<EOF > /app/dist/config.js
 window.APP_CONFIG = {

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import React, { useState, useCallback, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -151,7 +151,9 @@ export const ReportBuilderPage: React.FC = () => {
 
   // State
   const [dataSource, setDataSource] = useState<ReportDataSource | null>(null);
-  const [selectedColumns, setSelectedColumns] = useState<{ field: string, label: string }[]>([]);
+  const [selectedColumns, setSelectedColumns] = useState<
+    { field: string; label: string }[]
+  >([]);
   const [filters, setFilters] = useState<ReportFilter[]>([]);
   const [sorting, setSorting] = useState<ReportSort[]>([]);
   // recordLimit — how many rows the query should return (sent as the API limit)
@@ -219,7 +221,10 @@ export const ReportBuilderPage: React.FC = () => {
     if (userOptions?.data) {
       map.users = userOptions.data.map((user) => ({
         value: user.id,
-        label: (user.first_name && user.last_name ? user.first_name + ' ' + user.last_name : user.username || user.email),
+        label:
+          user.first_name && user.last_name
+            ? user.first_name + " " + user.last_name
+            : user.username || user.email,
       }));
     }
 
@@ -259,7 +264,12 @@ export const ReportBuilderPage: React.FC = () => {
     if (templateData?.data) {
       const template = templateData.data;
       setDataSource(template.data_source);
-      setSelectedColumns(template.config.columns.map((c) => ({ field: c.field, label: c.label })));
+      setSelectedColumns(
+        template.config.columns.map((c) => ({
+          field: c.field,
+          label: c.label,
+        })),
+      );
       setFilters(
         template.config.filters.map((f, i) => ({ ...f, id: `filter_${i}` })),
       );
@@ -320,6 +330,7 @@ export const ReportBuilderPage: React.FC = () => {
         100,
       );
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Failed to generate report:", error);
     } finally {
       setIsPreviewLoading(false);
@@ -421,7 +432,8 @@ export const ReportBuilderPage: React.FC = () => {
         sorting,
       };
 
-      console.log(config)
+      // eslint-disable-next-line no-console
+      console.log(config);
 
       if (loadedTemplate) {
         // Update existing

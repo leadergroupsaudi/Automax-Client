@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { publicUrl } from "../../utils/publicUrl";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -158,7 +159,11 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 mr-8">
-              <img src="/epm-logo.png" alt="Automax" className="h-9 w-auto" />
+              <img
+                src={publicUrl("epm-logo.png")}
+                alt="Automax"
+                className="h-9 w-auto"
+              />
             </Link>
 
             {/* Desktop Navigation */}
@@ -263,6 +268,7 @@ export const Navbar: React.FC = () => {
                   auth={{
                     user: {
                       userID: user?.id || "",
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       extension: (user as any)?.extension || "",
                     },
                   }}
