@@ -62,6 +62,7 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
   // Form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [comment, setComment] = useState("");
   const [source, setSource] = useState<IncidentSource | undefined>(undefined);
   const [channel, setChannel] = useState("");
   const [classificationId, setClassificationId] = useState("");
@@ -497,6 +498,11 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
         field: t("complaints.description", "Description"),
       });
     }
+    if (workflowRequiredFields.includes("comment") && !comment.trim()) {
+      newErrors.comment = t("complaints.fieldRequired", {
+        field: t("complaints.comment", "Comment"),
+      });
+    }
     if (workflowRequiredFields.includes("source") && !source) {
       newErrors.source = t("complaints.fieldRequired", {
         field: t("complaints.source", "Source"),
@@ -636,6 +642,7 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
     const data: CreateComplaintRequest = {
       title: title.trim(),
       description: description.trim() || undefined,
+      comment: comment.trim() || undefined,
       classification_id: classificationId,
       workflow_id: workflowId,
       source: source || undefined,
@@ -914,6 +921,38 @@ export const CreateComplaintModal: React.FC<CreateComplaintModalProps> = ({
                   <p className="text-xs text-red-500 mt-1">
                     {errors.description}
                   </p>
+                )}
+              </div>
+            )}
+
+            {/* Comment */}
+            {workflowRequiredFields.includes("comment") && (
+              <div>
+                <label
+                  htmlFor="complaint-comment"
+                  className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1"
+                >
+                  {t("complaints.comment", "Comment")}
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+                <textarea
+                  id="complaint-comment"
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder={t(
+                    "complaints.commentPlaceholder",
+                    "Add a comment...",
+                  )}
+                  rows={3}
+                  className={cn(
+                    "w-full px-4 py-3 bg-[hsl(var(--background))] border rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none",
+                    errors.comment
+                      ? "border-red-500"
+                      : "border-[hsl(var(--border))]",
+                  )}
+                />
+                {errors.comment && (
+                  <p className="text-xs text-red-500 mt-1">{errors.comment}</p>
                 )}
               </div>
             )}

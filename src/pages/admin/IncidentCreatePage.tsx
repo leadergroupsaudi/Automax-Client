@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -1087,98 +1087,96 @@ export function IncidentCreatePage() {
               </Card>
             )}
 
-            {workflowRequiredFields.includes("attachments") && (
-              <>
-                <Card className="p-6">
-                  <h2 className="text-lg font-semibold mb-4">
-                    {t("incidents.comment")}
-                    {workflowRequiredFields.includes("comment") && (
-                      <span className="text-red-500 ml-1">*</span>
-                    )}
-                  </h2>
-                  <Textarea
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    placeholder={t("incidents.commentPlaceholder")}
-                    rows={3}
-                    error={errors.comment}
-                  />
-                </Card>
+            {workflowRequiredFields.includes("comment") && (
+              <Card className="p-6">
+                <h2 className="text-lg font-semibold mb-4">
+                  {t("incidents.comment")}
+                  <span className="text-red-500 ml-1">*</span>
+                </h2>
+                <Textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder={t("incidents.commentPlaceholder")}
+                  rows={3}
+                  error={errors.comment}
+                />
+              </Card>
+            )}
 
-                <Card className="p-6">
-                  <h2 className="text-lg font-semibold mb-4">
-                    {t("incidents.attachments")}
-                    <span className="text-red-500 ml-1">*</span>
-                  </h2>
-                  <div className="space-y-4">
-                    {attachments.length > 0 && (
-                      <div className="space-y-2">
-                        {attachments.map((file, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between p-3 bg-primary/10 rounded-lg border border-primary"
-                          >
-                            <div className="flex items-center gap-2">
-                              <Paperclip className="w-4 h-4 text-gray-500" />
-                              <span
-                                className="text-sm text-muted-foreground truncate max-w-[250px] hover:underline cursor-pointer"
-                                onClick={() => setPreviewIndex(index)}
-                              >
-                                {file.name}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                ({(file.size / 1024).toFixed(1)} KB)
-                              </span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setAttachments((prev) =>
-                                  prev.filter((_, i) => i !== index),
-                                )
-                              }
-                              className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+            {workflowRequiredFields.includes("attachments") && (
+              <Card className="p-6">
+                <h2 className="text-lg font-semibold mb-4">
+                  {t("incidents.attachments")}
+                  <span className="text-red-500 ml-1">*</span>
+                </h2>
+                <div className="space-y-4">
+                  {attachments.length > 0 && (
+                    <div className="space-y-2">
+                      {attachments.map((file, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 bg-primary/10 rounded-lg border border-primary"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Paperclip className="w-4 h-4 text-gray-500" />
+                            <span
+                              className="text-sm text-muted-foreground truncate max-w-[250px] hover:underline cursor-pointer"
+                              onClick={() => setPreviewIndex(index)}
                             >
-                              <X className="w-4 h-4" />
-                            </button>
+                              {file.name}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              ({(file.size / 1024).toFixed(1)} KB)
+                            </span>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                    <label
-                      className={`flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-xl cursor-pointer hover:border-[hsl(var(--primary))] hover:bg-[hsl(var(--muted)/0.3)] transition-colors ${errors.attachments ? "border-[hsl(var(--destructive)/0.5)]" : "border-[hsl(var(--border))]"}`}
-                    >
-                      <Upload className="w-5 h-5 text-[hsl(var(--muted-foreground))]" />
-                      <span className="text-sm text-[hsl(var(--muted-foreground))]">
-                        {t("incidents.clickToUpload")}
-                      </span>
-                      <input
-                        type="file"
-                        className="hidden"
-                        multiple
-                        onChange={(e) => {
-                          const files = Array.from(e.target.files || []);
-                          if (files.length > 0) {
-                            setAttachments((prev) => [...prev, ...files]);
-                            if (errors.attachments) {
-                              setErrors((prev) => ({
-                                ...prev,
-                                attachments: "",
-                              }));
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setAttachments((prev) =>
+                                prev.filter((_, i) => i !== index),
+                              )
                             }
+                            className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <label
+                    className={`flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-xl cursor-pointer hover:border-[hsl(var(--primary))] hover:bg-[hsl(var(--muted)/0.3)] transition-colors ${errors.attachments ? "border-[hsl(var(--destructive)/0.5)]" : "border-[hsl(var(--border))]"}`}
+                  >
+                    <Upload className="w-5 h-5 text-[hsl(var(--muted-foreground))]" />
+                    <span className="text-sm text-[hsl(var(--muted-foreground))]">
+                      {t("incidents.clickToUpload")}
+                    </span>
+                    <input
+                      type="file"
+                      className="hidden"
+                      multiple
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        if (files.length > 0) {
+                          setAttachments((prev) => [...prev, ...files]);
+                          if (errors.attachments) {
+                            setErrors((prev) => ({
+                              ...prev,
+                              attachments: "",
+                            }));
                           }
-                          e.target.value = "";
-                        }}
-                      />
-                    </label>
-                    {errors.attachments && (
-                      <p className="mt-2 text-sm text-[hsl(var(--destructive))]">
-                        {errors.attachments}
-                      </p>
-                    )}
-                  </div>
-                </Card>
-              </>
+                        }
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                  {errors.attachments && (
+                    <p className="mt-2 text-sm text-[hsl(var(--destructive))]">
+                      {errors.attachments}
+                    </p>
+                  )}
+                </div>
+              </Card>
             )}
           </div>
 

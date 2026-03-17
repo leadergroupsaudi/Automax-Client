@@ -62,6 +62,7 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
   // Form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [comment, setComment] = useState("");
   const [source, setSource] = useState<IncidentSource | undefined>(undefined);
   const [channel, setChannel] = useState("");
   const [classificationId, setClassificationId] = useState("");
@@ -509,6 +510,11 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
         field: t("queries.description", "Description"),
       });
     }
+    if (workflowRequiredFields.includes("comment") && !comment.trim()) {
+      newErrors.comment = t("queries.fieldRequired", {
+        field: t("queries.comment", "Comment"),
+      });
+    }
     if (workflowRequiredFields.includes("source") && !source) {
       newErrors.source = t("queries.fieldRequired", {
         field: t("queries.source", "Source"),
@@ -648,6 +654,7 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
     const data: CreateQueryRequest = {
       title: title.trim(),
       description: description.trim() || undefined,
+      comment: comment.trim() || undefined,
       classification_id: classificationId,
       workflow_id: workflowId,
       source: source || undefined,
@@ -922,6 +929,38 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
                   <p className="text-xs text-red-500 mt-1">
                     {errors.description}
                   </p>
+                )}
+              </div>
+            )}
+
+            {/* Comment */}
+            {workflowRequiredFields.includes("comment") && (
+              <div>
+                <label
+                  htmlFor="query-comment"
+                  className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1"
+                >
+                  {t("queries.comment", "Comment")}
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+                <textarea
+                  id="query-comment"
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder={t(
+                    "queries.commentPlaceholder",
+                    "Add a comment...",
+                  )}
+                  rows={3}
+                  className={cn(
+                    "w-full px-4 py-3 bg-[hsl(var(--background))] border rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none",
+                    errors.comment
+                      ? "border-red-500"
+                      : "border-[hsl(var(--border))]",
+                  )}
+                />
+                {errors.comment && (
+                  <p className="text-xs text-red-500 mt-1">{errors.comment}</p>
                 )}
               </div>
             )}
