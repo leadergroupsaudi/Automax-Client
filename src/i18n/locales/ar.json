@@ -765,6 +765,8 @@
     "typeRequest": "الطلبات فقط",
     "typeComplaint": "الشكاوى فقط",
     "typeQuery": "الاستفسارات فقط",
+    "typeMobile": "الجوال فقط",
+    "typeIVR": "IVR فقط",
     "typeHelp": "يحدد أنواع السجلات التي يمكنها استخدام هذا التصنيف",
     "sortOrder": "ترتيب الفرز",
     "sortOrderHelp": "الأرقام الأصغر تظهر أولاً",
@@ -778,6 +780,8 @@
     "request": "طلب",
     "complaint": "شكوى",
     "query": "استفسار",
+    "mobile": "جوال",
+    "ivr": "IVR",
     "both": "كلاهما",
     "all": "الكل",
     "maxClosingTime": "أقصى وقت للإغلاق",
@@ -1153,7 +1157,11 @@
     "recordTypeBoth": "كلاهما",
     "recordTypeBothDesc": "الحوادث والطلبات",
     "recordTypeAll": "جميع الأنواع",
-    "recordTypeAllDesc": "جميع أنواع السجلات"
+    "recordTypeAllDesc": "جميع أنواع السجلات",
+    "recordTypeMobile": "الجوال فقط",
+    "recordTypeMobileDesc": "للتقديمات عبر الجوال",
+    "recordTypeIVR": "IVR فقط",
+    "recordTypeIVRDesc": "للتقديمات عبر IVR"
   },
   "lookups": {
     "title": "البيانات الرئيسية",

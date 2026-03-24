@@ -5,6 +5,8 @@ export type ClassificationType =
   | "request"
   | "complaint"
   | "query"
+  | "mobile"
+  | "ivr"
   | "both"
   | "all";
 

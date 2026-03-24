@@ -167,9 +167,13 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                   ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                   : classification.type === "complaint"
                     ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                    : classification.type === "all"
-                      ? "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
-                      : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+                    : classification.type === "mobile"
+                      ? "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400"
+                      : classification.type === "ivr"
+                        ? "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400"
+                        : classification.type === "all"
+                          ? "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
+                          : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
             )}
           >
             {classification.type === "incident"
@@ -180,9 +184,13 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                   ? t("classifications.complaint")
                   : classification.type === "query"
                     ? t("classifications.query")
-                    : classification.type === "all"
-                      ? t("classifications.all")
-                      : t("classifications.both")}
+                    : classification.type === "mobile"
+                      ? t("classifications.mobile")
+                      : classification.type === "ivr"
+                        ? t("classifications.ivr")
+                        : classification.type === "all"
+                          ? t("classifications.all")
+                          : t("classifications.both")}
           </span>
           <span
             className={cn(
@@ -1057,6 +1065,10 @@ export const ClassificationsPage: React.FC = () => {
                   <option value="query">
                     {t("classifications.typeQuery")}
                   </option>
+                  <option value="mobile">
+                    {t("classifications.typeMobile")}
+                  </option>
+                  <option value="ivr">{t("classifications.typeIVR")}</option>
                 </select>
                 <p className="mt-1.5 text-xs text-[hsl(var(--muted-foreground))]">
                   {t("classifications.typeHelp")}

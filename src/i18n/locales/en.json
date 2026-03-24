@@ -805,6 +805,8 @@
     "typeRequest": "Request Only",
     "typeComplaint": "Complaint Only",
     "typeQuery": "Query Only",
+    "typeMobile": "Mobile Only",
+    "typeIVR": "IVR Only",
     "typeHelp": "Determines which record types can use this classification",
     "sortOrder": "Sort Order",
     "sortOrderHelp": "Lower numbers appear first",
@@ -818,6 +820,8 @@
     "request": "Request",
     "complaint": "Complaint",
     "query": "Query",
+    "mobile": "Mobile",
+    "ivr": "IVR",
     "both": "Both",
     "all": "All",
     "maxClosingTime": "Max Closing Time",
@@ -1191,7 +1195,11 @@
     "recordTypeBoth": "Both",
     "recordTypeBothDesc": "Incidents and requests",
     "recordTypeAll": "All Types",
-    "recordTypeAllDesc": "All record types"
+    "recordTypeAllDesc": "All record types",
+    "recordTypeMobile": "Mobile Only",
+    "recordTypeMobileDesc": "For mobile submissions",
+    "recordTypeIVR": "IVR Only",
+    "recordTypeIVRDesc": "For IVR submissions"
   },
   "lookups": {
     "title": "Master Data",
