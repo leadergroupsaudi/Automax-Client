@@ -488,37 +488,37 @@ export const EMAIL_RECIPIENTS: {
   label: string;
   description: string;
 }[] = [
-  {
-    value: "assignee",
-    label: "Current Assignee",
-    description: "The user currently assigned to the incident",
-  },
-  {
-    value: "previous_assignee",
-    label: "Previous Assignee",
-    description: "The user who was previously assigned",
-  },
-  {
-    value: "reporter",
-    label: "Reporter",
-    description: "The person who reported the incident",
-  },
-  {
-    value: "creator",
-    label: "Creator",
-    description: "The user who created the incident",
-  },
-  {
-    value: "department_head",
-    label: "Department Head",
-    description: "The head of the assigned department",
-  },
-  {
-    value: "custom",
-    label: "Custom Email",
-    description: "Specify a custom email address",
-  },
-];
+    {
+      value: "assignee",
+      label: "Current Assignee",
+      description: "The user currently assigned to the incident",
+    },
+    {
+      value: "previous_assignee",
+      label: "Previous Assignee",
+      description: "The user who was previously assigned",
+    },
+    {
+      value: "reporter",
+      label: "Reporter",
+      description: "The person who reported the incident",
+    },
+    {
+      value: "creator",
+      label: "Creator",
+      description: "The user who created the incident",
+    },
+    {
+      value: "department_head",
+      label: "Department Head",
+      description: "The head of the assigned department",
+    },
+    {
+      value: "custom",
+      label: "Custom Email",
+      description: "Specify a custom email address",
+    },
+  ];
 
 export interface TransitionEmailConfig {
   enabled: boolean;
@@ -1351,13 +1351,13 @@ export interface ReportFieldDefinition {
   field: string;
   label: string;
   type:
-    | "string"
-    | "number"
-    | "date"
-    | "datetime"
-    | "boolean"
-    | "enum"
-    | "relation";
+  | "string"
+  | "number"
+  | "date"
+  | "datetime"
+  | "boolean"
+  | "enum"
+  | "relation";
   category: string;
   sortable: boolean;
   filterable: boolean;
@@ -1366,6 +1366,7 @@ export interface ReportFieldDefinition {
   relationField?: string;
   description?: string;
   dynamicOptions?: "departments" | "locations" | "classifications" | any; // For hierarchical dropdowns
+  canBeColumn?: boolean;
 }
 
 // Data Source Definition
