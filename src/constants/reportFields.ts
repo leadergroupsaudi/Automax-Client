@@ -132,9 +132,9 @@ export const incidentFields: ReportFieldDefinition[] = [
   { field: "incident_number", label: "Incident Number", type: "string", category: "Core", sortable: true, filterable: true },
   { field: "title", label: "Title", type: "string", category: "Core", sortable: true, filterable: true },
   { field: "description", label: "Description", type: "string", category: "Core", sortable: true, filterable: true },
-  { field: "classification_id", label: "Classification", type: "string", category: "Core", sortable: true, filterable: true, dynamicOptions: 'classifications' },
-  { field: "workflow_id", label: "Workflow", type: "string", category: "Core", sortable: true, filterable: true },
-  { field: "current_state_id", label: "Current State Id", type: "string", category: "Core", sortable: true, filterable: true },
+  // { field: "classification_id", label: "Classification", type: "string", category: "Core", sortable: true, filterable: true, dynamicOptions: 'classifications' },
+  // { field: "workflow_id", label: "Workflow", type: "string", category: "Core", sortable: true, filterable: true },
+  // { field: "current_state_id", label: "Current State Id", type: "string", category: "Core", sortable: true, filterable: true },
   {
     field: "priority", label: "Priority", type: "enum", category: "Core", sortable: true, filterable: true, options: [
       { value: 1, label: 'Critical' },
@@ -154,8 +154,8 @@ export const incidentFields: ReportFieldDefinition[] = [
     ]
   },
   { field: "assignee_id", label: "Assignee", type: "enum", category: "Core", sortable: true, filterable: true, dynamicOptions: 'users' },
-  { field: "department_id", label: "Department", type: "enum", category: "Core", sortable: true, filterable: true, dynamicOptions: 'departments' },
-  { field: "location_id", label: "Location", type: "enum", category: "Core", sortable: true, filterable: true, dynamicOptions: 'locations' },
+  // { field: "department_id", label: "Department", type: "enum", category: "Core", sortable: true, filterable: true, dynamicOptions: 'departments' },
+  // { field: "location_id", label: "Location", type: "enum", category: "Core", sortable: true, filterable: true, dynamicOptions: 'locations' },
   { field: "latitude", label: "Latitude", type: "string", category: "Core", sortable: false, filterable: false },
   { field: "longitude", label: "Longitude", type: "string", category: "Core", sortable: false, filterable: false },
   { field: "due_date", label: "Due Date", type: "date", category: "Core", sortable: true, filterable: true },
@@ -163,7 +163,7 @@ export const incidentFields: ReportFieldDefinition[] = [
   { field: "closed_at", label: "Closed At", type: "date", category: "Core", sortable: true, filterable: true },
   { field: "sla_breached", label: "Sla Breached", type: "boolean", category: "Core", sortable: true, filterable: true },
   { field: "sla_deadline", label: "Sla Deadline", type: "date", category: "Core", sortable: true, filterable: true },
-  { field: "reporter_id", label: "Reporter Id", type: "string", category: "Core", sortable: true, filterable: true },
+  // { field: "reporter_id", label: "Reporter Id", type: "string", category: "Core", sortable: true, filterable: true },
   { field: "reporter_email", label: "Reporter Email", type: "string", category: "Core", sortable: true, filterable: true },
   { field: "reporter_name", label: "Reporter Name", type: "string", category: "Core", sortable: true, filterable: true },
   // { field: "custom_fields", label: "Custom Fields", type: "string", category: "Core", sortable: true, filterable: true },
@@ -234,7 +234,7 @@ export const incidentFields: ReportFieldDefinition[] = [
   { field: "classification_name", label: "Classification Name", type: "string", category: "Core", sortable: true, filterable: true },
   { field: "department_name", label: "Department Name", type: "string", category: "Core", sortable: true, filterable: true },
   { field: "location_name", label: "Location Name", type: "string", category: "Core", sortable: true, filterable: true },
-  { field: "attachment_id", label: "Attachment Id", type: "string", category: "Core", sortable: false, filterable: false },
+  // { field: "attachment_id", label: "Attachment Id", type: "string", category: "Core", sortable: false, filterable: false },
   { field: "workflow_name", label: "Workflow Name", type: "string", category: "Core", sortable: true, filterable: true },
   { field: "closed_by", label: "Closed By", type: "enum", category: "Core", sortable: true, filterable: true, dynamicOptions: 'users' },
   { field: "contractor", label: "Contractor", type: "enum", category: "Core", sortable: true, filterable: true, dynamicOptions: 'users' },
@@ -294,7 +294,7 @@ export const actionLogFields: ReportFieldDefinition[] = [
   },
   { field: 'module', label: 'Module', type: 'string', category: 'Core', sortable: true, filterable: true, defaultSelected: true },
   { field: 'description', label: 'Description', type: 'string', category: 'Core', sortable: false, filterable: true, defaultSelected: true },
-  { field: 'resource_id', label: 'Resource ID', type: 'string', category: 'Core', sortable: true, filterable: true },
+  // { field: 'resource_id', label: 'Resource ID', type: 'string', category: 'Core', sortable: true, filterable: true },
 
   // Status
   {
