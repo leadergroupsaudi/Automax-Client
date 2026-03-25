@@ -1,21 +1,28 @@
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { X, Download, FileSpreadsheet, FileText, Eye, Info } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '../ui';
-import type { ReportFieldDefinition } from '../../types';
-import { renderStyledCell, getNestedValue, toHumanReadable } from './ReportPreview';
+import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  X,
+  Download,
+  FileSpreadsheet,
+  FileText,
+  Eye,
+  Info,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "../ui";
+import type { ReportFieldDefinition } from "../../types";
+import { renderStyledCell, getNestedValue } from "./ReportPreview";
 
 interface ExportDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onExport: (format: 'xlsx' | 'pdf', options: ExportOptions) => Promise<void>;
+  onExport: (format: "xlsx" | "pdf", options: ExportOptions) => Promise<void>;
   isExporting: boolean;
   dataSourceLabel: string;
   recordCount: number;
   // Preview data
   previewData?: Record<string, unknown>[];
-  columns?: { field: string, label: string }[];
+  columns?: { field: string; label: string }[];
   fields?: ReportFieldDefinition[];
 }
 
@@ -39,7 +46,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
   fields = [],
 }) => {
   const { t } = useTranslation();
-  const [format, setFormat] = useState<'xlsx' | 'pdf'>('xlsx');
+  const [format, setFormat] = useState<"xlsx" | "pdf">("xlsx");
   const [title, setTitle] = useState(`${dataSourceLabel} Report`);
   const [includeFilters, setIncludeFilters] = useState(true);
   const [includeTimestamp, setIncludeTimestamp] = useState(true);
@@ -54,7 +61,11 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
   const columnDefs: ReportFieldDefinition[] = columns.map((col) => {
     const found = fields.find((f) => f.field === col.field);
     if (found) return { ...found, label: col.label };
-    return { field: col.field, label: col.label, type: 'string' } as ReportFieldDefinition;
+    return {
+      field: col.field,
+      label: col.label,
+      type: "string",
+    } as ReportFieldDefinition;
   });
 
   const previewRows = previewData.slice(0, PREVIEW_ROWS);
@@ -66,10 +77,12 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
       {/* Dialog — wider to accommodate preview table */}
-      <div className={cn(
-        "relative bg-[hsl(var(--card))] rounded-xl shadow-xl w-full overflow-hidden flex flex-col",
-        hasPreview ? "max-w-5xl max-h-[90vh]" : "max-w-md"
-      )}>
+      <div
+        className={cn(
+          "relative bg-[hsl(var(--card))] rounded-xl shadow-xl w-full overflow-hidden flex flex-col",
+          hasPreview ? "max-w-5xl max-h-[90vh]" : "max-w-md",
+        )}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-8 py-5 border-b border-[hsl(var(--border))] shrink-0 bg-gradient-to-r from-[hsl(var(--primary)/0.05)] to-transparent">
           <div className="flex items-center gap-4">
@@ -78,14 +91,14 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
             </div>
             <div>
               <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">
-                {t('reports.exportDialog.title')}
+                {t("reports.exportDialog.title")}
               </h2>
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="text-xs font-bold text-[hsl(var(--primary))] uppercase tracking-wider">
                   {recordCount.toLocaleString()}
                 </span>
                 <span className="text-xs text-[hsl(var(--muted-foreground))] font-medium uppercase tracking-wider">
-                  {t('reports.exportDialog.records')}
+                  {t("reports.exportDialog.records")}
                 </span>
               </div>
             </div>
@@ -108,61 +121,68 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
                 {/* Format selection */}
                 <div>
                   <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-                    {t('reports.exportDialog.exportFormat')}
+                    {t("reports.exportDialog.exportFormat")}
                   </label>
-                  {
-                    columns.length > 10 && (
-                      <span className="text-red-500 text-xs flex gap-1 items-center my-2">
-                        <Info className='w-6 h-6' />
-                        Please Note that if you select more than 10 columns, PDF will be disabled
-                      </span>
-                    )
-                  }
+                  {columns.length > 10 && (
+                    <span className="text-red-500 text-xs flex gap-1 items-center my-2">
+                      <Info className="w-6 h-6" />
+                      Please Note that if you select more than 10 columns, PDF
+                      will be disabled
+                    </span>
+                  )}
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
-                      onClick={() => setFormat('xlsx')}
+                      onClick={() => setFormat("xlsx")}
                       className={cn(
                         "flex items-center gap-2 p-3 rounded-lg border-2 transition-all",
-                        format === 'xlsx'
+                        format === "xlsx"
                           ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)]"
-                          : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.5)]"
+                          : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.5)]",
                       )}
                     >
-                      <FileSpreadsheet className={cn(
-                        "w-6 h-6",
-                        format === 'xlsx' ? "text-green-600" : "text-[hsl(var(--muted-foreground))]"
-                      )} />
+                      <FileSpreadsheet
+                        className={cn(
+                          "w-6 h-6",
+                          format === "xlsx"
+                            ? "text-green-600"
+                            : "text-[hsl(var(--muted-foreground))]",
+                        )}
+                      />
                       <div className="text-left">
                         <p className="text-sm font-medium text-[hsl(var(--foreground))]">
-                          {t('reports.exportDialog.excel')}
+                          {t("reports.exportDialog.excel")}
                         </p>
                         <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                          {t('reports.exportDialog.xlsxFormat')}
+                          {t("reports.exportDialog.xlsxFormat")}
                         </p>
                       </div>
                     </button>
                     <button
                       disabled={columns.length > 10}
                       type="button"
-                      onClick={() => setFormat('pdf')}
+                      onClick={() => setFormat("pdf")}
                       className={cn(
                         "flex items-center gap-2 p-3 rounded-lg border-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed",
-                        format === 'pdf'
+                        format === "pdf"
                           ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)]"
-                          : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.5)]"
+                          : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.5)]",
                       )}
                     >
-                      <FileText className={cn(
-                        "w-6 h-6",
-                        format === 'pdf' ? "text-red-600" : "text-[hsl(var(--muted-foreground))]"
-                      )} />
+                      <FileText
+                        className={cn(
+                          "w-6 h-6",
+                          format === "pdf"
+                            ? "text-red-600"
+                            : "text-[hsl(var(--muted-foreground))]",
+                        )}
+                      />
                       <div className="text-left">
                         <p className="text-sm font-medium text-[hsl(var(--foreground))]">
-                          {t('reports.exportDialog.pdf')}
+                          {t("reports.exportDialog.pdf")}
                         </p>
                         <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                          {t('reports.exportDialog.pdfFormat')}
+                          {t("reports.exportDialog.pdfFormat")}
                         </p>
                       </div>
                     </button>
@@ -172,13 +192,15 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
                 {/* Title */}
                 <div>
                   <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">
-                    {t('reports.exportDialog.reportTitle')}
+                    {t("reports.exportDialog.reportTitle")}
                   </label>
                   <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder={t('reports.exportDialog.reportTitlePlaceholder')}
+                    placeholder={t(
+                      "reports.exportDialog.reportTitlePlaceholder",
+                    )}
                     className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)]"
                   />
                 </div>
@@ -194,10 +216,10 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
                     />
                     <div>
                       <p className="text-sm font-medium text-[hsl(var(--foreground))]">
-                        {t('reports.exportDialog.includeFilterSummary')}
+                        {t("reports.exportDialog.includeFilterSummary")}
                       </p>
                       <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                        {t('reports.exportDialog.includeFilterSummaryDesc')}
+                        {t("reports.exportDialog.includeFilterSummaryDesc")}
                       </p>
                     </div>
                   </label>
@@ -210,10 +232,10 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
                     />
                     <div>
                       <p className="text-sm font-medium text-[hsl(var(--foreground))]">
-                        {t('reports.exportDialog.includeTimestamp')}
+                        {t("reports.exportDialog.includeTimestamp")}
                       </p>
                       <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                        {t('reports.exportDialog.includeTimestampDesc')}
+                        {t("reports.exportDialog.includeTimestampDesc")}
                       </p>
                     </div>
                   </label>
@@ -228,7 +250,8 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
                     Data Preview
                   </span>
                   <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                    — first {previewRows.length} of {recordCount.toLocaleString()} records
+                    — first {previewRows.length} of{" "}
+                    {recordCount.toLocaleString()} records
                   </span>
                 </div>
 
@@ -251,7 +274,11 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
                         {previewRows.map((row, rowIndex) => (
                           <tr
                             key={rowIndex}
-                            className={rowIndex % 2 === 0 ? '' : 'bg-[hsl(var(--muted)/0.15)]'}
+                            className={
+                              rowIndex % 2 === 0
+                                ? ""
+                                : "bg-[hsl(var(--muted)/0.15)]"
+                            }
                           >
                             {columnDefs.map((col) => {
                               const value = getNestedValue(row, col.label);
@@ -273,7 +300,8 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
 
                 {recordCount > PREVIEW_ROWS && (
                   <p className="mt-2 text-xs text-[hsl(var(--muted-foreground))]">
-                    + {(recordCount - PREVIEW_ROWS).toLocaleString()} more records will be included in the download.
+                    + {(recordCount - PREVIEW_ROWS).toLocaleString()} more
+                    records will be included in the download.
                   </p>
                 )}
               </div>
@@ -284,52 +312,60 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
               {/* Format selection */}
               <div>
                 <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-                  {t('reports.exportDialog.exportFormat')}
+                  {t("reports.exportDialog.exportFormat")}
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
-                    onClick={() => setFormat('xlsx')}
+                    onClick={() => setFormat("xlsx")}
                     className={cn(
                       "flex items-center gap-3 p-4 rounded-lg border-2 transition-all",
-                      format === 'xlsx'
+                      format === "xlsx"
                         ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)]"
-                        : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.5)]"
+                        : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.5)]",
                     )}
                   >
-                    <FileSpreadsheet className={cn(
-                      "w-8 h-8",
-                      format === 'xlsx' ? "text-green-600" : "text-[hsl(var(--muted-foreground))]"
-                    )} />
+                    <FileSpreadsheet
+                      className={cn(
+                        "w-8 h-8",
+                        format === "xlsx"
+                          ? "text-green-600"
+                          : "text-[hsl(var(--muted-foreground))]",
+                      )}
+                    />
                     <div className="ltr:text-left rtl:text-right">
                       <p className="font-medium text-[hsl(var(--foreground))]">
-                        {t('reports.exportDialog.excel')}
+                        {t("reports.exportDialog.excel")}
                       </p>
                       <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                        {t('reports.exportDialog.xlsxFormat')}
+                        {t("reports.exportDialog.xlsxFormat")}
                       </p>
                     </div>
                   </button>
                   <button
                     type="button"
-                    onClick={() => setFormat('pdf')}
+                    onClick={() => setFormat("pdf")}
                     className={cn(
                       "flex items-center gap-3 p-4 rounded-lg border-2 transition-all",
-                      format === 'pdf'
+                      format === "pdf"
                         ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)]"
-                        : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.5)]"
+                        : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.5)]",
                     )}
                   >
-                    <FileText className={cn(
-                      "w-8 h-8",
-                      format === 'pdf' ? "text-red-600" : "text-[hsl(var(--muted-foreground))]"
-                    )} />
+                    <FileText
+                      className={cn(
+                        "w-8 h-8",
+                        format === "pdf"
+                          ? "text-red-600"
+                          : "text-[hsl(var(--muted-foreground))]",
+                      )}
+                    />
                     <div className="ltr:text-left rtl:text-right">
                       <p className="font-medium text-[hsl(var(--foreground))]">
-                        {t('reports.exportDialog.pdf')}
+                        {t("reports.exportDialog.pdf")}
                       </p>
                       <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                        {t('reports.exportDialog.pdfFormat')}
+                        {t("reports.exportDialog.pdfFormat")}
                       </p>
                     </div>
                   </button>
@@ -339,13 +375,13 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
               {/* Title */}
               <div>
                 <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">
-                  {t('reports.exportDialog.reportTitle')}
+                  {t("reports.exportDialog.reportTitle")}
                 </label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder={t('reports.exportDialog.reportTitlePlaceholder')}
+                  placeholder={t("reports.exportDialog.reportTitlePlaceholder")}
                   className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)]"
                 />
               </div>
@@ -361,10 +397,10 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
                   />
                   <div>
                     <p className="text-sm font-medium text-[hsl(var(--foreground))]">
-                      {t('reports.exportDialog.includeFilterSummary')}
+                      {t("reports.exportDialog.includeFilterSummary")}
                     </p>
                     <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                      {t('reports.exportDialog.includeFilterSummaryDesc')}
+                      {t("reports.exportDialog.includeFilterSummaryDesc")}
                     </p>
                   </div>
                 </label>
@@ -377,10 +413,10 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
                   />
                   <div>
                     <p className="text-sm font-medium text-[hsl(var(--foreground))]">
-                      {t('reports.exportDialog.includeTimestamp')}
+                      {t("reports.exportDialog.includeTimestamp")}
                     </p>
                     <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                      {t('reports.exportDialog.includeTimestampDesc')}
+                      {t("reports.exportDialog.includeTimestampDesc")}
                     </p>
                   </div>
                 </label>
@@ -392,15 +428,17 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)] shrink-0">
           <Button variant="outline" onClick={onClose} disabled={isExporting}>
-            {t('reports.exportDialog.cancel')}
+            {t("reports.exportDialog.cancel")}
           </Button>
           <Button
             onClick={handleExport}
             isLoading={isExporting}
-            leftIcon={!isExporting ? <Download className="w-4 h-4" /> : undefined}
+            leftIcon={
+              !isExporting ? <Download className="w-4 h-4" /> : undefined
+            }
           >
             {isExporting
-              ? t('reports.exportDialog.exporting')
+              ? t("reports.exportDialog.exporting")
               : `Download ${format.toUpperCase()}`}
           </Button>
         </div>
