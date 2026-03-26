@@ -60,15 +60,15 @@ interface ColumnConfig {
 const COLUMN_STORAGE_KEY = "incident_columns_config";
 
 const defaultColumns: ColumnConfig[] = [
-  { id: "incident", label: "Incident", visible: true, required: true },
-  { id: "state", label: "State", visible: true },
-  { id: "priority", label: "Priority", visible: true },
-  { id: "assignee", label: "Assignee", visible: true },
-  { id: "department", label: "Department", visible: false },
-  { id: "due_date", label: "Due Date", visible: true },
-  { id: "created_at", label: "Created", visible: false },
-  { id: "sla", label: "SLA", visible: true },
-  { id: "actions", label: "Actions", visible: true, required: true },
+  { id: "incident", label: "incidents.incident", visible: true, required: true },
+  { id: "state", label: "incidents.status", visible: true },
+  { id: "priority", label: "incidents.priority", visible: true },
+  { id: "assignee", label: "incidents.assignee", visible: true },
+  { id: "department", label: "incidents.department", visible: false },
+  { id: "due_date", label: "incidents.dueDate", visible: true },
+  { id: "created_at", label: "incidents.createdAt", visible: false },
+  { id: "sla", label: "incidents.slaStatus", visible: true },
+  { id: "actions", label: "common.actions", visible: true, required: true },
 ];
 
 // Returns true when an incident is in a ready_to_close state and within 24 hours of auto-reversion.
@@ -117,10 +117,10 @@ export const IncidentsPage: React.FC = () => {
     const statusParam = searchParams.get("status");
     if (stateTypeParam) {
       return stateTypeParam === "initial"
-        ? "New"
+        ? t("incidents.initial")
         : stateTypeParam === "terminal"
-          ? "Closed"
-          : "In Progress";
+          ? t("incidents.resolved")
+          : t("incidents.inProgress");
     } else if (statusParam) {
       return statusParam;
     }
@@ -146,8 +146,8 @@ export const IncidentsPage: React.FC = () => {
   const selectedWorkflowId =
     selectedIncidents?.length >= 2
       ? selectedIncidents.every(
-          (inc, _, arr) => inc.workflow?.id === arr[0].workflow?.id,
-        )
+        (inc, _, arr) => inc.workflow?.id === arr[0].workflow?.id,
+      )
         ? selectedIncidents[0].workflow?.id || null
         : null
       : null;
@@ -468,10 +468,10 @@ export const IncidentsPage: React.FC = () => {
     selectedIncidents.every(
       (incident) =>
         incident?.current_state?.name ===
-          selectedIncidents[0]?.current_state?.name &&
+        selectedIncidents[0]?.current_state?.name &&
         incident?.location?.id === selectedIncidents[0]?.location?.id &&
         incident?.classification?.id ===
-          selectedIncidents[0]?.classification?.id,
+        selectedIncidents[0]?.classification?.id,
     );
 
   const isSelected = (item: Incident) =>
@@ -740,7 +740,7 @@ export const IncidentsPage: React.FC = () => {
                               : "text-[hsl(var(--muted-foreground))]",
                           )}
                         >
-                          {col.label}
+                          {t(col.label)}
                         </span>
                         {col.required && (
                           <span className="text-xs text-[hsl(var(--muted-foreground))]">
@@ -802,8 +802,8 @@ export const IncidentsPage: React.FC = () => {
                 className={cn(
                   "w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]",
                   !canViewAllIncidents &&
-                    hasUrlFilter &&
-                    "opacity-60 cursor-not-allowed",
+                  hasUrlFilter &&
+                  "opacity-60 cursor-not-allowed",
                 )}
               >
                 <option value="">{t("common.allStates")}</option>
@@ -925,8 +925,8 @@ export const IncidentsPage: React.FC = () => {
                 className={cn(
                   "w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]",
                   !canViewAllIncidents &&
-                    hasUrlFilter &&
-                    "opacity-60 cursor-not-allowed",
+                  hasUrlFilter &&
+                  "opacity-60 cursor-not-allowed",
                 )}
               >
                 <option value="">{t("common.all")}</option>
@@ -962,9 +962,9 @@ export const IncidentsPage: React.FC = () => {
             <p className="text-[hsl(var(--muted-foreground))] mb-6">
               {isShortSearch
                 ? t(
-                    "search.minCharsDesc",
-                    "Enter at least 3 characters to search",
-                  )
+                  "search.minCharsDesc",
+                  "Enter at least 3 characters to search",
+                )
                 : hasActiveFilters
                   ? t("incidents.adjustFilters")
                   : t("incidents.noIncidentsDesc")}
@@ -1076,7 +1076,7 @@ export const IncidentsPage: React.FC = () => {
                         className={cn(
                           "hover:bg-[hsl(var(--muted)/0.5)] transition-colors",
                           isExpiringSoon &&
-                            "bg-amber-50/40 border-l-2 border-l-amber-400",
+                          "bg-amber-50/40 border-l-2 border-l-amber-400",
                         )}
                       >
                         <td
