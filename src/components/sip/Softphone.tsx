@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { callerFeedbackApi } from "@/api/admin";
+import { useAuthStore } from "@/stores/authStore";
 
 /* -------------------- Types -------------------- */
 
@@ -142,16 +143,12 @@ export default function SoftPhone({
   const [callSummary, setCallSummary] = useState<{
     number: string;
     duration: number;
-    calleeId: string;
+    calleeId?: string;
     callUuid: string;
-  } | null>({
-    number: "2322434",
-    duration: 2344,
-    calleeId: "645646464gfff",
-    callUuid: "840073d8-1299-48fa-abec-7bfea0b66666",
-  });
+  } | null>();
 
   const [selectedSentiment, setSelectedSentiment] = useState<any | null>(null);
+  const { user } = useAuthStore();
 
   /* ---------------- SIP CONNECTION ---------------- */
 
@@ -354,11 +351,10 @@ export default function SoftPhone({
       setCallSummary({
         number: dialedNumber,
         duration: callDuration,
-        calleeId: dialedNumber,
-        callUuid: sipService.getSession(),
+        calleeId: user?.id,
+        callUuid: dialedNumber,
       });
       setShowSentimentModal(true);
-      // Don't reset state yet — wait for submit/skip
       return;
     }
 
@@ -821,7 +817,7 @@ export default function SoftPhone({
           </div>
         </div>
       )}
-      {!showSentimentModal && callSummary && (
+      {showSentimentModal && callSummary && (
         <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[60]">
           <div className="bg-white rounded-2xl shadow-2xl w-[300px] overflow-hidden p-4">
             {/* Sentiment header row */}

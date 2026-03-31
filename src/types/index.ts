@@ -1742,7 +1742,7 @@ export interface CreateEscalationRequest {
 
 export interface CallerFeedBackRequest {
   callee_id: string;
-  call_uuid: string;
+  call_uuid?: string;
   sentiment: number;
   feedback: string;
 }
