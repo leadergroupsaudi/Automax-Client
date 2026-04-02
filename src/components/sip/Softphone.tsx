@@ -17,10 +17,14 @@ import {
   Delete,
   Settings,
   Clock,
+  BarChart2,
 } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { callerFeedbackApi } from "@/api/admin";
 import { useAuthStore } from "@/stores/authStore";
+import { v4 as uuid } from "uuid";
+import usePermissions from "@/hooks/usePermissions";
+import { PERMISSIONS } from "@/constants/permissions";
 
 /* -------------------- Types -------------------- */
 
@@ -95,18 +99,134 @@ const dialpadKeys = [
 
 const SENTIMENTS = (t: any) =>
   [
-    { key: 0, emoji: "😡", labelKey: t("softphone.sentiment.angry") },
-    { key: 1, emoji: "😠", labelKey: t("softphone.sentiment.upset") },
-    { key: 2, emoji: "😐", labelKey: t("softphone.sentiment.normal") },
-    { key: 3, emoji: "😊", labelKey: t("softphone.sentiment.satisfied") },
+    { key: 1, emoji: "😡", label: t("softphone.sentiment.angry") },
+    { key: 2, emoji: "😠", label: t("softphone.sentiment.upset") },
+    { key: 3, emoji: "😐", label: t("softphone.sentiment.normal") },
+    { key: 4, emoji: "😊", label: t("softphone.sentiment.satisfied") },
     {
-      key: 4,
+      key: 5,
       emoji: "😄",
-      labelKey: t("softphone.sentiment.verySatisfied"),
+      label: t("softphone.sentiment.verySatisfied"),
     },
   ] as const;
 
 /* -------------------- Component -------------------- */
+
+const SentimentStats: React.FC<{
+  calleeId: string;
+  callerId: string;
+  t: any;
+}> = ({ calleeId, callerId, t }) => {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["caller-sentiment-stats", calleeId],
+    queryFn: () =>
+      callerFeedbackApi.get({ callee_id: calleeId, caller_id: callerId }),
+    enabled: !!calleeId && !!callerId,
+  });
+
+  const barColour = (key: number) =>
+    [
+      "bg-red-500",
+      "bg-orange-400",
+      "bg-yellow-400",
+      "bg-emerald-400",
+      "bg-green-500",
+    ][key - 1] ?? "bg-gray-300";
+
+  const response = data as any;
+
+  const raw: Array<{ sentiment: number; count: number; percent: number }> =
+    response?.summary ?? [];
+
+  const summary = SENTIMENTS(t).map((def) => {
+    const match = raw.find((r) => r.sentiment === def.key);
+    return { ...def, count: match?.count ?? 0, percent: match?.percent ?? 0 };
+  });
+
+  const totalCalls = response?.calls?.length ?? 0;
+  const dominant = response?.dominant ?? null;
+
+  if (isLoading)
+    return (
+      <div className="mx-4 mb-3 rounded-xl border border-gray-100 bg-white p-3 animate-pulse">
+        <div className="h-3 bg-gray-100 rounded mb-2 w-24" />
+        <div className="space-y-1.5">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-4 bg-gray-100 rounded-full" />
+          ))}
+        </div>
+      </div>
+    );
+
+  if (isError || totalCalls === 0)
+    return (
+      <div className="mx-4 mb-3 rounded-xl border border-dashed border-gray-200 bg-gray-50 p-3 text-center">
+        <BarChart2 className="w-4 h-4 text-gray-300 mx-auto mb-1" />
+        <p className="text-xs text-gray-400">
+          {t("softphone.noCallerHistory")}
+        </p>
+      </div>
+    );
+
+  return (
+    <div className="mx-4 mb-3 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+      <div className="flex items-center justify-between mb-2.5">
+        <div className="flex items-center gap-1.5">
+          <BarChart2 className="w-3.5 h-3.5 text-blue-500" />
+          <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+            {t("softphone.callerHistory")}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          {dominant && (
+            <span
+              className="text-sm"
+              title={SENTIMENTS(t).find((s) => s.key === dominant)?.label}
+            >
+              {SENTIMENTS(t).find((s) => s.key === dominant)?.emoji}
+            </span>
+          )}
+          <span className="text-[10px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+            {totalCalls} {t("softphone.calls")}
+          </span>
+        </div>
+      </div>
+
+      {/* Stacked bar */}
+      <div className="flex h-2 rounded-full overflow-hidden gap-px mb-3">
+        {summary.map((s) =>
+          s.percent > 0 ? (
+            <div
+              key={s.key}
+              className={barColour(s.key)}
+              style={{ width: `${s.percent}%` }}
+            />
+          ) : null,
+        )}
+      </div>
+
+      {/* Per-sentiment rows */}
+      <div className="space-y-1.5">
+        {summary.map((s) => (
+          <div key={s.key} className="flex items-center gap-2">
+            <span className="text-sm w-5 text-center leading-none">
+              {s.emoji}
+            </span>
+            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className={`${barColour(s.key)} h-full rounded-full transition-all duration-500`}
+                style={{ width: `${s.percent}%` }}
+              />
+            </div>
+            <span className="text-[10px] text-gray-500 w-7 text-right tabular-nums">
+              {s.percent}%
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 export default function SoftPhone({
   showSip,
@@ -116,6 +236,7 @@ export default function SoftPhone({
 }: SoftPhoneProps) {
   const { t } = useTranslation();
   const dragRef = useRef<HTMLDivElement | null>(null);
+  const { hasPermission, isSuperAdmin } = usePermissions();
 
   const [sipConnected, setSipConnected] = useState<boolean>(false);
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
@@ -143,13 +264,14 @@ export default function SoftPhone({
   const [callSummary, setCallSummary] = useState<{
     number: string;
     duration: number;
-    calleeId?: string;
-    callUuid: string;
+    calleeId: string;
   } | null>();
 
   const [selectedSentiment, setSelectedSentiment] = useState<any | null>(null);
   const { user } = useAuthStore();
-
+  const [wasIncomingCall, setWasIncomingCall] = useState<boolean>(false);
+  const canCreateSentiment = hasPermission(PERMISSIONS.CALLER_SENTIMENT_CREATE);
+  const canViewSentiment = hasPermission(PERMISSIONS.CALLER_SENTIMENT_VIEW);
   /* ---------------- SIP CONNECTION ---------------- */
 
   // Initialize persistent audio element on mount
@@ -200,6 +322,7 @@ export default function SoftPhone({
       const session = ce.detail.session;
 
       setIncomingCall(session);
+      setWasIncomingCall(true);
       setDialedNumber(session?.remote_identity?.uri?.user ?? "Unknown");
       setCallStatus("incoming");
       playRingtone();
@@ -347,12 +470,11 @@ export default function SoftPhone({
     stopRingtone();
     stopTimer();
 
-    if (showFeedback) {
+    if (showFeedback && wasIncomingCall && canCreateSentiment) {
       setCallSummary({
         number: dialedNumber,
         duration: callDuration,
-        calleeId: user?.id,
-        callUuid: dialedNumber,
+        calleeId: dialedNumber,
       });
       setShowSentimentModal(true);
       return;
@@ -370,6 +492,7 @@ export default function SoftPhone({
     setIsMuted(false);
     setIsSpeakerOn(true);
     setSelectedSentiment(null);
+    setWasIncomingCall(false);
 
     const audioEl = getRemoteAudioElement();
     audioEl.srcObject = null;
@@ -479,13 +602,14 @@ export default function SoftPhone({
   const feedbackMutation = useMutation({
     mutationFn: () => {
       return callerFeedbackApi.create({
-        callee_id: callSummary!.callUuid,
-        call_uuid: callSummary!.calleeId,
+        callee_id: callSummary!.calleeId,
+        call_uuid: uuid(),
         sentiment: selectedSentiment?.key,
         feedback: selectedSentiment?.labelKey,
       });
     },
     onSuccess: () => {
+      toast.success(t("softphone.feedbackSubmitted"));
       setShowSentimentModal(false);
       setCallSummary(null);
       resetCallState();
@@ -677,6 +801,10 @@ export default function SoftPhone({
         )}
       </div>
 
+      {isIncomingCall && canViewSentiment && (
+        <SentimentStats calleeId={user!.id} callerId={dialedNumber} t={t} />
+      )}
+
       {/* Dialpad */}
       {!isInCall && !isIncomingCall && (
         <div className="px-4 pb-4">
@@ -849,7 +977,7 @@ export default function SoftPhone({
                 <button
                   key={item?.key}
                   onClick={() => setSelectedSentiment(item)}
-                  title={t(item?.labelKey)}
+                  title={t(item?.label)}
                   className={`text-2xl leading-none p-2 rounded-xl border transition-all duration-150 ${
                     selectedSentiment?.key === item?.key
                       ? "scale-110 bg-blue-50 border-primary opacity-100"

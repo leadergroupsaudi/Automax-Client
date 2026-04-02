@@ -1487,7 +1487,11 @@
       "satisfiedSub": "Issue resolved, caller pleased",
       "verySatisfied": "Very Satisfied",
       "verySatisfiedSub": "Caller was delighted"
-    }
+    },
+    "noCallerHistory": "No history found for this caller",
+    "callerHistory": "Caller History",
+    "calls": "Calls",
+    "feedbackSubmitted": "Feedback submitted. Thank you!"
   },
   "queries": {
     "title": "Queries",

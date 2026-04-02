@@ -2731,11 +2731,16 @@ export const callerFeedbackApi = {
     );
     return response.data;
   },
-  get: async (): Promise<ApiResponse<DataSourceDefinition[]>> => {
-    const response =
-      await apiClient.get<ApiResponse<DataSourceDefinition[]>>(
-        "/caller-sentiments",
-      );
+  get: async ({
+    callee_id,
+    caller_id,
+  }: {
+    callee_id: string;
+    caller_id: string;
+  }): Promise<ApiResponse<DataSourceDefinition[]>> => {
+    const response = await apiClient.get<ApiResponse<DataSourceDefinition[]>>(
+      `/caller-sentiments/${callee_id}/${caller_id}`,
+    );
     return response.data;
   },
 };
