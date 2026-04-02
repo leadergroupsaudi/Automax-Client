@@ -236,7 +236,7 @@ export default function SoftPhone({
 }: SoftPhoneProps) {
   const { t } = useTranslation();
   const dragRef = useRef<HTMLDivElement | null>(null);
-  const { hasPermission, isSuperAdmin } = usePermissions();
+  const { hasPermission } = usePermissions();
 
   const [sipConnected, setSipConnected] = useState<boolean>(false);
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
