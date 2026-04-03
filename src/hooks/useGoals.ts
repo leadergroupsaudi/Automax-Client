@@ -13,6 +13,7 @@ import type {
   GoalUpdateRequest,
   GoalTransitionRequest,
   GoalCloneRequest,
+  BulkActionRequest,
   GoalMetricCreateRequest,
   GoalMetricUpdateRequest,
   MetricValueUpdateRequest,
@@ -144,6 +145,50 @@ export function useCloneGoal() {
     },
     onError: () => {
       toast.error("Failed to clone goal");
+    },
+  });
+}
+
+// ──────────────────────────────────────────────────
+// Import & Bulk Mutations
+// ──────────────────────────────────────────────────
+
+export function useImportGoals() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ file, dryRun }: { file: File; dryRun: boolean }) =>
+      goalApi.importGoals(file, dryRun),
+    onSuccess: (data) => {
+      if (data.data?.mode === "committed") {
+        queryClient.invalidateQueries({ queryKey: goalKeys.lists() });
+        toast.success(
+          `Imported ${data.data.goals_count} goals with ${data.data.metrics_count} metrics`,
+        );
+      }
+    },
+    onError: () => {
+      toast.error("Failed to process import file");
+    },
+  });
+}
+
+export function useBulkAction() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: BulkActionRequest) => goalApi.bulkAction(data),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: goalKeys.lists() });
+      const resp = data.data!;
+      if (resp.failure_count === 0) {
+        toast.success(`${resp.success_count} goals updated successfully`);
+      } else {
+        toast.warning(
+          `${resp.success_count} succeeded, ${resp.failure_count} failed`,
+        );
+      }
+    },
+    onError: () => {
+      toast.error("Bulk operation failed");
     },
   });
 }

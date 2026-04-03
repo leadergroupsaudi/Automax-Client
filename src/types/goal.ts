@@ -470,3 +470,51 @@ export const COLLABORATOR_ROLE_OPTIONS: {
   { value: "reviewer_l1", label: "L1 Reviewer" },
   { value: "reviewer_l2", label: "L2 Reviewer" },
 ];
+
+// ──────────────────────────────────────────────────
+// Import Types
+// ──────────────────────────────────────────────────
+
+export interface ImportRowResult {
+  row_number: number;
+  status: "valid" | "warning" | "error";
+  errors?: string[];
+  warnings?: string[];
+  goal_title: string;
+}
+
+export interface GoalImportResponse {
+  mode: "dry_run" | "committed";
+  total_rows: number;
+  goals_count: number;
+  metrics_count: number;
+  valid_count: number;
+  error_count: number;
+  warning_count: number;
+  rows: ImportRowResult[];
+  created_goal_ids?: string[];
+}
+
+// ──────────────────────────────────────────────────
+// Bulk Action Types
+// ──────────────────────────────────────────────────
+
+export interface BulkActionRequest {
+  goal_ids: string[];
+  action: "transition" | "reassign" | "close";
+  new_status?: GoalStatus;
+  new_owner_id?: string;
+}
+
+export interface BulkActionItemResult {
+  goal_id: string;
+  success: boolean;
+  error?: string;
+}
+
+export interface BulkActionResponse {
+  total_requested: number;
+  success_count: number;
+  failure_count: number;
+  results: BulkActionItemResult[];
+}

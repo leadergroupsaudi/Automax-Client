@@ -8,6 +8,9 @@ import type {
   GoalCloneRequest,
   GoalFilter,
   GoalListResponse,
+  GoalImportResponse,
+  BulkActionRequest,
+  BulkActionResponse,
   GoalMetric,
   GoalMetricCreateRequest,
   GoalMetricUpdateRequest,
@@ -117,6 +120,27 @@ export const goalApi = {
     if (filter.search) params.append("search", filter.search);
 
     const res = await apiClient.get(`/goals/export?${params.toString()}`);
+    return res.data;
+  },
+
+  importGoals: async (
+    file: File,
+    dryRun: boolean,
+  ): Promise<ApiResponse<GoalImportResponse>> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("dry_run", dryRun ? "true" : "false");
+
+    const res = await apiClient.post("/goals/import", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res.data;
+  },
+
+  bulkAction: async (
+    data: BulkActionRequest,
+  ): Promise<ApiResponse<BulkActionResponse>> => {
+    const res = await apiClient.post("/goals/bulk", data);
     return res.data;
   },
 };

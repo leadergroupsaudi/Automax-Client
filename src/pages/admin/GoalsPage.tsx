@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
   Plus,
@@ -10,16 +10,21 @@ import {
   FileSpreadsheet,
   FileText,
   LayoutTemplate,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import { saveAs } from "file-saver";
-import { useGoals } from "../../hooks/useGoals";
+import { useGoals, useBulkAction } from "../../hooks/useGoals";
 import { usePermissions } from "../../hooks/usePermissions";
 import { PERMISSIONS } from "../../constants/permissions";
 import { GoalStatusBadge } from "../../components/goals/GoalStatusBadge";
 import { GoalPriorityBadge } from "../../components/goals/GoalPriorityBadge";
 import { GoalProgressBar } from "../../components/goals/GoalProgressBar";
 import { GoalFilters } from "../../components/goals/GoalFilters";
+import { GoalImportModal } from "../../components/goals/GoalImportModal";
+import { BulkActionsBar } from "../../components/goals/BulkActionsBar";
+import { BulkTransitionModal } from "../../components/goals/BulkTransitionModal";
+import { BulkReassignModal } from "../../components/goals/BulkReassignModal";
 import { goalApi } from "../../api/goals";
 import { exportGoalsToXlsx } from "../../utils/goalExport";
 import type { GoalFilter, Goal } from "../../types/goal";
@@ -87,8 +92,13 @@ export const GoalsPage: React.FC = () => {
     page: 1,
     limit: 10,
   });
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showBulkTransition, setShowBulkTransition] = useState(false);
+  const [showBulkReassign, setShowBulkReassign] = useState(false);
 
   const { data, isLoading, error } = useGoals(filters);
+  const bulkAction = useBulkAction();
 
   const goals = data?.data ?? [];
   const total = data?.total ?? 0;
@@ -97,6 +107,40 @@ export const GoalsPage: React.FC = () => {
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   const canCreate = hasPermission(PERMISSIONS.GOALS_CREATE);
+  const canUpdate = hasPermission(PERMISSIONS.GOALS_UPDATE);
+
+  const selectedGoals = goals.filter((g: Goal) => selectedIds.has(g.id));
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    if (selectedIds.size === goals.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(goals.map((g: Goal) => g.id)));
+    }
+  }, [goals, selectedIds.size]);
+
+  const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
+
+  const handleBulkClose = () => {
+    bulkAction.mutate(
+      {
+        goal_ids: [...selectedIds],
+        action: "close",
+      },
+      {
+        onSuccess: () => clearSelection(),
+      },
+    );
+  };
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return "-";
@@ -161,6 +205,15 @@ export const GoalsPage: React.FC = () => {
             <LayoutTemplate className="w-4 h-4" />
             Templates
           </Link>
+          {canCreate && (
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="inline-flex items-center gap-2 px-3 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors"
+            >
+              <Upload className="w-4 h-4" />
+              Import
+            </button>
+          )}
           <ExportDropdown filters={filters} />
           {canCreate && (
             <Link
@@ -199,6 +252,19 @@ export const GoalsPage: React.FC = () => {
               <table className="w-full">
                 <thead>
                   <tr className="bg-slate-50 dark:bg-slate-800">
+                    {canUpdate && (
+                      <th className="px-3 py-3 w-10">
+                        <input
+                          type="checkbox"
+                          checked={
+                            goals.length > 0 &&
+                            selectedIds.size === goals.length
+                          }
+                          onChange={toggleSelectAll}
+                          className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+                        />
+                      </th>
+                    )}
                     <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       Title
                     </th>
@@ -223,8 +289,22 @@ export const GoalsPage: React.FC = () => {
                   {goals.map((goal: Goal) => (
                     <tr
                       key={goal.id}
-                      className="border-b border-slate-100 dark:border-slate-700/30 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                      className={`border-b border-slate-100 dark:border-slate-700/30 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${
+                        selectedIds.has(goal.id)
+                          ? "bg-blue-50/50 dark:bg-blue-900/10"
+                          : ""
+                      }`}
                     >
+                      {canUpdate && (
+                        <td className="px-3 py-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(goal.id)}
+                            onChange={() => toggleSelect(goal.id)}
+                            className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+                          />
+                        </td>
+                      )}
                       <td className="px-6 py-4">
                         <Link
                           to={`/goals/${goal.id}`}
@@ -302,6 +382,43 @@ export const GoalsPage: React.FC = () => {
           </>
         )}
       </div>
+
+      {/* Bulk Actions Bar */}
+      {selectedIds.size > 0 && canUpdate && (
+        <BulkActionsBar
+          selectedCount={selectedIds.size}
+          selectedGoals={selectedGoals}
+          onClear={clearSelection}
+          onTransition={() => setShowBulkTransition(true)}
+          onReassign={() => setShowBulkReassign(true)}
+          onClose={handleBulkClose}
+        />
+      )}
+
+      {/* Modals */}
+      {showImportModal && (
+        <GoalImportModal onClose={() => setShowImportModal(false)} />
+      )}
+      {showBulkTransition && (
+        <BulkTransitionModal
+          selectedGoals={selectedGoals}
+          onClose={() => {
+            setShowBulkTransition(false);
+            clearSelection();
+          }}
+          onComplete={clearSelection}
+        />
+      )}
+      {showBulkReassign && (
+        <BulkReassignModal
+          selectedGoals={selectedGoals}
+          onClose={() => {
+            setShowBulkReassign(false);
+            clearSelection();
+          }}
+          onComplete={clearSelection}
+        />
+      )}
     </div>
   );
 };
