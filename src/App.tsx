@@ -67,6 +67,9 @@ import {
   GoalEditPage,
   GoalApprovalsPage,
   GoalTemplatesPage,
+  DocumentsPage,
+  MetricImportBatchesPage,
+  MetricImportBatchDetailPage,
 } from "./pages";
 import EscalationConfigPage from "./pages/admin/EsclationPage";
 
@@ -476,6 +479,18 @@ function App() {
                   <Route
                     path="/goals/approvals"
                     element={<GoalApprovalsPage />}
+                  />
+                  <Route
+                    path="/goals/documents"
+                    element={<DocumentsPage />}
+                  />
+                  <Route
+                    path="/goals/metric-batches"
+                    element={<MetricImportBatchesPage />}
+                  />
+                  <Route
+                    path="/goals/metric-batches/:id"
+                    element={<MetricImportBatchDetailPage />}
                   />
                   <Route path="/goals/:id" element={<GoalDetailPage />} />
                   <Route path="/goals/:id/edit" element={<GoalEditPage />} />

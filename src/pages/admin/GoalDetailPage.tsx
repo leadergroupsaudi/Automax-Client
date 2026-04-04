@@ -64,6 +64,8 @@ import { CollaboratorPicker } from "../../components/goals/CollaboratorPicker";
 import { GoalHierarchyTree } from "../../components/goals/GoalHierarchyTree";
 import { CheckInForm } from "../../components/goals/CheckInForm";
 import { CheckInCard } from "../../components/goals/CheckInCard";
+import { useAuthStore } from "../../stores/authStore";
+import { useGoalWebSocket } from "../../lib/services/goalWebSocket";
 
 type TabType = "overview" | "metrics" | "evidence" | "collaborators" | "check-ins";
 
@@ -80,6 +82,10 @@ export const GoalDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { hasPermission } = usePermissions();
+  const user = useAuthStore((state) => state.user);
+
+  // Real-time WebSocket updates
+  useGoalWebSocket(id, user?.id);
 
   // ── State ──────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<TabType>("overview");
@@ -622,7 +628,7 @@ export const GoalDetailPage: React.FC = () => {
               </h2>
               {canEdit && (
                 <Link
-                  to={`/goals/create?parent=${goal.id}`}
+                  to={`/goals/new?parent=${goal.id}`}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
                 >
                   <Plus className="w-4 h-4" />

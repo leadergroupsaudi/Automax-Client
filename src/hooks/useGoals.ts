@@ -7,6 +7,7 @@ import {
   evidenceApi,
   approvalApi,
   checkInApi,
+  metricImportApi,
 } from "../api/goals";
 import type {
   GoalFilter,
@@ -22,6 +23,8 @@ import type {
   EvidenceFilter,
   EvidenceTransitionRequest,
   CheckInCreateRequest,
+  MetricImportBatchFilter,
+  MetricImportBatchTransitionRequest,
 } from "../types/goal";
 
 // ──────────────────────────────────────────────────
@@ -51,6 +54,13 @@ export const goalKeys = {
   tree: (goalId: string) => [...goalKeys.all, "tree", goalId] as const,
   checkIns: (goalId: string, page: number) =>
     [...goalKeys.all, "check-ins", goalId, page] as const,
+  metricBatches: () => [...goalKeys.all, "metricBatches"] as const,
+  metricBatch: (id: string) =>
+    [...goalKeys.all, "metricBatch", id] as const,
+  metricBatchTransitions: (id: string) =>
+    [...goalKeys.all, "metricBatchTransitions", id] as const,
+  metricBatchHistory: (id: string) =>
+    [...goalKeys.all, "metricBatchHistory", id] as const,
 };
 
 // ──────────────────────────────────────────────────
@@ -410,12 +420,32 @@ export function useExecuteEvidenceTransition() {
       evidenceId: string;
       data: EvidenceTransitionRequest;
     }) => evidenceApi.executeTransition(evidenceId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: goalKeys.all });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: goalKeys.all });
       toast.success("Transition completed");
     },
     onError: () => {
       toast.error("Failed to execute transition");
+    },
+  });
+}
+
+export function useReplaceEvidenceFile() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      evidenceId,
+      file,
+    }: {
+      evidenceId: string;
+      file: File;
+    }) => evidenceApi.replaceFile(evidenceId, file),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: goalKeys.all });
+      toast.success("Evidence file replaced");
+    },
+    onError: () => {
+      toast.error("Failed to replace evidence file");
     },
   });
 }
@@ -501,5 +531,102 @@ export function useDeleteCheckIn() {
     onError: () => {
       toast.error("Failed to delete check-in");
     },
+  });
+}
+
+// ──────────────────────────────────────────────────
+// Metric Import Queries & Mutations
+// ──────────────────────────────────────────────────
+
+export function useMetricImportBatches(filter: MetricImportBatchFilter = {}) {
+  return useQuery({
+    queryKey: [...goalKeys.metricBatches(), filter],
+    queryFn: () => metricImportApi.listBatches(filter),
+  });
+}
+
+export function useMetricImportBatch(id: string) {
+  return useQuery({
+    queryKey: goalKeys.metricBatch(id),
+    queryFn: () => metricImportApi.getBatch(id),
+    enabled: !!id,
+  });
+}
+
+export function useImportMetrics() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      file,
+      dryRun,
+      title,
+      comment,
+      primaryGoalId,
+    }: {
+      file: File;
+      dryRun: boolean;
+      title?: string;
+      comment?: string;
+      primaryGoalId?: string;
+    }) => metricImportApi.importMetrics(file, dryRun, title, comment, primaryGoalId),
+    onSuccess: (data, variables) => {
+      if (!variables.dryRun) {
+        queryClient.invalidateQueries({ queryKey: goalKeys.metricBatches() });
+        toast.success("Metric import batch created");
+      }
+    },
+    onError: () => {
+      toast.error("Failed to process metric import");
+    },
+  });
+}
+
+export function useDeleteMetricImportBatch() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => metricImportApi.deleteBatch(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: goalKeys.metricBatches() });
+      toast.success("Import batch deleted");
+    },
+    onError: () => {
+      toast.error("Failed to delete import batch");
+    },
+  });
+}
+
+export function useMetricBatchTransitions(batchId: string) {
+  return useQuery({
+    queryKey: goalKeys.metricBatchTransitions(batchId),
+    queryFn: () => metricImportApi.getAvailableTransitions(batchId),
+    enabled: !!batchId,
+  });
+}
+
+export function useExecuteMetricBatchTransition() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      batchId,
+      data,
+    }: {
+      batchId: string;
+      data: MetricImportBatchTransitionRequest;
+    }) => metricImportApi.executeTransition(batchId, data),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: goalKeys.all });
+      toast.success("Transition completed");
+    },
+    onError: () => {
+      toast.error("Failed to execute transition");
+    },
+  });
+}
+
+export function useMetricBatchTransitionHistory(batchId: string) {
+  return useQuery({
+    queryKey: goalKeys.metricBatchHistory(batchId),
+    queryFn: () => metricImportApi.getTransitionHistory(batchId),
+    enabled: !!batchId,
   });
 }

@@ -39,3 +39,6 @@ export { GoalCreatePage } from "./GoalCreatePage";
 export { GoalEditPage } from "./GoalEditPage";
 export { GoalApprovalsPage } from "./GoalApprovalsPage";
 export { GoalTemplatesPage } from "./GoalTemplatesPage";
+export { DocumentsPage } from "./DocumentsPage";
+export { MetricImportBatchesPage } from "./MetricImportBatchesPage";
+export { MetricImportBatchDetailPage } from "./MetricImportBatchDetailPage";

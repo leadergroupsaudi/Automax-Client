@@ -575,3 +575,102 @@ export const CHECK_IN_STATUS_OPTIONS = [
   { value: "behind" as CheckInStatus, label: "Behind", color: "red" },
   { value: "blocked" as CheckInStatus, label: "Blocked", color: "slate" },
 ];
+
+// ──────────────────────────────────────────────────
+// Metric Import/Export
+// ──────────────────────────────────────────────────
+
+export interface MetricImportBatch {
+  id: string;
+  title: string;
+  comment: string;
+  status: string;
+  item_count: number;
+  goal_count: number;
+  file_name: string;
+  imported_by_id: string;
+  imported_by?: UserBrief;
+  primary_goal_id: string;
+  primary_goal_title?: string;
+  workflow_id?: string;
+  current_state_id?: string;
+  current_state?: WorkflowStateBrief;
+  assigned_to_id?: string;
+  assigned_to?: UserBrief;
+  version: number;
+  items?: MetricImportItem[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MetricImportItem {
+  id: string;
+  goal_id: string;
+  goal_title: string;
+  metric_id: string;
+  metric_name: string;
+  metric_type: string;
+  unit: string;
+  old_value: number;
+  new_value: number;
+  applied: boolean;
+}
+
+export interface MetricImportValidationItem {
+  row_number: number;
+  goal_id: string;
+  goal_title: string;
+  metric_id: string;
+  metric_name: string;
+  current_value: number;
+  new_value: number;
+  status: "valid" | "error" | "warning" | "skipped";
+  errors?: string[];
+  warnings?: string[];
+}
+
+export interface MetricImportDryRunResponse {
+  total_rows: number;
+  valid_count: number;
+  error_count: number;
+  warning_count: number;
+  skipped_count: number;
+  goal_count: number;
+  items: MetricImportValidationItem[];
+}
+
+export interface MetricImportBatchFilter {
+  page?: number;
+  limit?: number;
+  status?: string;
+}
+
+export interface MetricImportBatchListResponse {
+  success: boolean;
+  data: MetricImportBatch[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface MetricImportBatchTransitionRequest {
+  transition_id: string;
+  comment?: string;
+  version: number;
+}
+
+export interface MetricImportBatchTransitionHistory {
+  id: string;
+  batch_id: string;
+  transition_name: string;
+  from_state_name: string;
+  to_state_name: string;
+  from_state_color: string;
+  to_state_color: string;
+  performed_by_id: string;
+  performed_by?: UserBrief;
+  comment: string;
+  is_system_action: boolean;
+  transitioned_at: string;
+  created_at: string;
+}

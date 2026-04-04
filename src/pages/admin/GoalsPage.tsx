@@ -22,12 +22,14 @@ import { GoalPriorityBadge } from "../../components/goals/GoalPriorityBadge";
 import { GoalProgressBar } from "../../components/goals/GoalProgressBar";
 import { GoalFilters } from "../../components/goals/GoalFilters";
 import { GoalImportModal } from "../../components/goals/GoalImportModal";
+import { MetricImportModal } from "../../components/goals/MetricImportModal";
 import { BulkActionsBar } from "../../components/goals/BulkActionsBar";
 import { BulkTransitionModal } from "../../components/goals/BulkTransitionModal";
 import { BulkReassignModal } from "../../components/goals/BulkReassignModal";
 import { goalApi } from "../../api/goals";
 import { exportGoalsToXlsx } from "../../utils/goalExport";
 import type { GoalFilter, Goal } from "../../types/goal";
+import { useGoalListWebSocket } from "../../lib/services/goalListWebSocket";
 
 function ExportDropdown({ filters }: { filters: GoalFilter }) {
   const [open, setOpen] = useState(false);
@@ -88,12 +90,14 @@ function ExportDropdown({ filters }: { filters: GoalFilter }) {
 
 export const GoalsPage: React.FC = () => {
   const { hasPermission } = usePermissions();
+  useGoalListWebSocket();
   const [filters, setFilters] = useState<GoalFilter>({
     page: 1,
     limit: 10,
   });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showMetricImportModal, setShowMetricImportModal] = useState(false);
   const [showBulkTransition, setShowBulkTransition] = useState(false);
   const [showBulkReassign, setShowBulkReassign] = useState(false);
 
@@ -214,6 +218,13 @@ export const GoalsPage: React.FC = () => {
               Import
             </button>
           )}
+          <button
+            onClick={() => setShowMetricImportModal(true)}
+            className="inline-flex items-center gap-2 px-3 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            Metric Import
+          </button>
           <ExportDropdown filters={filters} />
           {canCreate && (
             <Link
@@ -398,6 +409,9 @@ export const GoalsPage: React.FC = () => {
       {/* Modals */}
       {showImportModal && (
         <GoalImportModal onClose={() => setShowImportModal(false)} />
+      )}
+      {showMetricImportModal && (
+        <MetricImportModal onClose={() => setShowMetricImportModal(false)} />
       )}
       {showBulkTransition && (
         <BulkTransitionModal
