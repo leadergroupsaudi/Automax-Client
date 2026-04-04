@@ -1,21 +1,42 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Save, LayoutTemplate, Info } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import { useCreateGoal } from "../../hooks/useGoals";
+import { useCreateGoal, useGoal } from "../../hooks/useGoals";
 import { useActiveGoalTemplates } from "../../hooks/useGoalTemplates";
 import { metricApi } from "../../api/goals";
 import { userApi, departmentApi } from "../../api/admin";
 import { GOAL_PRIORITY_OPTIONS } from "../../types/goal";
-import type { GoalCreateRequest, GoalPriority, TemplateMetric } from "../../types/goal";
+import type { GoalCreateRequest, GoalPriority, GoalBrief, TemplateMetric } from "../../types/goal";
+import { ParentGoalSelector } from "../../components/goals/ParentGoalSelector";
 
 export const GoalCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const createGoal = useCreateGoal();
   const { data: templatesData } = useActiveGoalTemplates();
   const activeTemplates = templatesData?.data ?? [];
+  const [searchParams] = useSearchParams();
+  const presetParentId = searchParams.get("parent") ?? undefined;
+  const { data: presetParentData } = useGoal(presetParentId ?? "");
   const [pendingMetrics, setPendingMetrics] = useState<TemplateMetric[]>([]);
+  const [parentGoal, setParentGoal] = useState<GoalBrief | null>(null);
+  const [parentInitialized, setParentInitialized] = useState(false);
+
+  // Pre-fill parent from URL param
+  if (presetParentData?.data && !parentInitialized) {
+    const pg = presetParentData.data;
+    setParentGoal({
+      id: pg.id,
+      title: pg.title,
+      status: pg.status,
+      priority: pg.priority,
+      progress: pg.progress,
+      level: pg.level,
+    });
+    setForm((prev) => ({ ...prev, parent_goal_id: pg.id }));
+    setParentInitialized(true);
+  }
 
   const { data: usersData } = useQuery({
     queryKey: ["admin", "users"],
@@ -35,6 +56,7 @@ export const GoalCreatePage: React.FC = () => {
     priority: "Medium",
     owner_id: "",
     department_id: "",
+    parent_goal_id: presetParentId,
     start_date: "",
     target_date: "",
     review_date: "",
@@ -81,6 +103,8 @@ export const GoalCreatePage: React.FC = () => {
     if (form.category?.trim()) payload.category = form.category.trim();
     if (form.department_id?.trim())
       payload.department_id = form.department_id.trim();
+    if (form.parent_goal_id?.trim())
+      payload.parent_goal_id = form.parent_goal_id.trim();
     if (form.start_date) payload.start_date = `${form.start_date}T00:00:00Z`;
     if (form.target_date) payload.target_date = `${form.target_date}T00:00:00Z`;
     if (form.review_date) payload.review_date = `${form.review_date}T00:00:00Z`;
@@ -266,6 +290,18 @@ export const GoalCreatePage: React.FC = () => {
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Parent Goal */}
+            <div className="md:col-span-2">
+              <ParentGoalSelector
+                value={form.parent_goal_id}
+                selectedGoal={parentGoal}
+                onChange={(goalId, goal) => {
+                  setForm((prev) => ({ ...prev, parent_goal_id: goalId }));
+                  setParentGoal(goal ?? null);
+                }}
+              />
             </div>
 
             {/* Start Date */}

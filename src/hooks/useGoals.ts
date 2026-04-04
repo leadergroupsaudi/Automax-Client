@@ -6,6 +6,7 @@ import {
   metricApi,
   evidenceApi,
   approvalApi,
+  checkInApi,
 } from "../api/goals";
 import type {
   GoalFilter,
@@ -20,6 +21,7 @@ import type {
   CollaboratorAddRequest,
   EvidenceFilter,
   EvidenceTransitionRequest,
+  CheckInCreateRequest,
 } from "../types/goal";
 
 // ──────────────────────────────────────────────────
@@ -44,6 +46,11 @@ export const goalKeys = {
     [...goalKeys.all, "approvals", "pending", page, limit] as const,
   completedApprovals: (page: number, limit: number) =>
     [...goalKeys.all, "approvals", "completed", page, limit] as const,
+  children: (goalId: string) =>
+    [...goalKeys.all, "children", goalId] as const,
+  tree: (goalId: string) => [...goalKeys.all, "tree", goalId] as const,
+  checkIns: (goalId: string, page: number) =>
+    [...goalKeys.all, "check-ins", goalId, page] as const,
 };
 
 // ──────────────────────────────────────────────────
@@ -428,5 +435,71 @@ export function useCompletedApprovals(page = 1, limit = 10) {
   return useQuery({
     queryKey: goalKeys.completedApprovals(page, limit),
     queryFn: () => approvalApi.listCompleted(page, limit),
+  });
+}
+
+// ──────────────────────────────────────────────────
+// Hierarchy Queries
+// ──────────────────────────────────────────────────
+
+export function useGoalChildren(goalId: string) {
+  return useQuery({
+    queryKey: goalKeys.children(goalId),
+    queryFn: () => goalApi.getChildren(goalId),
+    enabled: !!goalId,
+  });
+}
+
+export function useGoalTree(goalId: string) {
+  return useQuery({
+    queryKey: goalKeys.tree(goalId),
+    queryFn: () => goalApi.getTree(goalId),
+    enabled: !!goalId,
+  });
+}
+
+// ──────────────────────────────────────────────────
+// Check-in Queries & Mutations
+// ──────────────────────────────────────────────────
+
+export function useGoalCheckIns(goalId: string, page = 1, limit = 10) {
+  return useQuery({
+    queryKey: goalKeys.checkIns(goalId, page),
+    queryFn: () => checkInApi.list(goalId, page, limit),
+    enabled: !!goalId,
+  });
+}
+
+export function useCreateCheckIn() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      goalId,
+      data,
+    }: {
+      goalId: string;
+      data: CheckInCreateRequest;
+    }) => checkInApi.create(goalId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: goalKeys.all });
+      toast.success("Check-in submitted");
+    },
+    onError: () => {
+      toast.error("Failed to submit check-in");
+    },
+  });
+}
+
+export function useDeleteCheckIn() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => checkInApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: goalKeys.all });
+      toast.success("Check-in deleted");
+    },
+    onError: () => {
+      toast.error("Failed to delete check-in");
+    },
   });
 }

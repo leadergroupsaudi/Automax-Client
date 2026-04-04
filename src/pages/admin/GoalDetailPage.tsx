@@ -18,6 +18,9 @@ import {
   Upload,
   Search,
   Copy,
+  GitBranch,
+  ClipboardCheck,
+  ChevronRight,
 } from "lucide-react";
 import { usePermissions } from "../../hooks/usePermissions";
 import { PERMISSIONS } from "../../constants/permissions";
@@ -30,6 +33,9 @@ import {
   useDeleteMetric,
   useGoalEvidences,
   useDeleteEvidence,
+  useGoalCheckIns,
+  useCreateCheckIn,
+  useDeleteCheckIn,
 } from "../../hooks/useGoals";
 import type {
   GoalStatus,
@@ -38,6 +44,7 @@ import type {
   MetricType,
   EvidenceType,
   EvidenceFilter,
+  CheckInCreateRequest,
 } from "../../types/goal";
 import {
   VALID_GOAL_TRANSITIONS,
@@ -54,8 +61,11 @@ import { EvidenceUploadModal } from "../../components/goals/EvidenceUploadModal"
 import { EvidenceCard } from "../../components/goals/EvidenceCard";
 import { GoalCloneModal } from "../../components/goals/GoalCloneModal";
 import { CollaboratorPicker } from "../../components/goals/CollaboratorPicker";
+import { GoalHierarchyTree } from "../../components/goals/GoalHierarchyTree";
+import { CheckInForm } from "../../components/goals/CheckInForm";
+import { CheckInCard } from "../../components/goals/CheckInCard";
 
-type TabType = "overview" | "metrics" | "evidence" | "collaborators";
+type TabType = "overview" | "metrics" | "evidence" | "collaborators" | "check-ins";
 
 const TRANSITION_BUTTON_STYLES: Record<string, string> = {
   Active: "bg-blue-600 hover:bg-blue-700 text-white",
@@ -112,6 +122,9 @@ export const GoalDetailPage: React.FC = () => {
     evidenceFilter,
   );
 
+  // ── Check-in state ─────────────────────────────────
+  const [checkInPage, setCheckInPage] = useState(1);
+
   // ── Mutations ──────────────────────────────────────
   const transitionGoal = useTransitionGoal();
   const deleteGoal = useDeleteGoal();
@@ -119,6 +132,14 @@ export const GoalDetailPage: React.FC = () => {
   const createMetric = useCreateMetric();
   const deleteMetric = useDeleteMetric();
   const deleteEvidence = useDeleteEvidence();
+  const createCheckIn = useCreateCheckIn();
+  const deleteCheckIn = useDeleteCheckIn();
+
+  // ── Check-in queries ────────────────────────────────
+  const { data: checkInData, isLoading: checkInsLoading } = useGoalCheckIns(
+    id!,
+    checkInPage,
+  );
 
   // ── Derived ────────────────────────────────────────
   const goal = goalData?.data;
@@ -258,19 +279,37 @@ export const GoalDetailPage: React.FC = () => {
       label: "Collaborators",
       icon: <Users className="w-4 h-4" />,
     },
+    {
+      key: "check-ins",
+      label: "Check-ins",
+      icon: <ClipboardCheck className="w-4 h-4" />,
+    },
   ];
 
   // ── Render ─────────────────────────────────────────
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* ── Back Link ─────────────────────────────── */}
-      <Link
-        to="/goals"
-        className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back to Goals
-      </Link>
+      {/* ── Back Link + Parent Breadcrumb ──────────── */}
+      <div className="flex items-center gap-2 text-sm">
+        <Link
+          to="/goals"
+          className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Goals
+        </Link>
+        {goal?.parent_goal && (
+          <>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+            <Link
+              to={`/goals/${goal.parent_goal.id}`}
+              className="text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors"
+            >
+              {goal.parent_goal.title}
+            </Link>
+          </>
+        )}
+      </div>
 
       {/* ── Header ────────────────────────────────── */}
       <div className="rounded-xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/80 p-6">
@@ -572,6 +611,29 @@ export const GoalDetailPage: React.FC = () => {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Child Goals (Hierarchy) */}
+          <div className="rounded-xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/80 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                <GitBranch className="w-5 h-5" />
+                Child Goals ({goal.children?.length ?? 0})
+              </h2>
+              {canEdit && (
+                <Link
+                  to={`/goals/create?parent=${goal.id}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Child
+                </Link>
+              )}
+            </div>
+            <GoalHierarchyTree
+              children={goal.children ?? []}
+              parentId={goal.id}
+            />
           </div>
         </div>
       )}
@@ -887,6 +949,87 @@ export const GoalDetailPage: React.FC = () => {
               existingCollaborators={goal.collaborators ?? []}
             />
           </div>
+        </div>
+      )}
+
+      {/* Check-ins Tab */}
+      {activeTab === "check-ins" && (
+        <div className="space-y-6">
+          {/* Check-in Form */}
+          {canEdit && (
+            <CheckInForm
+              metrics={goal.metrics}
+              isPending={createCheckIn.isPending}
+              onSubmit={(data: CheckInCreateRequest) => {
+                createCheckIn.mutate({ goalId: id!, data });
+              }}
+            />
+          )}
+
+          {/* Check-in List */}
+          {checkInsLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : (checkInData?.data ?? []).length > 0 ? (
+            <div className="space-y-4">
+              {(checkInData?.data ?? []).map((checkIn) => (
+                <CheckInCard
+                  key={checkIn.id}
+                  checkIn={checkIn}
+                  onDelete={
+                    canEdit
+                      ? (checkInId) => {
+                          if (
+                            window.confirm(
+                              "Are you sure you want to delete this check-in?",
+                            )
+                          ) {
+                            deleteCheckIn.mutate(checkInId);
+                          }
+                        }
+                      : undefined
+                  }
+                  canEdit={canEdit}
+                />
+              ))}
+
+              {/* Pagination */}
+              {checkInData && checkInData.total > 10 && (
+                <div className="flex items-center justify-center gap-2 pt-4">
+                  <button
+                    onClick={() =>
+                      setCheckInPage((p) => Math.max(1, p - 1))
+                    }
+                    disabled={checkInPage <= 1}
+                    className="px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm text-slate-500 dark:text-slate-400 tabular-nums">
+                    Page {checkInPage} of{" "}
+                    {Math.ceil(checkInData.total / 10)}
+                  </span>
+                  <button
+                    onClick={() => setCheckInPage((p) => p + 1)}
+                    disabled={
+                      checkInPage >= Math.ceil(checkInData.total / 10)
+                    }
+                    className="px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/80 p-12 text-center">
+              <ClipboardCheck className="w-12 h-12 mx-auto mb-4 text-slate-300 dark:text-slate-600" />
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                No check-ins yet. Submit your first progress update above.
+              </p>
+            </div>
+          )}
         </div>
       )}
 

@@ -25,6 +25,9 @@ import type {
   EvidenceTransitionHistoryListResponse,
   AvailableTransition,
   ApprovalListResponse,
+  GoalCheckIn,
+  CheckInCreateRequest,
+  CheckInListResponse,
 } from "../types/goal";
 
 // ──────────────────────────────────────────────────
@@ -46,6 +49,9 @@ export const goalApi = {
     if (filter.owner_id) params.append("owner_id", filter.owner_id);
     if (filter.department_id)
       params.append("department_id", filter.department_id);
+    if (filter.parent_goal_id)
+      params.append("parent_goal_id", filter.parent_goal_id);
+    if (filter.root_only) params.append("root_only", "true");
     if (filter.category) params.append("category", filter.category);
     if (filter.search) params.append("search", filter.search);
     if (filter.start_from) params.append("start_from", filter.start_from);
@@ -141,6 +147,46 @@ export const goalApi = {
     data: BulkActionRequest,
   ): Promise<ApiResponse<BulkActionResponse>> => {
     const res = await apiClient.post("/goals/bulk", data);
+    return res.data;
+  },
+
+  getChildren: async (goalId: string): Promise<ApiResponse<Goal[]>> => {
+    const res = await apiClient.get(`/goals/${goalId}/children`);
+    return res.data;
+  },
+
+  getTree: async (goalId: string): Promise<ApiResponse<Goal>> => {
+    const res = await apiClient.get(`/goals/${goalId}/tree`);
+    return res.data;
+  },
+};
+
+// ──────────────────────────────────────────────────
+// Check-ins
+// ──────────────────────────────────────────────────
+
+export const checkInApi = {
+  create: async (
+    goalId: string,
+    data: CheckInCreateRequest,
+  ): Promise<ApiResponse<GoalCheckIn>> => {
+    const res = await apiClient.post(`/goals/${goalId}/check-ins`, data);
+    return res.data;
+  },
+
+  list: async (
+    goalId: string,
+    page = 1,
+    limit = 10,
+  ): Promise<CheckInListResponse> => {
+    const res = await apiClient.get(`/goals/${goalId}/check-ins`, {
+      params: { page, limit },
+    });
+    return res.data;
+  },
+
+  delete: async (id: string): Promise<ApiResponse<null>> => {
+    const res = await apiClient.delete(`/goals/check-ins/${id}`);
     return res.data;
   },
 };

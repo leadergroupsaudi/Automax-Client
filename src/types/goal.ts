@@ -45,6 +45,15 @@ export interface DepartmentBrief {
 // Response Types (match Go GoalResponse, etc.)
 // ──────────────────────────────────────────────────
 
+export interface GoalBrief {
+  id: string;
+  title: string;
+  status: GoalStatus;
+  priority: GoalPriority;
+  progress: number;
+  level: number;
+}
+
 export interface Goal {
   id: string;
   title: string;
@@ -56,6 +65,11 @@ export interface Goal {
   owner?: UserBrief;
   department_id?: string;
   department?: DepartmentBrief;
+  parent_goal_id?: string;
+  parent_goal?: GoalBrief;
+  children?: GoalBrief[];
+  level: number;
+  path: string;
   start_date?: string;
   target_date?: string;
   review_date?: string;
@@ -211,6 +225,7 @@ export interface GoalCreateRequest {
   priority: GoalPriority;
   owner_id: string;
   department_id?: string;
+  parent_goal_id?: string;
   start_date?: string;
   target_date?: string;
   review_date?: string;
@@ -224,6 +239,7 @@ export interface GoalUpdateRequest {
   priority?: GoalPriority;
   owner_id?: string;
   department_id?: string;
+  parent_goal_id?: string;
   start_date?: string;
   target_date?: string;
   review_date?: string;
@@ -249,6 +265,8 @@ export interface GoalFilter {
   priority?: GoalPriority;
   owner_id?: string;
   department_id?: string;
+  parent_goal_id?: string;
+  root_only?: boolean;
   category?: string;
   search?: string;
   start_from?: string;
@@ -518,3 +536,42 @@ export interface BulkActionResponse {
   failure_count: number;
   results: BulkActionItemResult[];
 }
+
+// ──────────────────────────────────────────────────
+// Check-in Types
+// ──────────────────────────────────────────────────
+
+export type CheckInStatus = "on_track" | "at_risk" | "behind" | "blocked";
+
+export interface GoalCheckIn {
+  id: string;
+  goal_id: string;
+  author_id: string;
+  author?: UserBrief;
+  status: CheckInStatus;
+  content: string;
+  progress_snapshot: number;
+  metric_updates: string;
+  created_at: string;
+}
+
+export interface CheckInCreateRequest {
+  status: CheckInStatus;
+  content: string;
+  metric_updates?: { metric_id: string; value: number; comment?: string }[];
+}
+
+export interface CheckInListResponse {
+  success: boolean;
+  data: GoalCheckIn[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export const CHECK_IN_STATUS_OPTIONS = [
+  { value: "on_track" as CheckInStatus, label: "On Track", color: "green" },
+  { value: "at_risk" as CheckInStatus, label: "At Risk", color: "amber" },
+  { value: "behind" as CheckInStatus, label: "Behind", color: "red" },
+  { value: "blocked" as CheckInStatus, label: "Blocked", color: "slate" },
+];
