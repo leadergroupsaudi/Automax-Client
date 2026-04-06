@@ -137,6 +137,9 @@ export const PERMISSIONS = {
   GOALS_ASSIGN: "goals:assign",
   GOALS_APPROVE: "goals:approve",
   DASHBOARD_GOALS: "dashboard:goals",
+
+  CALLER_SENTIMENT_CREATE: "caller-sentiment:create",
+  CALLER_SENTIMENT_VIEW: "caller-sentiment:view",
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

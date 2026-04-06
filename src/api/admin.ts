@@ -95,6 +95,7 @@ import type {
   CanMergeResponse,
   BulkConvertToRequestRequest,
   CreateEscalationRequest,
+  CallerFeedBackRequest,
 } from "../types";
 
 // User Management
@@ -2718,6 +2719,28 @@ export const escalationApi = {
   },
   delete: async (id: string): Promise<ApiResponse<any>> => {
     const response = await apiClient.delete(`/admin/escalation-groups/${id}`);
+    return response.data;
+  },
+};
+
+export const callerFeedbackApi = {
+  create: async (data: CallerFeedBackRequest): Promise<ApiResponse<any>> => {
+    const response = await apiClient.post<ApiResponse<any>>(
+      "/caller-sentiments",
+      data,
+    );
+    return response.data;
+  },
+  get: async ({
+    callee_id,
+    caller_id,
+  }: {
+    callee_id: string;
+    caller_id: string;
+  }): Promise<ApiResponse<DataSourceDefinition[]>> => {
+    const response = await apiClient.get<ApiResponse<DataSourceDefinition[]>>(
+      `/caller-sentiments/${callee_id}/${caller_id}`,
+    );
     return response.data;
   },
 };
