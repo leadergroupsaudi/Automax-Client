@@ -62,7 +62,10 @@ import {
   SMSPage,
 } from "./pages";
 import EscalationConfigPage from "./pages/admin/EsclationPage";
-import { CitizenIncidentUpdate } from "./pages/CitizenIncidentUpdate";
+import { CitizenAuthLayout } from "./components/layout/CitizenAuthLayout";
+import { CitizenLayout } from "./components/layout/CitizenLayout";
+import { CitizenVerifyPage } from "./pages/CitizenverifyPage";
+import { CitizenIncidentUpdatePage } from "./pages/CitizenIncidentUpdatePage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -456,7 +459,18 @@ function App() {
 
             {/* 404 redirect */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/citizen/update" element={<CitizenIncidentUpdate />} />
+            <Route element={<CitizenAuthLayout />}>
+              <Route
+                path="/ivr/incident/sms-link/:id"
+                element={<CitizenVerifyPage />}
+              />
+            </Route>
+            <Route element={<CitizenLayout />}>
+              <Route
+                path="/ivr/incident/:id/update"
+                element={<CitizenIncidentUpdatePage />}
+              />
+            </Route>
           </Routes>
         </BrowserRouter>
       </SettingsProvider>
