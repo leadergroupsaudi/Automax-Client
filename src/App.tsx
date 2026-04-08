@@ -548,21 +548,22 @@ function App() {
               {/* Redirect root to dashboard or login */}
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-            {/* 404 redirect */}
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            <Route element={<CitizenAuthLayout />}>
-              <Route
-                path="/ivr/incident/sms-link/:id"
-                element={<CitizenVerifyPage />}
-              />
-            </Route>
-            <Route element={<CitizenLayout />}>
-              <Route
-                path="/ivr/incident/:id/update"
-                element={<CitizenIncidentUpdatePage />}
-              />
-            </Route>
-          </Routes>
+              {/* 404 redirect */}
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              <Route element={<CitizenAuthLayout />}>
+                <Route
+                  path="/ivr/incident/sms-link/:id"
+                  element={<CitizenVerifyPage />}
+                />
+              </Route>
+              <Route element={<CitizenLayout />}>
+                <Route
+                  path="/ivr/incident/:id/update"
+                  element={<CitizenIncidentUpdatePage />}
+                />
+              </Route>
+            </Routes>
+          </UserBootstrap>
         </BrowserRouter>
       </SettingsProvider>
     </QueryClientProvider>

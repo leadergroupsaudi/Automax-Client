@@ -5,7 +5,7 @@ import { z } from "zod";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Mail, Lock, ArrowRight } from "lucide-react";
-import { Button, Input, Checkbox } from "../ui";
+import { Button, Input } from "../ui";
 import { authApi } from "../../api/auth";
 import { useAuthStore } from "../../stores/authStore";
 
