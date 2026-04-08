@@ -78,6 +78,10 @@ import {
   ReviewAssignmentPage,
 } from "./pages";
 import EscalationConfigPage from "./pages/admin/EsclationPage";
+import { CitizenAuthLayout } from "./components/layout/CitizenAuthLayout";
+import { CitizenLayout } from "./components/layout/CitizenLayout";
+import { CitizenVerifyPage } from "./pages/CitizenverifyPage";
+import { CitizenIncidentUpdatePage } from "./pages/CitizenIncidentUpdatePage";
 import { UserBootstrap } from "./components/common/UserBootstrap";
 
 const queryClient = new QueryClient({
@@ -544,10 +548,21 @@ function App() {
               {/* Redirect root to dashboard or login */}
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-              {/* 404 redirect */}
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
-          </UserBootstrap>
+            {/* 404 redirect */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route element={<CitizenAuthLayout />}>
+              <Route
+                path="/ivr/incident/sms-link/:id"
+                element={<CitizenVerifyPage />}
+              />
+            </Route>
+            <Route element={<CitizenLayout />}>
+              <Route
+                path="/ivr/incident/:id/update"
+                element={<CitizenIncidentUpdatePage />}
+              />
+            </Route>
+          </Routes>
         </BrowserRouter>
       </SettingsProvider>
     </QueryClientProvider>

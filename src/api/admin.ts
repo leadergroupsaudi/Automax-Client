@@ -2779,3 +2779,23 @@ export const rejectionLogApi = {
     return response.data;
   },
 };
+
+export const SmsLinkApi = {
+  validate: async (
+    id: string,
+    signed_token: string,
+    last6digits: string,
+  ): Promise<ApiResponse<any>> => {
+    const response = await apiClient.get<ApiResponse<any>>(
+      `/ivr/incident/sms-link/${id}`,
+      {
+        params: {
+          signed_token,
+          last6digits,
+        },
+      },
+    );
+    return response.data;
+  },
+};
+
