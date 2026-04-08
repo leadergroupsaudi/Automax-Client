@@ -28,6 +28,8 @@ import type {
   GoalCheckIn,
   CheckInCreateRequest,
   CheckInListResponse,
+  GoalCommentListResponse,
+  GoalActivityListResponse,
   MetricImportBatch,
   MetricImportDryRunResponse,
   MetricImportBatchFilter,
@@ -402,6 +404,53 @@ export const approvalApi = {
     limit = 10,
   ): Promise<ApprovalListResponse> => {
     const res = await apiClient.get("/approvals/completed", {
+      params: { page, limit },
+    });
+    return res.data;
+  },
+};
+
+// ──────────────────────────────────────────────────
+// Comments
+// ──────────────────────────────────────────────────
+
+export const goalCommentApi = {
+  list: async (
+    goalId: string,
+    page = 1,
+    limit = 20,
+  ): Promise<GoalCommentListResponse> => {
+    const res = await apiClient.get(`/goals/${goalId}/comments`, {
+      params: { page, limit },
+    });
+    return res.data;
+  },
+
+  add: async (
+    goalId: string,
+    content: string,
+  ): Promise<ApiResponse<{ id: string }>> => {
+    const res = await apiClient.post(`/goals/${goalId}/comments`, { content });
+    return res.data;
+  },
+
+  delete: async (commentId: string): Promise<ApiResponse<null>> => {
+    const res = await apiClient.delete(`/goals/comments/${commentId}`);
+    return res.data;
+  },
+};
+
+// ──────────────────────────────────────────────────
+// Activity
+// ──────────────────────────────────────────────────
+
+export const goalActivityApi = {
+  list: async (
+    goalId: string,
+    page = 1,
+    limit = 20,
+  ): Promise<GoalActivityListResponse> => {
+    const res = await apiClient.get(`/goals/${goalId}/activity`, {
       params: { page, limit },
     });
     return res.data;

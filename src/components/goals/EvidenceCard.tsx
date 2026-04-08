@@ -15,6 +15,8 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
+  History,
+  Loader2,
 } from "lucide-react";
 import type {
   Evidence,
@@ -26,6 +28,8 @@ import {
   useEvidenceTransitionHistory,
 } from "../../hooks/useGoals";
 import { evidenceApi } from "../../api/goals";
+import { documentApi } from "../../api/documents";
+import { useFileVersions } from "../../hooks/useDocuments";
 import { EvidenceTransitionModal } from "./EvidenceTransitionModal";
 import EvidenceReplaceModal from "./EvidenceReplaceModal";
 
@@ -57,6 +61,13 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({
   const [transitionModalOpen, setTransitionModalOpen] = useState(false);
   const [replaceModalOpen, setReplaceModalOpen] = useState(false);
   const [historyExpanded, setHistoryExpanded] = useState(false);
+  const [versionsExpanded, setVersionsExpanded] = useState(false);
+
+  const hasDmsFile = !!evidence.documenta_file_id;
+  const { data: versionsData, isLoading: loadingVersions } = useFileVersions(
+    versionsExpanded && hasDmsFile ? evidence.documenta_file_id : "",
+  );
+  const versions = versionsData ?? [];
 
   const { data: transitionsData } = useEvidenceTransitions(evidence.id);
   const { data: historyData } = useEvidenceTransitionHistory(
@@ -92,6 +103,20 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({
     try {
       const blob = await evidenceApi.download(evidence.id);
       const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = evidence.file_name;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      // Error handled by API layer
+    }
+  };
+
+  const handleDownloadVersion = async (versionUuid: string) => {
+    try {
+      const blob = await documentApi.downloadVersion(versionUuid);
+      const url = window.URL.createObjectURL(blob as Blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = evidence.file_name;
@@ -307,6 +332,76 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-2 py-2">
             No transition history yet.
           </p>
+        )}
+
+        {/* DMS File Versions */}
+        {hasDmsFile && (
+          <>
+            <button
+              onClick={() => setVersionsExpanded(!versionsExpanded)}
+              className="flex items-center gap-1.5 mt-3 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+            >
+              <History className="w-3.5 h-3.5" />
+              Versions
+              {versionsExpanded ? (
+                <ChevronUp className="w-3.5 h-3.5" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5" />
+              )}
+            </button>
+
+            {versionsExpanded && (
+              <div className="mt-2 space-y-1.5">
+                {loadingVersions ? (
+                  <div className="flex justify-center py-3">
+                    <Loader2
+                      size={16}
+                      className="animate-spin text-slate-400"
+                    />
+                  </div>
+                ) : versions.length > 0 ? (
+                  versions.map((v) => (
+                    <div
+                      key={v.uuid}
+                      className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-700/30 text-xs"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-medium text-slate-900 dark:text-white tabular-nums">
+                          v{v.version_number}
+                        </span>
+                        {v.is_current && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                            Current
+                          </span>
+                        )}
+                        <span className="text-slate-400 tabular-nums">
+                          {v.size < 1024
+                            ? `${v.size} B`
+                            : v.size < 1024 * 1024
+                              ? `${(v.size / 1024).toFixed(1)} KB`
+                              : `${(v.size / (1024 * 1024)).toFixed(1)} MB`}
+                        </span>
+                        <span className="text-slate-400">
+                          {new Date(v.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleDownloadVersion(v.uuid)}
+                        className="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                        title="Download this version"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-xs text-slate-400 dark:text-slate-500 py-2">
+                    No versions available.
+                  </p>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
 

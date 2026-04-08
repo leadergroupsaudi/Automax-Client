@@ -21,6 +21,9 @@ import {
   GitBranch,
   ClipboardCheck,
   ChevronRight,
+  MessageSquare,
+  History,
+  Send,
 } from "lucide-react";
 import { usePermissions } from "../../hooks/usePermissions";
 import { PERMISSIONS } from "../../constants/permissions";
@@ -36,6 +39,10 @@ import {
   useGoalCheckIns,
   useCreateCheckIn,
   useDeleteCheckIn,
+  useGoalComments,
+  useAddGoalComment,
+  useDeleteGoalComment,
+  useGoalActivity,
 } from "../../hooks/useGoals";
 import type {
   GoalStatus,
@@ -67,7 +74,7 @@ import { CheckInCard } from "../../components/goals/CheckInCard";
 import { useAuthStore } from "../../stores/authStore";
 import { useGoalWebSocket } from "../../lib/services/goalWebSocket";
 
-type TabType = "overview" | "metrics" | "evidence" | "collaborators" | "check-ins";
+type TabType = "overview" | "metrics" | "evidence" | "collaborators" | "check-ins" | "comments" | "activity";
 
 const TRANSITION_BUTTON_STYLES: Record<string, string> = {
   Active: "bg-blue-600 hover:bg-blue-700 text-white",
@@ -131,6 +138,13 @@ export const GoalDetailPage: React.FC = () => {
   // ── Check-in state ─────────────────────────────────
   const [checkInPage, setCheckInPage] = useState(1);
 
+  // ── Comment state ─────────────────────────────────
+  const [commentText, setCommentText] = useState("");
+  const [commentPage, setCommentPage] = useState(1);
+
+  // ── Activity state ────────────────────────────────
+  const [activityPage, setActivityPage] = useState(1);
+
   // ── Mutations ──────────────────────────────────────
   const transitionGoal = useTransitionGoal();
   const deleteGoal = useDeleteGoal();
@@ -145,6 +159,20 @@ export const GoalDetailPage: React.FC = () => {
   const { data: checkInData, isLoading: checkInsLoading } = useGoalCheckIns(
     id!,
     checkInPage,
+  );
+
+  // ── Comment queries & mutations ───────────────────
+  const { data: commentData, isLoading: commentsLoading } = useGoalComments(
+    id!,
+    commentPage,
+  );
+  const addComment = useAddGoalComment();
+  const deleteComment = useDeleteGoalComment();
+
+  // ── Activity queries ──────────────────────────────
+  const { data: activityData, isLoading: activityLoading } = useGoalActivity(
+    id!,
+    activityPage,
   );
 
   // ── Derived ────────────────────────────────────────
@@ -289,6 +317,16 @@ export const GoalDetailPage: React.FC = () => {
       key: "check-ins",
       label: "Check-ins",
       icon: <ClipboardCheck className="w-4 h-4" />,
+    },
+    {
+      key: "comments",
+      label: "Comments",
+      icon: <MessageSquare className="w-4 h-4" />,
+    },
+    {
+      key: "activity",
+      label: "Activity",
+      icon: <History className="w-4 h-4" />,
     },
   ];
 
@@ -1033,6 +1071,276 @@ export const GoalDetailPage: React.FC = () => {
               <ClipboardCheck className="w-12 h-12 mx-auto mb-4 text-slate-300 dark:text-slate-600" />
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 No check-ins yet. Submit your first progress update above.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Comments Tab */}
+      {activeTab === "comments" && (
+        <div className="space-y-6">
+          {/* Add Comment */}
+          <div className="rounded-xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/80 p-6">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+              Add Comment
+            </h2>
+            <div className="space-y-3">
+              <textarea
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="Write a comment..."
+                rows={3}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              />
+              <div className="flex justify-end">
+                <button
+                  onClick={async () => {
+                    if (!commentText.trim()) {
+                      toast.error("Comment cannot be empty");
+                      return;
+                    }
+                    try {
+                      await addComment.mutateAsync({
+                        goalId: id!,
+                        content: commentText.trim(),
+                      });
+                      setCommentText("");
+                    } catch {
+                      // Toast handled by hook
+                    }
+                  }}
+                  disabled={addComment.isPending || !commentText.trim()}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                >
+                  <Send className="w-4 h-4" />
+                  {addComment.isPending ? "Posting..." : "Add Comment"}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Comment List */}
+          {commentsLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : (commentData?.data ?? []).length > 0 ? (
+            <div className="space-y-4">
+              {(commentData?.data ?? []).map((comment) => {
+                const authorName = comment.author
+                  ? `${comment.author.first_name} ${comment.author.last_name}`.trim()
+                  : "Unknown";
+                const initial = authorName.charAt(0).toUpperCase();
+                const isOwn = comment.author?.id === user?.id;
+                const relativeTime = (() => {
+                  const diff = Date.now() - new Date(comment.created_at).getTime();
+                  const mins = Math.floor(diff / 60000);
+                  if (mins < 1) return "just now";
+                  if (mins < 60) return `${mins}m ago`;
+                  const hrs = Math.floor(mins / 60);
+                  if (hrs < 24) return `${hrs}h ago`;
+                  const days = Math.floor(hrs / 24);
+                  return `${days}d ago`;
+                })();
+
+                return (
+                  <div
+                    key={comment.id}
+                    className="rounded-xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/80 p-4"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                        <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                          {initial}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-slate-900 dark:text-white">
+                              {authorName}
+                            </span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                              {relativeTime}
+                            </span>
+                          </div>
+                          {isOwn && (
+                            <button
+                              onClick={() => {
+                                if (
+                                  window.confirm(
+                                    "Are you sure you want to delete this comment?",
+                                  )
+                                ) {
+                                  deleteComment.mutate(comment.id);
+                                }
+                              }}
+                              className="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                              title="Delete comment"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                        <p className="mt-1 text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
+                          {comment.content}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Pagination */}
+              {commentData && commentData.total > 20 && (
+                <div className="flex items-center justify-center gap-2 pt-4">
+                  <button
+                    onClick={() =>
+                      setCommentPage((p) => Math.max(1, p - 1))
+                    }
+                    disabled={commentPage <= 1}
+                    className="px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm text-slate-500 dark:text-slate-400 tabular-nums">
+                    Page {commentPage} of{" "}
+                    {Math.ceil(commentData.total / 20)}
+                  </span>
+                  <button
+                    onClick={() => setCommentPage((p) => p + 1)}
+                    disabled={
+                      commentPage >= Math.ceil(commentData.total / 20)
+                    }
+                    className="px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/80 p-12 text-center">
+              <MessageSquare className="w-12 h-12 mx-auto mb-4 text-slate-300 dark:text-slate-600" />
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                No comments yet. Start the conversation above.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Activity Tab */}
+      {activeTab === "activity" && (
+        <div className="space-y-6">
+          {activityLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : (activityData?.data ?? []).length > 0 ? (
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/80 p-6">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-6">
+                Activity Timeline
+              </h2>
+              <div className="relative">
+                {/* Timeline line */}
+                <div className="absolute left-4 top-0 bottom-0 w-px bg-slate-200 dark:bg-slate-700/60" />
+
+                <div className="space-y-6">
+                  {(activityData?.data ?? []).map((entry) => {
+                    const actionColors: Record<string, string> = {
+                      create:
+                        "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+                      update:
+                        "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+                      delete:
+                        "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+                      transition:
+                        "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+                      view:
+                        "bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-400",
+                    };
+                    const colorClass =
+                      actionColors[entry.action?.toLowerCase()] ??
+                      actionColors.view;
+                    const userName = entry.user
+                      ? `${entry.user.first_name} ${entry.user.last_name}`.trim()
+                      : "System";
+                    const timestamp = new Date(
+                      entry.created_at,
+                    ).toLocaleString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    });
+
+                    return (
+                      <div key={entry.id} className="relative pl-10">
+                        {/* Timeline dot */}
+                        <div className="absolute left-2.5 top-1 w-3 h-3 rounded-full border-2 border-white dark:border-slate-800 bg-slate-400 dark:bg-slate-500 z-10" />
+
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium capitalize ${colorClass}`}
+                          >
+                            {entry.action}
+                          </span>
+                          <span className="text-sm text-slate-700 dark:text-slate-300">
+                            {entry.description}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 dark:text-slate-400">
+                          <span className="flex items-center gap-1">
+                            <User className="w-3 h-3" />
+                            {userName}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {timestamp}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Pagination */}
+              {activityData && activityData.total > 20 && (
+                <div className="flex items-center justify-center gap-2 pt-6 mt-6 border-t border-slate-200 dark:border-slate-700/60">
+                  <button
+                    onClick={() =>
+                      setActivityPage((p) => Math.max(1, p - 1))
+                    }
+                    disabled={activityPage <= 1}
+                    className="px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm text-slate-500 dark:text-slate-400 tabular-nums">
+                    Page {activityPage} of{" "}
+                    {Math.ceil(activityData.total / 20)}
+                  </span>
+                  <button
+                    onClick={() => setActivityPage((p) => p + 1)}
+                    disabled={
+                      activityPage >= Math.ceil(activityData.total / 20)
+                    }
+                    className="px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/80 p-12 text-center">
+              <History className="w-12 h-12 mx-auto mb-4 text-slate-300 dark:text-slate-600" />
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                No activity recorded yet.
               </p>
             </div>
           )}

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import {
   Search,
   FolderOpen,
@@ -20,6 +20,9 @@ import {
   Filter,
   Trash2,
   Lock,
+  History,
+  Upload,
+  RotateCcw,
 } from "lucide-react";
 import {
   useDocumentFiles,
@@ -28,6 +31,9 @@ import {
   useAddComment,
   useFileTags,
   useSetTags,
+  useFileVersions,
+  useUploadVersion,
+  useRollbackVersion,
 } from "../../hooks/useDocuments";
 import { documentApi } from "../../api/documents";
 import type { DmsFile } from "../../types/document";
@@ -148,9 +154,9 @@ function FileDetailPanel({
   file: DmsFile;
   onClose: () => void;
 }) {
-  const [activeTab, setActiveTab] = useState<"info" | "comments" | "tags">(
-    "info",
-  );
+  const [activeTab, setActiveTab] = useState<
+    "info" | "comments" | "tags" | "versions"
+  >("info");
   const { data: comments, isLoading: loadingComments } = useFileComments(
     file.uuid,
     activeTab === "comments",
@@ -164,6 +170,17 @@ function FileDetailPanel({
   const [newComment, setNewComment] = useState("");
   const [newTagKey, setNewTagKey] = useState("");
   const [newTagValue, setNewTagValue] = useState("");
+
+  // Versions
+  const { data: versions, isLoading: loadingVersions } = useFileVersions(
+    activeTab === "versions" ? file.uuid : "",
+  );
+  const uploadVersion = useUploadVersion();
+  const rollbackVersion = useRollbackVersion();
+  const [versionFile, setVersionFile] = useState<File | null>(null);
+  const [versionDescription, setVersionDescription] = useState("");
+  const [rollbackConfirm, setRollbackConfirm] = useState<string | null>(null);
+  const versionFileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddComment = () => {
     if (!newComment.trim()) return;
@@ -187,6 +204,47 @@ function FileDetailPanel({
     const updated = { ...(tags || {}) };
     delete updated[keyToRemove];
     setTags.mutate(updated);
+  };
+
+  const handleUploadVersion = () => {
+    if (!versionFile) return;
+    uploadVersion.mutate(
+      {
+        fileId: file.uuid,
+        file: versionFile,
+        description: versionDescription.trim(),
+      },
+      {
+        onSuccess: () => {
+          setVersionFile(null);
+          setVersionDescription("");
+          if (versionFileInputRef.current) {
+            versionFileInputRef.current.value = "";
+          }
+        },
+      },
+    );
+  };
+
+  const handleDownloadVersion = async (versionUuid: string) => {
+    try {
+      const blob = await documentApi.downloadVersion(versionUuid);
+      const url = window.URL.createObjectURL(blob as Blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = file.name;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      // Error handled by API layer
+    }
+  };
+
+  const handleRollback = (versionUuid: string) => {
+    rollbackVersion.mutate(
+      { fileId: file.uuid, versionUuid },
+      { onSuccess: () => setRollbackConfirm(null) },
+    );
   };
 
   const handleDownload = async () => {
@@ -284,6 +342,13 @@ function FileDetailPanel({
         >
           <Tag size={14} className="inline mr-1" />
           Tags
+        </button>
+        <button
+          className={tabClass("versions")}
+          onClick={() => setActiveTab("versions")}
+        >
+          <History size={14} className="inline mr-1" />
+          Versions
         </button>
       </div>
 
@@ -484,6 +549,140 @@ function FileDetailPanel({
                   )}
                 </div>
               </>
+            )}
+          </div>
+        )}
+
+        {activeTab === "versions" && (
+          <div className="space-y-4">
+            {/* Upload New Version */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                Upload New Version
+              </h4>
+              <input
+                ref={versionFileInputRef}
+                type="file"
+                onChange={(e) =>
+                  setVersionFile(e.target.files?.[0] ?? null)
+                }
+                className="w-full text-sm text-slate-600 dark:text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-600 dark:file:bg-blue-900/30 dark:file:text-blue-400 hover:file:bg-blue-100 dark:hover:file:bg-blue-900/40"
+              />
+              <textarea
+                value={versionDescription}
+                onChange={(e) => setVersionDescription(e.target.value)}
+                placeholder="Version description (optional)"
+                rows={2}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              />
+              <button
+                onClick={handleUploadVersion}
+                disabled={!versionFile || uploadVersion.isPending}
+                className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              >
+                {uploadVersion.isPending ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Upload size={14} />
+                )}
+                Upload Version
+              </button>
+            </div>
+
+            {/* Versions List */}
+            {loadingVersions ? (
+              <div className="flex justify-center py-4">
+                <Loader2 size={20} className="animate-spin text-slate-400" />
+              </div>
+            ) : versions && versions.length > 0 ? (
+              <div className="space-y-2">
+                {versions.map((v) => (
+                  <div
+                    key={v.uuid}
+                    className="p-3 rounded-lg bg-slate-50 dark:bg-slate-700/50"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-slate-900 dark:text-white tabular-nums">
+                          v{v.version_number}
+                        </span>
+                        {v.is_current && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                            Current
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-slate-400 tabular-nums">
+                        {formatFileSize(v.size)}
+                      </span>
+                    </div>
+                    {v.description && (
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mb-1 line-clamp-2">
+                        {v.description}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-2 text-xs text-slate-400 mb-2">
+                      <span>{v.created_by_name || v.created_by}</span>
+                      <span>&middot;</span>
+                      <span>
+                        {new Date(v.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleDownloadVersion(v.uuid)}
+                        className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors"
+                        title="Download this version"
+                      >
+                        <Download size={12} />
+                        Download
+                      </button>
+                      {!v.is_current && (
+                        <>
+                          {rollbackConfirm === v.uuid ? (
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => handleRollback(v.uuid)}
+                                disabled={rollbackVersion.isPending}
+                                className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50 transition-colors"
+                              >
+                                {rollbackVersion.isPending ? (
+                                  <Loader2
+                                    size={12}
+                                    className="animate-spin"
+                                  />
+                                ) : (
+                                  <RotateCcw size={12} />
+                                )}
+                                Confirm
+                              </button>
+                              <button
+                                onClick={() => setRollbackConfirm(null)}
+                                className="px-2 py-1 text-xs font-medium rounded-md text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setRollbackConfirm(v.uuid)}
+                              className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md border border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                              title="Rollback to this version"
+                            >
+                              <RotateCcw size={12} />
+                              Rollback
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-400 text-center py-4">
+                No versions available
+              </p>
             )}
           </div>
         )}
