@@ -1057,6 +1057,10 @@ export const ClassificationsPage: React.FC = () => {
                   <option value="query">
                     {t("classifications.typeQuery")}
                   </option>
+                  <option value="ivr">{t("classifications.typeIVR")}</option>
+                  <option value="mobile">
+                    {t("classifications.typeMobile")}
+                  </option>
                 </select>
                 <p className="mt-1.5 text-xs text-[hsl(var(--muted-foreground))]">
                   {t("classifications.typeHelp")}
