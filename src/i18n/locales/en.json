@@ -812,6 +812,8 @@
     "typeComplaint": "Complaint Only",
     "typeQuery": "Query Only",
     "typeHelp": "Determines which record types can use this classification",
+    "typeIVR": "IVR Only",
+    "typeMobile": "Mobile Only",
     "sortOrder": "Sort Order",
     "sortOrderHelp": "Lower numbers appear first",
     "saving": "Saving...",

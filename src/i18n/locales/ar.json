@@ -772,6 +772,8 @@
     "typeComplaint": "الشكاوى فقط",
     "typeQuery": "الاستفسارات فقط",
     "typeHelp": "يحدد أنواع السجلات التي يمكنها استخدام هذا التصنيف",
+    "typeIVR": "IVR فقط",
+    "typeMobile": "Mobile فقط",
     "sortOrder": "ترتيب الفرز",
     "sortOrderHelp": "الأرقام الأصغر تظهر أولاً",
     "saving": "جاري الحفظ...",
