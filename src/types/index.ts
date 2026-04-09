@@ -6,7 +6,9 @@ export type ClassificationType =
   | "complaint"
   | "query"
   | "mobile"
-  | "ivr";
+  | "ivr"
+  | "both"
+  | "all";
 
 // Base types
 export interface User {

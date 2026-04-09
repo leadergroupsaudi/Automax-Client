@@ -222,7 +222,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                     "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400",
                 )}
               >
-                {t(`classifications.${type}`, { defaultValue: type })}
+                {t(`classifications.${type}`)}
               </span>
             ))}
           </div>
@@ -1086,7 +1086,7 @@ export const ClassificationsPage: React.FC = () => {
                 label={t("classifications.type")}
                 options={ALL_TYPES.map((type) => ({
                   value: type,
-                  label: t(`classifications.${type}`, { defaultValue: type }),
+                  label: t(`classifications.${type}`),
                 }))}
                 value={formData.types}
                 onChange={(types) => setFormData({ ...formData, types })}
