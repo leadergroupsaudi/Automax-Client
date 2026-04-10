@@ -577,7 +577,9 @@
     "backToApp": "Back to App",
     "administrator": "Administrator",
     "loggedInAsAdmin": "Logged in as admin",
-    "escalationGroups": "Escalation Groups"
+    "escalationGroups": "Escalation Groups",
+    "quality": "Quality",
+    "qualityAudit": "Quality Audit"
   },
   "users": {
     "title": "Users",

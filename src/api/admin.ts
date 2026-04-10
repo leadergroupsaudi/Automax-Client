@@ -2877,11 +2877,24 @@ export const rejectionLogApi = {
 };
 
 export const aiQualityApi = {
+  list: async (): Promise<ApiResponse<AIQualityFeedback[]>> => {
+    const response =
+      await apiClient.get<ApiResponse<AIQualityFeedback[]>>("/ai-quality");
+    return response.data;
+  },
+
   getByIncident: async (
     incidentId: string,
   ): Promise<ApiResponse<AIQualityFeedback>> => {
     const response = await apiClient.get<ApiResponse<AIQualityFeedback>>(
       `/incidents/${incidentId}/ai-quality`,
+    );
+    return response.data;
+  },
+
+  reopen: async (incidentId: string): Promise<ApiResponse<unknown>> => {
+    const response = await apiClient.post<ApiResponse<unknown>>(
+      `/incidents/${incidentId}/reopen`,
     );
     return response.data;
   },

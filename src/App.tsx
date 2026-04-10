@@ -78,6 +78,7 @@ import {
   ReviewAssignmentPage,
 } from "./pages";
 import EscalationConfigPage from "./pages/admin/EsclationPage";
+import QualityAuditPage from "./pages/admin/QualityAuditPage";
 import { CitizenAuthLayout } from "./components/layout/CitizenAuthLayout";
 import { CitizenLayout } from "./components/layout/CitizenLayout";
 import { CitizenVerifyPage } from "./pages/CitizenverifyPage";
@@ -270,6 +271,18 @@ function App() {
                     <Route
                       path="/admin/escalation-groups"
                       element={<EscalationConfigPage />}
+                    />
+                  </Route>
+                  <Route
+                    element={
+                      <PermissionRoute
+                        requiredPermissions={[PERMISSIONS.QUALITY_AUDIT_VIEW]}
+                      />
+                    }
+                  >
+                    <Route
+                      path="/admin/quality-audit"
+                      element={<QualityAuditPage />}
                     />
                   </Route>
                 </Route>

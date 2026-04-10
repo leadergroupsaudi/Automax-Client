@@ -263,7 +263,12 @@ export const IncidentDetailPage: React.FC = () => {
   // Fetch AI quality feedback for this incident
   const { data: aiQualityData, isLoading: aiQualityLoading } = useQuery({
     queryKey: ["incident", id, "ai-quality"],
-    queryFn: () => aiQualityApi.getByIncident(id!),
+    queryFn: async () => {
+      console.log("[AIQuality] Fetching for incident:", id);
+      const result = await aiQualityApi.getByIncident(id!);
+      console.log("[AIQuality] Response:", result);
+      return result;
+    },
     enabled: !!id,
     retry: false,
   });
@@ -1805,27 +1810,25 @@ export const IncidentDetailPage: React.FC = () => {
                   )}
                 </span>
               </button>
-              {incident?.is_ai_verified && (
-                <button
-                  onClick={() => setActiveTab("ai-quality")}
-                  className={cn(
-                    "flex-1 px-4 py-3 text-sm font-medium transition-colors",
-                    activeTab === "ai-quality"
-                      ? "text-emerald-600 border-b-2 border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400"
-                      : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]",
+              <button
+                onClick={() => setActiveTab("ai-quality")}
+                className={cn(
+                  "flex-1 px-4 py-3 text-sm font-medium transition-colors",
+                  activeTab === "ai-quality"
+                    ? "text-emerald-600 border-b-2 border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400"
+                    : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]",
+                )}
+              >
+                <span className="flex items-center justify-center gap-2">
+                  <Bot className="w-4 h-4" />
+                  AI Quality
+                  {aiQualityData?.data && (
+                    <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                      1
+                    </span>
                   )}
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    <Bot className="w-4 h-4" />
-                    AI Quality
-                    {aiQualityData?.data && (
-                      <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                        1
-                      </span>
-                    )}
-                  </span>
-                </button>
-              )}
+                </span>
+              </button>
             </div>
 
             <div className="p-4">
@@ -4730,6 +4733,8 @@ export const IncidentDetailPage: React.FC = () => {
 function AIQualityReport({ feedback }: { feedback: AIQualityFeedback }) {
   const isResolved =
     feedback.resolution_status?.toLowerCase().includes("resolved") ?? false;
+
+  console.log("[AIQuality] Rendering AIQualityReport with feedback:", feedback);
 
   return (
     <div className="space-y-4">

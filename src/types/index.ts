@@ -1013,6 +1013,7 @@ export interface AIQualityFeedback {
   distance_meters: number;
   created_at: string;
   updated_at: string;
+  incident?: Incident;
 }
 
 export interface TransitionHistory {
