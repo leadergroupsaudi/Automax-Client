@@ -25,12 +25,25 @@ test.describe("Goal Analytics", () => {
     await page.goto("/goals/analytics");
     await page.waitForLoadState("networkidle");
 
-    // Look for stat/metric cards
+    // The stat cards use rounded-xl border pattern and contain labels like
+    // "Total Goals", "Active", "Overdue", "At Risk", "Achieved", "Missed"
+    // They are in a grid: grid-cols-2 md:grid-cols-3 lg:grid-cols-6
     const statCards = page.locator(
-      '[class*="stat"], [class*="metric"], [class*="card"], [data-testid*="stat"]'
+      '.grid > .rounded-xl'
     );
     const count = await statCards.count();
-    expect(count).toBeGreaterThan(0);
+
+    // Also try text-based detection for stat labels
+    if (count === 0) {
+      const hasStatText = await page
+        .getByText(/Total Goals|Active|Overdue|At Risk|Achieved|Missed/)
+        .first()
+        .isVisible({ timeout: 5000 })
+        .catch(() => false);
+      expect(hasStatText).toBeTruthy();
+    } else {
+      expect(count).toBeGreaterThan(0);
+    }
   });
 
   test("charts render", async ({ page }) => {

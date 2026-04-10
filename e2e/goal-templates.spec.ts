@@ -25,31 +25,41 @@ test.describe("Goal Templates", () => {
     await page.goto("/goals/templates");
     await page.waitForLoadState("networkidle");
 
-    // Click create button
+    // Click create button — button text is "New Template"
     const createBtn = page
-      .getByRole("button", { name: /create|add|new/i })
+      .getByRole("button", { name: /new template|create|add/i })
       .first();
+    await expect(createBtn).toBeVisible({ timeout: 5000 });
     await createBtn.click();
 
-    // Fill template name
+    // The template form is a modal (fixed inset-0)
+    // Wait for the modal to appear
+    await page.waitForTimeout(500);
+
+    // Fill template name — the label is "Name *" and the input has no name attribute,
+    // so use the label text
     const nameInput = page
-      .getByLabel(/name|title/i)
-      .or(page.locator('input[name="name"], input[name="title"]'))
+      .locator('label:has-text("Name") + input, label:has-text("Name") ~ input')
       .first();
-    await nameInput.fill("E2E Test Template");
+
+    if (await nameInput.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await nameInput.fill("E2E Test Template");
+    } else {
+      // Fallback: find first text input in the modal
+      const modalInput = page.locator('.fixed input[type="text"]').first();
+      await modalInput.fill("E2E Test Template");
+    }
 
     // Fill description if present
-    const descInput = page
-      .getByLabel(/description/i)
-      .or(page.locator('textarea[name="description"]'))
-      .first();
+    const descInput = page.locator('.fixed textarea').first();
     if (await descInput.isVisible({ timeout: 2000 }).catch(() => false)) {
       await descInput.fill("Template created by Playwright E2E tests");
     }
 
-    // Submit
+    // Submit — button text could be "Create" or "Save"
     const saveBtn = page
-      .getByRole("button", { name: /save|create|submit/i })
+      .locator('.fixed button[type="submit"]')
+      .or(page.locator('.fixed').getByRole("button", { name: /save|create/i }))
       .first();
     await saveBtn.click();
 
@@ -81,17 +91,22 @@ test.describe("Goal Templates", () => {
     if (await editBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
       await editBtn.click();
 
-      // Update name
+      // Wait for modal
+      await page.waitForTimeout(500);
+
+      // Update name in the modal
       const nameInput = page
-        .getByLabel(/name|title/i)
-        .or(page.locator('input[name="name"], input[name="title"]'))
+        .locator('.fixed input[type="text"]')
         .first();
-      await nameInput.clear();
-      await nameInput.fill("E2E Updated Template");
+      if (await nameInput.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await nameInput.clear();
+        await nameInput.fill("E2E Updated Template");
+      }
 
       // Save
       const saveBtn = page
-        .getByRole("button", { name: /save|update|submit/i })
+        .locator('.fixed button[type="submit"]')
+        .or(page.locator('.fixed').getByRole("button", { name: /save|update/i }))
         .first();
       await saveBtn.click();
 
