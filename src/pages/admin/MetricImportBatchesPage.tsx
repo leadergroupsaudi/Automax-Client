@@ -263,7 +263,9 @@ export const MetricImportBatchesPage: React.FC = () => {
 
       {/* ── Import Modal ────────────────────────── */}
       {importModalOpen && (
-        <MetricImportModal onClose={() => setImportModalOpen(false)} />
+        <MetricImportModal
+          onClose={() => setImportModalOpen(false)}
+        />
       )}
     </div>
   );

@@ -5,6 +5,7 @@ import type {
   DmsSearchResult,
   DmsFile,
   DmsComment,
+  DmsVersion,
 } from "../types/document";
 
 export const documentApi = {
@@ -79,6 +80,50 @@ export const documentApi = {
     const res = await apiClient.put(`/documents/files/${fileId}/tags`, {
       tags,
     });
+    return res.data;
+  },
+
+  listVersions: async (
+    fileId: string,
+  ): Promise<ApiResponse<DmsVersion[]>> => {
+    const res = await apiClient.get(
+      `/documents/files/${fileId}/versions`,
+    );
+    return res.data;
+  },
+
+  uploadVersion: async (
+    fileId: string,
+    file: File,
+    description: string,
+  ): Promise<ApiResponse<DmsVersion>> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("description", description);
+    const res = await apiClient.post(
+      `/documents/files/${fileId}/versions`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } },
+    );
+    return res.data;
+  },
+
+  downloadVersion: async (versionId: string): Promise<Blob> => {
+    const res = await apiClient.get(
+      `/documents/versions/${versionId}/download`,
+      { responseType: "blob" },
+    );
+    return res.data;
+  },
+
+  rollbackVersion: async (
+    fileId: string,
+    versionUuid: string,
+  ): Promise<ApiResponse<null>> => {
+    const res = await apiClient.post(
+      `/documents/files/${fileId}/versions/rollback`,
+      { version_uuid: versionUuid },
+    );
     return res.data;
   },
 };

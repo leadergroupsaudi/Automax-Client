@@ -14,6 +14,8 @@ export const documentKeys = {
     [...documentKeys.all, "comments", fileId] as const,
   tags: (fileId: string) =>
     [...documentKeys.all, "tags", fileId] as const,
+  versions: (fileId: string) =>
+    [...documentKeys.all, "versions", fileId] as const,
 };
 
 export function useDocumentFiles(parentId?: string) {
@@ -109,6 +111,66 @@ export function useSetTags(fileId: string) {
     },
     onError: () => {
       toast.error("Failed to update tags");
+    },
+  });
+}
+
+export function useFileVersions(fileId: string) {
+  return useQuery({
+    queryKey: documentKeys.versions(fileId),
+    queryFn: async () => {
+      const res = await documentApi.listVersions(fileId);
+      return res.data;
+    },
+    enabled: !!fileId,
+  });
+}
+
+export function useUploadVersion() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      fileId,
+      file,
+      description,
+    }: {
+      fileId: string;
+      file: File;
+      description: string;
+    }) => documentApi.uploadVersion(fileId, file, description),
+    onSuccess: async (_data, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: documentKeys.versions(variables.fileId),
+      });
+      toast.success("Version uploaded");
+    },
+    onError: () => {
+      toast.error("Failed to upload version");
+    },
+  });
+}
+
+export function useRollbackVersion() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      fileId,
+      versionUuid,
+    }: {
+      fileId: string;
+      versionUuid: string;
+    }) => documentApi.rollbackVersion(fileId, versionUuid),
+    onSuccess: async (_data, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: documentKeys.versions(variables.fileId),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: documentKeys.fileInfo(variables.fileId),
+      });
+      toast.success("Version rolled back");
+    },
+    onError: () => {
+      toast.error("Failed to rollback version");
     },
   });
 }

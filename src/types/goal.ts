@@ -215,6 +215,44 @@ export interface ApprovalListItem {
 }
 
 // ──────────────────────────────────────────────────
+// Comment & Activity Types
+// ──────────────────────────────────────────────────
+
+export interface GoalComment {
+  id: string;
+  goal_id: string;
+  author?: UserBrief;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GoalCommentListResponse {
+  success: boolean;
+  data: GoalComment[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface GoalActivity {
+  id: string;
+  goal_id: string;
+  action: string;
+  description: string;
+  user?: UserBrief;
+  created_at: string;
+}
+
+export interface GoalActivityListResponse {
+  success: boolean;
+  data: GoalActivity[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+// ──────────────────────────────────────────────────
 // Request Types
 // ──────────────────────────────────────────────────
 

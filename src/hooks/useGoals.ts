@@ -7,6 +7,8 @@ import {
   evidenceApi,
   approvalApi,
   checkInApi,
+  goalCommentApi,
+  goalActivityApi,
   metricImportApi,
 } from "../api/goals";
 import type {
@@ -53,6 +55,10 @@ export const goalKeys = {
   tree: (goalId: string) => [...goalKeys.all, "tree", goalId] as const,
   checkIns: (goalId: string, page: number) =>
     [...goalKeys.all, "check-ins", goalId, page] as const,
+  comments: (goalId: string, page: number) =>
+    [...goalKeys.all, "comments", goalId, page] as const,
+  activity: (goalId: string, page: number) =>
+    [...goalKeys.all, "activity", goalId, page] as const,
   metricBatches: () => [...goalKeys.all, "metricBatches"] as const,
   metricBatch: (id: string) => [...goalKeys.all, "metricBatch", id] as const,
   metricBatchTransitions: (id: string) =>
@@ -365,15 +371,19 @@ export function useUploadEvidence() {
     }) => evidenceApi.upload(goalId, file, data),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: goalKeys.evidences(variables.goalId),
+        queryKey: [...goalKeys.all, "evidences", variables.goalId],
       });
       queryClient.invalidateQueries({
         queryKey: goalKeys.detail(variables.goalId),
       });
+      queryClient.invalidateQueries({
+        queryKey: [...goalKeys.all, "pendingApprovals"],
+      });
       toast.success("Evidence uploaded");
     },
-    onError: () => {
-      toast.error("Failed to upload evidence");
+    onError: (error: any) => {
+      const msg = error?.response?.data?.error || "Failed to upload evidence";
+      toast.error(msg);
     },
   });
 }
@@ -422,8 +432,10 @@ export function useExecuteEvidenceTransition() {
       await queryClient.invalidateQueries({ queryKey: goalKeys.all });
       toast.success("Transition completed");
     },
-    onError: () => {
-      toast.error("Failed to execute transition");
+    onError: (error: any) => {
+      const msg =
+        error?.response?.data?.error || "Failed to execute transition";
+      toast.error(msg);
     },
   });
 }
@@ -524,6 +536,63 @@ export function useDeleteCheckIn() {
     onError: () => {
       toast.error("Failed to delete check-in");
     },
+  });
+}
+
+// ──────────────────────────────────────────────────
+// Comment Queries & Mutations
+// ──────────────────────────────────────────────────
+
+export function useGoalComments(goalId: string, page = 1, limit = 20) {
+  return useQuery({
+    queryKey: goalKeys.comments(goalId, page),
+    queryFn: () => goalCommentApi.list(goalId, page, limit),
+    enabled: !!goalId,
+  });
+}
+
+export function useAddGoalComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ goalId, content }: { goalId: string; content: string }) =>
+      goalCommentApi.add(goalId, content),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [...goalKeys.all, "comments"],
+      });
+      toast.success("Comment added");
+    },
+    onError: () => {
+      toast.error("Failed to add comment");
+    },
+  });
+}
+
+export function useDeleteGoalComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (commentId: string) => goalCommentApi.delete(commentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [...goalKeys.all, "comments"],
+      });
+      toast.success("Comment deleted");
+    },
+    onError: () => {
+      toast.error("Failed to delete comment");
+    },
+  });
+}
+
+// ──────────────────────────────────────────────────
+// Activity Queries
+// ──────────────────────────────────────────────────
+
+export function useGoalActivity(goalId: string, page = 1, limit = 20) {
+  return useQuery({
+    queryKey: goalKeys.activity(goalId, page),
+    queryFn: () => goalActivityApi.list(goalId, page, limit),
+    enabled: !!goalId,
   });
 }
 

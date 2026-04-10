@@ -30,3 +30,16 @@ export interface DmsSearchResult {
   files: DmsFile[];
   total: number;
 }
+
+export interface DmsVersion {
+  uuid: string;
+  node_uuid: string;
+  version_number: number;
+  size: number;
+  description: string;
+  source: string;
+  created_by: string;
+  created_by_name: string;
+  created_at: string;
+  is_current: boolean;
+}
