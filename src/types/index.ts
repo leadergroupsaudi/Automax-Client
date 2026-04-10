@@ -30,6 +30,8 @@ export interface User {
   permissions: string[];
   is_active: boolean;
   is_super_admin: boolean;
+  mobile_verified?: boolean;
+  extension?: string;
   last_login_at: string | null;
   created_at: string;
 }
@@ -321,11 +323,28 @@ export interface UpdateProfileRequest {
   classification_ids?: string[];
   role_ids?: string[];
   is_active?: boolean;
+  mobile_verified?: boolean;
 }
 
 export interface ChangePasswordRequest {
   old_password: string;
   new_password: string;
+}
+
+// OTP types
+export interface OtpSendRequest {
+  phone: string;
+  channel: "sms" | "email";
+}
+
+export interface OtpSendResponse {
+  session_id: string;
+}
+
+export interface OtpVerifyRequest {
+  phone: string;
+  session_id: string;
+  otp: string;
 }
 
 // Classification request types
