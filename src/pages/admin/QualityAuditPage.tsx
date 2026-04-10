@@ -305,7 +305,6 @@ export default function QualityAuditPage() {
                 <th className="text-left px-4 py-3 font-medium text-[hsl(var(--muted-foreground))] text-xs uppercase tracking-wide">
                   Processed
                 </th>
-                <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-[hsl(var(--border))]">
@@ -387,11 +386,6 @@ export default function QualityAuditPage() {
                           timeStyle: "short",
                         })}
                       </span>
-                    </td>
-
-                    {/* Action */}
-                    <td className="px-4 py-3">
-                      <ReopenButton incidentId={record.incident_id} />
                     </td>
                   </tr>
                 );
