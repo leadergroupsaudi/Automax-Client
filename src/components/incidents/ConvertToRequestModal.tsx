@@ -17,6 +17,7 @@ import {
   PlusCircle,
   Link,
   Search,
+  Star,
 } from "lucide-react";
 import { Button, TreeSelect } from "../ui";
 import type { TreeSelectNode } from "../ui";
@@ -67,8 +68,8 @@ export const ConvertToRequestModal: React.FC<ConvertToRequestModalProps> = ({
   const [workflowId, setWorkflowId] = useState("");
 
   // Optional overrides
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  // const [title, setTitle] = useState("");
+  // const [description, setDescription] = useState("");
 
   // Convert type (existing or new request)
   const [convertType, setConvertType] = useState<"existing" | "new">("new");
@@ -282,8 +283,8 @@ export const ConvertToRequestModal: React.FC<ConvertToRequestModalProps> = ({
       setFeedbackComment("");
       setClassificationId("");
       setWorkflowId("");
-      setTitle("");
-      setDescription("");
+      // setTitle("");
+      // setDescription("");
       setConvertType("new");
       setSelectedRequest(null);
       setRequestSearch("");

@@ -19,7 +19,6 @@ import {
   Download,
   FileText,
   Save,
-  Eye,
 } from "lucide-react";
 import { RichTextEditor } from "../../components/RichTextEditor";
 import { useAuthStore } from "@/stores/authStore";
