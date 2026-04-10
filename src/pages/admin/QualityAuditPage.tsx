@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import {
@@ -10,11 +10,9 @@ import {
   Search,
   RefreshCw,
   ExternalLink,
-  RotateCcw,
   MapPin,
   CheckCircle2,
 } from "lucide-react";
-import { toast } from "sonner";
 import { aiQualityApi } from "../../api/admin";
 import { cn } from "@/lib/utils";
 import type { AIQualityFeedback } from "../../types";
@@ -55,50 +53,6 @@ function getRowStyle(status: ResolutionStatus) {
 function formatStatus(status: string) {
   if (!status) return "—";
   return status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-// ---------------------------------------------------------------------------
-// Reopen button
-// ---------------------------------------------------------------------------
-
-function ReopenButton({ incidentId }: { incidentId: string }) {
-  const queryClient = useQueryClient();
-  const { t } = useTranslation();
-
-  const mutation = useMutation({
-    mutationFn: () => aiQualityApi.reopen(incidentId),
-    onSuccess: () => {
-      toast.success("Incident reopened successfully");
-      queryClient.invalidateQueries({ queryKey: ["ai-quality-list"] });
-    },
-    onError: (err: unknown) => {
-      const msg =
-        err instanceof Error ? err.message : "Failed to reopen incident";
-      toast.error(msg);
-    },
-  });
-
-  return (
-    <button
-      onClick={() => mutation.mutate()}
-      disabled={mutation.isPending || mutation.isSuccess}
-      className={cn(
-        "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
-        mutation.isSuccess
-          ? "bg-gray-100 text-gray-400 dark:bg-gray-800 cursor-not-allowed"
-          : "bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary)/0.85)] disabled:opacity-60 disabled:cursor-not-allowed",
-      )}
-    >
-      {mutation.isPending ? (
-        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-      ) : (
-        <RotateCcw className="w-3.5 h-3.5" />
-      )}
-      {mutation.isSuccess
-        ? t("qualityAudit.reopened", "Reopened")
-        : t("qualityAudit.reopen", "Reopen")}
-    </button>
-  );
 }
 
 // ---------------------------------------------------------------------------
