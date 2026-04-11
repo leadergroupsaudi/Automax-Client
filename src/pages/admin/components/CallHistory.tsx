@@ -7,13 +7,17 @@ import {
   ChevronLeft,
   ChevronRight,
   ShieldAlert,
+  ArrowUpRight,
+  ArrowDownLeft,
 } from "lucide-react";
 import { callLogApi } from "../../../api/admin";
+import { useAuthStore } from "@/stores/authStore";
 
 export const CallHistory: React.FC = () => {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const limit = 20;
+  const user = useAuthStore((state) => state.user);
 
   const { data, isLoading, refetch, isFetching, error } = useQuery({
     queryKey: ["call-logs", page, limit],
@@ -181,6 +185,11 @@ export const CallHistory: React.FC = () => {
                           </span>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-slate-500 mt-0.5">
+                          {call?.created_by === user?.id ? (
+                            <ArrowUpRight size={16} />
+                          ) : (
+                            <ArrowDownLeft size={16} />
+                          )}
                           <span className="capitalize">{call.status}</span>
                           <span>•</span>
                           <span className="text-xs text-slate-400 truncate">
