@@ -6,7 +6,6 @@ import {
   ChevronLeft,
   LogOut,
   Home,
-  Bell,
   Menu,
   X,
   ChevronDown,
@@ -30,6 +29,7 @@ import SoftPhone from "../sip/Softphone";
 import { usePermissions } from "../../hooks/usePermissions";
 import { PERMISSIONS } from "../../constants/permissions";
 import ThemeToggle from "../common/ThemeToggle";
+import { NotificationBell } from "../common/NotificationBell";
 
 export const ReportsLayout: React.FC = () => {
   const { t } = useTranslation();
@@ -385,10 +385,7 @@ export const ReportsLayout: React.FC = () => {
             />
 
             {/* Notifications */}
-            <button className="relative p-2.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl transition-colors focus:outline-none focus:ring-0">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-sidebar" />
-            </button>
+            <NotificationBell />
 
             <ThemeToggle />
 

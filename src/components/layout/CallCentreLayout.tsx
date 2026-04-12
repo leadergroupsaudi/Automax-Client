@@ -6,7 +6,6 @@ import {
   ChevronLeft,
   LogOut,
   Home,
-  Bell,
   Menu,
   X,
   ChevronDown,
@@ -25,6 +24,7 @@ import {
 } from "../../i18n";
 import SoftPhone from "../sip/Softphone";
 import ThemeToggle from "../common/ThemeToggle";
+import { NotificationBell } from "../common/NotificationBell";
 
 export const CallCentreLayout: React.FC = () => {
   const { t } = useTranslation();
@@ -426,10 +426,7 @@ export const CallCentreLayout: React.FC = () => {
             </div>
 
             {/* Notifications */}
-            <button className="relative p-2.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2 end-2 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-sidebar" />
-            </button>
+            <NotificationBell />
 
             <ThemeToggle />
 

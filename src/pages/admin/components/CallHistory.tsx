@@ -11,13 +11,11 @@ import {
   ArrowDownLeft,
 } from "lucide-react";
 import { callLogApi } from "../../../api/admin";
-import { useAuthStore } from "@/stores/authStore";
 
 export const CallHistory: React.FC = () => {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const limit = 20;
-  const user = useAuthStore((state) => state.user);
 
   const { data, isLoading, refetch, isFetching, error } = useQuery({
     queryKey: ["call-logs", page, limit],
@@ -37,17 +35,11 @@ export const CallHistory: React.FC = () => {
       case "busy":
         return "text-orange-500";
       case "answered":
+      case "completed":
         return "text-green-500";
       default:
         return "text-slate-900";
     }
-  };
-
-  const calculateDuration = (startAt: string, endAt?: string) => {
-    if (!endAt) return 0;
-    const start = new Date(startAt).getTime();
-    const end = new Date(endAt).getTime();
-    return Math.floor((end - start) / 1000); // duration in seconds
   };
 
   const formatDuration = (seconds?: number) => {
@@ -135,12 +127,13 @@ export const CallHistory: React.FC = () => {
           <>
             <div className="divide-y divide-slate-100">
               {calls.map((call: any) => {
-                const duration = calculateDuration(call.start_at, call.end_at);
-                const creatorName = call.creator
-                  ? `${call.creator.first_name} ${call.creator.last_name}`.trim() ||
-                    call.creator.username
-                  : "Unknown";
-                const extension = call.creator?.extension || "—";
+                const isOutgoing = call.direction === "outgoing";
+                const isFailed =
+                  call.status === "missed" ||
+                  call.status === "rejected" ||
+                  call.status === "failed";
+                const isAnswered =
+                  call.status === "completed" || call.status === "answered";
 
                 return (
                   <div
@@ -150,24 +143,18 @@ export const CallHistory: React.FC = () => {
                     <div className="flex items-center gap-4 flex-1">
                       <div
                         className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          call.status === "missed" ||
-                          call.status === "rejected" ||
-                          call.status === "failed"
+                          isFailed
                             ? "bg-red-50"
-                            : call.status === "completed" ||
-                                call.status === "answered"
+                            : isAnswered
                               ? "bg-green-50"
                               : "bg-slate-100"
                         }`}
                       >
                         <Phone
                           className={`w-4 h-4 ${
-                            call.status === "missed" ||
-                            call.status === "rejected" ||
-                            call.status === "failed"
+                            isFailed
                               ? "text-red-500"
-                              : call.status === "completed" ||
-                                  call.status === "answered"
+                              : isAnswered
                                 ? "text-green-500"
                                 : "text-slate-400"
                           }`}
@@ -178,14 +165,16 @@ export const CallHistory: React.FC = () => {
                           <h3
                             className={`font-medium ${getStatusColor(call.status)}`}
                           >
-                            {creatorName}
+                            {call.other_party_name || "Unknown"}
                           </h3>
-                          <span className="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md">
-                            Ext. {extension}
-                          </span>
+                          {call.other_party_extension && (
+                            <span className="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md">
+                              Ext. {call.other_party_extension}
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 text-sm text-slate-500 mt-0.5">
-                          {call?.created_by === user?.id ? (
+                          {isOutgoing ? (
                             <ArrowUpRight size={16} />
                           ) : (
                             <ArrowDownLeft size={16} />
@@ -200,10 +189,12 @@ export const CallHistory: React.FC = () => {
                     </div>
                     <div className="text-right ml-4">
                       <p className="text-sm font-medium text-slate-900">
-                        {formatTimestamp(call.start_at)}
+                        {formatTimestamp(call.created_at)}
                       </p>
                       <p className="text-sm text-slate-500">
-                        {duration > 0 ? formatDuration(duration) : "—"}
+                        {call.duration > 0
+                          ? formatDuration(call.duration)
+                          : "—"}
                       </p>
                     </div>
                   </div>

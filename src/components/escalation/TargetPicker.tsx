@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Plus, X, Users, Loader2 } from "lucide-react";
@@ -110,6 +110,51 @@ const TargetPicker: React.FC<TargetPickerProps> = ({
     },
   });
 
+  // Auto-resolve users for entries loaded from backend (resolved_users is undefined)
+  const resolvingKeysRef = useRef(new Set<string>());
+  const valueRef = useRef(value);
+  valueRef.current = value;
+
+  useEffect(() => {
+    const pending = value
+      .map((entry, idx) => ({ entry, idx }))
+      .filter(({ entry }) => {
+        if (entry.resolved_users !== undefined) return false;
+        if (!entry.department_id && !entry.role_id) return false;
+        const key = `${entry.department_id ?? ""}-${entry.role_id ?? ""}`;
+        return !resolvingKeysRef.current.has(key);
+      });
+
+    if (!pending.length) return;
+
+    pending.forEach(({ entry }) => {
+      resolvingKeysRef.current.add(
+        `${entry.department_id ?? ""}-${entry.role_id ?? ""}`,
+      );
+    });
+
+    Promise.all(
+      pending.map(({ entry }) =>
+        escalationPolicyApi
+          .resolveUsers({
+            department_id: entry.department_id,
+            role_id: entry.role_id,
+          })
+          .then((res) => res.data || [])
+          .catch(() => [] as User[]),
+      ),
+    ).then((resolvedArrays) => {
+      onChange(
+        valueRef.current.map((entry, idx) => {
+          const pi = pending.findIndex((p) => p.idx === idx);
+          if (pi === -1) return entry;
+          return { ...entry, resolved_users: resolvedArrays[pi] };
+        }),
+      );
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
   const handleAdd = () => {
     if (!draftDeptId && !draftRoleId) return;
     resolveMutation.mutate({
@@ -167,7 +212,12 @@ const TargetPicker: React.FC<TargetPickerProps> = ({
           </div>
 
           {/* Resolved user chips */}
-          {entry.resolved_users && entry.resolved_users.length > 0 ? (
+          {entry.resolved_users === undefined ? (
+            <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--muted-foreground))]">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              {t("common.loading", "Loading users...")}
+            </div>
+          ) : entry.resolved_users.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
               {entry.resolved_users.map((u) => (
                 <span

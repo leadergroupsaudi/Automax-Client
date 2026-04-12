@@ -7,7 +7,6 @@ import {
   ChevronLeft,
   LogOut,
   Home,
-  Bell,
   Menu,
   X,
   ChevronDown,
@@ -37,6 +36,7 @@ import { usePermissions } from "../../hooks/usePermissions";
 import { PERMISSIONS } from "../../constants/permissions";
 import { CreateRequestModal } from "@/components/requests/CreateRequestModal";
 import ThemeToggle from "../common/ThemeToggle";
+import { NotificationBell } from "../common/NotificationBell";
 
 export const RequestLayout: React.FC = () => {
   const { t } = useTranslation();
@@ -159,9 +159,10 @@ export const RequestLayout: React.FC = () => {
               end
               onClick={() => setMobileMenuOpen(false)}
               className={({ isActive }) =>
-                `group relative flex items-center ${collapsed ? "justify-center" : ""} px-3 py-2.5 rounded-xl transition-all duration-200 ${isActive
-                  ? "bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-primary/20"
-                  : "text-slate-400 hover:text-white hover:bg-white/5"
+                `group relative flex items-center ${collapsed ? "justify-center" : ""} px-3 py-2.5 rounded-xl transition-all duration-200 ${
+                  isActive
+                    ? "bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-primary/20"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
                 }`
               }
             >
@@ -225,9 +226,10 @@ export const RequestLayout: React.FC = () => {
                       to="/requests/my-assigned"
                       onClick={() => setMobileMenuOpen(false)}
                       className={({ isActive }) =>
-                        `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${isActive
-                          ? "bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-primary/20"
-                          : "text-slate-400 hover:text-white hover:bg-white/5"
+                        `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
+                          isActive
+                            ? "bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-primary/20"
+                            : "text-slate-400 hover:text-white hover:bg-white/5"
                         }`
                       }
                     >
@@ -242,9 +244,10 @@ export const RequestLayout: React.FC = () => {
                       to="/requests/my-created"
                       onClick={() => setMobileMenuOpen(false)}
                       className={({ isActive }) =>
-                        `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${isActive
-                          ? "bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-primary/20"
-                          : "text-slate-400 hover:text-white hover:bg-white/5"
+                        `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
+                          isActive
+                            ? "bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-primary/20"
+                            : "text-slate-400 hover:text-white hover:bg-white/5"
                         }`
                       }
                     >
@@ -435,8 +438,9 @@ export const RequestLayout: React.FC = () => {
     <div className="flex h-screen bg-slate-100">
       {/* Desktop Sidebar */}
       <aside
-        className={`${collapsed ? "w-[72px]" : "w-[264px]"
-          } bg-sidebar transition-all duration-300 flex-col hidden lg:flex relative`}
+        className={`${
+          collapsed ? "w-[72px]" : "w-[264px]"
+        } bg-sidebar transition-all duration-300 flex-col hidden lg:flex relative`}
       >
         <SidebarContent />
       </aside>
@@ -451,10 +455,11 @@ export const RequestLayout: React.FC = () => {
 
       {/* Mobile Sidebar */}
       <aside
-        className={`fixed inset-y-0 start-0 w-[264px] bg-slate-900 z-50 transform transition-transform duration-300 lg:hidden ${mobileMenuOpen
-          ? "translate-x-0"
-          : "ltr:-translate-x-full rtl:translate-x-full"
-          }`}
+        className={`fixed inset-y-0 start-0 w-[264px] bg-slate-900 z-50 transform transition-transform duration-300 lg:hidden ${
+          mobileMenuOpen
+            ? "translate-x-0"
+            : "ltr:-translate-x-full rtl:translate-x-full"
+        }`}
       >
         <button
           onClick={() => setMobileMenuOpen(false)}
@@ -542,10 +547,11 @@ export const RequestLayout: React.FC = () => {
                     <button
                       key={lang.code}
                       onClick={() => handleLanguageChange(lang.code)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${currentLang === lang.code
-                        ? "bg-primary/10 text-primary"
-                        : "text-slate-700 hover:bg-slate-50"
-                        }`}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${
+                        currentLang === lang.code
+                          ? "bg-primary/10 text-primary"
+                          : "text-slate-700 hover:bg-slate-50"
+                      }`}
                     >
                       <span className="text-lg">
                         {lang.code === "en" ? "🇺🇸" : "🇸🇦"}
@@ -561,42 +567,39 @@ export const RequestLayout: React.FC = () => {
             </div>
 
             {/* Phone/Softphone */}
-            {
-              (isSuperAdmin || hasAnyPermission(["dashboard:ccm"])) && (
-                <>
-                  <button
-                    onClick={() => setShowSoftphone(!showSoftphone)}
-                    className={`relative p-2.5 rounded-xl transition-colors focus:outline-none focus:ring-0 ${showSoftphone
+            {(isSuperAdmin || hasAnyPermission(["dashboard:ccm"])) && (
+              <>
+                <button
+                  onClick={() => setShowSoftphone(!showSoftphone)}
+                  className={`relative p-2.5 rounded-xl transition-colors focus:outline-none focus:ring-0 ${
+                    showSoftphone
                       ? "text-primary bg-primary/10"
                       : "text-muted-foreground hover:text-primary hover:bg-primary/10"
-                      }`}
-                  >
-                    <Phone className="w-5 h-5" />
-                  </button>
+                  }`}
+                >
+                  <Phone className="w-5 h-5" />
+                </button>
 
-                  <SoftPhone
-                    showSip={showSoftphone}
-                    onClose={() => setShowSoftphone(false)}
-                    settings={{
-                      domain: "zkff.automaxsw.com",
-                      socketURL: "wss://zkff.automaxsw.com:7443",
-                    }}
-                    auth={{
-                      user: {
-                        userID: user?.id || "",
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        extension: (user as any)?.extension || "",
-                      },
-                    }}
-                  />
-                </>
-              )}
+                <SoftPhone
+                  showSip={showSoftphone}
+                  onClose={() => setShowSoftphone(false)}
+                  settings={{
+                    domain: "zkff.automaxsw.com",
+                    socketURL: "wss://zkff.automaxsw.com:7443",
+                  }}
+                  auth={{
+                    user: {
+                      userID: user?.id || "",
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      extension: (user as any)?.extension || "",
+                    },
+                  }}
+                />
+              </>
+            )}
 
             {/* Notifications */}
-            <button className="relative p-2.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2 end-2 w-2 h-2 bg-primary rounded-full ring-2 ring-white dark:ring-sidebar" />
-            </button>
+            <NotificationBell />
 
             <ThemeToggle />
 
