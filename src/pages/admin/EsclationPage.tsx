@@ -24,7 +24,6 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { escalationApi, escalationPolicyApi } from "@/api/admin";
 import CreateEscalationModal from "@/components/esclation/CreateEscalationModal";
 import EscalationPolicyModal from "@/components/escalation/EscalationPolicyModal";
-import { TooltipPopover } from "@/components/ui/TooltipPopover";
 import { toast } from "sonner";
 import usePermissions from "@/hooks/usePermissions";
 import { PERMISSIONS } from "@/constants/permissions";
@@ -40,6 +39,13 @@ interface EscalationUser {
   avatar?: string;
 }
 
+interface EscalationTarget {
+  id: string;
+  department?: { id: string; name: string };
+  role?: { id: string; name: string };
+  excluded_user_ids?: string[];
+}
+
 interface EscalationConfig {
   id: string;
   name: string;
@@ -51,61 +57,10 @@ interface EscalationConfig {
   frequency?: string;
   channel?: string;
   users?: EscalationUser[];
+  targets?: EscalationTarget[];
 }
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
-
-const MAX_VISIBLE = 2;
-
-const UserTags = ({ users }: { users?: EscalationUser[] }) => {
-  if (!users || users.length === 0) {
-    return (
-      <span className="inline-flex items-center gap-1.5 text-xs text-[hsl(var(--muted-foreground))]">
-        <Users className="w-3.5 h-3.5" />—
-      </span>
-    );
-  }
-  const visible = users.slice(0, MAX_VISIBLE);
-  const overflow = users.slice(MAX_VISIBLE);
-  const displayName = (u: EscalationUser) =>
-    u.first_name ? `${u.first_name} ${u.last_name ?? ""}`.trim() : u.username;
-
-  return (
-    <div className="flex items-center gap-1.5 flex-wrap">
-      {visible.map((u) => (
-        <span
-          key={u.id}
-          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-primary/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.15)]"
-        >
-          {displayName(u)}
-        </span>
-      ))}
-      {overflow.length > 0 && (
-        <TooltipPopover
-          placement="bottom"
-          content={
-            <div className="py-1">
-              {overflow.map((u) => (
-                <div
-                  key={u.id}
-                  className="flex items-center gap-1 px-2 py-0.5 rounded-lg hover:bg-[hsl(var(--muted)/0.5)] transition-colors"
-                >
-                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/0.15">
-                    {displayName(u)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          }
-        >
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold cursor-default bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))] hover:bg-primary/10 hover:border-primary transition-colors">
-            <Users className="w-3 h-3" />+{overflow.length}
-          </span>
-        </TooltipPopover>
-      )}
-    </div>
-  );
-};
 
 const StatusBadge = ({ active }: { active: boolean }) => {
   const { t } = useTranslation();
@@ -632,7 +587,56 @@ const GroupsTab: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-5 py-3.5">
-                          <UserTags users={cfg.users} />
+                          {(() => {
+                            const directCount = cfg.users?.length ?? 0;
+                            const targetCount = cfg.targets?.length ?? 0;
+                            if (directCount === 0 && targetCount === 0) {
+                              return (
+                                <span className="inline-flex items-center gap-1.5 text-xs text-[hsl(var(--muted-foreground))]">
+                                  <Users className="w-3.5 h-3.5" />—
+                                </span>
+                              );
+                            }
+                            return (
+                              <div className="flex flex-wrap gap-1">
+                                {/* Direct users — show first 2 */}
+                                {cfg.users?.slice(0, 2).map((u) => (
+                                  <span
+                                    key={u.id}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-primary/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.15)]"
+                                  >
+                                    {u.first_name
+                                      ? `${u.first_name} ${u.last_name ?? ""}`.trim()
+                                      : u.username}
+                                  </span>
+                                ))}
+                                {/* Dept/role targets — show first 2 (after direct slots used) */}
+                                {cfg.targets
+                                  ?.slice(
+                                    0,
+                                    Math.max(0, 2 - Math.min(directCount, 2)),
+                                  )
+                                  .map((tgt) => (
+                                    <span
+                                      key={tgt.id}
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-primary/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.15)]"
+                                    >
+                                      <Users className="w-3 h-3 shrink-0" />
+                                      {[tgt.department?.name, tgt.role?.name]
+                                        .filter(Boolean)
+                                        .join(" · ") || "All Users"}
+                                    </span>
+                                  ))}
+                                {/* Combined overflow count */}
+                                {directCount + targetCount > 2 && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))]">
+                                    <Users className="w-3 h-3" />+
+                                    {directCount + targetCount - 2} more
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </td>
                         <td className="px-5 py-3.5">
                           {cfg.classifications &&

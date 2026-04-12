@@ -1786,6 +1786,7 @@ export interface CreateEscalationRequest {
   channel: string;
   location_id: string;
   frequency: string;
+  scheduled_time?: string;
   is_active: boolean;
   user_ids: string[];
   targets?: EscalationGroupTargetRequest[];
