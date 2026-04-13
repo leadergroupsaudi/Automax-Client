@@ -31,12 +31,16 @@ export const CallHistory: React.FC = () => {
       case "missed":
       case "rejected":
       case "failed":
+      case "declined":
+      case "cancelled":
         return "text-red-500";
       case "busy":
         return "text-orange-500";
       case "answered":
       case "completed":
         return "text-green-500";
+      case "offline":
+        return "text-slate-400";
       default:
         return "text-slate-900";
     }
