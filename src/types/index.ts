@@ -1683,6 +1683,15 @@ export interface SMSRecipient {
   error?: string;
 }
 
+export interface SMSSentByUser {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone?: string;
+  avatar?: string;
+}
+
 export interface SMS {
   id: string;
   channel: string;
@@ -1691,12 +1700,16 @@ export interface SMS {
   template_code?: string;
   language: string;
   recipients: SMSRecipient[];
+  from?: string;
   body: string;
   status: string;
   provider?: string;
   is_read: boolean;
   is_starred: boolean;
   sent_by?: string;
+  sent_by_user?: SMSSentByUser;
+  received_by?: string;
+  received_by_user?: SMSSentByUser;
   sent_at?: string;
   created_at: string;
   updated_at?: string;

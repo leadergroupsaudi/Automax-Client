@@ -173,9 +173,19 @@ export const SMSPage: React.FC = () => {
     setDeleteConfirmation({ isOpen: false, id: null, isPermanent: false });
   };
 
-  const getPhoneNumber = (sms: SMS) => {
-    const recipient = sms.recipients.find((r) => r.type === "to");
-    return recipient?.email || "Unknown";
+  const getDisplayName = (sms: SMS) => {
+    if (sms.direction === "outbound") {
+      // Sent: show recipient name
+      const u = sms.received_by_user;
+      if (u) return `${u.first_name} ${u.last_name}`.trim();
+      return sms.recipients.find((r) => r.type === "to")?.email || "Unknown";
+    }
+    // Inbox: show sender phone
+    return (
+      sms.sent_by_user?.phone ||
+      sms.recipients.find((r) => r.type === "to")?.email ||
+      "Unknown"
+    );
   };
 
   return (
@@ -306,7 +316,7 @@ export const SMSPage: React.FC = () => {
                       <h3
                         className={`text-sm truncate pr-2 ${!sms.is_read ? "font-bold text-slate-900" : "font-medium text-slate-700"}`}
                       >
-                        {getPhoneNumber(sms)}
+                        {getDisplayName(sms)}
                       </h3>
                     </div>
                     <span
@@ -344,8 +354,21 @@ export const SMSPage: React.FC = () => {
                     </div>
                     <div>
                       <div className="font-semibold text-slate-900">
-                        {getPhoneNumber(selectedSMS)}
+                        {selectedSMS.direction === "outbound"
+                          ? getDisplayName(selectedSMS)
+                          : selectedSMS.sent_by_user?.phone ||
+                            getDisplayName(selectedSMS)}
                       </div>
+                      {selectedSMS.direction === "outbound" &&
+                        selectedSMS.received_by_user && (
+                          <div className="text-xs text-slate-500">
+                            {
+                              selectedSMS.recipients.find(
+                                (r) => r.type === "to",
+                              )?.email
+                            }
+                          </div>
+                        )}
                       <div className="text-xs text-slate-400">
                         {new Date(selectedSMS.created_at).toLocaleString()}
                       </div>
