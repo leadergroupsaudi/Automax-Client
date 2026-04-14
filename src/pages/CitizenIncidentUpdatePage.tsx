@@ -37,13 +37,17 @@ export function CitizenIncidentUpdatePage() {
   const _location = useLocation();
   const incident = _location.state?.incident;
 
-  const ALLOWED_TYPES = [
-    "image/jpeg",
-    "image/png",
-    "image/jpg",
-    "video/mp4",
-    "application/pdf",
-  ];
+  const isAllowedType = (file: File) => {
+    if (!file.type) return true;
+
+    return (
+      file.type.startsWith("image/") ||
+      file.type.startsWith("video/") ||
+      file.type.startsWith("audio/") ||
+      file.type === "application/pdf"
+    );
+  };
+
   const MAX_MB = 20;
 
   // ── Submit mutation ──
@@ -95,7 +99,7 @@ export function CitizenIncidentUpdatePage() {
     const invalid: string[] = [];
     const valid: File[] = [];
     Array.from(files).forEach((f) => {
-      if (!ALLOWED_TYPES.includes(f.type)) {
+      if (!isAllowedType(f)) {
         invalid.push(
           `${f.name} — ${t("citizen.unsupportedType", "unsupported type")}`,
         );
@@ -324,7 +328,7 @@ export function CitizenIncidentUpdatePage() {
               ref={fileInputRef}
               type="file"
               multiple
-              accept=".jpg,.jpeg,.png,.mp4,.pdf"
+              accept="image/*,video/*,audio/*,.pdf"
               className="hidden"
               onChange={(e) => {
                 handleFiles(e.target.files);
