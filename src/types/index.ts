@@ -675,6 +675,7 @@ export interface WorkflowState {
   position_x: number;
   position_y: number;
   sla_hours?: number;
+  sla_unit?: string;
   escalation_policy_id?: string;
   escalation_policy?: EscalationPolicy;
   is_mergable: boolean;

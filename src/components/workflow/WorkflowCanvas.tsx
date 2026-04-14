@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, useEffect } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from "react";
 import {
   ReactFlow,
   Background,
@@ -13,17 +13,13 @@ import {
   type Connection,
   type NodeChange,
   type EdgeChange,
-} from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
-import {
-  Plus,
-  Save,
-  RotateCcw,
-} from 'lucide-react';
-import StateNode, { type StateNodeData } from './StateNode';
-import TransitionEdge, { type TransitionEdgeData } from './TransitionEdge';
-import type { WorkflowState, WorkflowTransition } from '../../types';
-import { Button } from '../ui';
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import { Plus, Save, RotateCcw } from "lucide-react";
+import StateNode, { type StateNodeData } from "./StateNode";
+import TransitionEdge, { type TransitionEdgeData } from "./TransitionEdge";
+import type { WorkflowState, WorkflowTransition } from "../../types";
+import { Button } from "../ui";
 
 interface WorkflowCanvasProps {
   workflowId: string;
@@ -50,12 +46,12 @@ const edgeTypes = {
 };
 
 const defaultEdgeOptions = {
-  type: 'transitionEdge',
+  type: "transitionEdge",
   markerEnd: {
     type: MarkerType.ArrowClosed,
     width: 20,
     height: 20,
-    color: '#94a3b8',
+    color: "#94a3b8",
   },
 };
 
@@ -89,12 +85,12 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
   const initialNodes: Node[] = useMemo(() => {
     return states.map((state, index) => {
       const storedPosition = layoutPositions[state.id];
-      const defaultX = state.position_x ?? (150 + (index % 4) * 250);
-      const defaultY = state.position_y ?? (100 + Math.floor(index / 4) * 150);
+      const defaultX = state.position_x ?? 150 + (index % 4) * 250;
+      const defaultY = state.position_y ?? 100 + Math.floor(index / 4) * 150;
 
       return {
         id: state.id,
-        type: 'stateNode',
+        type: "stateNode",
         position: {
           x: storedPosition?.x ?? defaultX,
           y: storedPosition?.y ?? defaultY,
@@ -103,9 +99,10 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
           id: state.id,
           name: state.name,
           code: state.code,
-          state_type: state.state_type as 'initial' | 'normal' | 'terminal',
+          state_type: state.state_type as "initial" | "normal" | "terminal",
           color: state.color,
           sla_hours: state.sla_hours,
+          sla_unit: state.sla_unit,
           description: state.description,
         } as StateNodeData,
       };
@@ -118,12 +115,12 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
       id: transition.id,
       source: transition.from_state_id,
       target: transition.to_state_id,
-      type: 'transitionEdge',
+      type: "transitionEdge",
       markerEnd: {
         type: MarkerType.ArrowClosed,
         width: 20,
         height: 20,
-        color: '#94a3b8',
+        color: "#94a3b8",
       },
       data: {
         id: transition.id,
@@ -152,17 +149,23 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
   // Handle new connections (creating transitions)
   const onConnect = useCallback(
     (connection: Connection) => {
-      if (connection.source && connection.target && connection.source !== connection.target) {
+      if (
+        connection.source &&
+        connection.target &&
+        connection.source !== connection.target
+      ) {
         // Check if transition already exists
         const exists = transitions.some(
-          (t) => t.from_state_id === connection.source && t.to_state_id === connection.target
+          (t) =>
+            t.from_state_id === connection.source &&
+            t.to_state_id === connection.target,
         );
         if (!exists) {
           onTransitionAdd(connection.source, connection.target);
         }
       }
     },
-    [transitions, onTransitionAdd]
+    [transitions, onTransitionAdd],
   );
 
   // Handle node position changes
@@ -172,12 +175,16 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
 
       // Update position in backend when drag ends
       changes.forEach((change) => {
-        if (change.type === 'position' && !change.dragging && change.position) {
-          onStatePositionChange?.(change.id, change.position.x, change.position.y);
+        if (change.type === "position" && !change.dragging && change.position) {
+          onStatePositionChange?.(
+            change.id,
+            change.position.x,
+            change.position.y,
+          );
         }
       });
     },
-    [onNodesChange, onStatePositionChange]
+    [onNodesChange, onStatePositionChange],
   );
 
   // Handle edge changes
@@ -185,26 +192,20 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
     (changes: EdgeChange[]) => {
       onEdgesChange(changes);
     },
-    [onEdgesChange]
+    [onEdgesChange],
   );
 
   // Handle node click
-  const onNodeClick = useCallback(
-    (_: React.MouseEvent, node: Node) => {
-      setSelectedNode(node);
-      setSelectedEdge(null);
-    },
-    []
-  );
+  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
+    setSelectedNode(node);
+    setSelectedEdge(null);
+  }, []);
 
   // Handle edge click
-  const onEdgeClick = useCallback(
-    (_: React.MouseEvent, edge: Edge) => {
-      setSelectedEdge(edge);
-      setSelectedNode(null);
-    },
-    []
-  );
+  const onEdgeClick = useCallback((_: React.MouseEvent, edge: Edge) => {
+    setSelectedEdge(edge);
+    setSelectedNode(null);
+  }, []);
 
   // Handle pane click (deselect)
   const onPaneClick = useCallback(() => {
@@ -220,7 +221,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         onStateEdit(state);
       }
     },
-    [states, onStateEdit]
+    [states, onStateEdit],
   );
 
   // Handle edge double-click for editing
@@ -231,7 +232,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         onTransitionEdit(transition);
       }
     },
-    [transitions, onTransitionEdit]
+    [transitions, onTransitionEdit],
   );
 
   // Save current layout
@@ -246,9 +247,9 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
   // Auto-arrange nodes
   const autoArrange = useCallback(() => {
     // Find initial states
-    const initialStates = states.filter((s) => s.state_type === 'initial');
-    const terminalStates = states.filter((s) => s.state_type === 'terminal');
-    const normalStates = states.filter((s) => s.state_type === 'normal');
+    const initialStates = states.filter((s) => s.state_type === "initial");
+    const terminalStates = states.filter((s) => s.state_type === "terminal");
+    const normalStates = states.filter((s) => s.state_type === "normal");
 
     const arranged: Record<string, { x: number; y: number }> = {};
     let currentY = 100;
@@ -261,7 +262,10 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
 
     // Normal states in middle rows
     normalStates.forEach((state, i) => {
-      arranged[state.id] = { x: 150 + (i % 3) * 250, y: currentY + Math.floor(i / 3) * 150 };
+      arranged[state.id] = {
+        x: 150 + (i % 3) * 250,
+        y: currentY + Math.floor(i / 3) * 150,
+      };
     });
     if (normalStates.length > 0) {
       currentY += Math.ceil(normalStates.length / 3) * 150;
@@ -276,13 +280,17 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
       nds.map((node) => ({
         ...node,
         position: arranged[node.id] || node.position,
-      }))
+      })),
     );
   }, [states, setNodes]);
 
   // Get selected state/transition for sidebar
-  const selectedState = selectedNode ? states.find((s) => s.id === selectedNode.id) : null;
-  const selectedTransition = selectedEdge ? transitions.find((t) => t.id === selectedEdge.id) : null;
+  const selectedState = selectedNode
+    ? states.find((s) => s.id === selectedNode.id)
+    : null;
+  const selectedTransition = selectedEdge
+    ? transitions.find((t) => t.id === selectedEdge.id)
+    : null;
 
   return (
     <div className="h-[600px] bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
@@ -311,7 +319,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         <MiniMap
           nodeColor={(node) => {
             const data = node.data as StateNodeData;
-            return data?.color || '#6366f1';
+            return data?.color || "#6366f1";
           }}
           maskColor="rgba(255, 255, 255, 0.8)"
           className="!bg-white !border-slate-200"
@@ -350,19 +358,30 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
             <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-4">
               {selectedState && (
                 <>
-                  <h4 className="font-semibold text-slate-800 mb-3">Selected State</h4>
+                  <h4 className="font-semibold text-slate-800 mb-3">
+                    Selected State
+                  </h4>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <div
                         className="w-4 h-4 rounded-full"
                         style={{ backgroundColor: selectedState.color }}
                       />
-                      <span className="font-medium text-slate-700">{selectedState.name}</span>
+                      <span className="font-medium text-slate-700">
+                        {selectedState.name}
+                      </span>
                     </div>
-                    <p className="text-xs text-slate-500 font-mono">{selectedState.code}</p>
-                    <p className="text-xs text-slate-500 capitalize">Type: {selectedState.state_type}</p>
+                    <p className="text-xs text-slate-500 font-mono">
+                      {selectedState.code}
+                    </p>
+                    <p className="text-xs text-slate-500 capitalize">
+                      Type: {selectedState.state_type}
+                    </p>
                     {selectedState.sla_hours && (
-                      <p className="text-xs text-slate-500">SLA: {selectedState.sla_hours}h</p>
+                      <p className="text-xs text-slate-500">
+                        SLA: {selectedState.sla_hours}{" "}
+                        {selectedState.sla_unit || "hours"}
+                      </p>
                     )}
                     <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
                       <Button
@@ -387,23 +406,43 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
               )}
               {selectedTransition && (
                 <>
-                  <h4 className="font-semibold text-slate-800 mb-3">Selected Transition</h4>
+                  <h4 className="font-semibold text-slate-800 mb-3">
+                    Selected Transition
+                  </h4>
                   <div className="space-y-2">
-                    <span className="font-medium text-slate-700">{selectedTransition.name}</span>
-                    <p className="text-xs text-slate-500 font-mono">{selectedTransition.code}</p>
+                    <span className="font-medium text-slate-700">
+                      {selectedTransition.name}
+                    </span>
+                    <p className="text-xs text-slate-500 font-mono">
+                      {selectedTransition.code}
+                    </p>
                     <div className="flex items-center gap-1 text-xs">
                       <span
                         className="px-2 py-0.5 rounded text-white"
-                        style={{ backgroundColor: states.find((s) => s.id === selectedTransition.from_state_id)?.color || '#6b7280' }}
+                        style={{
+                          backgroundColor:
+                            states.find(
+                              (s) => s.id === selectedTransition.from_state_id,
+                            )?.color || "#6b7280",
+                        }}
                       >
-                        {states.find((s) => s.id === selectedTransition.from_state_id)?.name || 'Unknown'}
+                        {states.find(
+                          (s) => s.id === selectedTransition.from_state_id,
+                        )?.name || "Unknown"}
                       </span>
                       <span className="text-slate-400">→</span>
                       <span
                         className="px-2 py-0.5 rounded text-white"
-                        style={{ backgroundColor: states.find((s) => s.id === selectedTransition.to_state_id)?.color || '#6b7280' }}
+                        style={{
+                          backgroundColor:
+                            states.find(
+                              (s) => s.id === selectedTransition.to_state_id,
+                            )?.color || "#6b7280",
+                        }}
                       >
-                        {states.find((s) => s.id === selectedTransition.to_state_id)?.name || 'Unknown'}
+                        {states.find(
+                          (s) => s.id === selectedTransition.to_state_id,
+                        )?.name || "Unknown"}
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-1 text-xs">
@@ -435,7 +474,9 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
                       <Button
                         size="sm"
                         variant="secondary"
-                        onClick={() => onTransitionConfigure(selectedTransition)}
+                        onClick={() =>
+                          onTransitionConfigure(selectedTransition)
+                        }
                         className="flex-1"
                       >
                         Configure
@@ -451,7 +492,8 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         {/* Help Panel */}
         <Panel position="bottom-left">
           <div className="bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-slate-500 border border-slate-200">
-            <span className="font-medium">Tips:</span> Double-click to edit • Drag between nodes to create transitions • Drag nodes to reposition
+            <span className="font-medium">Tips:</span> Double-click to edit •
+            Drag between nodes to create transitions • Drag nodes to reposition
           </div>
         </Panel>
       </ReactFlow>
