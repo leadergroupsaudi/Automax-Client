@@ -154,7 +154,6 @@ export const CallHistory: React.FC = () => {
           <>
             <div className="divide-y divide-slate-100">
               {calls.map((call: any) => {
-                const isOutgoing = call.direction === "outgoing";
                 const isFailed =
                   call.status === "missed" ||
                   call.status === "rejected" ||
