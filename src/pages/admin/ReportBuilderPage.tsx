@@ -364,7 +364,7 @@ export const ReportBuilderPage: React.FC = () => {
         const rows = previewData.map((row) => {
           return selectedColumns.map((col) => {
             const fieldDef = fields.find((f) => f.field === col.field);
-            const value = getNestedValue(row, col.field);
+            const value = getNestedValue(row, col.label);
             if (!fieldDef) return value == null ? "" : String(value);
             return formatCellValue(value, fieldDef, t);
           });
@@ -716,9 +716,9 @@ export const ReportBuilderPage: React.FC = () => {
               <span className="text-sm text-[hsl(var(--muted-foreground))]">
                 {previewData.length < dbTotalCount ? (
                   <>
-                    {t("reports.fetched")}{" "}
-                    {t("reports.of")}{" "}
-                    <strong>{dbTotalCount.toLocaleString()}</strong> {t("reports.totalRecords")}
+                    {t("reports.fetched")} {t("reports.of")}{" "}
+                    <strong>{dbTotalCount.toLocaleString()}</strong>{" "}
+                    {t("reports.totalRecords")}
                     {previewData.length < dbTotalCount && (
                       <span className="ltr:ml-1 rtl:mr-1 text-amber-600 dark:text-amber-400">
                         — {t("reports.increaseLimitHint")}
@@ -727,7 +727,8 @@ export const ReportBuilderPage: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    {t("reports.all")} <strong>{previewData.length.toLocaleString()}</strong>{" "}
+                    {t("reports.all")}{" "}
+                    <strong>{previewData.length.toLocaleString()}</strong>{" "}
                     {t("reports.recordsFetched")}
                   </>
                 )}
