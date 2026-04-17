@@ -29,6 +29,7 @@ import {
   Link2,
   Settings,
   AlertTriangle,
+  KeyRound,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/authStore";
 import usePermissions from "@/hooks/usePermissions";
@@ -42,6 +43,8 @@ import {
 import SoftPhone from "../sip/Softphone";
 import ThemeToggle from "../common/ThemeToggle";
 import { PERMISSIONS } from "@/constants/permissions";
+import { LicenseGraceBanner } from "../common/LicenseGraceBanner";
+import { useLicense } from "../../hooks/useLicense";
 
 interface SidebarItem {
   icon: React.ElementType;
@@ -136,6 +139,12 @@ const sidebarSectionsConfig: SidebarSection[] = [
         path: "/admin/escalation-groups",
         permission: PERMISSIONS.ESCALATION_GROUPS_VIEW,
       },
+      {
+        icon: KeyRound,
+        labelKey: "admin.license",
+        path: "/admin/license",
+        permission: PERMISSIONS.LICENSE_VIEW,
+      },
     ],
   },
 ];
@@ -153,6 +162,7 @@ export const AdminLayout: React.FC = () => {
   const location = useLocation();
   const langRef = useRef<HTMLDivElement>(null);
   const { hasAnyPermission, isSuperAdmin } = usePermissions();
+  const { isFeatureLicensed, hasLicense } = useLicense();
 
   const handleLanguageChange = async (langCode: string) => {
     if (langCode === currentLang) {
@@ -627,6 +637,7 @@ export const AdminLayout: React.FC = () => {
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto bg-background">
+          <LicenseGraceBanner />
           <div className="p-4 lg:p-8">
             <div className="max-w-7xl mx-auto">
               <Outlet />

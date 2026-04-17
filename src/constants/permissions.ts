@@ -143,6 +143,10 @@ export const PERMISSIONS = {
 
   // Quality Audit
   QUALITY_AUDIT_VIEW: "incidents:view",
+
+  // License permissions
+  LICENSE_VIEW: "license:view",
+  LICENSE_MANAGE: "license:manage",
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

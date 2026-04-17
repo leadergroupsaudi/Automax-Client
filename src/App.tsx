@@ -57,6 +57,7 @@ import {
   LookupsPage,
   ApplicationLinksPage,
   SettingsManagementPage,
+  LicensePage,
   CallCentrePage,
   CallHistory,
   EmailPage,
@@ -259,6 +260,18 @@ function App() {
                     <Route
                       path="/admin/settings"
                       element={<SettingsManagementPage />}
+                    />
+                  </Route>
+                  <Route
+                    element={
+                      <PermissionRoute
+                        requiredPermissions={[PERMISSIONS.LICENSE_VIEW]}
+                      />
+                    }
+                  >
+                    <Route
+                      path="/admin/license"
+                      element={<LicensePage />}
                     />
                   </Route>
                   <Route
