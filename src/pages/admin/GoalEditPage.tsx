@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft, Save, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
@@ -27,6 +28,7 @@ const flattenCategories = (
 };
 
 export const GoalEditPage: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: goalData, isLoading, error } = useGoal(id!);
@@ -93,11 +95,11 @@ export const GoalEditPage: React.FC = () => {
     e.preventDefault();
 
     if (!form.title?.trim()) {
-      toast.error("Title is required");
+      toast.error(t("goals.create.errors.titleRequired"));
       return;
     }
     if (!form.owner_id?.trim()) {
-      toast.error("Owner is required");
+      toast.error(t("goals.create.errors.ownerRequired"));
       return;
     }
 
@@ -164,12 +166,12 @@ export const GoalEditPage: React.FC = () => {
             <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
             <div>
               <h3 className="text-sm font-medium text-red-800 dark:text-red-300">
-                Failed to load goal
+                {t("goals.failedToLoad")}
               </h3>
               <p className="mt-1 text-sm text-red-700 dark:text-red-400">
                 {error instanceof Error
                   ? error.message
-                  : "An unexpected error occurred."}
+                  : t("goals.unexpectedError")}
               </p>
             </div>
           </div>
@@ -185,15 +187,16 @@ export const GoalEditPage: React.FC = () => {
         <Link
           to={`/goals/${id}`}
           className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+          aria-label={t("common.back")}
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-4 h-4 rtl:-rotate-180" />
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Edit Goal
+            {t("goals.edit.title")}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Update goal details and settings
+            {t("goals.edit.subtitle")}
           </p>
         </div>
       </div>
@@ -205,13 +208,14 @@ export const GoalEditPage: React.FC = () => {
             {/* Title */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Title <span className="text-red-500">*</span>
+                {t("goals.create.fields.title")}{" "}
+                <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={form.title ?? ""}
                 onChange={(e) => handleChange("title", e.target.value)}
-                placeholder="Enter goal title"
+                placeholder={t("goals.create.fields.titlePlaceholder")}
                 required
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
               />
@@ -220,12 +224,12 @@ export const GoalEditPage: React.FC = () => {
             {/* Description */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Description
+                {t("goals.create.fields.description")}
               </label>
               <textarea
                 value={form.description ?? ""}
                 onChange={(e) => handleChange("description", e.target.value)}
-                placeholder="Describe the goal and its objectives"
+                placeholder={t("goals.create.fields.descriptionPlaceholder")}
                 rows={4}
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
               />
@@ -234,7 +238,7 @@ export const GoalEditPage: React.FC = () => {
             {/* Category (tree-backed) */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Category
+                {t("goals.create.fields.category")}
               </label>
               <select
                 value={form.category_id ?? ""}
@@ -248,8 +252,8 @@ export const GoalEditPage: React.FC = () => {
               >
                 <option value="">
                   {flatCategories.length === 0
-                    ? "No categories defined"
-                    : "— None —"}
+                    ? t("goals.create.fields.noCategories")
+                    : t("goals.create.fields.noneCategory")}
                 </option>
                 {flatCategories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
@@ -260,7 +264,9 @@ export const GoalEditPage: React.FC = () => {
               </select>
               {form.category && !form.category_id && (
                 <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-                  Legacy text category: "{form.category}"
+                  {t("goals.create.fields.legacyCategoryHint", {
+                    value: form.category,
+                  })}
                 </p>
               )}
             </div>
@@ -268,7 +274,8 @@ export const GoalEditPage: React.FC = () => {
             {/* Priority */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Priority <span className="text-red-500">*</span>
+                {t("goals.create.fields.priority")}{" "}
+                <span className="text-red-500">*</span>
               </label>
               <select
                 value={form.priority ?? "Medium"}
@@ -289,7 +296,8 @@ export const GoalEditPage: React.FC = () => {
             {/* Owner */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Owner <span className="text-red-500">*</span>
+                {t("goals.create.fields.owner")}{" "}
+                <span className="text-red-500">*</span>
               </label>
               <select
                 value={form.owner_id ?? ""}
@@ -297,7 +305,7 @@ export const GoalEditPage: React.FC = () => {
                 required
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
               >
-                <option value="">Select owner</option>
+                <option value="">{t("goals.create.fields.selectOwner")}</option>
                 {users.map((u) => (
                   <option key={u.id} value={u.id}>
                     {u.first_name} {u.last_name} ({u.email})
@@ -309,14 +317,16 @@ export const GoalEditPage: React.FC = () => {
             {/* Department */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Department
+                {t("goals.create.fields.department")}
               </label>
               <select
                 value={form.department_id ?? ""}
                 onChange={(e) => handleChange("department_id", e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
               >
-                <option value="">No department</option>
+                <option value="">
+                  {t("goals.create.fields.noDepartment")}
+                </option>
                 {departments.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.name}
@@ -341,7 +351,7 @@ export const GoalEditPage: React.FC = () => {
             {/* Start Date */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Start Date
+                {t("goals.create.fields.startDate")}
               </label>
               <input
                 type="date"
@@ -354,7 +364,7 @@ export const GoalEditPage: React.FC = () => {
             {/* Target Date */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Target Date
+                {t("goals.create.fields.targetDate")}
               </label>
               <input
                 type="date"
@@ -367,7 +377,7 @@ export const GoalEditPage: React.FC = () => {
             {/* Review Date */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Review Date
+                {t("goals.create.fields.reviewDate")}
               </label>
               <input
                 type="date"
@@ -384,7 +394,7 @@ export const GoalEditPage: React.FC = () => {
               to={`/goals/${id}`}
               className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
             >
-              Cancel
+              {t("common.cancel")}
             </Link>
             <button
               type="submit"
@@ -392,7 +402,9 @@ export const GoalEditPage: React.FC = () => {
               className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save className="w-4 h-4" />
-              {updateGoal.isPending ? "Saving..." : "Save Changes"}
+              {updateGoal.isPending
+                ? t("goals.edit.submitting")
+                : t("goals.edit.submit")}
             </button>
           </div>
         </div>

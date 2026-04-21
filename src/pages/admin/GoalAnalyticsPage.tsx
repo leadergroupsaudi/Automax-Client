@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -97,42 +98,42 @@ function ensurePrintStyles() {
 const statCards = [
   {
     key: "total" as const,
-    label: "Total Goals",
+    labelKey: "goals.analytics.stats.total",
     icon: Target,
     color: "text-blue-600 dark:text-blue-400",
     bg: "bg-blue-50 dark:bg-blue-900/20",
   },
   {
     key: "active" as const,
-    label: "Active",
+    labelKey: "goals.analytics.stats.active",
     icon: TrendingUp,
     color: "text-emerald-600 dark:text-emerald-400",
     bg: "bg-emerald-50 dark:bg-emerald-900/20",
   },
   {
     key: "overdue" as const,
-    label: "Overdue",
+    labelKey: "goals.analytics.stats.overdue",
     icon: Clock,
     color: "text-red-600 dark:text-red-400",
     bg: "bg-red-50 dark:bg-red-900/20",
   },
   {
     key: "at_risk" as const,
-    label: "At Risk",
+    labelKey: "goals.analytics.stats.atRisk",
     icon: AlertTriangle,
     color: "text-amber-600 dark:text-amber-400",
     bg: "bg-amber-50 dark:bg-amber-900/20",
   },
   {
     key: "achieved" as const,
-    label: "Achieved",
+    labelKey: "goals.analytics.stats.achieved",
     icon: CheckCircle,
     color: "text-green-600 dark:text-green-400",
     bg: "bg-green-50 dark:bg-green-900/20",
   },
   {
     key: "missed" as const,
-    label: "Missed",
+    labelKey: "goals.analytics.stats.missed",
     icon: XCircle,
     color: "text-slate-600 dark:text-slate-400",
     bg: "bg-slate-50 dark:bg-slate-900/20",
@@ -169,6 +170,7 @@ function formatMonthLabel(v: string): string {
 // ──────────────────────────────────────────────────
 
 export function GoalAnalyticsPage() {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const isAdmin = user?.is_super_admin || user?.permissions?.includes("*");
 
@@ -216,10 +218,10 @@ export function GoalAnalyticsPage() {
   const departments = deptResp?.data ?? [];
 
   const selectedDepartmentName = useMemo(() => {
-    if (!departmentId) return "All Departments";
+    if (!departmentId) return t("goals.analytics.filters.allDepartments");
     const d = departments.find((x) => x.id === departmentId);
     return d?.name ?? "—";
-  }, [departmentId, departments]);
+  }, [departmentId, departments, t]);
 
   // ── Analytics queries ────────────────────────────
   const [atRiskPage, setAtRiskPage] = useState(1);
@@ -257,12 +259,12 @@ export function GoalAnalyticsPage() {
     if (isGenerating) return;
 
     if (statsLoading || distLoading || atRiskLoading) {
-      toast.error("Please wait for analytics data to finish loading");
+      toast.error(t("goals.analytics.pdfWaitingData"));
       return;
     }
 
     setIsGenerating(true);
-    const loadingToast = toast.loading("Generating PDF report...");
+    const loadingToast = toast.loading(t("goals.analytics.pdfGenerating"));
 
     try {
       // Fetch ALL at-risk goals (up to 1000) so the report is complete
@@ -306,11 +308,11 @@ export function GoalAnalyticsPage() {
         .save();
 
       toast.dismiss(loadingToast);
-      toast.success("PDF report downloaded");
+      toast.success(t("goals.analytics.pdfDownloaded"));
     } catch (err) {
       toast.dismiss(loadingToast);
       console.error("PDF generation failed:", err);
-      toast.error("Failed to generate PDF report");
+      toast.error(t("goals.analytics.pdfFailed"));
     } finally {
       setPdfAtRiskAll(null);
       setPdfAtRiskTotal(0);
@@ -322,6 +324,7 @@ export function GoalAnalyticsPage() {
     distLoading,
     isGenerating,
     statsLoading,
+    t,
   ]);
 
   // Ensure native print fallback CSS is injected (for Ctrl+P)
@@ -333,16 +336,21 @@ export function GoalAnalyticsPage() {
   const generatedDate = new Date();
   const filtersText = useMemo(() => {
     const parts: string[] = [];
-    parts.push(`Department: ${selectedDepartmentName}`);
+    parts.push(
+      t("goals.analytics.pdf.departmentLine", { name: selectedDepartmentName }),
+    );
     if (periodStart || periodEnd) {
       parts.push(
-        `Period: ${periodStart || "—"} to ${periodEnd || "—"}`,
+        t("goals.analytics.pdf.periodLine", {
+          start: periodStart || "—",
+          end: periodEnd || "—",
+        }),
       );
     } else {
-      parts.push("Period: All time");
+      parts.push(t("goals.analytics.pdf.periodAllTime"));
     }
     return parts;
-  }, [selectedDepartmentName, periodStart, periodEnd]);
+  }, [selectedDepartmentName, periodStart, periodEnd, t]);
 
   const generatedByText = user
     ? `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() || user.email
@@ -354,17 +362,18 @@ export function GoalAnalyticsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Goal Analytics
+            {t("goals.analytics.title")}
           </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Overview of goal performance and health metrics
+            {t("goals.analytics.subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-2" data-print-hide>
           <button
             onClick={handleDownloadPDF}
             disabled={isGenerating}
-            title="Download PDF report"
+            title={t("goals.analytics.downloadPdfTitle")}
+            aria-label={t("goals.analytics.downloadPdfTitle")}
             className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isGenerating ? (
@@ -373,12 +382,23 @@ export function GoalAnalyticsPage() {
               <FileDown className="w-4 h-4" />
             )}
             <span className="hidden sm:inline">
-              {isGenerating ? "Generating..." : "Download PDF Report"}
+              {isGenerating
+                ? t("goals.analytics.generating")
+                : t("goals.analytics.downloadPdf")}
             </span>
           </button>
           <button
             onClick={toggleFullscreen}
-            title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            title={
+              isFullscreen
+                ? t("goals.analytics.exitFullscreen")
+                : t("goals.analytics.enterFullscreen")
+            }
+            aria-label={
+              isFullscreen
+                ? t("goals.analytics.exitFullscreen")
+                : t("goals.analytics.enterFullscreen")
+            }
             className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
           >
             {isFullscreen ? (
@@ -400,14 +420,18 @@ export function GoalAnalyticsPage() {
           <div className="flex flex-col gap-1 min-w-[200px]">
             <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
               <Building2 className="w-3.5 h-3.5" />
-              Department
+              {t("goals.analytics.filters.department")}
             </label>
             <select
               value={departmentId}
               onChange={(e) => setDepartmentId(e.target.value)}
               className="h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-300 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
             >
-              {isAdmin && <option value="">All Departments</option>}
+              {isAdmin && (
+                <option value="">
+                  {t("goals.analytics.filters.allDepartments")}
+                </option>
+              )}
               {departments.map((dept) => (
                 <option key={dept.id} value={dept.id}>
                   {dept.name}
@@ -420,7 +444,7 @@ export function GoalAnalyticsPage() {
           <div className="flex flex-col gap-1">
             <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
               <Calendar className="w-3.5 h-3.5" />
-              From
+              {t("goals.analytics.filters.from")}
             </label>
             <input
               type="date"
@@ -435,7 +459,7 @@ export function GoalAnalyticsPage() {
           <div className="flex flex-col gap-1">
             <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
               <Calendar className="w-3.5 h-3.5" />
-              To
+              {t("goals.analytics.filters.to")}
             </label>
             <input
               type="date"
@@ -456,7 +480,7 @@ export function GoalAnalyticsPage() {
               }}
               className="h-9 px-3 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
             >
-              Clear
+              {t("goals.analytics.filters.clear")}
             </button>
           )}
         </div>
@@ -481,7 +505,7 @@ export function GoalAnalyticsPage() {
                     {value}
                   </p>
                   <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                    {card.label}
+                    {t(card.labelKey)}
                   </p>
                 </div>
               </div>
@@ -495,11 +519,11 @@ export function GoalAnalyticsPage() {
         {/* Status Distribution */}
         <div className="rounded-xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/80 p-6">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
-            Status Distribution
+            {t("goals.analytics.charts.statusDistribution")}
           </h3>
           {distLoading ? (
             <div className="h-64 flex items-center justify-center text-slate-400">
-              Loading...
+              {t("goals.analytics.charts.loading")}
             </div>
           ) : distributions?.by_status?.length ? (
             <ResponsiveContainer width="100%" height={264}>
@@ -523,7 +547,7 @@ export function GoalAnalyticsPage() {
             </ResponsiveContainer>
           ) : (
             <div className="h-64 flex items-center justify-center text-slate-400">
-              No data available
+              {t("goals.analytics.charts.noData")}
             </div>
           )}
         </div>
@@ -531,11 +555,11 @@ export function GoalAnalyticsPage() {
         {/* Priority Distribution */}
         <div className="rounded-xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/80 p-6">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
-            Priority Distribution
+            {t("goals.analytics.charts.priorityDistribution")}
           </h3>
           {distLoading ? (
             <div className="h-64 flex items-center justify-center text-slate-400">
-              Loading...
+              {t("goals.analytics.charts.loading")}
             </div>
           ) : distributions?.by_priority?.length ? (
             <ResponsiveContainer width="100%" height={264}>
@@ -544,7 +568,11 @@ export function GoalAnalyticsPage() {
                 <XAxis dataKey="label" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip />
-                <Bar dataKey="value" name="Goals" radius={[4, 4, 0, 0]}>
+                <Bar
+                  dataKey="value"
+                  name={t("goals.analytics.charts.goals")}
+                  radius={[4, 4, 0, 0]}
+                >
                   {distributions.by_priority.map((entry, index) => (
                     <Cell key={index} fill={entry.color || "#3b82f6"} />
                   ))}
@@ -553,7 +581,7 @@ export function GoalAnalyticsPage() {
             </ResponsiveContainer>
           ) : (
             <div className="h-64 flex items-center justify-center text-slate-400">
-              No data available
+              {t("goals.analytics.charts.noData")}
             </div>
           )}
         </div>
@@ -564,7 +592,7 @@ export function GoalAnalyticsPage() {
         {/* Department Breakdown */}
         <div className="rounded-xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/80 p-6">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
-            Goals by Department
+            {t("goals.analytics.charts.byDepartment")}
           </h3>
           {distributions?.by_department?.length ? (
             <ResponsiveContainer width="100%" height={264}>
@@ -584,7 +612,7 @@ export function GoalAnalyticsPage() {
                 <Tooltip />
                 <Bar
                   dataKey="value"
-                  name="Goals"
+                  name={t("goals.analytics.charts.goals")}
                   fill="#6366f1"
                   radius={[0, 4, 4, 0]}
                 />
@@ -592,7 +620,7 @@ export function GoalAnalyticsPage() {
             </ResponsiveContainer>
           ) : (
             <div className="h-64 flex items-center justify-center text-slate-400">
-              No data available
+              {t("goals.analytics.charts.noData")}
             </div>
           )}
         </div>
@@ -600,10 +628,12 @@ export function GoalAnalyticsPage() {
         {/* Progress Distribution */}
         <div className="rounded-xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/80 p-6">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
-            Progress Distribution
+            {t("goals.analytics.charts.progressDistribution")}
             {progress && (
-              <span className="ml-2 text-xs font-normal text-slate-500">
-                (avg: {progress.average}%)
+              <span className="ms-2 text-xs font-normal text-slate-500">
+                {t("goals.analytics.charts.progressAverage", {
+                  value: progress.average,
+                })}
               </span>
             )}
           </h3>
@@ -614,7 +644,11 @@ export function GoalAnalyticsPage() {
                 <XAxis dataKey="label" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip />
-                <Bar dataKey="value" name="Goals" radius={[4, 4, 0, 0]}>
+                <Bar
+                  dataKey="value"
+                  name={t("goals.analytics.charts.goals")}
+                  radius={[4, 4, 0, 0]}
+                >
                   {progress.ranges.map((entry, index) => (
                     <Cell key={index} fill={entry.color || "#3b82f6"} />
                   ))}
@@ -623,7 +657,7 @@ export function GoalAnalyticsPage() {
             </ResponsiveContainer>
           ) : (
             <div className="h-64 flex items-center justify-center text-slate-400">
-              No data available
+              {t("goals.analytics.charts.noData")}
             </div>
           )}
         </div>
@@ -632,7 +666,7 @@ export function GoalAnalyticsPage() {
       {/* Trend Chart */}
       <div className="rounded-xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/80 p-6">
         <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
-          Monthly Trend (Last 12 Months)
+          {t("goals.analytics.charts.monthlyTrend")}
         </h3>
         {trend?.points?.length ? (
           <ResponsiveContainer width="100%" height={300}>
@@ -652,7 +686,7 @@ export function GoalAnalyticsPage() {
               <Area
                 type="monotone"
                 dataKey="created"
-                name="Created"
+                name={t("goals.analytics.charts.created")}
                 stroke="#3b82f6"
                 fill="#3b82f6"
                 fillOpacity={0.15}
@@ -661,7 +695,7 @@ export function GoalAnalyticsPage() {
               <Area
                 type="monotone"
                 dataKey="completed"
-                name="Completed"
+                name={t("goals.analytics.charts.completed")}
                 stroke="#22c55e"
                 fill="#22c55e"
                 fillOpacity={0.15}
@@ -671,7 +705,7 @@ export function GoalAnalyticsPage() {
           </ResponsiveContainer>
         ) : (
           <div className="h-64 flex items-center justify-center text-slate-400">
-            No data available
+            {t("goals.analytics.charts.noData")}
           </div>
         )}
       </div>
@@ -682,7 +716,7 @@ export function GoalAnalyticsPage() {
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-500" />
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-              At-Risk & Overdue Goals
+              {t("goals.analytics.atRisk.heading")}
             </h3>
             {atRiskResp?.total != null && (
               <span className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-full tabular-nums">
@@ -693,30 +727,32 @@ export function GoalAnalyticsPage() {
         </div>
 
         {atRiskLoading ? (
-          <div className="p-8 text-center text-slate-400">Loading...</div>
+          <div className="p-8 text-center text-slate-400">
+            {t("goals.analytics.atRisk.loading")}
+          </div>
         ) : atRiskResp?.data?.length ? (
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-700/60">
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      Goal
+                    <th className="px-6 py-3 ltr:text-left rtl:text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {t("goals.analytics.atRisk.goal")}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      Owner
+                    <th className="px-4 py-3 ltr:text-left rtl:text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {t("goals.analytics.atRisk.owner")}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      Priority
+                    <th className="px-4 py-3 ltr:text-left rtl:text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {t("goals.analytics.atRisk.priority")}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      Progress
+                    <th className="px-4 py-3 ltr:text-left rtl:text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {t("goals.analytics.atRisk.progress")}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      Target Date
+                    <th className="px-4 py-3 ltr:text-left rtl:text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {t("goals.analytics.atRisk.targetDate")}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      Risk
+                    <th className="px-4 py-3 ltr:text-left rtl:text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {t("goals.analytics.atRisk.risk")}
                     </th>
                   </tr>
                 </thead>
@@ -769,7 +805,9 @@ export function GoalAnalyticsPage() {
                         {goal.days_overdue > 0 ? (
                           <span className="inline-flex items-center gap-1 text-xs font-medium text-red-600 dark:text-red-400">
                             <Clock className="w-3 h-3" />
-                            {goal.days_overdue}d overdue
+                            {t("goals.analytics.atRisk.daysOverdue", {
+                              count: goal.days_overdue,
+                            })}
                           </span>
                         ) : goal.last_check_in_status ? (
                           <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
@@ -790,15 +828,19 @@ export function GoalAnalyticsPage() {
             {atRiskResp.total_pages > 1 && (
               <div className="px-6 py-3 border-t border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
                 <span className="text-sm text-slate-500 dark:text-slate-400 tabular-nums">
-                  Page {atRiskResp.page} of {atRiskResp.total_pages}
+                  {t("goals.analytics.atRisk.pageOf", {
+                    current: atRiskResp.page,
+                    total: atRiskResp.total_pages,
+                  })}
                 </span>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setAtRiskPage((p) => Math.max(1, p - 1))}
                     disabled={atRiskPage <= 1}
+                    aria-label={t("common.previous")}
                     className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-700/50"
                   >
-                    <ChevronLeft className="w-4 h-4" />
+                    <ChevronLeft className="w-4 h-4 rtl:-rotate-180" />
                   </button>
                   <button
                     onClick={() =>
@@ -807,9 +849,10 @@ export function GoalAnalyticsPage() {
                       )
                     }
                     disabled={atRiskPage >= atRiskResp.total_pages}
+                    aria-label={t("common.next")}
                     className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-700/50"
                   >
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-4 h-4 rtl:-rotate-180" />
                   </button>
                 </div>
               </div>
@@ -819,7 +862,7 @@ export function GoalAnalyticsPage() {
           <div className="p-8 text-center">
             <CheckCircle className="w-10 h-10 mx-auto mb-3 text-green-400" />
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              No at-risk or overdue goals
+              {t("goals.analytics.atRisk.empty")}
             </p>
           </div>
         )}
@@ -917,7 +960,7 @@ export function GoalAnalyticsPage() {
                     marginBottom: "10px",
                   }}
                 >
-                  Analytics Report
+                  {t("goals.analytics.pdf.reportLabel")}
                 </div>
 
                 <h1
@@ -929,7 +972,7 @@ export function GoalAnalyticsPage() {
                     color: "#0f172a",
                   }}
                 >
-                  Goal Analytics Report
+                  {t("goals.analytics.pdf.reportTitle")}
                 </h1>
                 <p
                   style={{
@@ -939,8 +982,7 @@ export function GoalAnalyticsPage() {
                     maxWidth: "150mm",
                   }}
                 >
-                  A comprehensive overview of goal performance, distribution,
-                  progress trends, and at-risk items for the selected scope.
+                  {t("goals.analytics.pdf.reportIntro")}
                 </p>
 
                 <div
@@ -962,7 +1004,7 @@ export function GoalAnalyticsPage() {
                       marginBottom: "10px",
                     }}
                   >
-                    Report Parameters
+                    {t("goals.analytics.pdf.reportParameters")}
                   </div>
                   <table
                     style={{
@@ -993,7 +1035,9 @@ export function GoalAnalyticsPage() {
                             fontWeight: 500,
                           }}
                         >
-                          Generated by: {generatedByText}
+                          {t("goals.analytics.pdf.generatedBy", {
+                            name: generatedByText,
+                          })}
                         </td>
                       </tr>
                       <tr>
@@ -1004,7 +1048,9 @@ export function GoalAnalyticsPage() {
                             fontWeight: 500,
                           }}
                         >
-                          Generated on: {generatedDate.toLocaleString()}
+                          {t("goals.analytics.pdf.generatedOn", {
+                            date: generatedDate.toLocaleString(),
+                          })}
                         </td>
                       </tr>
                     </tbody>
@@ -1020,7 +1066,7 @@ export function GoalAnalyticsPage() {
                   paddingTop: "12px",
                 }}
               >
-                Automax — Enterprise Goal Management Platform · Confidential
+                {t("goals.analytics.pdf.confidential")}
               </div>
             </section>
 
@@ -1036,7 +1082,7 @@ export function GoalAnalyticsPage() {
                   color: "#0f172a",
                 }}
               >
-                Executive Summary
+                {t("goals.analytics.pdf.executiveSummary")}
               </h2>
               <p
                 style={{
@@ -1045,7 +1091,7 @@ export function GoalAnalyticsPage() {
                   margin: "0 0 14px 0",
                 }}
               >
-                High-level counts across the goal lifecycle.
+                {t("goals.analytics.pdf.executiveSummaryDesc")}
               </p>
 
               <div
@@ -1077,7 +1123,7 @@ export function GoalAnalyticsPage() {
                           marginBottom: "4px",
                         }}
                       >
-                        {card.label}
+                        {t(card.labelKey)}
                       </div>
                       <div
                         style={{
@@ -1105,7 +1151,7 @@ export function GoalAnalyticsPage() {
                   color: "#0f172a",
                 }}
               >
-                Status Distribution
+                {t("goals.analytics.charts.statusDistribution")}
               </h2>
               {distributions?.by_status?.length ? (
                 <table
@@ -1120,9 +1166,15 @@ export function GoalAnalyticsPage() {
                 >
                   <thead>
                     <tr style={{ backgroundColor: "#f8fafc" }}>
-                      <th style={thStyle}>Status</th>
-                      <th style={{ ...thStyle, textAlign: "right" }}>Count</th>
-                      <th style={{ ...thStyle, textAlign: "right" }}>Share</th>
+                      <th style={thStyle}>
+                        {t("goals.analytics.pdf.statusTableStatus")}
+                      </th>
+                      <th style={{ ...thStyle, textAlign: "right" }}>
+                        {t("goals.analytics.pdf.statusTableCount")}
+                      </th>
+                      <th style={{ ...thStyle, textAlign: "right" }}>
+                        {t("goals.analytics.pdf.statusTableShare")}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1174,7 +1226,9 @@ export function GoalAnalyticsPage() {
                   </tbody>
                 </table>
               ) : (
-                <p style={emptyStyle}>No data available</p>
+                <p style={emptyStyle}>
+                  {t("goals.analytics.charts.noData")}
+                </p>
               )}
             </section>
 
@@ -1188,7 +1242,7 @@ export function GoalAnalyticsPage() {
                   color: "#0f172a",
                 }}
               >
-                Priority Distribution
+                {t("goals.analytics.charts.priorityDistribution")}
               </h2>
               {distributions?.by_priority?.length ? (
                 <div>
@@ -1251,7 +1305,9 @@ export function GoalAnalyticsPage() {
                   })()}
                 </div>
               ) : (
-                <p style={emptyStyle}>No data available</p>
+                <p style={emptyStyle}>
+                  {t("goals.analytics.charts.noData")}
+                </p>
               )}
             </section>
 
@@ -1265,7 +1321,7 @@ export function GoalAnalyticsPage() {
                   color: "#0f172a",
                 }}
               >
-                Goals by Department
+                {t("goals.analytics.charts.byDepartment")}
               </h2>
               {distributions?.by_department?.length ? (
                 <div>
@@ -1331,7 +1387,9 @@ export function GoalAnalyticsPage() {
                   })()}
                 </div>
               ) : (
-                <p style={emptyStyle}>No data available</p>
+                <p style={emptyStyle}>
+                  {t("goals.analytics.charts.noData")}
+                </p>
               )}
             </section>
 
@@ -1347,7 +1405,7 @@ export function GoalAnalyticsPage() {
                   color: "#0f172a",
                 }}
               >
-                Progress Summary
+                {t("goals.analytics.pdf.progressSummary")}
               </h2>
               <p
                 style={{
@@ -1356,7 +1414,7 @@ export function GoalAnalyticsPage() {
                   margin: "0 0 14px 0",
                 }}
               >
-                Average progress:{" "}
+                {t("goals.analytics.pdf.progressAverageLabel")}
                 <strong style={{ color: "#0f172a" }}>
                   {progress?.average ?? 0}%
                 </strong>
@@ -1375,8 +1433,12 @@ export function GoalAnalyticsPage() {
                 >
                   <thead>
                     <tr style={{ backgroundColor: "#f8fafc" }}>
-                      <th style={thStyle}>Progress Range</th>
-                      <th style={{ ...thStyle, textAlign: "right" }}>Goals</th>
+                      <th style={thStyle}>
+                        {t("goals.analytics.pdf.progressRange")}
+                      </th>
+                      <th style={{ ...thStyle, textAlign: "right" }}>
+                        {t("goals.analytics.pdf.progressGoals")}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1410,7 +1472,9 @@ export function GoalAnalyticsPage() {
                   </tbody>
                 </table>
               ) : (
-                <p style={emptyStyle}>No data available</p>
+                <p style={emptyStyle}>
+                  {t("goals.analytics.charts.noData")}
+                </p>
               )}
             </section>
 
@@ -1424,7 +1488,7 @@ export function GoalAnalyticsPage() {
                   color: "#0f172a",
                 }}
               >
-                Monthly Trend (Last 12 Months)
+                {t("goals.analytics.charts.monthlyTrend")}
               </h2>
               {trend?.points?.length ? (
                 <table
@@ -1439,12 +1503,14 @@ export function GoalAnalyticsPage() {
                 >
                   <thead>
                     <tr style={{ backgroundColor: "#f8fafc" }}>
-                      <th style={thStyle}>Month</th>
-                      <th style={{ ...thStyle, textAlign: "right" }}>
-                        Created
+                      <th style={thStyle}>
+                        {t("goals.analytics.pdf.trendMonth")}
                       </th>
                       <th style={{ ...thStyle, textAlign: "right" }}>
-                        Completed
+                        {t("goals.analytics.charts.created")}
+                      </th>
+                      <th style={{ ...thStyle, textAlign: "right" }}>
+                        {t("goals.analytics.charts.completed")}
                       </th>
                     </tr>
                   </thead>
@@ -1477,7 +1543,9 @@ export function GoalAnalyticsPage() {
                   </tbody>
                 </table>
               ) : (
-                <p style={emptyStyle}>No data available</p>
+                <p style={emptyStyle}>
+                  {t("goals.analytics.charts.noData")}
+                </p>
               )}
             </section>
 
@@ -1501,7 +1569,7 @@ export function GoalAnalyticsPage() {
                     color: "#0f172a",
                   }}
                 >
-                  At-Risk & Overdue Goals
+                  {t("goals.analytics.pdf.atRiskHeading")}
                 </h2>
                 <span
                   style={{
@@ -1514,7 +1582,9 @@ export function GoalAnalyticsPage() {
                     fontVariantNumeric: "tabular-nums",
                   }}
                 >
-                  {pdfAtRiskTotal} total
+                  {t("goals.analytics.pdf.atRiskTotal", {
+                    count: pdfAtRiskTotal,
+                  })}
                 </span>
               </div>
               <p
@@ -1524,7 +1594,7 @@ export function GoalAnalyticsPage() {
                   margin: "0 0 10px 0",
                 }}
               >
-                Full list of goals flagged as at-risk or overdue.
+                {t("goals.analytics.pdf.atRiskIntro")}
               </p>
 
               {pdfAtRiskAll && pdfAtRiskAll.length > 0 ? (
@@ -1538,14 +1608,24 @@ export function GoalAnalyticsPage() {
                 >
                   <thead>
                     <tr style={{ backgroundColor: "#f8fafc" }}>
-                      <th style={thStyle}>Title</th>
-                      <th style={thStyle}>Owner</th>
-                      <th style={thStyle}>Priority</th>
-                      <th style={{ ...thStyle, textAlign: "right" }}>
-                        Progress
+                      <th style={thStyle}>
+                        {t("goals.analytics.pdf.atRiskTitle")}
                       </th>
-                      <th style={thStyle}>Target Date</th>
-                      <th style={thStyle}>Status</th>
+                      <th style={thStyle}>
+                        {t("goals.analytics.atRisk.owner")}
+                      </th>
+                      <th style={thStyle}>
+                        {t("goals.analytics.atRisk.priority")}
+                      </th>
+                      <th style={{ ...thStyle, textAlign: "right" }}>
+                        {t("goals.analytics.atRisk.progress")}
+                      </th>
+                      <th style={thStyle}>
+                        {t("goals.analytics.atRisk.targetDate")}
+                      </th>
+                      <th style={thStyle}>
+                        {t("goals.analytics.pdf.atRiskStatus")}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1605,7 +1685,9 @@ export function GoalAnalyticsPage() {
                                 fontWeight: 600,
                               }}
                             >
-                              {goal.days_overdue}d overdue
+                              {t("goals.analytics.atRisk.daysOverdue", {
+                                count: goal.days_overdue,
+                              })}
                             </span>
                           ) : goal.last_check_in_status ? (
                             <span
@@ -1626,7 +1708,7 @@ export function GoalAnalyticsPage() {
                 </table>
               ) : (
                 <p style={emptyStyle}>
-                  No at-risk or overdue goals — great job!
+                  {t("goals.analytics.pdf.atRiskEmpty")}
                 </p>
               )}
             </section>
@@ -1641,8 +1723,9 @@ export function GoalAnalyticsPage() {
                 textAlign: "center",
               }}
             >
-              Automax Goal Analytics · Generated{" "}
-              {generatedDate.toLocaleString()} · Confidential
+              {t("goals.analytics.pdf.footer", {
+                date: generatedDate.toLocaleString(),
+              })}
             </div>
           </div>
         </div>
