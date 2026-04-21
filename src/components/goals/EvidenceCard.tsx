@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   FileText,
   Image,
@@ -9,6 +10,7 @@ import {
   User,
   Paperclip,
   Download,
+  ExternalLink,
   Trash2,
   RefreshCw,
   ArrowRight,
@@ -206,6 +208,20 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({
             <Download className="w-3.5 h-3.5" />
             Download
           </button>
+
+          {/* Open in Documents — deep link to /goals/documents?file=<uuid>
+              Opens the file directly in the Documents detail panel (versions,
+              comments, tags) without having to navigate the folder tree. */}
+          {hasDmsFile && (
+            <Link
+              to={`/goals/documents?file=${evidence.documenta_file_id}`}
+              className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              title="Open in Documents"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              Open in Documents
+            </Link>
+          )}
 
           {/* Transition buttons */}
           {executableTransitions.length === 1 ? (

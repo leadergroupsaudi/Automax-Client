@@ -1,4 +1,5 @@
-import React, { useState, useRef, useMemo } from "react";
+import React, { useState, useRef, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Search,
   FolderOpen,
@@ -831,11 +832,41 @@ function TagFilterBar({
 // ──────────────────────────────────────────────────
 
 export function DocumentsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [folderPath, setFolderPath] = useState<BreadcrumbItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [selectedFile, setSelectedFile] = useState<DmsFile | null>(null);
   const [searchTags, setSearchTags] = useState<Record<string, string>>({});
+
+  // Deep-link: ?file=<uuid> opens the file detail panel on load.
+  // Used by "Open in Documents" links from evidence cards so users can jump
+  // straight to a file's info / versions / comments without navigating the tree.
+  const deepLinkFileId = searchParams.get("file");
+  useEffect(() => {
+    if (!deepLinkFileId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const info = await documentApi.getFileInfo(deepLinkFileId);
+        if (!cancelled && info?.data) {
+          setSelectedFile(info.data);
+        }
+      } catch {
+        // file not found or not accessible — silently ignore; user lands on root
+      }
+      // Clear the query param once handled so a refresh doesn't re-trigger.
+      if (!cancelled) {
+        const next = new URLSearchParams(searchParams);
+        next.delete("file");
+        setSearchParams(next, { replace: true });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deepLinkFileId]);
 
   const currentParentId =
     folderPath.length > 0 ? folderPath[folderPath.length - 1].id : undefined;
