@@ -23,7 +23,7 @@ export interface LicenseStatus extends LicenseInfo {
 
 export interface LicenseActivateRequest {
   license_key: string;
-  public_key: string;
+  jwks: string;
 }
 
 export interface LicenseFeature {

@@ -50,26 +50,35 @@ export const LicensePage: React.FC = () => {
   const deactivateMutation = useDeactivateLicense();
 
   const [licenseKey, setLicenseKey] = useState("");
-  const [publicKey, setPublicKey] = useState("");
+  const [jwks, setJwks] = useState("");
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
   const [showActivationForm, setShowActivationForm] = useState(false);
 
   const hasLicense = license && !error;
 
   const handleActivate = async () => {
-    if (!licenseKey.trim() || !publicKey.trim()) {
-      toast.error("Both the license key and public key are required");
+    if (!licenseKey.trim() || !jwks.trim()) {
+      toast.error("Both the license key and JWKS are required");
+      return;
+    }
+
+    // Client-side JSON validation — the backend also validates, but a quick
+    // check here avoids a round-trip for obvious typos.
+    try {
+      JSON.parse(jwks);
+    } catch {
+      toast.error("JWKS must be valid JSON");
       return;
     }
 
     try {
       const result = await activateMutation.mutateAsync({
         license_key: licenseKey.trim(),
-        public_key: publicKey.trim(),
+        jwks: jwks.trim(),
       });
       toast.success(result.message || "License activated successfully");
       setLicenseKey("");
-      setPublicKey("");
+      setJwks("");
       setShowActivationForm(false);
       refetch();
     } catch (err: unknown) {
@@ -203,24 +212,24 @@ export const LicensePage: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-              Public Key (PEM)
+              JWKS (Public Keys JSON)
             </label>
             <textarea
               rows={6}
               className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm font-mono text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
-              placeholder="-----BEGIN PUBLIC KEY-----&#10;Paste the RSA public key from Licensify here...&#10;-----END PUBLIC KEY-----"
-              value={publicKey}
-              onChange={(e) => setPublicKey(e.target.value)}
+              placeholder='{"keys":[{"kty":"RSA","use":"sig","alg":"RS256","kid":"...","n":"...","e":"AQAB"}]}'
+              value={jwks}
+              onChange={(e) => setJwks(e.target.value)}
             />
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Obtain the public key from Licensify: GET /api/v1/public-key?product=automax
+              Paste the JWKS JSON provided by your license issuer (typically the contents of LMA's /.well-known/jwks.json endpoint). Must be valid JSON with a <code className="font-mono">keys</code> array.
             </p>
           </div>
 
           <div className="flex gap-2 pt-2">
             <Button
               onClick={handleActivate}
-              disabled={activateMutation.isPending || !licenseKey.trim() || !publicKey.trim()}
+              disabled={activateMutation.isPending || !licenseKey.trim() || !jwks.trim()}
             >
               {activateMutation.isPending ? "Activating..." : "Activate License"}
             </Button>
