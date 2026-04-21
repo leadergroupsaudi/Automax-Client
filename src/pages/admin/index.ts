@@ -7,6 +7,7 @@ export { DepartmentDetailPage } from "./DepartmentDetailPage";
 export { LocationsPage } from "./LocationsPage";
 export { default as LocationMapPage } from "./LocationMapPage";
 export { ClassificationsPage } from "./ClassificationsPage";
+export { CategoriesPage } from "./CategoriesPage";
 export { ActionLogsPage } from "./ActionLogsPage";
 export { WorkflowsPage } from "./WorkflowsPage";
 export { WorkflowDesignerPage } from "./WorkflowDesignerPage";

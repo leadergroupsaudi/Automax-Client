@@ -59,6 +59,7 @@ export interface Goal {
   title: string;
   description: string;
   category: string;
+  category_id?: string | null;
   priority: GoalPriority;
   status: GoalStatus;
   owner_id: string;
@@ -260,7 +261,10 @@ export interface GoalActivityListResponse {
 export interface GoalCreateRequest {
   title: string;
   description?: string;
+  /** Legacy free-text category (kept for backward compatibility). */
   category?: string;
+  /** Preferred: uuid of a Category in the hierarchy. */
+  category_id?: string;
   priority: GoalPriority;
   owner_id: string;
   department_id?: string;
@@ -274,7 +278,10 @@ export interface GoalCreateRequest {
 export interface GoalUpdateRequest {
   title?: string;
   description?: string;
+  /** Legacy free-text category (kept for backward compatibility). */
   category?: string;
+  /** Preferred: uuid of a Category in the hierarchy. */
+  category_id?: string;
   priority?: GoalPriority;
   owner_id?: string;
   department_id?: string;

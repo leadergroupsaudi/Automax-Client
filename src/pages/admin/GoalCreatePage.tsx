@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { useCreateGoal, useGoal } from "../../hooks/useGoals";
 import { useActiveGoalTemplates } from "../../hooks/useGoalTemplates";
+import { useCategoryTree } from "../../hooks/useCategories";
 import { metricApi } from "../../api/goals";
 import { userApi, departmentApi } from "../../api/admin";
 import { GOAL_PRIORITY_OPTIONS } from "../../types/goal";
@@ -14,7 +15,24 @@ import type {
   GoalBrief,
   TemplateMetric,
 } from "../../types/goal";
+import type { Category } from "../../types/category";
 import { ParentGoalSelector } from "../../components/goals/ParentGoalSelector";
+
+// Flatten the category tree into a sorted flat list for <option> rendering.
+const flattenCategories = (
+  nodes: Category[],
+  depth = 0,
+  acc: Array<Category & { depth: number }> = [],
+): Array<Category & { depth: number }> => {
+  for (const n of nodes) {
+    if (!n.is_active) continue;
+    acc.push({ ...n, depth });
+    if (n.children && n.children.length > 0) {
+      flattenCategories(n.children, depth + 1, acc);
+    }
+  }
+  return acc;
+};
 
 export const GoalCreatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -31,6 +49,7 @@ export const GoalCreatePage: React.FC = () => {
     title: "",
     description: "",
     category: "",
+    category_id: "",
     priority: "Medium",
     owner_id: "",
     department_id: "",
@@ -39,6 +58,9 @@ export const GoalCreatePage: React.FC = () => {
     target_date: "",
     review_date: "",
   });
+
+  const { data: categoryTreeData } = useCategoryTree();
+  const flatCategories = flattenCategories(categoryTreeData?.data ?? []);
 
   // Pre-fill parent from URL param
   if (presetParentData?.data && !parentInitialized) {
@@ -104,7 +126,13 @@ export const GoalCreatePage: React.FC = () => {
     };
 
     if (form.description?.trim()) payload.description = form.description.trim();
-    if (form.category?.trim()) payload.category = form.category.trim();
+    if (form.category_id?.trim()) {
+      payload.category_id = form.category_id.trim();
+      // Clear legacy free-text category when a tree category is selected.
+      payload.category = "";
+    } else if (form.category?.trim()) {
+      payload.category = form.category.trim();
+    }
     if (form.department_id?.trim())
       payload.department_id = form.department_id.trim();
     if (form.parent_goal_id?.trim())
@@ -222,18 +250,38 @@ export const GoalCreatePage: React.FC = () => {
               />
             </div>
 
-            {/* Category */}
+            {/* Category (tree-backed) */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Category
               </label>
-              <input
-                type="text"
-                value={form.category ?? ""}
-                onChange={(e) => handleChange("category", e.target.value)}
-                placeholder="e.g. Revenue, Operations"
+              <select
+                value={form.category_id ?? ""}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    category_id: e.target.value,
+                  }))
+                }
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              />
+              >
+                <option value="">
+                  {flatCategories.length === 0
+                    ? "No categories defined"
+                    : "— None —"}
+                </option>
+                {flatCategories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {"— ".repeat(cat.depth)}
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+              {form.category && !form.category_id && (
+                <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                  Legacy text category: "{form.category}"
+                </p>
+              )}
             </div>
 
             {/* Priority */}

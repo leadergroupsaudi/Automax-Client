@@ -44,6 +44,12 @@ export const PERMISSIONS = {
   CLASSIFICATIONS_UPDATE: "classifications:update",
   CLASSIFICATIONS_DELETE: "classifications:delete",
 
+  // Category permissions (goal category hierarchy)
+  CATEGORIES_VIEW: "categories:view",
+  CATEGORIES_CREATE: "categories:create",
+  CATEGORIES_UPDATE: "categories:update",
+  CATEGORIES_DELETE: "categories:delete",
+
   // Workflow permissions
   WORKFLOWS_VIEW: "workflows:view",
   WORKFLOWS_CREATE: "workflows:create",

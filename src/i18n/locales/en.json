@@ -558,6 +558,7 @@
     "departments": "Departments",
     "locations": "Locations",
     "classifications": "Classifications",
+    "categories": "Categories",
     "workflows": "Workflows",
     "workflowDesigner": "Workflow Designer",
     "actionLogs": "Action Logs",

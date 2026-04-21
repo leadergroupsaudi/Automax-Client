@@ -4,10 +4,27 @@ import { ArrowLeft, Save, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { useGoal, useUpdateGoal } from "../../hooks/useGoals";
+import { useCategoryTree } from "../../hooks/useCategories";
 import { userApi, departmentApi } from "../../api/admin";
 import { GOAL_PRIORITY_OPTIONS } from "../../types/goal";
 import type { GoalUpdateRequest, GoalPriority, GoalBrief } from "../../types/goal";
+import type { Category } from "../../types/category";
 import { ParentGoalSelector } from "../../components/goals/ParentGoalSelector";
+
+const flattenCategories = (
+  nodes: Category[],
+  depth = 0,
+  acc: Array<Category & { depth: number }> = [],
+): Array<Category & { depth: number }> => {
+  for (const n of nodes) {
+    if (!n.is_active) continue;
+    acc.push({ ...n, depth });
+    if (n.children && n.children.length > 0) {
+      flattenCategories(n.children, depth + 1, acc);
+    }
+  }
+  return acc;
+};
 
 export const GoalEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -32,6 +49,7 @@ export const GoalEditPage: React.FC = () => {
     title: "",
     description: "",
     category: "",
+    category_id: "",
     priority: "Medium",
     owner_id: "",
     department_id: "",
@@ -39,6 +57,9 @@ export const GoalEditPage: React.FC = () => {
     target_date: "",
     review_date: "",
   });
+
+  const { data: categoryTreeData } = useCategoryTree();
+  const flatCategories = flattenCategories(categoryTreeData?.data ?? []);
 
   const [initialized, setInitialized] = useState(false);
   const [parentGoal, setParentGoal] = useState<GoalBrief | null>(null);
@@ -49,6 +70,7 @@ export const GoalEditPage: React.FC = () => {
       title: goal.title ?? "",
       description: goal.description ?? "",
       category: goal.category ?? "",
+      category_id: goal.category_id ?? "",
       priority: goal.priority ?? "Medium",
       owner_id: goal.owner_id ?? "",
       department_id: goal.department_id ?? "",
@@ -83,7 +105,17 @@ export const GoalEditPage: React.FC = () => {
 
     if (form.title?.trim()) payload.title = form.title.trim();
     if (form.description?.trim()) payload.description = form.description.trim();
-    if (form.category?.trim()) payload.category = form.category.trim();
+    if (form.category_id?.trim()) {
+      payload.category_id = form.category_id.trim();
+      // New tree-backed category takes over; clear legacy free-text.
+      payload.category = "";
+    } else if (form.category_id === "") {
+      // Explicit clear from tree select.
+      payload.category_id = "";
+    }
+    if (!form.category_id && form.category?.trim()) {
+      payload.category = form.category.trim();
+    }
     if (form.priority) payload.priority = form.priority;
     if (form.owner_id?.trim()) payload.owner_id = form.owner_id.trim();
     if (form.department_id?.trim())
@@ -199,18 +231,38 @@ export const GoalEditPage: React.FC = () => {
               />
             </div>
 
-            {/* Category */}
+            {/* Category (tree-backed) */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Category
               </label>
-              <input
-                type="text"
-                value={form.category ?? ""}
-                onChange={(e) => handleChange("category", e.target.value)}
-                placeholder="e.g. Revenue, Operations"
+              <select
+                value={form.category_id ?? ""}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    category_id: e.target.value,
+                  }))
+                }
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              />
+              >
+                <option value="">
+                  {flatCategories.length === 0
+                    ? "No categories defined"
+                    : "— None —"}
+                </option>
+                {flatCategories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {"— ".repeat(cat.depth)}
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+              {form.category && !form.category_id && (
+                <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                  Legacy text category: "{form.category}"
+                </p>
+              )}
             </div>
 
             {/* Priority */}

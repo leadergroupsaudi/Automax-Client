@@ -35,6 +35,7 @@ import {
   LocationsPage,
   LocationMapPage,
   ClassificationsPage,
+  CategoriesPage,
   ActionLogsPage,
   WorkflowsPage,
   WorkflowDesignerPage,
@@ -209,6 +210,19 @@ function App() {
                     <Route
                       path="/admin/classifications"
                       element={<ClassificationsPage />}
+                    />
+                  </Route>
+                  {/* Category (goal) management - requires categories:view permission */}
+                  <Route
+                    element={
+                      <PermissionRoute
+                        requiredPermissions={[PERMISSIONS.CATEGORIES_VIEW]}
+                      />
+                    }
+                  >
+                    <Route
+                      path="/admin/categories"
+                      element={<CategoriesPage />}
                     />
                   </Route>
                   {/* Action logs - requires action-logs:view permission */}
