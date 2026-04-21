@@ -51,6 +51,10 @@ interface SidebarItem {
   labelKey: string;
   path: string;
   permission?: string;
+  // License feature code. If set and the feature is not licensed, the item hides.
+  // Undefined for foundational modules (users/roles/departments/etc.) that are
+  // always available regardless of license.
+  licenseFeature?: string;
   badge?: number;
 }
 
@@ -138,6 +142,7 @@ const sidebarSectionsConfig: SidebarSection[] = [
         labelKey: "admin.escalationGroups",
         path: "/admin/escalation-groups",
         permission: PERMISSIONS.ESCALATION_GROUPS_VIEW,
+        licenseFeature: "escalation",
       },
       {
         icon: KeyRound,
@@ -209,11 +214,20 @@ export const AdminLayout: React.FC = () => {
     return user?.permissions?.includes(permission) ?? false;
   };
 
-  // Filter sections based on permissions
+  // Filter sections based on permissions AND license features.
+  // License hasn't loaded yet → show everything (avoids flicker on first paint).
+  // Super admin → show everything regardless of license (useful for debug/support).
+  const itemAllowed = (item: SidebarItem) => {
+    if (!hasPermission(item.permission)) return false;
+    if (!item.licenseFeature) return true;
+    if (isSuperAdmin) return true;
+    if (!hasLicense) return true;
+    return isFeatureLicensed(item.licenseFeature);
+  };
   const filteredSections = sidebarSectionsConfig
     .map((section) => ({
       ...section,
-      items: section.items.filter((item) => hasPermission(item.permission)),
+      items: section.items.filter(itemAllowed),
     }))
     .filter((section) => section.items.length > 0);
 
