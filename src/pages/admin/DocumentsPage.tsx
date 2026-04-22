@@ -249,9 +249,10 @@ function FileDetailPanel({
   };
 
   const handleDownload = async () => {
-    const res = await documentApi.getDownloadUrl(file.uuid);
-    if (res.data?.url) {
-      window.open(res.data.url, "_blank");
+    try {
+      await documentApi.download(file.uuid, file.name);
+    } catch {
+      // Error toast is surfaced by the axios interceptor.
     }
   };
 

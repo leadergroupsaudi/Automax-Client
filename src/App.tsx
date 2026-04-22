@@ -570,9 +570,17 @@ function App() {
                     element={<GoalApprovalsPage />}
                   />
                   <Route
-                    path="/goals/documents"
-                    element={<DocumentsPage />}
-                  />
+                    element={
+                      <PermissionRoute
+                        requiredPermissions={[PERMISSIONS.GOALS_DELETE]}
+                      />
+                    }
+                  >
+                    <Route
+                      path="/goals/documents"
+                      element={<DocumentsPage />}
+                    />
+                  </Route>
                   <Route
                     path="/goals/metric-batches"
                     element={<MetricImportBatchesPage />}
