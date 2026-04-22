@@ -316,8 +316,17 @@ export interface UserLoginResponse {
   created_at: string;
 }
 
-export interface AuthResponse {
+/** Response for POST /auth/login — user is slim (no departments/locations/classifications). */
+export interface AuthLoginResponse {
   user: UserLoginResponse;
+  token: string;
+  refresh_token?: string;
+  expires_in?: number;
+}
+
+/** Response for POST /auth/register and POST /auth/refresh — user is full. */
+export interface AuthResponse {
+  user: User;
   token: string;
   refresh_token?: string;
   expires_in?: number;
