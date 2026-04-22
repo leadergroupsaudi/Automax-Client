@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { emailApi } from "../../api/admin";
 import type { Email, EmailFilter, EmailAttachment } from "../../types";
+import { emailApi, smsApi } from "../../api/admin";
 import {
   Mail,
   Send,
@@ -78,6 +78,13 @@ export const EmailPage: React.FC = () => {
 
       return emailApi.list(filter);
     },
+  });
+
+  const { data: emailCount } = useQuery({
+    queryKey: ["emails", "count"],
+    queryFn: () => smsApi.getCount("email", user!.id),
+    enabled: user?.id !== undefined,
+    select: (response) => response.data.counts,
   });
 
   const { mutate: getEmailById } = useMutation({
@@ -457,17 +464,37 @@ export const EmailPage: React.FC = () => {
   const isSendingDraft = sendDraftMutation.isPending;
   const isSending = sendEmailMutation.isPending || isSendingDraft;
 
-  const folderConfig: { key: Folder; label: string; icon: React.ReactNode }[] =
-    [
-      { key: "inbox", label: "Inbox", icon: <Inbox className="w-4 h-4" /> },
-      { key: "sent", label: "Sent", icon: <Send className="w-4 h-4" /> },
-      {
-        key: "drafts",
-        label: "Drafts",
-        icon: <FileText className="w-4 h-4" />,
-      },
-      { key: "trash", label: "Trash", icon: <Trash className="w-4 h-4" /> },
-    ];
+  const folderConfig: {
+    key: Folder;
+    label: string;
+    icon: React.ReactNode;
+    count?: number;
+  }[] = [
+    {
+      key: "inbox",
+      label: "Inbox",
+      icon: <Inbox className="w-4 h-4" />,
+      count: emailCount?.inbox,
+    },
+    {
+      key: "sent",
+      label: "Sent",
+      icon: <Send className="w-4 h-4" />,
+      count: emailCount?.sent,
+    },
+    {
+      key: "drafts",
+      label: "Drafts",
+      icon: <FileText className="w-4 h-4" />,
+      count: emailCount?.drafts,
+    },
+    {
+      key: "trash",
+      label: "Trash",
+      icon: <Trash className="w-4 h-4" />,
+      count: emailCount?.trash,
+    },
+  ];
 
   return (
     <div className="h-[calc(100vh-100px)] flex bg-card rounded-xl border border-border overflow-hidden shadow-sm">
@@ -489,17 +516,24 @@ export const EmailPage: React.FC = () => {
 
         <div className="flex-1 overflow-y-auto py-2">
           <div className="px-3 space-y-1">
-            {folderConfig.map(({ key, label, icon }) => (
+            {folderConfig.map(({ key, label, icon, count }) => (
               <button
                 key={key}
                 onClick={() => {
                   setCurrentFolder(key);
                   setSelectedEmail(null);
                 }}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentFolder === key ? "bg-primary/5 text-primary" : "text-slate-600 hover:bg-slate-100"}`}
+                className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentFolder === key ? "bg-primary/5 text-primary" : "text-slate-600 hover:bg-slate-100"}`}
               >
-                {icon}
-                <span>{label}</span>
+                <div className="flex items-center gap-3">
+                  {icon}
+                  <span>{label}</span>
+                </div>
+                {count ? (
+                  <span className="ml-auto text-xs text-primary bg-gray-100 px-2 py-0.5 rounded">
+                    {count}
+                  </span>
+                ) : null}
               </button>
             ))}
           </div>
@@ -776,18 +810,30 @@ export const EmailPage: React.FC = () => {
 
       {/* Compose Modal */}
       {isComposeOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-slate-50">
-              <h3 className="font-semibold text-slate-900">
-                {editingDraftId
-                  ? "Edit Draft"
-                  : isNewEmail
-                    ? "New Message"
-                    : isCloningAttachments
-                      ? "Cloning attachments..."
-                      : composeSubject}
-              </h3>
+        <div className="fixed inset-0 bg-background/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-card rounded-xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Mail className="w-[18px] h-[18px] text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-[15px] leading-tight">
+                    {editingDraftId
+                      ? "Edit Draft"
+                      : isNewEmail
+                        ? "New Message"
+                        : isCloningAttachments
+                          ? "Cloning attachments..."
+                          : composeSubject}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {editingDraftId
+                      ? "Update and save your draft"
+                      : "Compose and send an email"}
+                  </p>
+                </div>
+              </div>
               <button
                 onClick={closeCompose}
                 className="text-slate-400 hover:text-slate-600"
@@ -802,9 +848,7 @@ export const EmailPage: React.FC = () => {
             >
               <div className="p-6 space-y-4 flex-1 overflow-y-auto">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    To
-                  </label>
+                  <label className="block text-sm font-medium  mb-1">To</label>
                   <EmailChipInput
                     value={composeTo}
                     onChange={setComposeTo}
@@ -812,7 +856,7 @@ export const EmailPage: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <label className="block text-sm font-medium  mb-1">
                     CC (optional)
                   </label>
                   <EmailChipInput
@@ -822,7 +866,7 @@ export const EmailPage: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <label className="block text-sm font-medium  mb-1">
                     BCC (optional)
                   </label>
                   <EmailChipInput
@@ -832,19 +876,19 @@ export const EmailPage: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <label className="block text-sm font-medium  mb-1">
                     Subject
                   </label>
                   <input
                     type="text"
                     value={composeSubject}
                     onChange={(e) => setComposeSubject(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="w-full px-3 py-2 border bg-background border-b border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder="Subject"
                   />
                 </div>
                 <div className="flex-1 flex flex-col">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <label className="block text-sm font-medium  mb-1">
                     Message
                   </label>
                   <RichTextEditor
@@ -882,7 +926,7 @@ export const EmailPage: React.FC = () => {
                       {attachments.map((file, index) => (
                         <div
                           key={index}
-                          className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                          className="flex items-center justify-between p-2 bg-primary/10 border border-primary rounded-lg text-sm"
                         >
                           <div className="flex items-center gap-2 truncate">
                             <Paperclip className="w-4 h-4 text-slate-400 shrink-0" />
@@ -921,7 +965,7 @@ export const EmailPage: React.FC = () => {
                   )}
                 </div>
               </div>
-              <div className="px-6 py-4 border-t border-border bg-slate-50 flex justify-between gap-3">
+              <div className="px-6 py-4 border-t border-border  flex justify-between gap-3">
                 {/* Save as Draft button */}
                 <button
                   type="button"
@@ -938,19 +982,15 @@ export const EmailPage: React.FC = () => {
                 </button>
 
                 <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={closeCompose}
-                    className="px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-lg font-medium transition-colors"
-                  >
+                  <Button variant={"ghost"} onClick={closeCompose}>
                     Cancel
-                  </button>
+                  </Button>
                   <button
                     type="submit"
                     disabled={
                       isSending || (composeTo.length === 0 && !editingDraftId)
                     }
-                    className="px-6 py-2 bg-primary hover:bg-violet-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
+                    className="px-6 py-2 bg-linear-to-r from-primary to-accent hover:shadow-md hover:shadow-primary/20 text-white rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
                   >
                     {isSending ? (
                       <Loader2 className="w-4 h-4 animate-spin" />

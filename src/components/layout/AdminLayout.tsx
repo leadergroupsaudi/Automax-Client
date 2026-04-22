@@ -19,7 +19,6 @@ import {
   ChevronLeft,
   LogOut,
   Home,
-  Bell,
   Menu,
   X,
   ChevronDown,
@@ -41,8 +40,9 @@ import {
   getCurrentLanguage,
   supportedLanguages,
 } from "../../i18n";
-import SoftPhone from "../sip/Softphone";
 import ThemeToggle from "../common/ThemeToggle";
+import { NotificationBell } from "../common/NotificationBell";
+import { useSoftphoneStore } from "@/stores/softphoneStore";
 import { PERMISSIONS } from "@/constants/permissions";
 import { LicenseGraceBanner } from "../common/LicenseGraceBanner";
 import { useLicense } from "../../hooks/useLicense";
@@ -146,7 +146,7 @@ const sidebarSectionsConfig: SidebarSection[] = [
       },
       {
         icon: AlertTriangle,
-        labelKey: "admin.escalationGroups",
+        labelKey: "admin.escalationManagement",
         path: "/admin/escalation-groups",
         permission: PERMISSIONS.ESCALATION_GROUPS_VIEW,
         licenseFeature: "escalation",
@@ -168,7 +168,7 @@ export const AdminLayout: React.FC = () => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [currentLang, setCurrentLang] = useState(getCurrentLanguage());
-  const [showSoftphone, setShowSoftphone] = useState(false);
+  const { isOpen, toggle } = useSoftphoneStore();
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
@@ -292,9 +292,10 @@ export const AdminLayout: React.FC = () => {
                   to={item.path}
                   onClick={() => setMobileMenuOpen(false)}
                   className={({ isActive }) =>
-                    `group relative flex items-center ${collapsed ? "justify-center" : ""} px-3 py-2.5 rounded-xl transition-all duration-200 ${isActive
-                      ? "bg-linear-to-r rtl:bg-linear-to-l from-primary to-accent text-white shadow-lg shadow-primary/20"
-                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                    `group relative flex items-center ${collapsed ? "justify-center" : ""} px-3 py-2.5 rounded-xl transition-all duration-200 ${
+                      isActive
+                        ? "bg-linear-to-r rtl:bg-linear-to-l from-primary to-accent text-white shadow-lg shadow-primary/20"
+                        : "text-slate-400 hover:text-white hover:bg-white/5"
                     }`
                   }
                 >
@@ -396,8 +397,9 @@ export const AdminLayout: React.FC = () => {
     <div className="flex h-screen ">
       {/* Desktop Sidebar */}
       <aside
-        className={`${collapsed ? "w-[72px]" : "w-[264px]"
-          } bg-sidebar transition-all duration-300 flex-col hidden lg:flex relative`}
+        className={`${
+          collapsed ? "w-[72px]" : "w-[264px]"
+        } bg-sidebar transition-all duration-300 flex-col hidden lg:flex relative`}
       >
         <SidebarContent />
       </aside>
@@ -412,8 +414,9 @@ export const AdminLayout: React.FC = () => {
 
       {/* Mobile Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 w-[264px] bg-slate-900 z-50 transform transition-transform duration-300 lg:hidden ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
+        className={`fixed inset-y-0 left-0 w-[264px] bg-slate-900 z-50 transform transition-transform duration-300 lg:hidden ${
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
         <button
           onClick={() => setMobileMenuOpen(false)}
@@ -502,10 +505,11 @@ export const AdminLayout: React.FC = () => {
                     <button
                       key={lang.code}
                       onClick={() => handleLanguageChange(lang.code)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${currentLang === lang.code
-                        ? "bg-primary/10 text-primary"
-                        : "text-slate-700 hover:bg-slate-50"
-                        }`}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${
+                        currentLang === lang.code
+                          ? "bg-primary/10 text-primary"
+                          : "text-slate-700 hover:bg-slate-50"
+                      }`}
                     >
                       <span className="text-lg">
                         {lang.code === "en" ? "🇺🇸" : "🇸🇦"}
@@ -521,45 +525,21 @@ export const AdminLayout: React.FC = () => {
             </div>
 
             {/* Phone/Softphone */}
-
-            {
-              (isSuperAdmin || hasAnyPermission(["dashboard:ccm"])) && (
-
-                <>
-                  <button
-                    onClick={() => setShowSoftphone(!showSoftphone)}
-                    className={`relative p-2.5 rounded-xl transition-colors focus:outline-none focus:ring-0 ${showSoftphone
-                      ? "text-primary bg-primary/10"
-                      : "text-muted-foreground hover:text-primary hover:bg-primary/10"
-                      }`}
-                  >
-                    <Phone className="w-5 h-5" />
-                  </button>
-
-                  <SoftPhone
-                    showSip={showSoftphone}
-                    onClose={() => setShowSoftphone(false)}
-                    settings={{
-                      domain: "zkff.automaxsw.com",
-                      socketURL: "wss://zkff.automaxsw.com:7443",
-                    }}
-                    auth={{
-                      user: {
-                        userID: user?.id || "",
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        extension: (user as any)?.extension || "",
-                      },
-                    }}
-                  />
-                </>
-              )
-            }
+            {(isSuperAdmin || hasAnyPermission(["dashboard:ccm"])) && (
+              <button
+                onClick={toggle}
+                className={`relative p-2.5 rounded-xl transition-colors focus:outline-none focus:ring-0 ${
+                  isOpen
+                    ? "text-primary bg-primary/10"
+                    : "text-muted-foreground hover:text-primary hover:bg-primary/10"
+                }`}
+              >
+                <Phone className="w-5 h-5" />
+              </button>
+            )}
 
             {/* Notifications */}
-            <button className="relative p-2.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl transition-colors focus:outline-none focus:ring-0">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-sidebar" />
-            </button>
+            <NotificationBell />
 
             <ThemeToggle />
 

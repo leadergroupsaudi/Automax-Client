@@ -14,6 +14,7 @@ import {
   Tag,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import {
   useCategoryTree,
   useCategories,
@@ -76,7 +77,7 @@ interface TreeNodeProps {
   canCreate: boolean;
   canEdit: boolean;
   canDelete: boolean;
-  t: (key: string, fallback?: string) => string;
+  t: TFunction;
 }
 
 const TreeNode: React.FC<TreeNodeProps> = ({

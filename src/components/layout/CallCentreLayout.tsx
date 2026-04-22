@@ -1,12 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { Outlet, NavLink, useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   HelpCircle,
   ChevronLeft,
   LogOut,
   Home,
-  Bell,
   Menu,
   X,
   ChevronDown,
@@ -23,15 +22,16 @@ import {
   getCurrentLanguage,
   supportedLanguages,
 } from "../../i18n";
-import SoftPhone from "../sip/Softphone";
 import ThemeToggle from "../common/ThemeToggle";
+import { NotificationBell } from "../common/NotificationBell";
+import { useSoftphoneStore } from "@/stores/softphoneStore";
 
 export const CallCentreLayout: React.FC = () => {
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [showSoftphone, setShowSoftphone] = useState(false);
+  const { isOpen, setIsOpen, toggle } = useSoftphoneStore();
 
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [currentLang, setCurrentLang] = useState(getCurrentLanguage());
@@ -62,13 +62,13 @@ export const CallCentreLayout: React.FC = () => {
 
   useEffect(() => {
     const handleInitiateCall = () => {
-      setShowSoftphone(true);
+      setIsOpen(true);
     };
 
     window.addEventListener("initiate-call", handleInitiateCall);
     return () =>
       window.removeEventListener("initiate-call", handleInitiateCall);
-  }, []);
+  }, [setIsOpen]);
 
   const handleLogout = () => {
     logout();
@@ -348,11 +348,21 @@ export const CallCentreLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            <Link
+              to="/"
+              className="flex items-center gap-2 px-3 py-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl transition-colors"
+              title={t("sidebar.backToHome", "Back to Home")}
+            >
+              <Home className="w-5 h-5" />
+              <span className="hidden md:inline text-sm font-medium">
+                {t("sidebar.backToHome", "Back to Home")}
+              </span>
+            </Link>
             {/* Softphone Toggle */}
             <button
-              onClick={() => setShowSoftphone(!showSoftphone)}
+              onClick={toggle}
               className={`relative p-2.5 rounded-xl transition-colors focus:outline-none focus:ring-0 ${
-                showSoftphone
+                isOpen
                   ? "text-primary bg-primary/10"
                   : "text-muted-foreground hover:text-primary hover:bg-primary/10"
               }`}
@@ -416,10 +426,7 @@ export const CallCentreLayout: React.FC = () => {
             </div>
 
             {/* Notifications */}
-            <button className="relative p-2.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2 end-2 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-sidebar" />
-            </button>
+            <NotificationBell />
 
             <ThemeToggle />
 
@@ -514,21 +521,6 @@ export const CallCentreLayout: React.FC = () => {
           </div>
         </main>
       </div>
-
-      <SoftPhone
-        showSip={showSoftphone}
-        onClose={() => setShowSoftphone(false)}
-        settings={{
-          domain: "zkff.automaxsw.com",
-          socketURL: "wss://zkff.automaxsw.com:7443",
-        }}
-        auth={{
-          user: {
-            userID: user?.id || "",
-            extension: (user as any)?.extension || "",
-          },
-        }}
-      />
     </div>
   );
 };

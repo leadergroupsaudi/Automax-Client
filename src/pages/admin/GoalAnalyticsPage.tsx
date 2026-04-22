@@ -304,7 +304,7 @@ export function GoalAnalyticsPage() {
           },
           jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
           pagebreak: { mode: ["css", "legacy"], after: ".pdf-page-break" },
-        })
+        } as any)
         .save();
 
       toast.dismiss(loadingToast);

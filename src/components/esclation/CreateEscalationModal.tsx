@@ -59,6 +59,7 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
   const [selectedUsers, setSelectedUsers] = useState<UserType[]>([]);
   const [targets, setTargets] = useState<TargetEntry[]>([]);
   const [frequency, setFrequency] = useState("daily");
+  const [scheduledTime, setScheduledTime] = useState("09:00");
   // Errors
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -289,6 +290,7 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
       setClassificationIds(ids);
       setLocationId(editData.location?.id ?? "");
       setFrequency(editData.frequency ?? "daily");
+      setScheduledTime(editData.scheduled_time ?? "09:00");
       setSelectedUsers(editData.users ?? []);
       setTargets((editData.targets || []).map(fromBackendTarget));
     } else {
@@ -297,6 +299,7 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
       setClassificationIds([]);
       setLocationId("");
       setFrequency("daily");
+      setScheduledTime("09:00");
       setSelectedUsers([]);
       setTargets([]);
     }
@@ -344,6 +347,7 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
       channel: channel.trim(),
       location_id: locationId,
       frequency: frequency,
+      scheduled_time: scheduledTime,
       is_active: true,
       user_ids: selectedUsers.map((u) => u.id),
       targets: targets.length > 0 ? toTargetRequests(targets) : undefined,
@@ -438,10 +442,14 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
                   }))}
                   value={selectedUsers.map((u) => u.id)}
                   onChange={(ids) => {
-                    const selectedUsers = users.filter((u) =>
-                      ids.includes(u.id),
+                    const idSet = new Set(ids);
+                    // Preserve already-selected users not visible in the options list
+                    const optionIds = new Set(users.map((u) => u.id));
+                    const invisible = selectedUsers.filter(
+                      (u) => !optionIds.has(u.id) && idSet.has(u.id),
                     );
-                    setSelectedUsers(selectedUsers);
+                    const visible = users.filter((u) => idSet.has(u.id));
+                    setSelectedUsers([...invisible, ...visible]);
                   }}
                   placeholder={t("escalation.userPlaceholder")}
                   error={errors?.assignee}
@@ -526,31 +534,35 @@ export const CreateEscalationModal: React.FC<CreateEscalationProps> = ({
                   {t("escalation.reportFrequency")}
                 </label>
 
-                <div className="flex items-center gap-6">
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="radio"
-                      name="frequency"
-                      value="daily"
-                      checked={frequency === "daily"}
-                      onChange={(e) => setFrequency(e.target.value)}
-                      className="accent-blue-500"
-                    />
-                    {t("escalation.daily")}
-                  </label>
-
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="radio"
-                      name="frequency"
-                      value="weekly"
-                      checked={frequency === "weekly"}
-                      onChange={(e) => setFrequency(e.target.value)}
-                      className="accent-blue-500"
-                    />
-                    {t("escalation.weekly")}
-                  </label>
-                </div>
+                <select
+                  value={frequency}
+                  onChange={(e) => setFrequency(e.target.value)}
+                  className="w-full h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+                >
+                  <option value="hourly">{t("escalation.hourly")}</option>
+                  <option value="every_6_hours">
+                    {t("escalation.every6Hours")}
+                  </option>
+                  <option value="every_12_hours">
+                    {t("escalation.every12Hours")}
+                  </option>
+                  <option value="daily">{t("escalation.daily")}</option>
+                  <option value="weekly">{t("escalation.weekly")}</option>
+                  <option value="bi_weekly">{t("escalation.biWeekly")}</option>
+                  <option value="monthly">{t("escalation.monthly")}</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-xs font-medium text-muted-foreground">
+                  <Calendar className="w-3 h-3 inline me-1" />
+                  {t("escalation.scheduledTime", "Scheduled Time")}
+                </label>
+                <input
+                  type="time"
+                  value={scheduledTime}
+                  onChange={(e) => setScheduledTime(e.target.value)}
+                  className="w-full h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+                />
               </div>
             </div>
           </div>

@@ -75,6 +75,7 @@ interface StateFormData {
   state_type: "initial" | "normal" | "terminal";
   color: string;
   sla_hours: number | undefined;
+  sla_unit: string;
   escalation_policy_id: string | undefined;
   is_mergable: boolean;
   is_ready_to_close: boolean;
@@ -109,6 +110,7 @@ const initialStateFormData: StateFormData = {
   state_type: "normal",
   color: "#6366f1",
   sla_hours: undefined,
+  sla_unit: "hours",
   escalation_policy_id: undefined,
   is_mergable: false,
   is_ready_to_close: false,
@@ -654,6 +656,7 @@ export const WorkflowDesignerPage: React.FC = () => {
       state_type: state.state_type as "initial" | "normal" | "terminal",
       color: state.color,
       sla_hours: state.sla_hours || undefined,
+      sla_unit: state.sla_unit || "hours",
       escalation_policy_id: state.escalation_policy_id || undefined,
       is_mergable: state.is_mergable || false,
       is_ready_to_close: state.is_ready_to_close || false,
@@ -760,6 +763,7 @@ export const WorkflowDesignerPage: React.FC = () => {
       state_type: stateFormData.state_type,
       color: stateFormData.color,
       sla_hours: stateFormData.sla_hours,
+      sla_unit: stateFormData.sla_unit || "hours",
       escalation_policy_id: stateFormData.escalation_policy_id || null,
       is_mergable: stateFormData.is_mergable,
       is_ready_to_close: stateFormData.is_ready_to_close,
@@ -1235,7 +1239,9 @@ export const WorkflowDesignerPage: React.FC = () => {
                           </td>
                           <td className="py-3 px-4">
                             <span className="text-sm text-[hsl(var(--muted-foreground))]">
-                              {state.sla_hours ? `${state.sla_hours}h` : "-"}
+                              {state.sla_hours
+                                ? `${state.sla_hours} ${state.sla_unit || "h"}`
+                                : "-"}
                             </span>
                           </td>
                           <td className="py-3 px-4">
@@ -2503,22 +2509,40 @@ export const WorkflowDesignerPage: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-                    SLA Hours (optional)
+                    SLA Duration (optional)
                   </label>
-                  <input
-                    type="number"
-                    value={stateFormData.sla_hours || ""}
-                    onChange={(e) =>
-                      setStateFormData({
-                        ...stateFormData,
-                        sla_hours: e.target.value
-                          ? parseInt(e.target.value)
-                          : undefined,
-                      })
-                    }
-                    className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
-                    min="0"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      value={stateFormData.sla_hours || ""}
+                      onChange={(e) =>
+                        setStateFormData({
+                          ...stateFormData,
+                          sla_hours: e.target.value
+                            ? parseInt(e.target.value)
+                            : undefined,
+                        })
+                      }
+                      className="flex-1 px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                      min="1"
+                      placeholder="e.g. 8"
+                    />
+                    <select
+                      value={stateFormData.sla_unit}
+                      onChange={(e) =>
+                        setStateFormData({
+                          ...stateFormData,
+                          sla_unit: e.target.value,
+                        })
+                      }
+                      className="px-3 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                    >
+                      <option value="minutes">Minutes</option>
+                      <option value="hours">Hours</option>
+                      <option value="days">Days</option>
+                      <option value="months">Months</option>
+                    </select>
+                  </div>
                   <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">
                     Maximum time an incident should remain in this state
                   </p>

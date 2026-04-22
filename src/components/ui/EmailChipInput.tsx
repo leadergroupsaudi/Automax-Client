@@ -61,7 +61,7 @@ export function EmailChipInput({
   return (
     <div
       className={cn(
-        "flex flex-wrap gap-1.5 items-center min-h-[38px] px-3 py-1.5 border border-slate-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent cursor-text",
+        "flex flex-wrap gap-1.5 items-center min-h-[38px] px-3 py-1.5 border border-border rounded-lg bg-background focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent cursor-text",
         className,
       )}
       onClick={() => inputRef.current?.focus()}
@@ -93,7 +93,8 @@ export function EmailChipInput({
         onBlur={handleBlur}
         onPaste={handlePaste}
         placeholder={value.length === 0 ? placeholder : ""}
-        className="flex-1 min-w-[140px] outline-none text-sm bg-transparent placeholder:text-slate-400"
+        className="flex-1 min-w-[140px] outline-none border-none ring-0 focus:outline-none focus:ring-0 focus:border-none 
+             focus-visible:outline-none focus-visible:ring-0 text-sm bg-transparent placeholder:text-slate-400"
       />
     </div>
   );

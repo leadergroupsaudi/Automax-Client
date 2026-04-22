@@ -293,6 +293,7 @@ export interface AuthResponse {
 export interface LoginRequest {
   email: string;
   password: string;
+  remember_me?: boolean;
 }
 
 export interface RegisterRequest {
@@ -675,6 +676,7 @@ export interface WorkflowState {
   position_x: number;
   position_y: number;
   sla_hours?: number;
+  sla_unit?: string;
   escalation_policy_id?: string;
   escalation_policy?: EscalationPolicy;
   is_mergable: boolean;
@@ -1520,6 +1522,7 @@ export interface ReportExportRequest {
     includeFilters?: boolean;
     includeTimestamp?: boolean;
   };
+  title?: string;
 }
 
 // Report Template Request Types
@@ -1568,6 +1571,8 @@ export interface Settings {
   date_format: string;
   time_format: string;
   default_language: string;
+  sip_domain?: string;
+  sip_socket_url?: string;
   updated_at: string;
 }
 
@@ -1594,6 +1599,8 @@ export interface SettingsUpdateRequest {
   date_format?: string;
   time_format?: string;
   default_language?: string;
+  sip_domain?: string;
+  sip_socket_url?: string;
 }
 
 // Re-export report template builder types
@@ -1683,6 +1690,15 @@ export interface SMSRecipient {
   error?: string;
 }
 
+export interface SMSSentByUser {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone?: string;
+  avatar?: string;
+}
+
 export interface SMS {
   id: string;
   channel: string;
@@ -1691,12 +1707,16 @@ export interface SMS {
   template_code?: string;
   language: string;
   recipients: SMSRecipient[];
+  from?: string;
   body: string;
   status: string;
   provider?: string;
   is_read: boolean;
   is_starred: boolean;
   sent_by?: string;
+  sent_by_user?: SMSSentByUser;
+  received_by?: string;
+  received_by_user?: SMSSentByUser;
   sent_at?: string;
   created_at: string;
   updated_at?: string;
@@ -1786,6 +1806,7 @@ export interface CreateEscalationRequest {
   channel: string;
   location_id: string;
   frequency: string;
+  scheduled_time?: string;
   is_active: boolean;
   user_ids: string[];
   targets?: EscalationGroupTargetRequest[];

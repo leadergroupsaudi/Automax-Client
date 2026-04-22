@@ -1,13 +1,18 @@
 import React, { useState, useRef, useEffect } from "react";
 import { publicUrl } from "../../utils/publicUrl";
-import { Outlet, NavLink, useNavigate, Link } from "react-router-dom";
+import {
+  Outlet,
+  NavLink,
+  useNavigate,
+  Link,
+  useLocation,
+} from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
   ChevronLeft,
   LogOut,
   Home,
-  Bell,
   Menu,
   X,
   ChevronDown,
@@ -26,7 +31,7 @@ import {
 import { useAuthStore } from "../../stores/authStore";
 import { authApi } from "../../api/auth";
 import { setLoggingOut } from "../../api/client";
-import SoftPhone from "../sip/Softphone";
+import { useSoftphoneStore } from "@/stores/softphoneStore";
 import { incidentApi } from "../../api/admin";
 import {
   setLanguage,
@@ -37,6 +42,7 @@ import { usePermissions } from "../../hooks/usePermissions";
 import { PERMISSIONS } from "../../constants/permissions";
 import { CreateRequestModal } from "@/components/requests/CreateRequestModal";
 import ThemeToggle from "../common/ThemeToggle";
+import { NotificationBell } from "../common/NotificationBell";
 
 export const RequestLayout: React.FC = () => {
   const { t } = useTranslation();
@@ -46,10 +52,13 @@ export const RequestLayout: React.FC = () => {
   const [myRequestsOpen, setMyRequestsOpen] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [currentLang, setCurrentLang] = useState(getCurrentLanguage());
-  const [showSoftphone, setShowSoftphone] = useState(false);
+  const { isOpen, toggle } = useSoftphoneStore();
   const [createRequestModalOpen, setCreateRequestModalOpen] = useState(false);
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const currentStatus = queryParams.get("status");
   const langRef = useRef<HTMLDivElement>(null);
   const { hasPermission, isSuperAdmin, hasAnyPermission } = usePermissions();
   const canViewIncidents =
@@ -158,26 +167,31 @@ export const RequestLayout: React.FC = () => {
               to="/requests"
               end
               onClick={() => setMobileMenuOpen(false)}
-              className={({ isActive }) =>
-                `group relative flex items-center ${collapsed ? "justify-center" : ""} px-3 py-2.5 rounded-xl transition-all duration-200 ${isActive
-                  ? "bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-primary/20"
-                  : "text-slate-400 hover:text-white hover:bg-white/5"
-                }`
-              }
+              className={({ isActive }) => {
+                const isAllRequestsActive = isActive && !currentStatus;
+                return `group relative flex items-center ${collapsed ? "justify-center" : ""} px-3 py-2.5 rounded-xl transition-all duration-200 ${
+                  isAllRequestsActive
+                    ? "bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-primary/20"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`;
+              }}
             >
-              {({ isActive }) => (
-                <>
-                  {isActive && (
-                    <div className="absolute start-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white ltr:rounded-r-full rtl:rounded-l-full" />
-                  )}
-                  <List size={20} className="flex-shrink-0" />
-                  {!collapsed && (
-                    <span className="ms-3 font-medium text-sm">
-                      {t("sidebar.allRequests", "All Requests")}
-                    </span>
-                  )}
-                </>
-              )}
+              {({ isActive }) => {
+                const isAllRequestsActive = isActive && !currentStatus;
+                return (
+                  <>
+                    {isAllRequestsActive && (
+                      <div className="absolute start-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white ltr:rounded-r-full rtl:rounded-l-full" />
+                    )}
+                    <List size={20} className="flex-shrink-0" />
+                    {!collapsed && (
+                      <span className="ms-3 font-medium text-sm">
+                        {t("sidebar.allRequests", "All Requests")}
+                      </span>
+                    )}
+                  </>
+                );
+              }}
             </NavLink>
           )}
 
@@ -225,9 +239,10 @@ export const RequestLayout: React.FC = () => {
                       to="/requests/my-assigned"
                       onClick={() => setMobileMenuOpen(false)}
                       className={({ isActive }) =>
-                        `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${isActive
-                          ? "bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-primary/20"
-                          : "text-slate-400 hover:text-white hover:bg-white/5"
+                        `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
+                          isActive
+                            ? "bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-primary/20"
+                            : "text-slate-400 hover:text-white hover:bg-white/5"
                         }`
                       }
                     >
@@ -242,9 +257,10 @@ export const RequestLayout: React.FC = () => {
                       to="/requests/my-created"
                       onClick={() => setMobileMenuOpen(false)}
                       className={({ isActive }) =>
-                        `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${isActive
-                          ? "bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-primary/20"
-                          : "text-slate-400 hover:text-white hover:bg-white/5"
+                        `group relative flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
+                          isActive
+                            ? "bg-linear-to-r from-primary to-accent text-white shadow-lg shadow-primary/20"
+                            : "text-slate-400 hover:text-white hover:bg-white/5"
                         }`
                       }
                     >
@@ -302,23 +318,51 @@ export const RequestLayout: React.FC = () => {
                         key={stateName}
                         to={`/requests?status=${encodeURIComponent(stateName)}`}
                         onClick={() => setMobileMenuOpen(false)}
-                        className="group flex items-center px-3 py-2.5 text-slate-400 hover:text-white rounded-xl hover:bg-white/5 transition-colors"
+                        className={({ isActive }) => {
+                          const isItemActive =
+                            isActive && currentStatus === stateName;
+                          return `group flex items-center px-3 py-2.5 text-slate-400 hover:text-white rounded-xl hover:bg-white/5 transition-colors ${
+                            isItemActive
+                              ? "bg-white/10 text-white shadow-sm"
+                              : ""
+                          }`;
+                        }}
                       >
-                        <Circle
-                          size={8}
-                          className="flex-shrink-0 fill-current"
-                        />
+                        {({ isActive }) => {
+                          const isItemActive =
+                            isActive && currentStatus === stateName;
+                          return (
+                            <>
+                              <Circle
+                                size={8}
+                                className={`flex-shrink-0 fill-current ${
+                                  isItemActive
+                                    ? "text-primary shadow-[0_0_8px_rgba(59,130,246,0.5)]"
+                                    : "text-slate-500"
+                                }`}
+                              />
 
-                        {!collapsed && (
-                          <>
-                            <span className="ms-3 font-medium text-sm flex-1">
-                              {stateName}
-                            </span>
-                            <span className="text-xs bg-slate-700 px-2 py-0.5 rounded-md">
-                              {count as number}
-                            </span>
-                          </>
-                        )}
+                              {!collapsed && (
+                                <>
+                                  <span
+                                    className={`ms-3 font-medium text-sm flex-1 ${isItemActive ? "text-white" : ""}`}
+                                  >
+                                    {stateName}
+                                  </span>
+                                  <span
+                                    className={`text-xs px-2 py-0.5 rounded-md transition-colors ${
+                                      isItemActive
+                                        ? "bg-primary text-white"
+                                        : "bg-slate-700 text-slate-300"
+                                    }`}
+                                  >
+                                    {count as number}
+                                  </span>
+                                </>
+                              )}
+                            </>
+                          );
+                        }}
                       </NavLink>
                     ),
                   )}
@@ -339,10 +383,18 @@ export const RequestLayout: React.FC = () => {
               {canViewAllRequests ? (
                 <NavLink
                   to="/requests"
+                  end
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between text-sm hover:bg-white/5 rounded-lg px-2 py-1.5 -mx-2 transition-colors"
+                  className={({ isActive }) => {
+                    const isTotalActive = isActive && !currentStatus;
+                    return `flex items-center justify-between text-sm hover:bg-white/5 rounded-lg px-2 py-1.5 -mx-2 transition-colors ${
+                      isTotalActive ? "bg-white/5 text-white" : ""
+                    }`;
+                  }}
                 >
-                  <span className="text-slate-400">
+                  <span
+                    className={!currentStatus ? "text-white" : "text-slate-400"}
+                  >
                     {t("sidebar.total", "Total")}
                   </span>
                   <span className="text-white font-semibold">
@@ -435,8 +487,9 @@ export const RequestLayout: React.FC = () => {
     <div className="flex h-screen bg-slate-100">
       {/* Desktop Sidebar */}
       <aside
-        className={`${collapsed ? "w-[72px]" : "w-[264px]"
-          } bg-sidebar transition-all duration-300 flex-col hidden lg:flex relative`}
+        className={`${
+          collapsed ? "w-[72px]" : "w-[264px]"
+        } bg-sidebar transition-all duration-300 flex-col hidden lg:flex relative`}
       >
         <SidebarContent />
       </aside>
@@ -451,10 +504,11 @@ export const RequestLayout: React.FC = () => {
 
       {/* Mobile Sidebar */}
       <aside
-        className={`fixed inset-y-0 start-0 w-[264px] bg-slate-900 z-50 transform transition-transform duration-300 lg:hidden ${mobileMenuOpen
-          ? "translate-x-0"
-          : "ltr:-translate-x-full rtl:translate-x-full"
-          }`}
+        className={`fixed inset-y-0 start-0 w-[264px] bg-slate-900 z-50 transform transition-transform duration-300 lg:hidden ${
+          mobileMenuOpen
+            ? "translate-x-0"
+            : "ltr:-translate-x-full rtl:translate-x-full"
+        }`}
       >
         <button
           onClick={() => setMobileMenuOpen(false)}
@@ -542,10 +596,11 @@ export const RequestLayout: React.FC = () => {
                     <button
                       key={lang.code}
                       onClick={() => handleLanguageChange(lang.code)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${currentLang === lang.code
-                        ? "bg-primary/10 text-primary"
-                        : "text-slate-700 hover:bg-slate-50"
-                        }`}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${
+                        currentLang === lang.code
+                          ? "bg-primary/10 text-primary"
+                          : "text-slate-700 hover:bg-slate-50"
+                      }`}
                     >
                       <span className="text-lg">
                         {lang.code === "en" ? "🇺🇸" : "🇸🇦"}
@@ -561,42 +616,21 @@ export const RequestLayout: React.FC = () => {
             </div>
 
             {/* Phone/Softphone */}
-            {
-              (isSuperAdmin || hasAnyPermission(["dashboard:ccm"])) && (
-                <>
-                  <button
-                    onClick={() => setShowSoftphone(!showSoftphone)}
-                    className={`relative p-2.5 rounded-xl transition-colors focus:outline-none focus:ring-0 ${showSoftphone
-                      ? "text-primary bg-primary/10"
-                      : "text-muted-foreground hover:text-primary hover:bg-primary/10"
-                      }`}
-                  >
-                    <Phone className="w-5 h-5" />
-                  </button>
-
-                  <SoftPhone
-                    showSip={showSoftphone}
-                    onClose={() => setShowSoftphone(false)}
-                    settings={{
-                      domain: "zkff.automaxsw.com",
-                      socketURL: "wss://zkff.automaxsw.com:7443",
-                    }}
-                    auth={{
-                      user: {
-                        userID: user?.id || "",
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        extension: (user as any)?.extension || "",
-                      },
-                    }}
-                  />
-                </>
-              )}
+            {(isSuperAdmin || hasAnyPermission(["dashboard:ccm"])) && (
+              <button
+                onClick={toggle}
+                className={`relative p-2.5 rounded-xl transition-colors focus:outline-none focus:ring-0 ${
+                  isOpen
+                    ? "text-primary bg-primary/10"
+                    : "text-muted-foreground hover:text-primary hover:bg-primary/10"
+                }`}
+              >
+                <Phone className="w-5 h-5" />
+              </button>
+            )}
 
             {/* Notifications */}
-            <button className="relative p-2.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2 end-2 w-2 h-2 bg-primary rounded-full ring-2 ring-white dark:ring-sidebar" />
-            </button>
+            <NotificationBell />
 
             <ThemeToggle />
 

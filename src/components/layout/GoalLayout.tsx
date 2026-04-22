@@ -6,7 +6,6 @@ import {
   ChevronLeft,
   LogOut,
   Home,
-  Bell,
   Menu,
   X,
   ChevronDown,
@@ -30,10 +29,11 @@ import {
   getCurrentLanguage,
   supportedLanguages,
 } from "../../i18n";
-import SoftPhone from "../sip/Softphone";
 import { usePermissions } from "../../hooks/usePermissions";
 import { PERMISSIONS } from "../../constants/permissions";
 import ThemeToggle from "../common/ThemeToggle";
+import { NotificationBell } from "../common/NotificationBell";
+import { useSoftphoneStore } from "@/stores/softphoneStore";
 
 export const GoalLayout: React.FC = () => {
   const { t } = useTranslation();
@@ -42,7 +42,7 @@ export const GoalLayout: React.FC = () => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [currentLang, setCurrentLang] = useState(getCurrentLanguage());
-  const [showSoftphone, setShowSoftphone] = useState(false);
+  const { isOpen, toggle } = useSoftphoneStore();
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const langRef = useRef<HTMLDivElement>(null);
@@ -85,9 +85,10 @@ export const GoalLayout: React.FC = () => {
   };
 
   const navLinkClass = (isActive: boolean) =>
-    `group relative flex items-center ${collapsed ? "justify-center" : ""} px-3 py-2.5 rounded-xl transition-all duration-200 ${isActive
-      ? "bg-gradient-to-r from-primary to-accent text-white shadow-lg shadow-blue-500/20"
-      : "text-slate-400 hover:text-white hover:bg-white/5"
+    `group relative flex items-center ${collapsed ? "justify-center" : ""} px-3 py-2.5 rounded-xl transition-all duration-200 ${
+      isActive
+        ? "bg-gradient-to-r from-primary to-accent text-white shadow-lg shadow-blue-500/20"
+        : "text-slate-400 hover:text-white hover:bg-white/5"
     }`;
 
   const SidebarContent = () => (
@@ -288,9 +289,7 @@ export const GoalLayout: React.FC = () => {
                 )}
                 <FileText size={20} className="flex-shrink-0" />
                 {!collapsed && (
-                  <span className="ms-3 font-medium text-sm">
-                    Templates
-                  </span>
+                  <span className="ms-3 font-medium text-sm">Templates</span>
                 )}
               </>
             )}
@@ -445,10 +444,11 @@ export const GoalLayout: React.FC = () => {
                     <button
                       key={lang.code}
                       onClick={() => handleLanguageChange(lang.code)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${currentLang === lang.code
-                        ? "bg-blue-50 text-blue-600"
-                        : "text-slate-700 hover:bg-slate-50"
-                        }`}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${
+                        currentLang === lang.code
+                          ? "bg-blue-50 text-blue-600"
+                          : "text-slate-700 hover:bg-slate-50"
+                      }`}
                     >
                       <span className="text-lg">
                         {lang.code === "en"
@@ -466,43 +466,21 @@ export const GoalLayout: React.FC = () => {
             </div>
 
             {/* Softphone */}
-            {
-              (isSuperAdmin || hasAnyPermission(["dashboard:ccm"])) && (
-                <>
-                  <button
-                    onClick={() => setShowSoftphone(!showSoftphone)}
-                    className={`relative p-2.5 rounded-xl transition-colors focus:outline-none focus:ring-0 ${showSoftphone
-                      ? "text-blue-600 bg-blue-50"
-                      : "text-muted-foreground hover:text-primary hover:bg-primary/10"
-                      }`}
-                  >
-                    <Phone className="w-5 h-5" />
-                  </button>
-
-                  <SoftPhone
-                    showSip={showSoftphone}
-                    onClose={() => setShowSoftphone(false)}
-                    settings={{
-                      domain: "zkff.automaxsw.com",
-                      socketURL: "wss://zkff.automaxsw.com:7443",
-                    }}
-                    auth={{
-                      user: {
-                        userID: user?.id || "",
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        extension: (user as any)?.extension || "",
-                      },
-                    }}
-                  />
-                </>
-              )
-            }
+            {(isSuperAdmin || hasAnyPermission(["dashboard:ccm"])) && (
+              <button
+                onClick={toggle}
+                className={`relative p-2.5 rounded-xl transition-colors focus:outline-none focus:ring-0 ${
+                  isOpen
+                    ? "text-blue-600 bg-blue-50"
+                    : "text-muted-foreground hover:text-primary hover:bg-primary/10"
+                }`}
+              >
+                <Phone className="w-5 h-5" />
+              </button>
+            )}
 
             {/* Notifications */}
-            <button className="relative p-2.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl transition-colors focus:outline-none focus:ring-0">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-sidebar" />
-            </button>
+            <NotificationBell />
 
             <ThemeToggle />
 

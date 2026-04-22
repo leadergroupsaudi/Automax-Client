@@ -2176,9 +2176,15 @@ export const reportApi = {
   },
 
   // Export report to file
-  export: async (request: ReportExportRequest): Promise<Blob> => {
+  export: async (
+    request: ReportExportRequest,
+    language: string = "en",
+  ): Promise<Blob> => {
     const response = await apiClient.post("/admin/reports/export", request, {
       responseType: "blob",
+      headers: {
+        "Accept-Language": language,
+      },
     });
     return response.data;
   },
@@ -2743,6 +2749,18 @@ export const smsApi = {
   hardDelete: async (id: string): Promise<ApiResponse<any>> => {
     const response = await apiClient.delete<ApiResponse<any>>(
       `/notifications/${id}/permanent`,
+    );
+    return response.data;
+  },
+  getCount: async (
+    channel: string,
+    userId: string,
+  ): Promise<ApiResponse<any>> => {
+    const params = new URLSearchParams();
+    params.append("channel", channel);
+    params.append("user_id", userId);
+    const response = await apiClient.get<ApiResponse<any>>(
+      `/notifications/stats?${params.toString()}`,
     );
     return response.data;
   },
