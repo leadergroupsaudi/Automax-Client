@@ -578,6 +578,7 @@ function App() {
                   }
                 >
                   <Route path="/goals" element={<GoalsPage />} />
+                  <Route path="/goals/mine" element={<GoalsPage />} />
                   <Route
                     path="/goals/analytics"
                     element={<GoalAnalyticsPage />}

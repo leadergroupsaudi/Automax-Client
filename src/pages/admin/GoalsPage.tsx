@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   Plus,
@@ -93,10 +93,15 @@ function ExportDropdown({ filters }: { filters: GoalFilter }) {
 export const GoalsPage: React.FC = () => {
   const { t } = useTranslation();
   const { hasPermission } = usePermissions();
+  const location = useLocation();
+  // "My Goals" route reuses this page with a scope=mine filter; the backend
+  // intersects to goals the caller owns or collaborates on.
+  const isMyGoals = location.pathname.startsWith("/goals/mine");
   useGoalListWebSocket();
   const [filters, setFilters] = useState<GoalFilter>({
     page: 1,
     limit: 10,
+    ...(isMyGoals ? { scope: "mine" as const } : {}),
   });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showImportModal, setShowImportModal] = useState(false);
@@ -197,10 +202,10 @@ export const GoalsPage: React.FC = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-              {t("goals.title")}
+              {isMyGoals ? t("goals.myGoalsTitle") : t("goals.title")}
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {t("goals.subtitle")}
+              {isMyGoals ? t("goals.myGoalsSubtitle") : t("goals.subtitle")}
             </p>
           </div>
         </div>
