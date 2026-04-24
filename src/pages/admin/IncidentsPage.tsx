@@ -484,7 +484,8 @@ export const IncidentsPage: React.FC = () => {
     (filter.location_ids && filter.location_ids.length > 0) ||
     filter.assignee_id ||
     (filter.department_ids && filter.department_ids.length > 0) ||
-    filter.sla_breached !== undefined
+    filter.sla_breached !== undefined ||
+    filter.priority !== undefined
   );
 
   const getLookupValue = (incident: Incident, categoryCode: string) => {
@@ -984,7 +985,7 @@ export const IncidentsPage: React.FC = () => {
               selectedIds={filter.department_ids || []}
               onSelectionChange={(ids) =>
                 handleFilterChange(
-                  "classification_ids",
+                  "department_ids",
                   ids.length ? ids : undefined,
                 )
               }
