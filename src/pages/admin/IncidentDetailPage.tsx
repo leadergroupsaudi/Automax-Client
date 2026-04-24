@@ -1357,7 +1357,13 @@ export const IncidentDetailPage: React.FC = () => {
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div>
           <button
-            onClick={() => navigate("/incidents")}
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                navigate("/incidents");
+              }
+            }}
             className="flex items-center gap-1 text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] mb-3 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -2274,13 +2280,11 @@ export const IncidentDetailPage: React.FC = () => {
                                           </span>
                                           <span className="ml-1">
                                             ·{" "}
-                                            {users
-                                              .find(
-                                                (user: any) =>
-                                                  user.id ===
-                                                  attachment.uploaded_by?.id,
-                                              )
-                                              ?.departments?.map(
+                                            {(
+                                              attachment.uploaded_by
+                                                ?.departments || []
+                                            )
+                                              .map(
                                                 (department: any) =>
                                                   department.name,
                                               )
