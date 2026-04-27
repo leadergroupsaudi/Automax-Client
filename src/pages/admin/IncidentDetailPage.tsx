@@ -39,6 +39,7 @@ import {
   ArrowRight,
   Bot,
   ShieldCheck,
+  List,
 } from "lucide-react";
 import { Button } from "../../components/ui";
 import {
@@ -63,6 +64,8 @@ import {
   classificationApi,
   rejectionLogApi,
   aiQualityApi,
+  commentTemplateApi,
+  feedbackTemplateApi,
 } from "../../api/admin";
 import type { EscalationSLARecord } from "../../types";
 import { API_URL } from "../../api/client";
@@ -207,6 +210,7 @@ export const IncidentDetailPage: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<IncidentAttachment | null>(
     null,
   );
+  const [toggleMode, setToggleMode] = useState<"text" | "list">("text");
 
   // Queries
   const {
@@ -1266,6 +1270,23 @@ export const IncidentDetailPage: React.FC = () => {
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   };
+
+  const { data: commentTemplatesData } = useQuery({
+    queryKey: ["comment-templates", selectedTransition?.transition.id],
+    queryFn: () =>
+      commentTemplateApi.listByTransition(selectedTransition!.transition.id),
+    enabled: !!selectedTransition?.transition.id,
+  });
+
+  const { data: feedbackTemplatesData } = useQuery({
+    queryKey: ["feedback-templates", selectedTransition?.transition.id],
+    queryFn: () =>
+      feedbackTemplateApi.listByTransition(selectedTransition!.transition.id),
+    enabled: !!selectedTransition?.transition.id,
+  });
+
+  const commentTemplates = commentTemplatesData?.data || [];
+  const feedbackTemplates = feedbackTemplatesData?.data || [];
 
   if (isLoading) {
     return (
@@ -3267,6 +3288,9 @@ export const IncidentDetailPage: React.FC = () => {
               trans.manual_select_user &&
               !trans.assign_user_id) ||
             currentStepKey === "duration";
+          const showModeToggle =
+            (currentStepKey === "comment" && commentTemplates?.length) ||
+            (currentStepKey === "feedback" && feedbackTemplates?.length);
           return (
             <div className="fixed inset-0 bg-[hsl(var(--foreground)/0.6)] backdrop-blur-sm flex items-center justify-center z-50 p-4">
               <div className="bg-[hsl(var(--card))] rounded-xl shadow-2xl max-w-md w-full animate-scale-in flex flex-col max-h-[90vh]">
@@ -3339,16 +3363,46 @@ export const IncidentDetailPage: React.FC = () => {
                 {/* Step content */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
                   {/* Step label */}
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
-                      {stepTitles[currentStepKey]}
-                    </span>
-                    {isMandatory ? (
-                      <span className="text-red-500 font-bold">*</span>
-                    ) : (
-                      <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                        ({t("incidents.optional", "optional")})
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
+                        {stepTitles[currentStepKey]}
                       </span>
+
+                      {isMandatory ? (
+                        <span className="text-red-500 font-bold">*</span>
+                      ) : (
+                        <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                          ({t("incidents.optional", "optional")})
+                        </span>
+                      )}
+                    </div>
+                    {showModeToggle && (
+                      <div className="inline-flex border border-border rounded-md overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setToggleMode("text")}
+                          className={`px-3 py-1.5 text-sm transition-colors ${
+                            toggleMode === "text"
+                              ? "bg-background text-primary border border-primary rounded-l-md"
+                              : "bg-muted/0.6 text-muted-foreground"
+                          }`}
+                        >
+                          <FileText className="w-4 h-4" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setToggleMode("list")}
+                          className={`px-3 py-1.5 text-sm transition-colors ${
+                            toggleMode === "list"
+                              ? "bg-background text-primary border rounded-r-md border-primary"
+                              : "bg-muted/0.6 text-muted-foreground border-l border-border"
+                          }`}
+                        >
+                          <List className="w-4 h-4" />
+                        </button>
+                      </div>
                     )}
                   </div>
 
@@ -4107,17 +4161,74 @@ export const IncidentDetailPage: React.FC = () => {
                         </div>
                         {/* Feedback Comment */}
                         <div>
-                          <textarea
-                            value={transitionFeedbackComment}
-                            onChange={(e) =>
-                              setTransitionFeedbackComment(e.target.value)
-                            }
-                            placeholder={t(
-                              "incidents.feedbackCommentPlaceholder",
-                            )}
-                            rows={2}
-                            className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] resize-none"
-                          />
+                          {showModeToggle && toggleMode === "list" ? (
+                            <div className="border rounded-lg overflow-hidden">
+                              {feedbackTemplates.length === 0 ? (
+                                <p className="p-3 text-sm text-[hsl(var(--muted-foreground))]">
+                                  No templates available
+                                </p>
+                              ) : (
+                                <>
+                                  <label className="flex items-center gap-2 px-3 py-2 border-b cursor-pointer hover:bg-[hsl(var(--muted)/0.5)]">
+                                    <input
+                                      type="radio"
+                                      checked={!transitionFeedbackComment}
+                                      onChange={() => {
+                                        setTransitionFeedbackComment("");
+                                        if (transitionErrors.feedbackComment)
+                                          setTransitionErrors((prev) => ({
+                                            ...prev,
+                                            feedbackComment: "",
+                                          }));
+                                      }}
+                                    />
+                                    <span className="text-sm text-[hsl(var(--muted-foreground))]">
+                                      None
+                                    </span>
+                                  </label>
+                                  {feedbackTemplates.map((tpl: any) => (
+                                    <label
+                                      key={tpl.id}
+                                      className="flex items-center gap-2 px-3 py-2 border-b last:border-0 cursor-pointer hover:bg-[hsl(var(--muted)/0.5)]"
+                                    >
+                                      <input
+                                        type="radio"
+                                        checked={
+                                          transitionFeedbackComment ===
+                                          tpl.feedback_text
+                                        }
+                                        onChange={() => {
+                                          setTransitionFeedbackComment(
+                                            tpl.feedback_text,
+                                          );
+                                          if (transitionErrors.feedbackComment)
+                                            setTransitionErrors((prev) => ({
+                                              ...prev,
+                                              feedbackComment: "",
+                                            }));
+                                        }}
+                                      />
+                                      <span className="text-sm">
+                                        {tpl.feedback_text}
+                                      </span>
+                                    </label>
+                                  ))}
+                                </>
+                              )}
+                            </div>
+                          ) : (
+                            <textarea
+                              value={transitionFeedbackComment}
+                              onChange={(e) =>
+                                setTransitionFeedbackComment(e.target.value)
+                              }
+                              placeholder={t(
+                                "incidents.feedbackCommentPlaceholder",
+                              )}
+                              rows={2}
+                              className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] resize-none"
+                            />
+                          )}
                           {/* <select
                         className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] resize-none"
                         value={transitionFeedbackComment}
@@ -4383,20 +4494,74 @@ export const IncidentDetailPage: React.FC = () => {
                   {/* Comment */}
                   {currentStepKey === "comment" && (
                     <>
-                      <textarea
-                        value={transitionComment}
-                        onChange={(e) => {
-                          setTransitionComment(e.target.value);
-                          if (transitionErrors.comment)
-                            setTransitionErrors((prev) => ({
-                              ...prev,
-                              comment: "",
-                            }));
-                        }}
-                        placeholder={t("incidents.addCommentForTransition")}
-                        rows={3}
-                        className={`w-full px-4 py-3 bg-[hsl(var(--background))] border rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] resize-none ${transitionErrors.comment ? "border-red-500" : "border-[hsl(var(--border))]"}`}
-                      />
+                      {showModeToggle && toggleMode === "list" ? (
+                        <div className="border rounded-lg overflow-hidden">
+                          {commentTemplates.length === 0 ? (
+                            <p className="p-3 text-sm text-[hsl(var(--muted-foreground))]">
+                              No templates available
+                            </p>
+                          ) : (
+                            <>
+                              <label className="flex items-center gap-2 px-3 py-2 border-b cursor-pointer hover:bg-[hsl(var(--muted)/0.5)]">
+                                <input
+                                  type="radio"
+                                  checked={!transitionComment}
+                                  onChange={() => {
+                                    setTransitionComment("");
+                                    if (transitionErrors.comment)
+                                      setTransitionErrors((prev) => ({
+                                        ...prev,
+                                        comment: "",
+                                      }));
+                                  }}
+                                />
+                                <span className="text-sm text-[hsl(var(--muted-foreground))]">
+                                  None
+                                </span>
+                              </label>
+                              {commentTemplates.map((tpl: any) => (
+                                <label
+                                  key={tpl.id}
+                                  className="flex items-center gap-2 px-3 py-2 border-b last:border-0 cursor-pointer hover:bg-[hsl(var(--muted)/0.5)]"
+                                >
+                                  <input
+                                    type="radio"
+                                    checked={
+                                      transitionComment === tpl.comment_text
+                                    }
+                                    onChange={() => {
+                                      setTransitionComment(tpl.comment_text);
+                                      if (transitionErrors.comment)
+                                        setTransitionErrors((prev) => ({
+                                          ...prev,
+                                          comment: "",
+                                        }));
+                                    }}
+                                  />
+                                  <span className="text-sm">
+                                    {tpl.comment_text}
+                                  </span>
+                                </label>
+                              ))}
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        <textarea
+                          value={transitionComment}
+                          onChange={(e) => {
+                            setTransitionComment(e.target.value);
+                            if (transitionErrors.comment)
+                              setTransitionErrors((prev) => ({
+                                ...prev,
+                                comment: "",
+                              }));
+                          }}
+                          placeholder={t("incidents.addCommentForTransition")}
+                          rows={3}
+                          className={`w-full px-4 py-3 bg-[hsl(var(--background))] border rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] resize-none ${transitionErrors.comment ? "border-red-500" : "border-[hsl(var(--border))]"}`}
+                        />
+                      )}
                       {transitionErrors.comment && (
                         <p className="text-xs text-red-500 mt-1">
                           {transitionErrors.comment}
