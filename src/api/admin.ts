@@ -2999,3 +2999,83 @@ export const SmsLinkApi = {
     return response.data;
   },
 };
+
+export const commentTemplateApi = {
+  listByTransition: async (
+    workflowTransitionId: string,
+  ): Promise<ApiResponse<any[]>> => {
+    const response = await apiClient.get<ApiResponse<any[]>>(
+      `/admin/comment-templates/workflow-transition/${workflowTransitionId}`,
+    );
+    return response.data;
+  },
+
+  create: async (data: {
+    comment_text: string;
+    workflow_transition_id: string;
+  }): Promise<ApiResponse<any>> => {
+    const response = await apiClient.post<ApiResponse<any>>(
+      `/admin/comment-templates`,
+      data,
+    );
+    return response.data;
+  },
+
+  update: async (
+    id: string,
+    data: { comment_text?: string; is_active?: boolean },
+  ): Promise<ApiResponse<any>> => {
+    const response = await apiClient.put<ApiResponse<any>>(
+      `/admin/comment-templates/${id}`,
+      data,
+    );
+    return response.data;
+  },
+
+  delete: async (id: string): Promise<ApiResponse<unknown>> => {
+    const response = await apiClient.delete<ApiResponse<unknown>>(
+      `/admin/comment-templates/${id}`,
+    );
+    return response.data;
+  },
+};
+
+export const feedbackTemplateApi = {
+  listByTransition: async (
+    workflowTransitionId: string,
+  ): Promise<ApiResponse<any[]>> => {
+    const response = await apiClient.get<ApiResponse<any[]>>(
+      `/admin/feedback-templates/workflow-transition/${workflowTransitionId}`,
+    );
+    return response.data;
+  },
+
+  create: async (data: {
+    feedback_text: string;
+    workflow_transition_id: string;
+  }): Promise<ApiResponse<any>> => {
+    const response = await apiClient.post<ApiResponse<any>>(
+      `/admin/feedback-templates`,
+      data,
+    );
+    return response.data;
+  },
+
+  update: async (
+    id: string,
+    data: { feedback_text?: string; is_active?: boolean },
+  ): Promise<ApiResponse<any>> => {
+    const response = await apiClient.put<ApiResponse<any>>(
+      `/admin/feedback-templates/${id}`,
+      data,
+    );
+    return response.data;
+  },
+
+  delete: async (id: string): Promise<ApiResponse<unknown>> => {
+    const response = await apiClient.delete<ApiResponse<unknown>>(
+      `/admin/feedback-templates/${id}`,
+    );
+    return response.data;
+  },
+};

@@ -35,6 +35,8 @@ import {
   userApi,
   lookupApi,
   escalationPolicyApi,
+  feedbackTemplateApi,
+  commentTemplateApi,
 } from "../../api/admin";
 import { HierarchicalCheckboxTree } from "../../components/workflow/HierarchicalCheckboxTree";
 import type {
@@ -215,6 +217,197 @@ const baseFormFields: {
   },
 ];
 
+const TemplateModalBody: React.FC<{
+  type: "comment" | "feedback";
+  transitionId: string;
+}> = ({ type, transitionId }) => {
+  const [newText, setNewText] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const queryKey =
+    type === "feedback"
+      ? ["feedback-templates", transitionId]
+      : ["comment-templates", transitionId];
+
+  const { data, isLoading, refetch, isRefetching } = useQuery({
+    queryKey,
+    queryFn: () =>
+      type === "feedback"
+        ? feedbackTemplateApi.listByTransition(transitionId)
+        : commentTemplateApi.listByTransition(transitionId),
+  });
+
+  const templates: any[] = data?.data || [];
+
+  const createMutation = useMutation({
+    mutationFn: (text: string) => {
+      const payload: any = {
+        [type === "feedback" ? "feedback_text" : "comment_text"]: text,
+        workflow_transition_id: transitionId,
+      };
+      return type === "feedback"
+        ? feedbackTemplateApi.create(payload)
+        : commentTemplateApi.create(payload);
+    },
+    onSuccess: () => {
+      refetch();
+      setNewText("");
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, text }: { id: string; text: string }) =>
+      type === "feedback"
+        ? feedbackTemplateApi.update(id, {
+            feedback_text: text,
+          })
+        : commentTemplateApi.update(id, {
+            comment_text: text,
+          }),
+    onSuccess: () => {
+      refetch();
+      setEditingId(null);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => {
+      setDeletingId(id);
+      return type === "feedback"
+        ? feedbackTemplateApi.delete(id)
+        : commentTemplateApi.delete(id);
+    },
+    onSettled: () => setDeletingId(null),
+    onSuccess: () => refetch(),
+  });
+
+  const label = type === "feedback" ? "feedback" : "comment";
+
+  return (
+    <div className="overflow-y-auto max-h-[calc(80vh-64px)] p-5 space-y-3">
+      {isLoading || isRefetching ? (
+        <div className="flex items-center justify-center gap-2 py-6">
+          <Loader2 className="w-4 h-4 animate-spin text-[hsl(var(--muted-foreground))]" />
+          <span className="text-sm text-[hsl(var(--muted-foreground))]">
+            Loading...
+          </span>
+        </div>
+      ) : templates.length === 0 ? (
+        <p className="text-sm text-[hsl(var(--muted-foreground))] italic text-center py-4">
+          No {label} options yet.
+        </p>
+      ) : (
+        templates.map((tpl) => (
+          <div
+            key={tpl.id}
+            className="flex items-center gap-2 p-2.5 bg-[hsl(var(--muted)/0.5)] border border-[hsl(var(--border))] rounded-lg"
+          >
+            {editingId === tpl.id ? (
+              <>
+                <input
+                  type="text"
+                  value={editingText}
+                  autoFocus
+                  onChange={(e) => setEditingText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const t = editingText.trim();
+                      if (t) updateMutation.mutate({ id: tpl.id, text: t });
+                    }
+                    if (e.key === "Escape") setEditingId(null);
+                  }}
+                  className="flex-1 px-2 py-1 bg-[hsl(var(--background))] border border-[hsl(var(--primary))] rounded-md text-sm focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const t = editingText.trim();
+                    if (t) updateMutation.mutate({ id: tpl.id, text: t });
+                  }}
+                  className="p-1 text-emerald-600 hover:bg-emerald-500/10 rounded"
+                >
+                  {updateMutation?.isPending ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Check className="w-3.5 h-3.5" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingId(null)}
+                  className="p-1 text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] rounded"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="flex-1 text-sm text-[hsl(var(--foreground))]">
+                  {type === "feedback" ? tpl.feedback_text : tpl.comment_text}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingId(tpl.id);
+                    setEditingText(
+                      type === "feedback"
+                        ? tpl.feedback_text
+                        : tpl.comment_text,
+                    );
+                  }}
+                  className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  disabled={deleteMutation.isPending}
+                  onClick={() => deleteMutation.mutate(tpl.id)}
+                  className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] rounded-lg transition-colors disabled:opacity-40"
+                >
+                  {deletingId === tpl.id ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              </>
+            )}
+          </div>
+        ))
+      )}
+
+      <div className="flex items-center gap-2 pt-1">
+        <input
+          type="text"
+          placeholder={`New ${label} option...`}
+          value={newText}
+          onChange={(e) => setNewText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && newText.trim())
+              createMutation.mutate(newText.trim());
+          }}
+          className="flex-1 px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+        />
+        <Button
+          onClick={() => {
+            if (newText.trim()) createMutation.mutate(newText.trim());
+          }}
+          disabled={!newText.trim()}
+          isLoading={createMutation.isPending}
+          leftIcon={
+            !createMutation.isPending ? <Plus className="w-4 h-4" /> : undefined
+          }
+        >
+          Add
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 export const WorkflowDesignerPage: React.FC = () => {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
@@ -281,6 +474,12 @@ export const WorkflowDesignerPage: React.FC = () => {
 
   // Merge allowed role IDs
   const [mergeAllowedRoleIds, setMergeAllowedRoleIds] = useState<string[]>([]);
+
+  const [templateModal, setTemplateModal] = React.useState<{
+    type: "comment" | "feedback";
+    transitionId: string;
+    transitionName: string;
+  } | null>(null);
 
   const { data: workflowData, isLoading } = useQuery({
     queryKey: ["admin", "workflow", id],
@@ -3396,6 +3595,32 @@ export const WorkflowDesignerPage: React.FC = () => {
                             }
                             className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm"
                           />
+                          {(req.requirement_type === "comment" ||
+                            req.requirement_type === "feedback") && (
+                            <>
+                              <hr className="border-[hsl(var(--border))]" />
+                              <button
+                                type="button"
+                                disabled={!configuringTransition?.id}
+                                onClick={() =>
+                                  setTemplateModal({
+                                    type: req.requirement_type as
+                                      | "comment"
+                                      | "feedback",
+                                    transitionId: configuringTransition!.id,
+                                    transitionName: configuringTransition!.name,
+                                  })
+                                }
+                                className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--background))] hover:bg-[hsl(var(--muted)/0.5)] transition-colors disabled:opacity-40"
+                              >
+                                <Settings className="w-3.5 h-3.5" />
+                                Configure{" "}
+                                {req.requirement_type === "feedback"
+                                  ? "feedback"
+                                  : "comments"}
+                              </button>
+                            </>
+                          )}
                         </div>
                       ))
                     )}
@@ -4025,6 +4250,36 @@ export const WorkflowDesignerPage: React.FC = () => {
                 </Button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {templateModal && (
+        <div className="fixed inset-0 bg-[hsl(var(--foreground)/0.6)] backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-[hsl(var(--card))] rounded-xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden animate-scale-in">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.5)]">
+              <div className="flex items-center gap-2">
+                <Settings className="w-4 h-4 text-[hsl(var(--primary))]" />
+                <h3 className="text-sm font-semibold text-[hsl(var(--foreground))]">
+                  Configure{" "}
+                  {templateModal.type === "feedback" ? "feedback" : "comment"}{" "}
+                  options
+                </h3>
+                <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                  · {templateModal.transitionName}
+                </span>
+              </div>
+              <button
+                onClick={() => setTemplateModal(null)}
+                className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <TemplateModalBody
+              type={templateModal.type}
+              transitionId={templateModal.transitionId}
+            />
           </div>
         </div>
       )}
