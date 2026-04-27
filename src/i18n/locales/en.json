@@ -1941,7 +1941,11 @@
       "evidence": {
         "heading": "Evidence ({{count}})",
         "upload": "Upload Evidence",
+        "openFolder": "Open Goal Folder in Documents",
+        "openFolderTitle": "Open this goal's folder in the Documents browser",
         "searchPlaceholder": "Search by title or file name...",
+        "smartSearchPlaceholder": "Search by name, content, or tags",
+        "smartSearchActive": "Showing files matching “{{query}}” ({{count}} result(s))",
         "allTypes": "All Types",
         "allStatuses": "All Statuses",
         "statusDraft": "Draft",
@@ -2313,6 +2317,8 @@
         "versionCurrent": "Current",
         "noVersions": "No versions available.",
         "downloadVersionTitle": "Download this version",
+        "uploadVersion": "Upload version",
+        "uploadVersionTitle": "Upload a new version of this file",
         "systemActor": "System",
         "uploadModal": {
           "title": "Upload Evidence",
@@ -2338,6 +2344,15 @@
           "currentFile": "Current file:",
           "selectReplacement": "Click to select a replacement file",
           "replace": "Replace File"
+        },
+        "versionUploadModal": {
+          "title": "Upload New Version",
+          "currentFile": "Current file:",
+          "selectFile": "Click to select a file",
+          "descriptionLabel": "Version description",
+          "descriptionPlaceholder": "What changed in this version?",
+          "optional": "(optional)",
+          "submit": "Upload Version"
         },
         "transitionModal": {
           "title": "Transition Evidence",

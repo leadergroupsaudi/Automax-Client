@@ -25,6 +25,7 @@ import {
   MessageSquare,
   History,
   Send,
+  FolderOpen,
 } from "lucide-react";
 import { usePermissions } from "../../hooks/usePermissions";
 import { PERMISSIONS } from "../../constants/permissions";
@@ -74,6 +75,8 @@ import { CheckInForm } from "../../components/goals/CheckInForm";
 import { CheckInCard } from "../../components/goals/CheckInCard";
 import { useAuthStore } from "../../stores/authStore";
 import { useGoalWebSocket } from "../../lib/services/goalWebSocket";
+import { useDocumentSearch } from "../../hooks/useDocuments";
+import type { DmsFile } from "../../types/document";
 
 type TabType = "overview" | "metrics" | "evidence" | "collaborators" | "check-ins" | "comments" | "activity";
 
@@ -106,10 +109,19 @@ export const GoalDetailPage: React.FC = () => {
 
   // Evidence filters
   const [evidenceSearch, setEvidenceSearch] = useState("");
+  const [debouncedEvidenceSearch, setDebouncedEvidenceSearch] = useState("");
   const [evidenceTypeFilter, setEvidenceTypeFilter] = useState<
     EvidenceType | ""
   >("");
   const [evidenceStatusFilter, setEvidenceStatusFilter] = useState("");
+
+  // Debounce the evidence search to avoid spamming the DMS smart-search endpoint.
+  React.useEffect(() => {
+    const handle = setTimeout(() => {
+      setDebouncedEvidenceSearch(evidenceSearch.trim());
+    }, 400);
+    return () => clearTimeout(handle);
+  }, [evidenceSearch]);
 
   // ── New Metric Form ────────────────────────────────
   const [newMetric, setNewMetric] = useState<GoalMetricCreateRequest>({
@@ -122,14 +134,17 @@ export const GoalDetailPage: React.FC = () => {
     formula: "",
   });
 
-  // ── Evidence filter (debounced via memo) ──────────
+  // ── Evidence filter ──────────────────────────────
+  // When a search query is set we intentionally drop the backend name LIKE
+  // filter — the DMS smart-search hook below provides the matching set
+  // (name + content + tags) which we intersect client-side, so leaving the
+  // backend filter in would over-restrict the results.
   const evidenceFilter: EvidenceFilter = useMemo(() => {
     const f: EvidenceFilter = {};
-    if (evidenceSearch.trim()) f.search = evidenceSearch.trim();
     if (evidenceTypeFilter) f.evidence_type = evidenceTypeFilter;
     if (evidenceStatusFilter) f.status = evidenceStatusFilter;
     return f;
-  }, [evidenceSearch, evidenceTypeFilter, evidenceStatusFilter]);
+  }, [evidenceTypeFilter, evidenceStatusFilter]);
 
   // ── Queries ────────────────────────────────────────
   const { data: goalData, isLoading, error } = useGoal(id!);
@@ -137,6 +152,23 @@ export const GoalDetailPage: React.FC = () => {
     id!,
     evidenceFilter,
   );
+
+  // ── DMS smart search (by name / content / tags, scoped to this goal) ─────
+  // When the user types in the Evidence search box we additionally hit the
+  // MyDocs search endpoint with the goal_id tag so we surface hits on file
+  // content and tags — not just the file-name LIKE match the backend goal
+  // service does. Empty query → hook is disabled, listing falls back to the
+  // standard evidence query.
+  const dmsSearchTags = useMemo(
+    () => (id ? { goal_id: id } : undefined),
+    [id],
+  );
+  const { data: dmsSearchResults, isLoading: dmsSearchLoading } =
+    useDocumentSearch(
+      debouncedEvidenceSearch,
+      dmsSearchTags,
+      !!debouncedEvidenceSearch && !!id,
+    );
 
   // ── Check-in state ─────────────────────────────────
   const [checkInPage, setCheckInPage] = useState(1);
@@ -180,12 +212,33 @@ export const GoalDetailPage: React.FC = () => {
 
   // ── Derived ────────────────────────────────────────
   const goal = goalData?.data;
-  const evidences = evidenceData?.data ?? [];
+  const allEvidences = evidenceData?.data ?? [];
   const canEdit = hasPermission(PERMISSIONS.GOALS_UPDATE);
   const canDelete = hasPermission(PERMISSIONS.GOALS_DELETE);
   const metricToUpdate = metricUpdateId
     ? (goal?.metrics?.find((m: GoalMetric) => m.id === metricUpdateId) ?? null)
     : null;
+
+  // When a smart search is active, narrow the evidence list to the rows whose
+  // DMS file is in the search hit set. We intersect rather than replacing the
+  // list because the EvidenceCard renders rich workflow info (state, history,
+  // versions, transitions) that a raw DmsFile doesn't carry.
+  const dmsHitFileIds = useMemo<Set<string> | null>(() => {
+    if (!debouncedEvidenceSearch) return null;
+    const hits = (dmsSearchResults?.files as DmsFile[] | undefined) ?? [];
+    return new Set(hits.map((f) => f.uuid));
+  }, [debouncedEvidenceSearch, dmsSearchResults]);
+
+  const evidences = useMemo(() => {
+    if (!dmsHitFileIds) return allEvidences;
+    return allEvidences.filter(
+      (e) =>
+        e.documenta_file_id && dmsHitFileIds.has(e.documenta_file_id),
+    );
+  }, [allEvidences, dmsHitFileIds]);
+
+  const evidenceListLoading =
+    evidenceLoading || (!!debouncedEvidenceSearch && dmsSearchLoading);
 
   // ── Helpers ────────────────────────────────────────
   const formatDate = (dateStr?: string) => {
@@ -917,19 +970,31 @@ export const GoalDetailPage: React.FC = () => {
       {activeTab === "evidence" && (
         <div className="space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
               {t("goals.detail.evidence.heading", {
                 count: evidenceData?.total ?? 0,
               })}
             </h2>
-            <button
-              onClick={() => setShowEvidenceUpload(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
-            >
-              <Upload className="w-4 h-4" />
-              {t("goals.detail.evidence.upload")}
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              {goal.documenta_folder_id && (
+                <Link
+                  to={`/goals/documents?file=${goal.documenta_folder_id}`}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors"
+                  title={t("goals.detail.evidence.openFolderTitle")}
+                >
+                  <FolderOpen className="w-4 h-4" />
+                  {t("goals.detail.evidence.openFolder")}
+                </Link>
+              )}
+              <button
+                onClick={() => setShowEvidenceUpload(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                <Upload className="w-4 h-4" />
+                {t("goals.detail.evidence.upload")}
+              </button>
+            </div>
           </div>
 
           {/* Search & Filter Bar */}
@@ -942,7 +1007,9 @@ export const GoalDetailPage: React.FC = () => {
                   type="text"
                   value={evidenceSearch}
                   onChange={(e) => setEvidenceSearch(e.target.value)}
-                  placeholder={t("goals.detail.evidence.searchPlaceholder")}
+                  placeholder={t(
+                    "goals.detail.evidence.smartSearchPlaceholder",
+                  )}
                   className="w-full ltr:pl-9 rtl:pr-9 ltr:pr-3 rtl:pl-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -995,8 +1062,21 @@ export const GoalDetailPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Smart-search banner */}
+          {debouncedEvidenceSearch && (
+            <div className="rounded-lg border border-blue-200 dark:border-blue-800/60 bg-blue-50 dark:bg-blue-900/20 px-4 py-2.5 text-xs text-blue-700 dark:text-blue-300 flex items-center gap-2">
+              <Search className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>
+                {t("goals.detail.evidence.smartSearchActive", {
+                  query: debouncedEvidenceSearch,
+                  count: evidences.length,
+                })}
+              </span>
+            </div>
+          )}
+
           {/* Evidence List */}
-          {evidenceLoading ? (
+          {evidenceListLoading ? (
             <div className="flex items-center justify-center py-20">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>

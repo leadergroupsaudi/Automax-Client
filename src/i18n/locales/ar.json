@@ -1834,7 +1834,11 @@
       "evidence": {
         "heading": "الأدلة ({{count}})",
         "upload": "رفع دليل",
+        "openFolder": "فتح مجلد الهدف في المستندات",
+        "openFolderTitle": "افتح مجلد هذا الهدف في متصفح المستندات",
         "searchPlaceholder": "ابحث بالعنوان أو اسم الملف...",
+        "smartSearchPlaceholder": "ابحث بالاسم أو المحتوى أو الوسوم",
+        "smartSearchActive": "عرض الملفات المطابقة لـ “{{query}}” ({{count}} نتيجة)",
         "allTypes": "جميع الأنواع",
         "allStatuses": "جميع الحالات",
         "statusDraft": "مسودة",
@@ -2206,6 +2210,8 @@
         "versionCurrent": "الحالي",
         "noVersions": "لا توجد إصدارات متاحة.",
         "downloadVersionTitle": "تنزيل هذا الإصدار",
+        "uploadVersion": "رفع إصدار",
+        "uploadVersionTitle": "رفع إصدار جديد من هذا الملف",
         "systemActor": "النظام",
         "uploadModal": {
           "title": "تحميل الدليل",
@@ -2231,6 +2237,15 @@
           "currentFile": "الملف الحالي:",
           "selectReplacement": "انقر لاختيار ملف بديل",
           "replace": "استبدال الملف"
+        },
+        "versionUploadModal": {
+          "title": "رفع إصدار جديد",
+          "currentFile": "الملف الحالي:",
+          "selectFile": "انقر لاختيار ملف",
+          "descriptionLabel": "وصف الإصدار",
+          "descriptionPlaceholder": "ما الذي تغيّر في هذا الإصدار؟",
+          "optional": "(اختياري)",
+          "submit": "رفع الإصدار"
         },
         "transitionModal": {
           "title": "نقل الدليل",
