@@ -2148,7 +2148,11 @@
         "employeeIdPlaceholder": "UUID of employee",
         "reviewerId": "Reviewer ID",
         "reviewerIdPlaceholder": "UUID of reviewer",
-        "assign": "Assign"
+        "assign": "Assign",
+        "employee": "Employee",
+        "reviewer": "Reviewer",
+        "selectEmployee": "Select an employee",
+        "selectReviewer": "Select a reviewer"
       },
       "my": {
         "title": "My Reviews",

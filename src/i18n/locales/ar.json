@@ -2041,7 +2041,11 @@
         "employeeIdPlaceholder": "UUID للموظف",
         "reviewerId": "معرّف المُراجِع",
         "reviewerIdPlaceholder": "UUID للمُراجِع",
-        "assign": "إسناد"
+        "assign": "إسناد",
+        "employee": "الموظف",
+        "reviewer": "المراجع",
+        "selectEmployee": "اختر موظفاً",
+        "selectReviewer": "اختر مراجعاً"
       },
       "my": {
         "title": "مراجعاتي",
