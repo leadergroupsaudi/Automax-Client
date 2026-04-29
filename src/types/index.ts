@@ -167,6 +167,7 @@ export interface LookupCategory {
   validation_rules?: string;
   values_count: number;
   values?: LookupValue[];
+  redirect_url?: string;
   created_at: string;
   updated_at: string;
 }
@@ -185,6 +186,7 @@ export interface LookupValue {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  redirect_url: string;
 }
 
 export interface LookupCategoryCreateRequest {
@@ -196,6 +198,7 @@ export interface LookupCategoryCreateRequest {
   add_to_incident_form?: boolean;
   field_type?: FieldType;
   validation_rules?: string;
+  redirect_url?: string;
 }
 
 export interface LookupCategoryUpdateRequest {
@@ -207,6 +210,7 @@ export interface LookupCategoryUpdateRequest {
   add_to_incident_form?: boolean;
   field_type?: FieldType;
   validation_rules?: string;
+  redirect_url?: string;
 }
 
 export interface LookupValueCreateRequest {
@@ -218,6 +222,7 @@ export interface LookupValueCreateRequest {
   color?: string;
   is_default?: boolean;
   is_active?: boolean;
+  redirect_url?: string;
 }
 
 export interface LookupValueUpdateRequest {

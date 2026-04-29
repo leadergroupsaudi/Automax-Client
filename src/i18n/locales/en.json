@@ -1307,7 +1307,9 @@
     "selectCategory": "Select a category from the left to view its values.",
     "descriptionPlaceholder": "Enter a short description...",
     "noDescription": "No description",
-    "addToIncidentForm": "Add to Incident form"
+    "addToIncidentForm": "Add to Incident form",
+    "redirectURLPlaceholder": "https://example.com/ (:id to be replaced field value)",
+    "redirectURL": "Redirect URL"
   },
   "requests": {
     "title": "Requests",

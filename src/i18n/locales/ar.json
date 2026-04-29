@@ -1264,7 +1264,9 @@
     "selectCategory": "اختر فئة من اليسار لعرض قيمها.",
     "descriptionPlaceholder": "أدخل وصفاً قصيراً...",
     "noDescription": "لا يوجد وصف",
-    "addToIncidentForm": "إضافة إلى نموذج الحادث"
+    "addToIncidentForm": "إضافة إلى نموذج الحادث",
+    "redirectURLPlaceholder": "https://example.com/ (':id' ليتم استبداله بقيمة الحقل)",
+    "redirectURL": "رابط التحويل"
   },
   "requests": {
     "title": "الطلبات",

@@ -38,6 +38,7 @@ interface CategoryFormData {
   is_active: boolean;
   add_to_incident_form: boolean;
   field_type: FieldType;
+  redirect_url: string;
   validation_rules: ValidationRules;
 }
 
@@ -49,6 +50,7 @@ const initialCategoryFormData: CategoryFormData = {
   is_active: true,
   add_to_incident_form: false,
   field_type: "select",
+  redirect_url: "",
   validation_rules: {},
 };
 
@@ -62,6 +64,7 @@ interface ValueFormData {
   color: string;
   is_default: boolean;
   is_active: boolean;
+  redirect_url: string;
 }
 
 const initialValueFormData: ValueFormData = {
@@ -73,6 +76,7 @@ const initialValueFormData: ValueFormData = {
   color: "#3B82F6",
   is_default: false,
   is_active: true,
+  redirect_url: "",
 };
 
 // Predefined colors for values
@@ -237,6 +241,7 @@ export const LookupsPage: React.FC = () => {
       add_to_incident_form: category.add_to_incident_form || false,
       field_type: (category.field_type || "select") as FieldType,
       validation_rules: validationRules,
+      redirect_url: category?.redirect_url || "",
     });
     setIsCategoryModalOpen(true);
   };
@@ -265,6 +270,7 @@ export const LookupsPage: React.FC = () => {
       add_to_incident_form: categoryFormData.add_to_incident_form,
       field_type: categoryFormData.field_type,
       validation_rules: validationRulesJSON || undefined,
+      redirect_url: categoryFormData?.redirect_url || undefined,
     };
 
     if (editingCategory) {
@@ -296,6 +302,7 @@ export const LookupsPage: React.FC = () => {
       color: value.color || "#3B82F6",
       is_default: value.is_default,
       is_active: value.is_active,
+      redirect_url: value?.redirect_url,
     });
     setIsValueModalOpen(true);
   };
@@ -319,6 +326,7 @@ export const LookupsPage: React.FC = () => {
       color: valueFormData.color || undefined,
       is_default: valueFormData.is_default,
       is_active: valueFormData.is_active,
+      redirect_url: valueFormData?.redirect_url || "",
     };
 
     if (editingValue) {
@@ -822,6 +830,24 @@ export const LookupsPage: React.FC = () => {
                     }
                     className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
                     dir="rtl"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
+                    {t("lookups.redirectURL")}
+                  </label>
+                  <input
+                    type="text"
+                    placeholder={t("lookups.redirectURLPlaceholder")}
+                    value={categoryFormData?.redirect_url}
+                    onChange={(e) =>
+                      setCategoryFormData({
+                        ...categoryFormData,
+                        redirect_url: e.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
                   />
                 </div>
 
