@@ -477,11 +477,14 @@ export const LocationsPage: React.FC = () => {
               className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--success))] text-white rounded-lg hover:bg-[hsl(var(--success)/0.9)] transition-colors text-sm font-medium shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Download className="w-4 h-4" />
-              {isExporting ? "Exporting..." : "Export"}
+              {isExporting ? t("common.exporting") : t("common.export")}
             </button>
             <label className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))] rounded-lg hover:bg-[hsl(var(--accent)/0.9)] transition-colors text-sm font-medium shadow-md cursor-pointer">
               <Upload className="w-4 h-4" />
-              <span>{isImporting ? "Importing..." : "Import"}</span>
+              <span>
+                {" "}
+                {isImporting ? t("common.importing") : t("common.import")}
+              </span>
               <input
                 type="file"
                 accept=".json"

@@ -582,7 +582,7 @@ export const UsersPage: React.FC = () => {
             onClick={handleExport}
             isLoading={isExporting}
           >
-            {isExporting ? "Exporting..." : t("common.export")}
+            {isExporting ? t("common.exporting") : t("common.export")}
           </Button>
           <label className="inline-flex">
             <Button
@@ -591,7 +591,7 @@ export const UsersPage: React.FC = () => {
               leftIcon={<Upload className="w-4 h-4" />}
               disabled={isImporting}
             >
-              {isImporting ? "Importing..." : "Import"}
+              {isImporting ? t("common.importing") : t("common.import")}
             </Button>
             <input
               type="file"
@@ -884,37 +884,37 @@ export const UsersPage: React.FC = () => {
               <table className="min-w-full">
                 <thead>
                   <tr className="border-b border-[hsl(var(--border))]">
-                    <th className="px-6 py-4 text-left">
+                    <th className="px-6 py-4 text-start">
                       <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
                         {t("users.user")}
                       </span>
                     </th>
-                    <th className="px-6 py-4 text-left">
+                    <th className="px-6 py-4 text-start">
                       <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
                         {t("users.email")}
                       </span>
                     </th>
-                    <th className="px-6 py-4 text-left">
+                    <th className="px-6 py-4 text-start">
                       <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                        Extension
+                        {t("users.extension")}
                       </span>
                     </th>
-                    <th className="px-6 py-4 text-left">
+                    <th className="px-6 py-4 text-start">
                       <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
                         {t("users.roles")}
                       </span>
                     </th>
-                    <th className="px-6 py-4 text-left">
+                    <th className="px-6 py-4 text-start">
                       <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
                         {t("users.department")}
                       </span>
                     </th>
-                    <th className="px-6 py-4 text-left">
+                    <th className="px-6 py-4 text-start">
                       <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
                         {t("users.location")}
                       </span>
                     </th>
-                    <th className="px-6 py-4 text-left">
+                    <th className="px-6 py-4 text-start">
                       <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
                         {t("users.status")}
                       </span>
@@ -1330,7 +1330,7 @@ export const UsersPage: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-                    Extension
+                    {t("users.extension")}
                   </label>
                   <input
                     type="text"
@@ -1724,7 +1724,7 @@ export const UsersPage: React.FC = () => {
                 {/* Extension */}
                 <div>
                   <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-                    Extension
+                    {t("users.extension")}
                   </label>
                   <input
                     type="text"
@@ -1969,7 +1969,7 @@ export const UsersPage: React.FC = () => {
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                    Extension
+                    {t("users.extension")}
                   </p>
                   <div className="flex items-center gap-2">
                     <Phone className="w-4 h-4 text-[hsl(var(--primary))]" />

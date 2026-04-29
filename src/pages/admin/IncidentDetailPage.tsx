@@ -1831,7 +1831,7 @@ export const IncidentDetailPage: React.FC = () => {
               >
                 <span className="flex items-center justify-center gap-2">
                   <XCircle className="w-4 h-4" />
-                  Rejection History
+                  {t("incidents.rejectionHistory")}
                   {(rejectionLogsData?.data?.length ?? 0) > 0 && (
                     <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))]">
                       {rejectionLogsData?.data?.length}
@@ -1850,7 +1850,7 @@ export const IncidentDetailPage: React.FC = () => {
               >
                 <span className="flex items-center justify-center gap-2">
                   <Bot className="w-4 h-4" />
-                  AI Quality
+                  {t("incidents.aiQuality")}
                   {aiQualityData?.data && (
                     <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                       1
@@ -2644,18 +2644,17 @@ export const IncidentDetailPage: React.FC = () => {
                     <div className="flex items-center justify-center py-12 text-[hsl(var(--muted-foreground))]">
                       <RefreshCw className="w-5 h-5 animate-spin mr-2" />
                       <span className="text-sm">
-                        Loading AI quality report...
+                        {t("incidents.loadingAIQualityReport")}
                       </span>
                     </div>
                   ) : !aiQualityData?.data ? (
                     <div className="flex flex-col items-center justify-center py-12 text-[hsl(var(--muted-foreground))]">
                       <Bot className="w-10 h-10 mb-3 opacity-30" />
                       <p className="text-sm font-medium">
-                        No AI quality report yet
+                        {t("incidents.noAiQualityReport")}
                       </p>
                       <p className="text-xs mt-1 text-center max-w-xs">
-                        The AI quality monitor will process this incident
-                        shortly.
+                        {t("incidents.aiQualityProcessing")}
                       </p>
                     </div>
                   ) : (
@@ -2671,7 +2670,7 @@ export const IncidentDetailPage: React.FC = () => {
                     <div className="flex flex-col items-center justify-center py-12 text-[hsl(var(--muted-foreground))]">
                       <XCircle className="w-10 h-10 mb-3 opacity-30" />
                       <p className="text-sm">
-                        No rejection records for this incident.
+                        {t("incidents.noRejectionRecords")}
                       </p>
                     </div>
                   ) : (
