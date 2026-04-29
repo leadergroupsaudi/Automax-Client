@@ -42,7 +42,63 @@ export const GoalFilters: React.FC<GoalFiltersProps> = ({
     filters.target_to ||
     filters.root_only;
 
+  // Build a list of currently-active filters as removable chips so users
+  // can see at-a-glance which filters are narrowing the list, and drop a
+  // single filter without the all-or-nothing "Clear" button.
+  type ActiveChip = { key: keyof GoalFilter; label: string; value: string };
+  const activeChips: ActiveChip[] = [];
+  if (filters.search) {
+    activeChips.push({
+      key: "search",
+      label: t("common.search"),
+      value: filters.search,
+    });
+  }
+  if (filters.status) {
+    activeChips.push({
+      key: "status",
+      label: t("common.status"),
+      value: t(`goals.components.badges.status.${filters.status}`),
+    });
+  }
+  if (filters.priority) {
+    activeChips.push({
+      key: "priority",
+      label: t("common.priority"),
+      value: t(`goals.components.badges.priority.${filters.priority}`),
+    });
+  }
+  if (filters.category) {
+    activeChips.push({
+      key: "category",
+      label: t("goals.category"),
+      value: filters.category,
+    });
+  }
+  if (filters.start_from) {
+    activeChips.push({
+      key: "start_from",
+      label: t("goals.components.filters.startFrom"),
+      value: filters.start_from,
+    });
+  }
+  if (filters.target_to) {
+    activeChips.push({
+      key: "target_to",
+      label: t("goals.components.filters.targetTo"),
+      value: filters.target_to,
+    });
+  }
+  if (filters.root_only) {
+    activeChips.push({
+      key: "root_only",
+      label: t("goals.components.filters.rootOnly"),
+      value: t("common.yes"),
+    });
+  }
+
   return (
+    <div className="space-y-3">
     <div className="flex flex-wrap items-end gap-3">
       {/* Search */}
       <div className="flex-1 min-w-[200px]">
@@ -194,6 +250,34 @@ export const GoalFilters: React.FC<GoalFiltersProps> = ({
           {t("common.clearFilters")}
         </button>
       )}
+    </div>
+
+    {/* Active filter chips — make narrowing visible at a glance and let
+        users drop a single filter without nuking everything via Clear. */}
+    {activeChips.length > 0 && (
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          {t("goals.components.filters.activeFilters")}:
+        </span>
+        {activeChips.map((chip) => (
+          <span
+            key={chip.key}
+            className="inline-flex items-center gap-1 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 px-2.5 py-0.5 text-xs text-blue-700 dark:text-blue-300"
+          >
+            <span className="font-medium">{chip.label}:</span>
+            <span className="truncate max-w-[160px]">{chip.value}</span>
+            <button
+              type="button"
+              onClick={() => updateFilter(chip.key, undefined)}
+              aria-label={t("common.remove")}
+              className="ms-1 rounded-full p-0.5 hover:bg-blue-100 dark:hover:bg-blue-500/20"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </span>
+        ))}
+      </div>
+    )}
     </div>
   );
 };

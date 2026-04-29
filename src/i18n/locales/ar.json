@@ -1722,6 +1722,17 @@
     "notFound": "الهدف غير موجود",
     "category": "الفئة",
     "pageOf": "الصفحة {{current}} من {{total}}",
+    "savedViews": {
+      "title": "العروض المحفوظة",
+      "save": "حفظ العرض",
+      "namePlaceholder": "اسم العرض",
+      "delete": "حذف العرض",
+      "deleteConfirm": "هل تريد حذف العرض المحفوظ \"{{name}}\"؟",
+      "defaults": {
+        "activeHighPriority": "نشط – أولوية عالية",
+        "drafts": "المسودات"
+      }
+    },
     "table": {
       "title": "العنوان",
       "priority": "الأولوية",
@@ -2160,7 +2171,8 @@
         "categoryPlaceholder": "الفئة...",
         "startFrom": "يبدأ من",
         "targetTo": "الهدف حتى",
-        "rootOnly": "الأهداف الجذرية فقط"
+        "rootOnly": "الأهداف الجذرية فقط",
+        "activeFilters": "الفلاتر النشطة"
       },
       "hierarchyTree": {
         "empty": "لا توجد أهداف فرعية بعد"
@@ -2230,7 +2242,9 @@
           "upload": "تحميل الدليل",
           "errorSelectFile": "يرجى اختيار ملف للتحميل",
           "errorTitleRequired": "العنوان مطلوب",
-          "errorCommentRequired": "التعليق مطلوب"
+          "errorCommentRequired": "التعليق مطلوب",
+          "dropToSelect": "أفلت الملف للتحديد",
+          "orDragAndDrop": "أو اسحب الملف وأفلته"
         },
         "replaceModal": {
           "title": "استبدال ملف الدليل",

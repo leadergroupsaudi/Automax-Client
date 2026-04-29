@@ -1829,6 +1829,17 @@
     "notFound": "Goal not found",
     "category": "Category",
     "pageOf": "Page {{current}} of {{total}}",
+    "savedViews": {
+      "title": "Saved views",
+      "save": "Save view",
+      "namePlaceholder": "View name",
+      "delete": "Delete view",
+      "deleteConfirm": "Delete saved view \"{{name}}\"?",
+      "defaults": {
+        "activeHighPriority": "Active – High priority",
+        "drafts": "Drafts"
+      }
+    },
     "table": {
       "title": "Title",
       "priority": "Priority",
@@ -2267,7 +2278,8 @@
         "categoryPlaceholder": "Category...",
         "startFrom": "Start From",
         "targetTo": "Target To",
-        "rootOnly": "Root goals only"
+        "rootOnly": "Root goals only",
+        "activeFilters": "Active filters"
       },
       "hierarchyTree": {
         "empty": "No child goals yet"
@@ -2337,7 +2349,9 @@
           "upload": "Upload Evidence",
           "errorSelectFile": "Please select a file to upload",
           "errorTitleRequired": "Title is required",
-          "errorCommentRequired": "Comment is required"
+          "errorCommentRequired": "Comment is required",
+          "dropToSelect": "Drop file to select",
+          "orDragAndDrop": "or drag and drop"
         },
         "replaceModal": {
           "title": "Replace Evidence File",

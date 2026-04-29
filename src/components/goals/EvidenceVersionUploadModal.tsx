@@ -26,6 +26,27 @@ export default function EvidenceVersionUploadModal({
     }
   };
 
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(true);
+  };
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(false);
+  };
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(false);
+    const dropped = e.dataTransfer?.files?.[0];
+    if (dropped) {
+      setSelectedFile(dropped);
+    }
+  };
+
   const handleSubmit = () => {
     if (!selectedFile) return;
     uploadVersion.mutate(
@@ -66,8 +87,15 @@ export default function EvidenceVersionUploadModal({
           </div>
 
           <div
-            className="border-2 border-dashed border-slate-200 dark:border-slate-600 rounded-xl p-6 text-center cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
+            className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
+              isDraggingOver
+                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                : "border-slate-200 dark:border-slate-600 hover:border-blue-400 dark:hover:border-blue-500"
+            }`}
             onClick={() => fileInputRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
           >
             <input
               ref={fileInputRef}

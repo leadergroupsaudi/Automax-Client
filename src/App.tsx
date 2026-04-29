@@ -1,6 +1,8 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
+import { Loader2 } from "lucide-react";
 import {
   MainLayout,
   AuthLayout,
@@ -19,6 +21,7 @@ import {
 } from "./components/layout";
 import { PERMISSIONS } from "./constants/permissions";
 import { SettingsProvider } from "./contexts/SettingsContext";
+// Eager: shell + auth + first-paint pages (load on every visit)
 import {
   LoginPage,
   RegisterPage,
@@ -26,68 +29,240 @@ import {
   ProfilePage,
   SettingsPage,
   SSOCompletePage,
-  AdminDashboard,
-  UsersPage,
-  RolesPage,
-  RoleCreatePage,
-  RoleEditPage,
-  PermissionsPage,
-  DepartmentsPage,
-  DepartmentDetailPage,
-  LocationsPage,
-  LocationMapPage,
-  ClassificationsPage,
-  CategoriesPage,
-  ActionLogsPage,
-  WorkflowsPage,
-  WorkflowDesignerPage,
-  IncidentsPage,
-  IncidentCreatePage,
-  IncidentEditPage,
-  IncidentDetailPage,
-  MyIncidentsPage,
-  RequestsPage,
-  RequestDetailPage,
-  MyRequestsPage,
-  ComplaintsPage,
-  ComplaintDetailPage,
-  QueriesPage,
-  QueryDetailPage,
-  ReportBuilderPage,
-  ReportTemplatesPage,
-  ReportTemplatesListPage,
-  ReportTemplateBuilderPage,
-  LookupsPage,
-  ApplicationLinksPage,
-  SettingsManagementPage,
-  LicensePage,
-  CallCentrePage,
-  CallHistory,
-  EmailPage,
-  SMSPage,
-  GoalsPage,
-  GoalDetailPage,
-  GoalCreatePage,
-  GoalEditPage,
-  GoalApprovalsPage,
-  GoalTemplatesPage,
-  DocumentsPage,
-  MetricImportBatchesPage,
-  MetricImportBatchDetailPage,
-  GoalAnalyticsPage,
-  OKRAlignmentPage,
-  ReviewCyclesPage,
-  ReviewCycleDetailPage,
-  MyReviewPage,
-  ReviewAssignmentPage,
 } from "./pages";
-import EscalationConfigPage from "./pages/admin/EsclationPage";
-import QualityAuditPage from "./pages/admin/QualityAuditPage";
 import { CitizenAuthLayout } from "./components/layout/CitizenAuthLayout";
 import { CitizenLayout } from "./components/layout/CitizenLayout";
 import { CitizenVerifyPage } from "./pages/CitizenverifyPage";
 import { CitizenIncidentUpdatePage } from "./pages/CitizenIncidentUpdatePage";
 import { UserBootstrap } from "./components/common/UserBootstrap";
+
+// Lazy: admin/feature pages — only fetched when navigated to.
+// We import each page from its own file (NOT the barrel) so Rollup can emit a
+// per-page chunk. Pages that re-export with `export const Foo` need the
+// `.then(m => ({ default: m.Foo }))` re-wrap; pages with `export default`
+// can be imported directly.
+const AdminDashboard = lazy(() =>
+  import("./pages/admin/AdminDashboard").then((m) => ({
+    default: m.AdminDashboard,
+  })),
+);
+const UsersPage = lazy(() =>
+  import("./pages/admin/UsersPage").then((m) => ({ default: m.UsersPage })),
+);
+const RolesPage = lazy(() =>
+  import("./pages/admin/RolesPage").then((m) => ({ default: m.RolesPage })),
+);
+const RoleCreatePage = lazy(() =>
+  import("./pages/admin/RoleCreatePage").then((m) => ({
+    default: m.RoleCreatePage,
+  })),
+);
+const RoleEditPage = lazy(() =>
+  import("./pages/admin/RoleEditPage").then((m) => ({
+    default: m.RoleEditPage,
+  })),
+);
+const PermissionsPage = lazy(() =>
+  import("./pages/admin/PermissionsPage").then((m) => ({
+    default: m.PermissionsPage,
+  })),
+);
+const DepartmentsPage = lazy(() =>
+  import("./pages/admin/DepartmentsPage").then((m) => ({
+    default: m.DepartmentsPage,
+  })),
+);
+const DepartmentDetailPage = lazy(() =>
+  import("./pages/admin/DepartmentDetailPage").then((m) => ({
+    default: m.DepartmentDetailPage,
+  })),
+);
+const LocationsPage = lazy(() =>
+  import("./pages/admin/LocationsPage").then((m) => ({
+    default: m.LocationsPage,
+  })),
+);
+const LocationMapPage = lazy(() => import("./pages/admin/LocationMapPage"));
+const ClassificationsPage = lazy(() =>
+  import("./pages/admin/ClassificationsPage").then((m) => ({
+    default: m.ClassificationsPage,
+  })),
+);
+const CategoriesPage = lazy(() => import("./pages/admin/CategoriesPage"));
+const ActionLogsPage = lazy(() =>
+  import("./pages/admin/ActionLogsPage").then((m) => ({
+    default: m.ActionLogsPage,
+  })),
+);
+const WorkflowsPage = lazy(() =>
+  import("./pages/admin/WorkflowsPage").then((m) => ({
+    default: m.WorkflowsPage,
+  })),
+);
+const WorkflowDesignerPage = lazy(() =>
+  import("./pages/admin/WorkflowDesignerPage").then((m) => ({
+    default: m.WorkflowDesignerPage,
+  })),
+);
+const IncidentsPage = lazy(() =>
+  import("./pages/admin/IncidentsPage").then((m) => ({
+    default: m.IncidentsPage,
+  })),
+);
+const IncidentCreatePage = lazy(() =>
+  import("./pages/admin/IncidentCreatePage").then((m) => ({
+    default: m.IncidentCreatePage,
+  })),
+);
+const IncidentEditPage = lazy(() =>
+  import("./pages/admin/IncidentEditPage").then((m) => ({
+    default: m.IncidentEditPage,
+  })),
+);
+const IncidentDetailPage = lazy(() =>
+  import("./pages/admin/IncidentDetailPage").then((m) => ({
+    default: m.IncidentDetailPage,
+  })),
+);
+const MyIncidentsPage = lazy(() =>
+  import("./pages/admin/MyIncidentsPage").then((m) => ({
+    default: m.MyIncidentsPage,
+  })),
+);
+const RequestsPage = lazy(() =>
+  import("./pages/admin/RequestsPage").then((m) => ({
+    default: m.RequestsPage,
+  })),
+);
+const RequestDetailPage = lazy(() =>
+  import("./pages/admin/RequestDetailPage").then((m) => ({
+    default: m.RequestDetailPage,
+  })),
+);
+const MyRequestsPage = lazy(() =>
+  import("./pages/admin/MyRequestsPage").then((m) => ({
+    default: m.MyRequestsPage,
+  })),
+);
+const ComplaintsPage = lazy(() =>
+  import("./pages/admin/ComplaintsPage").then((m) => ({
+    default: m.ComplaintsPage,
+  })),
+);
+const ComplaintDetailPage = lazy(() =>
+  import("./pages/admin/ComplaintDetailPage").then((m) => ({
+    default: m.ComplaintDetailPage,
+  })),
+);
+const QueriesPage = lazy(() =>
+  import("./pages/admin/QueriesPage").then((m) => ({
+    default: m.QueriesPage,
+  })),
+);
+const QueryDetailPage = lazy(() =>
+  import("./pages/admin/QueryDetailPage").then((m) => ({
+    default: m.QueryDetailPage,
+  })),
+);
+const ReportBuilderPage = lazy(() => import("./pages/admin/ReportBuilderPage"));
+const ReportTemplatesPage = lazy(
+  () => import("./pages/admin/ReportTemplatesPage"),
+);
+const ReportTemplatesListPage = lazy(
+  () => import("./pages/admin/ReportTemplatesListPage"),
+);
+const ReportTemplateBuilderPage = lazy(
+  () => import("./pages/admin/ReportTemplateBuilderPage"),
+);
+const LookupsPage = lazy(() =>
+  import("./pages/admin/LookupsPage").then((m) => ({
+    default: m.LookupsPage,
+  })),
+);
+const ApplicationLinksPage = lazy(
+  () => import("./pages/admin/ApplicationLinksPage"),
+);
+const SettingsManagementPage = lazy(() =>
+  import("./pages/admin/SettingsManagementPage").then((m) => ({
+    default: m.SettingsManagementPage,
+  })),
+);
+const LicensePage = lazy(() =>
+  import("./pages/admin/LicensePage").then((m) => ({
+    default: m.LicensePage,
+  })),
+);
+const CallCentrePage = lazy(() =>
+  import("./pages/admin/CallCentrePage").then((m) => ({
+    default: m.CallCentrePage,
+  })),
+);
+const CallHistory = lazy(() =>
+  import("./pages/admin/components/CallHistory").then((m) => ({
+    default: m.CallHistory,
+  })),
+);
+const EmailPage = lazy(() =>
+  import("./pages/admin/EmailPage").then((m) => ({ default: m.EmailPage })),
+);
+const SMSPage = lazy(() =>
+  import("./pages/admin/SMSPage").then((m) => ({ default: m.SMSPage })),
+);
+const GoalsPage = lazy(() =>
+  import("./pages/admin/GoalsPage").then((m) => ({ default: m.GoalsPage })),
+);
+const GoalDetailPage = lazy(() => import("./pages/admin/GoalDetailPage"));
+const GoalCreatePage = lazy(() =>
+  import("./pages/admin/GoalCreatePage").then((m) => ({
+    default: m.GoalCreatePage,
+  })),
+);
+const GoalEditPage = lazy(() =>
+  import("./pages/admin/GoalEditPage").then((m) => ({
+    default: m.GoalEditPage,
+  })),
+);
+const GoalApprovalsPage = lazy(() => import("./pages/admin/GoalApprovalsPage"));
+const GoalTemplatesPage = lazy(() =>
+  import("./pages/admin/GoalTemplatesPage").then((m) => ({
+    default: m.GoalTemplatesPage,
+  })),
+);
+const DocumentsPage = lazy(() =>
+  import("./pages/admin/DocumentsPage").then((m) => ({
+    default: m.DocumentsPage,
+  })),
+);
+const MetricImportBatchesPage = lazy(
+  () => import("./pages/admin/MetricImportBatchesPage"),
+);
+const MetricImportBatchDetailPage = lazy(
+  () => import("./pages/admin/MetricImportBatchDetailPage"),
+);
+const GoalAnalyticsPage = lazy(() => import("./pages/admin/GoalAnalyticsPage"));
+const OKRAlignmentPage = lazy(() => import("./pages/admin/OKRAlignmentPage"));
+const ReviewCyclesPage = lazy(() =>
+  import("./pages/admin/ReviewCyclesPage").then((m) => ({
+    default: m.ReviewCyclesPage,
+  })),
+);
+const ReviewCycleDetailPage = lazy(() =>
+  import("./pages/admin/ReviewCycleDetailPage").then((m) => ({
+    default: m.ReviewCycleDetailPage,
+  })),
+);
+const MyReviewPage = lazy(() =>
+  import("./pages/admin/MyReviewPage").then((m) => ({
+    default: m.MyReviewPage,
+  })),
+);
+const ReviewAssignmentPage = lazy(() =>
+  import("./pages/admin/ReviewAssignmentPage").then((m) => ({
+    default: m.ReviewAssignmentPage,
+  })),
+);
+const EscalationConfigPage = lazy(() => import("./pages/admin/EsclationPage"));
+const QualityAuditPage = lazy(() => import("./pages/admin/QualityAuditPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -97,6 +272,14 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+function RouteFallback() {
+  return (
+    <div className="flex h-[60vh] w-full items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-slate-500 dark:text-slate-400" />
+    </div>
+  );
+}
 
 function App() {
   return (
@@ -111,7 +294,8 @@ function App() {
           }
         >
           <UserBootstrap>
-            <Routes>
+            <Suspense fallback={<RouteFallback />}>
+              <Routes>
               {/* Auth routes */}
               <Route element={<AuthLayout />}>
                 <Route path="/login" element={<LoginPage />} />
@@ -647,7 +831,8 @@ function App() {
                   element={<CitizenIncidentUpdatePage />}
                 />
               </Route>
-            </Routes>
+              </Routes>
+            </Suspense>
           </UserBootstrap>
         </BrowserRouter>
       </SettingsProvider>

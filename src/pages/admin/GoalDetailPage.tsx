@@ -348,7 +348,16 @@ export const GoalDetailPage: React.FC = () => {
   const validTransitions = VALID_GOAL_TRANSITIONS[goal.status] ?? [];
 
   // ── Tab Definitions ────────────────────────────────
-  const tabs: { key: TabType; label: string; icon: React.ReactNode }[] = [
+  // Each tab carries a count derived from already-loaded query data so users
+  // see at-a-glance how many items live behind each tab without clicking
+  // through. Counts use TanStack `total` when available (server-paginated)
+  // and `length` as a fallback (client-loaded).
+  const tabs: {
+    key: TabType;
+    label: string;
+    icon: React.ReactNode;
+    count?: number;
+  }[] = [
     {
       key: "overview",
       label: t("goals.detail.tabs.overview"),
@@ -358,31 +367,37 @@ export const GoalDetailPage: React.FC = () => {
       key: "metrics",
       label: t("goals.detail.tabs.metrics"),
       icon: <BarChart3 className="w-4 h-4" />,
+      count: goal.metrics?.length ?? 0,
     },
     {
       key: "evidence",
       label: t("goals.detail.tabs.evidence"),
       icon: <FileText className="w-4 h-4" />,
+      count: evidenceData?.total ?? allEvidences.length,
     },
     {
       key: "collaborators",
       label: t("goals.detail.tabs.collaborators"),
       icon: <Users className="w-4 h-4" />,
+      count: (goal.collaborators ?? []).length,
     },
     {
       key: "check-ins",
       label: t("goals.detail.tabs.checkIns"),
       icon: <ClipboardCheck className="w-4 h-4" />,
+      count: (checkInData?.data ?? []).length,
     },
     {
       key: "comments",
       label: t("goals.detail.tabs.comments"),
       icon: <MessageSquare className="w-4 h-4" />,
+      count: (commentData?.data ?? []).length,
     },
     {
       key: "activity",
       label: t("goals.detail.tabs.activity"),
       icon: <History className="w-4 h-4" />,
+      count: activityData?.total ?? (activityData?.data ?? []).length,
     },
   ];
 
@@ -587,7 +602,18 @@ export const GoalDetailPage: React.FC = () => {
               }`}
             >
               {tab.icon}
-              {tab.label}
+              <span>{tab.label}</span>
+              {typeof tab.count === "number" && (
+                <span
+                  className={`tabular-nums text-xs rounded-full px-1.5 min-w-[1.25rem] text-center ${
+                    activeTab === tab.key
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300"
+                      : "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              )}
             </button>
           ))}
         </nav>
