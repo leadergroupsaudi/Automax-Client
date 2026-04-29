@@ -98,8 +98,115 @@ export interface GoalMetric {
   weight: number;
   formula?: string;
   progress: number;
+  workflow_id?: string;
+  current_state_id?: string;
+  current_state?: WorkflowStateBrief;
+  assigned_to_id?: string;
+  assigned_to?: UserBrief;
+  version?: number;
   created_at: string;
   updated_at: string;
+}
+
+// ──────────────────────────────────────────────────
+// Metric Value Change (approval workflow)
+// ──────────────────────────────────────────────────
+
+export interface MetricValueChange {
+  id: string;
+  metric_id: string;
+  proposed_value: number;
+  previous_value: number;
+  comment: string;
+  submitted_by_id?: string;
+  submitted_by?: UserBrief;
+  workflow_id?: string;
+  current_state_id?: string;
+  current_state?: WorkflowStateBrief;
+  assigned_to_id?: string;
+  assigned_to?: UserBrief;
+  version?: number;
+  applied_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GoalMetricValueChangeResponse {
+  metric_id: string;
+  change: MetricValueChange;
+}
+
+export interface MetricValueChangeListResponse {
+  success: boolean;
+  data: MetricValueChange[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface MetricApprovalListItem {
+  id: string;
+  metric_id: string;
+  metric_name: string;
+  metric_version: number;
+  goal_id: string;
+  goal_title: string;
+  goal_priority: GoalPriority;
+  state_name: string;
+  state_color: string;
+  current_value: number;
+  target_value: number;
+  unit: string;
+  submitted_by?: UserBrief;
+  assigned_to?: UserBrief;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MetricApprovalListResponse {
+  success: boolean;
+  data: MetricApprovalListItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface MetricValueChangeApprovalListItem {
+  id: string;
+  change_id: string;
+  metric_id: string;
+  metric_name: string;
+  goal_id: string;
+  goal_title: string;
+  goal_priority: GoalPriority;
+  proposed_value: number;
+  previous_value: number;
+  unit: string;
+  state_name: string;
+  state_color: string;
+  version: number;
+  submitted_by?: UserBrief;
+  assigned_to?: UserBrief;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MetricValueChangeApprovalListResponse {
+  success: boolean;
+  data: MetricValueChangeApprovalListItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface MetricTransitionRequest {
+  transition_id: string;
+  comment?: string;
+}
+
+export interface MetricValueChangeTransitionRequest {
+  transition_id: string;
+  comment?: string;
 }
 
 export interface MetricHistory {

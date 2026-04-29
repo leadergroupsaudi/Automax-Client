@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { X, TrendingUp } from "lucide-react";
+import { X, TrendingUp, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import type { GoalMetric } from "../../types/goal";
-import { useUpdateMetricValue } from "../../hooks/useGoals";
+import {
+  useUpdateMetricValue,
+  useMetricValueChanges,
+} from "../../hooks/useGoals";
 
 interface MetricValueUpdateModalProps {
   metric: GoalMetric;
@@ -16,12 +19,20 @@ export const MetricValueUpdateModal: React.FC<MetricValueUpdateModalProps> = ({
   metric,
   isOpen,
   onClose,
-  goalId: _goalId,
+  goalId,
 }) => {
   const { t } = useTranslation();
   const [value, setValue] = useState<string>(String(metric.current_value));
   const [comment, setComment] = useState("");
   const updateMetricValue = useUpdateMetricValue();
+
+  // Block double-submission while a value-change is already in flight.
+  // Backend will reject anyway; we surface that state up-front.
+  const { data: valueChangesData } = useMetricValueChanges(goalId, metric.id);
+  const pendingChange = (valueChangesData?.data ?? []).find(
+    (c) => c.current_state && c.current_state.state_type !== "terminal",
+  );
+  const hasPending = !!pendingChange;
 
   if (!isOpen) return null;
 
@@ -81,6 +92,25 @@ export const MetricValueUpdateModal: React.FC<MetricValueUpdateModalProps> = ({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Pending warning */}
+          {hasPending && pendingChange && (
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+              <AlertCircle className="w-4 h-4 mt-0.5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+              <div className="text-xs text-amber-700 dark:text-amber-300">
+                <p className="font-medium">
+                  {t("goals.components.metric.pendingApproval")}
+                </p>
+                <p className="mt-0.5">
+                  {t("goals.components.metric.proposedValue")}:{" "}
+                  <span className="font-semibold tabular-nums">
+                    {pendingChange.proposed_value.toLocaleString()}
+                    {metric.unit ? ` ${metric.unit}` : ""}
+                  </span>
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Current / Target reference */}
           <div className="flex items-center gap-4 p-3 rounded-lg bg-slate-50 dark:bg-slate-700/30 text-sm">
             <div>
@@ -117,7 +147,8 @@ export const MetricValueUpdateModal: React.FC<MetricValueUpdateModalProps> = ({
               value={value}
               onChange={(e) => setValue(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              disabled={hasPending}
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:opacity-60 disabled:cursor-not-allowed"
               placeholder={t(
                 "goals.components.metric.updateModal.newValuePlaceholder",
               )}
@@ -140,7 +171,8 @@ export const MetricValueUpdateModal: React.FC<MetricValueUpdateModalProps> = ({
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+              disabled={hasPending}
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none disabled:opacity-60 disabled:cursor-not-allowed"
               placeholder={t(
                 "goals.components.metric.updateModal.commentPlaceholder",
               )}
@@ -159,7 +191,7 @@ export const MetricValueUpdateModal: React.FC<MetricValueUpdateModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={updateMetricValue.isPending}
+              disabled={updateMetricValue.isPending || hasPending}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {updateMetricValue.isPending

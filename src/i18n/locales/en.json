@@ -2207,8 +2207,17 @@
       "subtitle": "Review and manage evidence approval requests",
       "tabPending": "Pending",
       "tabCompleted": "Completed",
+      "tabPendingMetrics": "Metrics",
+      "tabPendingValueChanges": "Value Changes",
+      "subTabEvidence": "Evidence",
       "emptyPending": "No pending approvals. You're all caught up!",
       "emptyCompleted": "No completed approvals yet.",
+      "metricItem": {
+        "title": "Metric"
+      },
+      "valueChangeItem": {
+        "title": "Value Change"
+      },
       "table": {
         "goal": "Goal",
         "evidence": "Evidence",
@@ -2388,6 +2397,25 @@
         "no": "No",
         "updateValue": "Update Value",
         "deleteTitle": "Delete metric",
+        "pendingState": "Workflow state",
+        "proposedValue": "Pending",
+        "pendingApproval": "A value change is pending approval",
+        "availableTransitions": "{{count}} actions",
+        "transitionModal": {
+          "title": "Metric Workflow",
+          "transition": "Transition",
+          "commentLabel": "Comment",
+          "commentPlaceholder": "Optional note about this transition...",
+          "submit": "Submit"
+        },
+        "valueChangeHistory": {
+          "heading": "Value change history",
+          "empty": "No value changes recorded.",
+          "proposed": "Proposed",
+          "previous": "Previous",
+          "submittedBy": "Submitted by",
+          "appliedAt": "Applied"
+        },
         "updateModal": {
           "title": "Update Metric Value",
           "currentLabel": "Current:",
@@ -2398,7 +2426,7 @@
           "optional": "(optional)",
           "commentPlaceholder": "Reason for update...",
           "updating": "Updating...",
-          "update": "Update Value",
+          "update": "Submit for Approval",
           "errorInvalidNumber": "Please enter a valid number"
         },
         "importModal": {

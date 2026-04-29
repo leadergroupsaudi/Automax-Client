@@ -2100,8 +2100,17 @@
       "subtitle": "مراجعة وإدارة طلبات الموافقة على الأدلة",
       "tabPending": "قيد الانتظار",
       "tabCompleted": "مكتمل",
+      "tabPendingMetrics": "المؤشرات",
+      "tabPendingValueChanges": "تغييرات القيم",
+      "subTabEvidence": "الأدلة",
       "emptyPending": "لا توجد موافقات معلقة. أنت على اطلاع كامل!",
       "emptyCompleted": "لا توجد موافقات مكتملة بعد.",
+      "metricItem": {
+        "title": "المؤشر"
+      },
+      "valueChangeItem": {
+        "title": "تغيير القيمة"
+      },
       "table": {
         "goal": "الهدف",
         "evidence": "الدليل",
@@ -2281,6 +2290,25 @@
         "no": "لا",
         "updateValue": "تحديث القيمة",
         "deleteTitle": "حذف المقياس",
+        "pendingState": "حالة سير العمل",
+        "proposedValue": "قيد الانتظار",
+        "pendingApproval": "هناك تغيير في القيمة قيد الموافقة",
+        "availableTransitions": "{{count}} إجراءات",
+        "transitionModal": {
+          "title": "سير عمل المقياس",
+          "transition": "الانتقال",
+          "commentLabel": "تعليق",
+          "commentPlaceholder": "ملاحظة اختيارية حول هذا الانتقال...",
+          "submit": "إرسال"
+        },
+        "valueChangeHistory": {
+          "heading": "سجل تغييرات القيمة",
+          "empty": "لا توجد تغييرات مسجلة.",
+          "proposed": "المقترحة",
+          "previous": "السابقة",
+          "submittedBy": "أرسل بواسطة",
+          "appliedAt": "تم التطبيق"
+        },
         "updateModal": {
           "title": "تحديث قيمة المقياس",
           "currentLabel": "الحالي:",
@@ -2291,7 +2319,7 @@
           "optional": "(اختياري)",
           "commentPlaceholder": "سبب التحديث...",
           "updating": "جاري التحديث...",
-          "update": "تحديث القيمة",
+          "update": "إرسال للموافقة",
           "errorInvalidNumber": "يرجى إدخال رقم صالح"
         },
         "importModal": {
