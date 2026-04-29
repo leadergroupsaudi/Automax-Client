@@ -2988,13 +2988,25 @@ export const IncidentDetailPage: React.FC = () => {
                   );
 
                   return (
-                    <div key={key}>
+                    <div key={key} className="flex flex-col">
                       <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
                         {categoryName}
                       </label>
-                      <div className="mt-0.5 text-sm text-[hsl(var(--foreground))]">
-                        {displayValue}
-                      </div>
+                      {field.redirect_url ? (
+                        <a
+                          className="mt-0.5 !text-blue-500 flex gap-1 text-sm text-[hsl(var(--foreground))]"
+                          href={field.redirect_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {displayValue}
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      ) : (
+                        <div className="mt-0.5 text-sm text-[hsl(var(--foreground))]">
+                          {displayValue}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
