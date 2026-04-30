@@ -244,7 +244,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
             <button
               onClick={() => onView(classification)}
               className="p-2 text-[hsl(var(--muted-foreground))] hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              title="View assigned users & departments"
+              title={t("classifications.viewAssignedUsersDepartments")}
             >
               <Eye className="w-4 h-4" />
             </button>
@@ -724,7 +724,8 @@ export const ClassificationsPage: React.FC = () => {
                     {viewingClassification.name}
                   </h3>
                   <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                    Level {viewingClassification.level} ·{" "}
+                    {t("classifications.level")}
+                    {viewingClassification.level} ·{" "}
                     {(viewingClassification.types ?? []).join(", ")}
                   </p>
                 </div>
@@ -748,7 +749,7 @@ export const ClassificationsPage: React.FC = () => {
                 )}
               >
                 <Users className="w-4 h-4" />
-                Users
+                {t("users.title")}
                 <span
                   className={cn(
                     "px-1.5 py-0.5 rounded-full text-xs font-semibold",
@@ -770,7 +771,7 @@ export const ClassificationsPage: React.FC = () => {
                 )}
               >
                 <Briefcase className="w-4 h-4" />
-                Departments
+                {t("users.departments")}
                 <span
                   className={cn(
                     "px-1.5 py-0.5 rounded-full text-xs font-semibold",
@@ -796,10 +797,12 @@ export const ClassificationsPage: React.FC = () => {
                       <Users className="w-6 h-6 text-[hsl(var(--muted-foreground))]" />
                     </div>
                     <p className="text-sm font-medium text-[hsl(var(--foreground))]">
-                      No users assigned
+                      {t("classifications.noUsersAssigned")}
                     </p>
                     <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
-                      No users are assigned to this classification.
+                      {t(
+                        "classifications.noUsersAreAssignedToThisClassification",
+                      )}
                     </p>
                   </div>
                 ) : (
@@ -831,10 +834,12 @@ export const ClassificationsPage: React.FC = () => {
                     <Briefcase className="w-6 h-6 text-[hsl(var(--muted-foreground))]" />
                   </div>
                   <p className="text-sm font-medium text-[hsl(var(--foreground))]">
-                    No departments assigned
+                    {t("users.noDepartmentsAssigned")}
                   </p>
                   <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
-                    No departments are assigned to this classification.
+                    {t(
+                      "classifications.noDepartmentsAreAssignedToThisClassification",
+                    )}
                   </p>
                 </div>
               ) : (
@@ -873,7 +878,7 @@ export const ClassificationsPage: React.FC = () => {
             {/* Footer */}
             <div className="flex justify-end px-6 py-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.5)] flex-shrink-0">
               <Button onClick={() => setViewingClassification(null)}>
-                Close
+                {t("common.close")}
               </Button>
             </div>
           </div>
@@ -905,27 +910,27 @@ export const ClassificationsPage: React.FC = () => {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">
-                    Import Complete
+                    {t("goals.components.import.completedHeading")}
                   </h3>
                   <div className="mt-3 space-y-2">
                     <p className="text-sm text-[hsl(var(--muted-foreground))]">
                       <span className="font-medium text-[hsl(var(--success))]">
                         {importResult.imported}
                       </span>{" "}
-                      classifications imported successfully
+                      {t("classifications.classificationsImportedSuccessfully")}
                     </p>
                     {importResult.skipped > 0 && (
                       <p className="text-sm text-[hsl(var(--muted-foreground))]">
                         <span className="font-medium text-[hsl(var(--warning))]">
                           {importResult.skipped}
                         </span>{" "}
-                        classifications skipped
+                        {t("classifications.classificationsSkipped")}
                       </p>
                     )}
                     {importResult.errors.length > 0 && (
                       <div className="mt-3 max-h-40 overflow-y-auto">
                         <p className="text-xs font-medium text-[hsl(var(--destructive))] mb-2">
-                          Errors:
+                          {t("classifications.errors")}
                         </p>
                         <ul className="space-y-1">
                           {importResult.errors.map((error, index) => (
@@ -943,7 +948,9 @@ export const ClassificationsPage: React.FC = () => {
                 </div>
               </div>
               <div className="flex justify-end">
-                <Button onClick={() => setImportResult(null)}>Close</Button>
+                <Button onClick={() => setImportResult(null)}>
+                  {t("common.close")}
+                </Button>
               </div>
             </div>
           </div>
@@ -1212,9 +1219,7 @@ export const ClassificationsPage: React.FC = () => {
                                 });
                               }}
                               className="w-20 px-2 py-1.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
-                              placeholder={t(
-                                "classifications.hoursPlaceholder",
-                              )}
+                              placeholder={"0"}
                             />
                           </div>
                           <div>
@@ -1245,18 +1250,13 @@ export const ClassificationsPage: React.FC = () => {
                                 });
                               }}
                               className="w-20 px-2 py-1.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
-                              placeholder={t(
-                                "classifications.minutesPlaceholder",
-                              )}
+                              placeholder={"0"}
                             />
                           </div>
                           {escalationPolicies.length > 0 && (
                             <div>
                               <label className="block text-xs text-[hsl(var(--muted-foreground))] mb-0.5">
-                                {t(
-                                  "classifications.escalationPolicy",
-                                  "Escalation Policy",
-                                )}
+                                {t("classifications.escalationPolicy")}
                               </label>
                               <select
                                 value={
@@ -1280,9 +1280,7 @@ export const ClassificationsPage: React.FC = () => {
                                 }}
                                 className="h-8 px-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-xs text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all min-w-[140px]"
                               >
-                                <option value="">
-                                  — {t("common.none", "None")} —
-                                </option>
+                                <option value="">— {t("common.none")} —</option>
                                 {escalationPolicies.map((p) => (
                                   <option key={p.id} value={p.id}>
                                     {p.name}

@@ -183,7 +183,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
             <button
               onClick={() => onView(location)}
               className="p-2 text-[hsl(var(--muted-foreground))] hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              title="View assigned users & departments"
+              title={t("locations.viewAssignedUsersDepartments")}
             >
               <Eye className="w-4 h-4" />
             </button>
@@ -579,27 +579,27 @@ export const LocationsPage: React.FC = () => {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">
-                    Import Complete
+                    {t("goals.components.import.completedHeading")}
                   </h3>
                   <div className="mt-3 space-y-2">
                     <p className="text-sm text-[hsl(var(--muted-foreground))]">
                       <span className="font-medium text-[hsl(var(--success))]">
                         {importResult.imported}
                       </span>{" "}
-                      locations imported successfully
+                      {t("locations.locationsImportedSuccessfully")}
                     </p>
                     {importResult.skipped > 0 && (
                       <p className="text-sm text-[hsl(var(--muted-foreground))]">
                         <span className="font-medium text-[hsl(var(--warning))]">
                           {importResult.skipped}
                         </span>{" "}
-                        locations skipped
+                        {t("locations.locationsSkipped")}
                       </p>
                     )}
                     {importResult.errors.length > 0 && (
                       <div className="mt-3 max-h-40 overflow-y-auto">
                         <p className="text-xs font-medium text-[hsl(var(--destructive))] mb-2">
-                          Errors:
+                          {t("locations.errors")}
                         </p>
                         <ul className="space-y-1">
                           {importResult.errors.map((error, index) => (
@@ -617,7 +617,9 @@ export const LocationsPage: React.FC = () => {
                 </div>
               </div>
               <div className="flex justify-end">
-                <Button onClick={() => setImportResult(null)}>Close</Button>
+                <Button onClick={() => setImportResult(null)}>
+                  {t("common.close")}
+                </Button>
               </div>
             </div>
           </div>
@@ -705,7 +707,7 @@ export const LocationsPage: React.FC = () => {
                 )}
               >
                 <Users className="w-4 h-4" />
-                Users
+                {t("users.title")}
                 <span
                   className={cn(
                     "px-1.5 py-0.5 rounded-full text-xs font-semibold",
@@ -727,7 +729,7 @@ export const LocationsPage: React.FC = () => {
                 )}
               >
                 <Briefcase className="w-4 h-4" />
-                Departments
+                {t("users.departments")}
                 <span
                   className={cn(
                     "px-1.5 py-0.5 rounded-full text-xs font-semibold",
@@ -753,10 +755,10 @@ export const LocationsPage: React.FC = () => {
                       <Users className="w-6 h-6 text-[hsl(var(--muted-foreground))]" />
                     </div>
                     <p className="text-sm font-medium text-[hsl(var(--foreground))]">
-                      No users assigned
+                      {t("locations.noUsersAssigned")}
                     </p>
                     <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
-                      No users are assigned to this location.
+                      {t("locations.noUsersAreAssignedToThisLocation")}
                     </p>
                   </div>
                 ) : (
@@ -788,10 +790,10 @@ export const LocationsPage: React.FC = () => {
                     <Briefcase className="w-6 h-6 text-[hsl(var(--muted-foreground))]" />
                   </div>
                   <p className="text-sm font-medium text-[hsl(var(--foreground))]">
-                    No departments assigned
+                    {t("users.noDepartmentsAssigned")}
                   </p>
                   <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
-                    No departments are assigned to this location.
+                    {t("locations.noDepartmentsAreAssignedToThisLocation")}
                   </p>
                 </div>
               ) : (
@@ -829,7 +831,9 @@ export const LocationsPage: React.FC = () => {
             </div>
             {/* Footer */}
             <div className="flex justify-end px-6 py-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.5)] flex-shrink-0">
-              <Button onClick={() => setViewingLocation(null)}>Close</Button>
+              <Button onClick={() => setViewingLocation(null)}>
+                {t("common.close")}
+              </Button>
             </div>
           </div>
         </div>

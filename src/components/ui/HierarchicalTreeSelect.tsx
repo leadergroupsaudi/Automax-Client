@@ -383,14 +383,14 @@ export const HierarchicalTreeSelect: React.FC<HierarchicalTreeSelectProps> = ({
             onClick={expandAll}
             className="text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] px-2 py-1 hover:bg-[hsl(var(--muted))] rounded transition-colors"
           >
-            Expand
+            {t("common.expand")}
           </button>
           <button
             type="button"
             onClick={collapseAll}
             className="text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] px-2 py-1 hover:bg-[hsl(var(--muted))] rounded transition-colors"
           >
-            Collapse
+            {t("common.collapse")}
           </button>
           <span className="text-[hsl(var(--border))]">|</span>
           <button
@@ -398,14 +398,14 @@ export const HierarchicalTreeSelect: React.FC<HierarchicalTreeSelectProps> = ({
             onClick={selectAll}
             className="text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] px-2 py-1 hover:bg-[hsl(var(--muted))] rounded transition-colors"
           >
-            All
+            {t("common.all")}
           </button>
           <button
             type="button"
             onClick={deselectAll}
             className="text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] px-2 py-1 hover:bg-[hsl(var(--muted))] rounded transition-colors"
           >
-            None
+            {t("common.none")}
           </button>
         </div>
       </div>

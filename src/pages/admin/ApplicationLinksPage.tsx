@@ -281,7 +281,7 @@ const ApplicationLinksPage: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.sso_enabled && !formData.sso_callback_url?.trim()) {
-      toast.error(t("applicationLinks.ssoCallbackRequired_error"));
+      toast.error(t("applicationLinks.ssoCallbackRequiredError"));
       return;
     }
     if (editingId) {
@@ -727,7 +727,7 @@ const ApplicationLinksPage: React.FC = () => {
                         {link.sso_enabled && !link.sso_callback_url && (
                           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                             <AlertTriangle className="w-3 h-3" />
-                            SSO: No callback URL
+                            {t("applicationLinks.ssoNoCallback")}
                           </span>
                         )}
                       </div>
@@ -739,7 +739,7 @@ const ApplicationLinksPage: React.FC = () => {
                             <button
                               onClick={() => handleEdit(link)}
                               className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                              title="Edit"
+                              title={t("applicationLinks.editTitle")}
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
@@ -748,7 +748,7 @@ const ApplicationLinksPage: React.FC = () => {
                             <button
                               onClick={() => handleDelete(link.id, link.name)}
                               className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
-                              title="Delete"
+                              title={t("applicationLinks.deleteTitle")}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
