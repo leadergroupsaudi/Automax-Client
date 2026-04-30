@@ -1,6 +1,7 @@
 import React from "react";
 import type { LookupCategory, ValidationRules } from "../../types";
 import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 interface DynamicLookupFieldProps {
   category: LookupCategory;
@@ -19,6 +20,8 @@ export const DynamicLookupField: React.FC<DynamicLookupFieldProps> = ({
 }) => {
   const { t } = useTranslation();
   const fieldType = category.field_type || "select";
+  const fieldLabel =
+    i18n.language === "ar" ? category.name_ar || category.name : category.name;
 
   // Parse validation rules
   let validationRules: ValidationRules = {};
@@ -45,8 +48,7 @@ export const DynamicLookupField: React.FC<DynamicLookupFieldProps> = ({
       return (
         <div>
           <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-            {category.name}{" "}
-            {required && <span className="text-red-500">*</span>}
+            {fieldLabel} {required && <span className="text-red-500">*</span>}
           </label>
           <input
             type="text"
@@ -57,7 +59,7 @@ export const DynamicLookupField: React.FC<DynamicLookupFieldProps> = ({
             maxLength={validationRules.maxLength}
             pattern={validationRules.pattern}
             className={`${commonClasses} ${errorClasses}`}
-            placeholder={category.description || `Enter ${category.name}`}
+            placeholder={category.description || `Enter ${fieldLabel}`}
           />
           {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
         </div>
@@ -67,8 +69,7 @@ export const DynamicLookupField: React.FC<DynamicLookupFieldProps> = ({
       return (
         <div>
           <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-            {category.name}{" "}
-            {required && <span className="text-red-500">*</span>}
+            {fieldLabel} {required && <span className="text-red-500">*</span>}
           </label>
           <textarea
             value={value || ""}
@@ -78,7 +79,7 @@ export const DynamicLookupField: React.FC<DynamicLookupFieldProps> = ({
             maxLength={validationRules.maxLength}
             rows={4}
             className={`${commonClasses} ${errorClasses} resize-none`}
-            placeholder={category.description || `Enter ${category.name}`}
+            placeholder={category.description || `Enter ${fieldLabel}`}
           />
           {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
         </div>
@@ -88,8 +89,7 @@ export const DynamicLookupField: React.FC<DynamicLookupFieldProps> = ({
       return (
         <div>
           <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-            {category.name}{" "}
-            {required && <span className="text-red-500">*</span>}
+            {fieldLabel} {required && <span className="text-red-500">*</span>}
           </label>
           <input
             type="number"
@@ -101,7 +101,7 @@ export const DynamicLookupField: React.FC<DynamicLookupFieldProps> = ({
             min={validationRules.minValue}
             max={validationRules.maxValue}
             className={`${commonClasses} ${errorClasses}`}
-            placeholder={category.description || `Enter ${category.name}`}
+            placeholder={category.description || `Enter ${fieldLabel}`}
           />
           {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
         </div>
@@ -111,8 +111,7 @@ export const DynamicLookupField: React.FC<DynamicLookupFieldProps> = ({
       return (
         <div>
           <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-            {category.name}{" "}
-            {required && <span className="text-red-500">*</span>}
+            {fieldLabel} {required && <span className="text-red-500">*</span>}
           </label>
           <input
             type="datetime-local"
@@ -141,8 +140,7 @@ export const DynamicLookupField: React.FC<DynamicLookupFieldProps> = ({
             htmlFor={`lookup_${category.id}`}
             className="text-sm text-[hsl(var(--foreground))]"
           >
-            {category.name}{" "}
-            {required && <span className="text-red-500">*</span>}
+            {fieldLabel} {required && <span className="text-red-500">*</span>}
           </label>
           {error && <p className="ml-7 text-xs text-red-500">{error}</p>}
         </div>
@@ -152,8 +150,7 @@ export const DynamicLookupField: React.FC<DynamicLookupFieldProps> = ({
       return (
         <div>
           <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-            {category.name}{" "}
-            {required && <span className="text-red-500">*</span>}
+            {fieldLabel} {required && <span className="text-red-500">*</span>}
           </label>
           <select
             value={value || ""}
@@ -162,7 +159,7 @@ export const DynamicLookupField: React.FC<DynamicLookupFieldProps> = ({
             className={`${commonClasses} ${errorClasses}`}
           >
             <option value="">
-              {t("common.select")} {category.name}
+              {t("common.select")} {fieldLabel}
             </option>
             {category.values
               ?.filter((v) => v.is_active)
@@ -180,8 +177,7 @@ export const DynamicLookupField: React.FC<DynamicLookupFieldProps> = ({
       return (
         <div>
           <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-            {category.name}{" "}
-            {required && <span className="text-red-500">*</span>}
+            {fieldLabel} {required && <span className="text-red-500">*</span>}
           </label>
           <select
             multiple
