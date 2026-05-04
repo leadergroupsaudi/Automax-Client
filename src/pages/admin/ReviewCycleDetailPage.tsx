@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ClipboardCheck,
@@ -22,6 +23,7 @@ import {
   useAssignReviewees,
   useRemoveAssignment,
 } from "../../hooks/useReviews";
+import { userApi } from "../../api/admin";
 import type { ReviewAssignmentStatus } from "../../types/review";
 
 // ── Helpers ────────────────────────────────────────────
@@ -61,6 +63,16 @@ const AddAssignmentModal: React.FC<{
   const assignReviewees = useAssignReviewees();
   const [employeeId, setEmployeeId] = useState("");
   const [reviewerId, setReviewerId] = useState("");
+  // Load the user directory once so the dropdowns can render names instead of
+  // raw UUIDs. Same shape as GoalCreatePage's owner picker. Only fetched while
+  // the modal is open.
+  const { data: usersData } = useQuery({
+    queryKey: ["admin", "users", "review-assignment-picker"],
+    queryFn: () => userApi.list(1, 500),
+    enabled: open,
+    staleTime: 60_000,
+  });
+  const users = usersData?.data ?? [];
 
   if (!open) return null;
 
@@ -92,33 +104,45 @@ const AddAssignmentModal: React.FC<{
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              {t("goals.reviews.addAssignmentModal.employeeId")}
+              {t("goals.reviews.addAssignmentModal.employee")}
             </label>
-            <input
-              type="text"
+            <select
               required
               value={employeeId}
               onChange={(e) => setEmployeeId(e.target.value)}
               className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder={t(
-                "goals.reviews.addAssignmentModal.employeeIdPlaceholder",
-              )}
-            />
+            >
+              <option value="">
+                {t("goals.reviews.addAssignmentModal.selectEmployee")}
+              </option>
+              {users.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.first_name} {u.last_name} ({u.email})
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              {t("goals.reviews.addAssignmentModal.reviewerId")}
+              {t("goals.reviews.addAssignmentModal.reviewer")}
             </label>
-            <input
-              type="text"
+            <select
               required
               value={reviewerId}
               onChange={(e) => setReviewerId(e.target.value)}
               className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder={t(
-                "goals.reviews.addAssignmentModal.reviewerIdPlaceholder",
-              )}
-            />
+            >
+              <option value="">
+                {t("goals.reviews.addAssignmentModal.selectReviewer")}
+              </option>
+              {users
+                .filter((u) => u.id !== employeeId)
+                .map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.first_name} {u.last_name} ({u.email})
+                  </option>
+                ))}
+            </select>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button

@@ -60,6 +60,27 @@ export const EvidenceUploadModal: React.FC<EvidenceUploadModalProps> = ({
     }
   };
 
+  const [isDraggingOver, setIsDraggingOver] = React.useState(false);
+  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(true);
+  };
+  const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(false);
+  };
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(false);
+    const droppedFile = e.dataTransfer?.files?.[0];
+    if (droppedFile) {
+      setFile(droppedFile);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -164,11 +185,23 @@ export const EvidenceUploadModal: React.FC<EvidenceUploadModalProps> = ({
             ) : (
               <label
                 htmlFor="evidence-file-input"
-                className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors"
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                  isDraggingOver
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                    : "border-slate-300 dark:border-slate-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/10"
+                }`}
               >
                 <Upload className="w-8 h-8 text-slate-400" />
                 <span className="text-sm text-slate-500 dark:text-slate-400">
-                  {t("goals.components.evidence.uploadModal.selectFile")}
+                  {isDraggingOver
+                    ? t("goals.components.evidence.uploadModal.dropToSelect")
+                    : t("goals.components.evidence.uploadModal.selectFile")}
+                </span>
+                <span className="text-xs text-slate-400 dark:text-slate-500">
+                  {t("goals.components.evidence.uploadModal.orDragAndDrop")}
                 </span>
               </label>
             )}

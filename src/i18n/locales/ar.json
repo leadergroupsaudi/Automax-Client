@@ -2387,6 +2387,17 @@
     "notFound": "الهدف غير موجود",
     "category": "الفئة",
     "pageOf": "الصفحة {{current}} من {{total}}",
+    "savedViews": {
+      "title": "العروض المحفوظة",
+      "save": "حفظ العرض",
+      "namePlaceholder": "اسم العرض",
+      "delete": "حذف العرض",
+      "deleteConfirm": "هل تريد حذف العرض المحفوظ \"{{name}}\"؟",
+      "defaults": {
+        "activeHighPriority": "نشط – أولوية عالية",
+        "drafts": "المسودات"
+      }
+    },
     "table": {
       "title": "العنوان",
       "priority": "الأولوية",
@@ -2499,7 +2510,11 @@
       "evidence": {
         "heading": "الأدلة ({{count}})",
         "upload": "رفع دليل",
+        "openFolder": "فتح مجلد الهدف في المستندات",
+        "openFolderTitle": "افتح مجلد هذا الهدف في متصفح المستندات",
         "searchPlaceholder": "ابحث بالعنوان أو اسم الملف...",
+        "smartSearchPlaceholder": "ابحث بالاسم أو المحتوى أو الوسوم",
+        "smartSearchActive": "عرض الملفات المطابقة لـ “{{query}}” ({{count}} نتيجة)",
         "allTypes": "جميع الأنواع",
         "allStatuses": "جميع الحالات",
         "statusDraft": "مسودة",
@@ -2706,7 +2721,11 @@
         "employeeIdPlaceholder": "UUID للموظف",
         "reviewerId": "معرّف المُراجِع",
         "reviewerIdPlaceholder": "UUID للمُراجِع",
-        "assign": "إسناد"
+        "assign": "إسناد",
+        "employee": "الموظف",
+        "reviewer": "المراجع",
+        "selectEmployee": "اختر موظفاً",
+        "selectReviewer": "اختر مراجعاً"
       },
       "my": {
         "title": "مراجعاتي",
@@ -2746,8 +2765,17 @@
       "subtitle": "مراجعة وإدارة طلبات الموافقة على الأدلة",
       "tabPending": "قيد الانتظار",
       "tabCompleted": "مكتمل",
+      "tabPendingMetrics": "المؤشرات",
+      "tabPendingValueChanges": "تغييرات القيم",
+      "subTabEvidence": "الأدلة",
       "emptyPending": "لا توجد موافقات معلقة. أنت على اطلاع كامل!",
       "emptyCompleted": "لا توجد موافقات مكتملة بعد.",
+      "metricItem": {
+        "title": "المؤشر"
+      },
+      "valueChangeItem": {
+        "title": "تغيير القيمة"
+      },
       "table": {
         "goal": "الهدف",
         "evidence": "الدليل",
@@ -2817,7 +2845,8 @@
         "categoryPlaceholder": "الفئة...",
         "startFrom": "يبدأ من",
         "targetTo": "الهدف حتى",
-        "rootOnly": "الأهداف الجذرية فقط"
+        "rootOnly": "الأهداف الجذرية فقط",
+        "activeFilters": "الفلاتر النشطة"
       },
       "hierarchyTree": {
         "empty": "لا توجد أهداف فرعية بعد"
@@ -2867,6 +2896,8 @@
         "versionCurrent": "الحالي",
         "noVersions": "لا توجد إصدارات متاحة.",
         "downloadVersionTitle": "تنزيل هذا الإصدار",
+        "uploadVersion": "رفع إصدار",
+        "uploadVersionTitle": "رفع إصدار جديد من هذا الملف",
         "systemActor": "النظام",
         "uploadModal": {
           "title": "تحميل الدليل",
@@ -2885,13 +2916,24 @@
           "upload": "تحميل الدليل",
           "errorSelectFile": "يرجى اختيار ملف للتحميل",
           "errorTitleRequired": "العنوان مطلوب",
-          "errorCommentRequired": "التعليق مطلوب"
+          "errorCommentRequired": "التعليق مطلوب",
+          "dropToSelect": "أفلت الملف للتحديد",
+          "orDragAndDrop": "أو اسحب الملف وأفلته"
         },
         "replaceModal": {
           "title": "استبدال ملف الدليل",
           "currentFile": "الملف الحالي:",
           "selectReplacement": "انقر لاختيار ملف بديل",
           "replace": "استبدال الملف"
+        },
+        "versionUploadModal": {
+          "title": "رفع إصدار جديد",
+          "currentFile": "الملف الحالي:",
+          "selectFile": "انقر لاختيار ملف",
+          "descriptionLabel": "وصف الإصدار",
+          "descriptionPlaceholder": "ما الذي تغيّر في هذا الإصدار؟",
+          "optional": "(اختياري)",
+          "submit": "رفع الإصدار"
         },
         "transitionModal": {
           "title": "نقل الدليل",
@@ -2913,6 +2955,25 @@
         "no": "لا",
         "updateValue": "تحديث القيمة",
         "deleteTitle": "حذف المقياس",
+        "pendingState": "حالة سير العمل",
+        "proposedValue": "قيد الانتظار",
+        "pendingApproval": "هناك تغيير في القيمة قيد الموافقة",
+        "availableTransitions": "{{count}} إجراءات",
+        "transitionModal": {
+          "title": "سير عمل المقياس",
+          "transition": "الانتقال",
+          "commentLabel": "تعليق",
+          "commentPlaceholder": "ملاحظة اختيارية حول هذا الانتقال...",
+          "submit": "إرسال"
+        },
+        "valueChangeHistory": {
+          "heading": "سجل تغييرات القيمة",
+          "empty": "لا توجد تغييرات مسجلة.",
+          "proposed": "المقترحة",
+          "previous": "السابقة",
+          "submittedBy": "أرسل بواسطة",
+          "appliedAt": "تم التطبيق"
+        },
         "updateModal": {
           "title": "تحديث قيمة المقياس",
           "currentLabel": "الحالي:",
@@ -2923,7 +2984,7 @@
           "optional": "(اختياري)",
           "commentPlaceholder": "سبب التحديث...",
           "updating": "جاري التحديث...",
-          "update": "تحديث القيمة",
+          "update": "إرسال للموافقة",
           "errorInvalidNumber": "يرجى إدخال رقم صالح"
         },
         "importModal": {

@@ -10,6 +10,7 @@ import {
   goalCommentApi,
   goalActivityApi,
   metricImportApi,
+  valueChangeApi,
 } from "../api/goals";
 import { goalAnalyticsKeys } from "./useGoalAnalytics";
 import type {
@@ -28,6 +29,8 @@ import type {
   CheckInCreateRequest,
   MetricImportBatchFilter,
   MetricImportBatchTransitionRequest,
+  MetricTransitionRequest,
+  MetricValueChangeTransitionRequest,
 } from "../types/goal";
 
 // ──────────────────────────────────────────────────
@@ -66,6 +69,22 @@ export const goalKeys = {
     [...goalKeys.all, "metricBatchTransitions", id] as const,
   metricBatchHistory: (id: string) =>
     [...goalKeys.all, "metricBatchHistory", id] as const,
+  metricTransitions: (metricId: string) =>
+    [...goalKeys.all, "metricTransitions", metricId] as const,
+  metricValueChanges: (goalId: string, metricId: string) =>
+    [...goalKeys.all, "metricValueChanges", goalId, metricId] as const,
+  valueChangeTransitions: (changeId: string) =>
+    [...goalKeys.all, "valueChangeTransitions", changeId] as const,
+  metricApprovals: (page: number, limit: number) =>
+    [...goalKeys.all, "approvals", "pendingMetrics", page, limit] as const,
+  metricValueChangeApprovals: (page: number, limit: number) =>
+    [
+      ...goalKeys.all,
+      "approvals",
+      "pendingMetricValueChanges",
+      page,
+      limit,
+    ] as const,
 };
 
 // ──────────────────────────────────────────────────
@@ -340,11 +359,96 @@ export function useUpdateMetricValue() {
       data: MetricValueUpdateRequest;
     }) => metricApi.updateValue(id, data),
     onSuccess: () => {
+      // The metric isn't mutated until the value-change is approved, but we
+      // still invalidate so the "Pending: <value>" hint shows up immediately.
       queryClient.invalidateQueries({ queryKey: goalKeys.all });
-      toast.success("Metric value updated");
+      toast.success(
+        "Value change submitted for approval — pending review",
+      );
     },
     onError: () => {
-      toast.error("Failed to update metric value");
+      toast.error("Failed to submit metric value change");
+    },
+  });
+}
+
+// ──────────────────────────────────────────────────
+// Metric Workflow Transitions
+// ──────────────────────────────────────────────────
+
+export function useMetricAvailableTransitions(metricId: string) {
+  return useQuery({
+    queryKey: goalKeys.metricTransitions(metricId),
+    queryFn: () => metricApi.getAvailableTransitions(metricId),
+    enabled: !!metricId,
+  });
+}
+
+export function useExecuteMetricTransition() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      metricId,
+      data,
+    }: {
+      metricId: string;
+      data: MetricTransitionRequest;
+    }) => metricApi.transition(metricId, data),
+    onSuccess: async () => {
+      // Metric state changed — refresh goal detail (which embeds metrics),
+      // approvals queues, and any cached transitions.
+      await queryClient.invalidateQueries({ queryKey: goalKeys.all });
+      toast.success("Metric transition completed");
+    },
+    onError: (error: { response?: { data?: { error?: string } } }) => {
+      const msg =
+        error?.response?.data?.error || "Failed to execute metric transition";
+      toast.error(msg);
+    },
+  });
+}
+
+// ──────────────────────────────────────────────────
+// Metric Value Changes
+// ──────────────────────────────────────────────────
+
+export function useMetricValueChanges(goalId: string, metricId: string) {
+  return useQuery({
+    queryKey: goalKeys.metricValueChanges(goalId, metricId),
+    queryFn: () => metricApi.listValueChanges(goalId, metricId),
+    enabled: !!goalId && !!metricId,
+  });
+}
+
+export function useValueChangeAvailableTransitions(changeId: string) {
+  return useQuery({
+    queryKey: goalKeys.valueChangeTransitions(changeId),
+    queryFn: () => valueChangeApi.getAvailableTransitions(changeId),
+    enabled: !!changeId,
+  });
+}
+
+export function useExecuteValueChangeTransition() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      changeId,
+      data,
+    }: {
+      changeId: string;
+      data: MetricValueChangeTransitionRequest;
+    }) => valueChangeApi.transition(changeId, data),
+    onSuccess: async () => {
+      // current_value may have flipped on the parent metric — invalidate
+      // everything goal-shaped to keep cards in sync.
+      await queryClient.invalidateQueries({ queryKey: goalKeys.all });
+      toast.success("Value change transition completed");
+    },
+    onError: (error: { response?: { data?: { error?: string } } }) => {
+      const msg =
+        error?.response?.data?.error ||
+        "Failed to execute value change transition";
+      toast.error(msg);
     },
   });
 }
@@ -479,6 +583,20 @@ export function useCompletedApprovals(page = 1, limit = 10) {
   return useQuery({
     queryKey: goalKeys.completedApprovals(page, limit),
     queryFn: () => approvalApi.listCompleted(page, limit),
+  });
+}
+
+export function usePendingMetricApprovals(page = 1, limit = 10) {
+  return useQuery({
+    queryKey: goalKeys.metricApprovals(page, limit),
+    queryFn: () => approvalApi.pendingMetrics(page, limit),
+  });
+}
+
+export function usePendingMetricValueChangeApprovals(page = 1, limit = 10) {
+  return useQuery({
+    queryKey: goalKeys.metricValueChangeApprovals(page, limit),
+    queryFn: () => approvalApi.pendingMetricValueChanges(page, limit),
   });
 }
 

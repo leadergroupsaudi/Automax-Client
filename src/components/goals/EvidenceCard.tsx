@@ -20,6 +20,7 @@ import {
   Clock,
   History,
   Loader2,
+  Plus,
 } from "lucide-react";
 import type {
   Evidence,
@@ -35,6 +36,7 @@ import { documentApi } from "../../api/documents";
 import { useFileVersions } from "../../hooks/useDocuments";
 import { EvidenceTransitionModal } from "./EvidenceTransitionModal";
 import EvidenceReplaceModal from "./EvidenceReplaceModal";
+import EvidenceVersionUploadModal from "./EvidenceVersionUploadModal";
 
 interface EvidenceCardProps {
   evidence: Evidence;
@@ -64,6 +66,7 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({
   const { t } = useTranslation();
   const [transitionModalOpen, setTransitionModalOpen] = useState(false);
   const [replaceModalOpen, setReplaceModalOpen] = useState(false);
+  const [versionUploadModalOpen, setVersionUploadModalOpen] = useState(false);
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const [versionsExpanded, setVersionsExpanded] = useState(false);
 
@@ -361,18 +364,30 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({
         {/* DMS File Versions */}
         {hasDmsFile && (
           <>
-            <button
-              onClick={() => setVersionsExpanded(!versionsExpanded)}
-              className="flex items-center gap-1.5 mt-3 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-            >
-              <History className="w-3.5 h-3.5" />
-              {t("goals.components.evidence.versions")}
-              {versionsExpanded ? (
-                <ChevronUp className="w-3.5 h-3.5" />
-              ) : (
-                <ChevronDown className="w-3.5 h-3.5" />
+            <div className="flex items-center justify-between gap-2 mt-3">
+              <button
+                onClick={() => setVersionsExpanded(!versionsExpanded)}
+                className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+              >
+                <History className="w-3.5 h-3.5" />
+                {t("goals.components.evidence.versions")}
+                {versionsExpanded ? (
+                  <ChevronUp className="w-3.5 h-3.5" />
+                ) : (
+                  <ChevronDown className="w-3.5 h-3.5" />
+                )}
+              </button>
+              {versionsExpanded && canEdit && (
+                <button
+                  onClick={() => setVersionUploadModalOpen(true)}
+                  className="flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                  title={t("goals.components.evidence.uploadVersionTitle")}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  {t("goals.components.evidence.uploadVersion")}
+                </button>
               )}
-            </button>
+            </div>
 
             {versionsExpanded && (
               <div className="mt-2 space-y-1.5">
@@ -438,6 +453,15 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({
           evidenceId={evidence.id}
           currentFileName={evidence.file_name}
           onClose={() => setReplaceModalOpen(false)}
+        />
+      )}
+
+      {/* Upload New Version Modal */}
+      {versionUploadModalOpen && hasDmsFile && (
+        <EvidenceVersionUploadModal
+          fileId={evidence.documenta_file_id}
+          currentFileName={evidence.file_name}
+          onClose={() => setVersionUploadModalOpen(false)}
         />
       )}
 

@@ -22,6 +22,7 @@ import { GoalStatusBadge } from "../../components/goals/GoalStatusBadge";
 import { GoalPriorityBadge } from "../../components/goals/GoalPriorityBadge";
 import { GoalProgressBar } from "../../components/goals/GoalProgressBar";
 import { GoalFilters } from "../../components/goals/GoalFilters";
+import { SavedViewsBar } from "../../components/goals/SavedViewsBar";
 import { GoalImportModal } from "../../components/goals/GoalImportModal";
 import { MetricImportModal } from "../../components/goals/MetricImportModal";
 import { BulkActionsBar } from "../../components/goals/BulkActionsBar";
@@ -262,6 +263,16 @@ export const GoalsPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Saved Views (filter presets stored in localStorage) */}
+      <SavedViewsBar
+        filters={filters}
+        onApply={(viewFilters) =>
+          // Reset page on view application; preserve session limit. Scope is
+          // intentionally omitted from saved views — `isMyGoals` route owns it.
+          setFilters({ page: 1, limit: filters.limit ?? 10, ...viewFilters })
+        }
+      />
 
       {/* Filters */}
       <GoalFilters filters={filters} onChange={setFilters} />

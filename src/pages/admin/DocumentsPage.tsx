@@ -853,7 +853,9 @@ export function DocumentsPage() {
   // Deep-link: ?file=<uuid> navigates into the file's parent folder and opens
   // the file detail panel. Used by "Open in Documents" links from evidence
   // cards so users can jump straight to a file's context without manually
-  // walking the folder tree.
+  // walking the folder tree. When the uuid points to a folder (e.g. the
+  // goal-folder shortcut from the goal detail page), we navigate INTO the
+  // folder instead of opening the detail panel.
   const deepLinkFileId = searchParams.get("file");
   useEffect(() => {
     if (!deepLinkFileId) return;
@@ -866,16 +868,24 @@ export function DocumentsPage() {
           documentApi.getFileBreadcrumb(deepLinkFileId),
         ]);
         if (cancelled) return;
-        if (breadcrumbRes?.data?.breadcrumb) {
-          setFolderPath(
-            breadcrumbRes.data.breadcrumb.map((entry) => ({
-              id: entry.uuid,
-              name: entry.name,
-            })),
-          );
-        }
-        if (infoRes?.data) {
-          setSelectedFile(infoRes.data);
+        const breadcrumb =
+          breadcrumbRes?.data?.breadcrumb?.map((entry) => ({
+            id: entry.uuid,
+            name: entry.name,
+          })) ?? [];
+        if (infoRes?.data?.type === "folder") {
+          // Navigate INTO the folder: append it to the chain so the listing
+          // shows its children. Detail panel stays closed.
+          setFolderPath([
+            ...breadcrumb,
+            { id: infoRes.data.uuid, name: infoRes.data.name },
+          ]);
+          setSelectedFile(null);
+        } else {
+          setFolderPath(breadcrumb);
+          if (infoRes?.data) {
+            setSelectedFile(infoRes.data);
+          }
         }
       } catch {
         // file not found or not accessible — silently ignore; user lands on root

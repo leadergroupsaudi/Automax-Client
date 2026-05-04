@@ -2508,6 +2508,17 @@
     "notFound": "Goal not found",
     "category": "Category",
     "pageOf": "Page {{current}} of {{total}}",
+    "savedViews": {
+      "title": "Saved views",
+      "save": "Save view",
+      "namePlaceholder": "View name",
+      "delete": "Delete view",
+      "deleteConfirm": "Delete saved view \"{{name}}\"?",
+      "defaults": {
+        "activeHighPriority": "Active – High priority",
+        "drafts": "Drafts"
+      }
+    },
     "table": {
       "title": "Title",
       "priority": "Priority",
@@ -2620,7 +2631,11 @@
       "evidence": {
         "heading": "Evidence ({{count}})",
         "upload": "Upload Evidence",
+        "openFolder": "Open Goal Folder in Documents",
+        "openFolderTitle": "Open this goal's folder in the Documents browser",
         "searchPlaceholder": "Search by title or file name...",
+        "smartSearchPlaceholder": "Search by name, content, or tags",
+        "smartSearchActive": "Showing files matching “{{query}}” ({{count}} result(s))",
         "allTypes": "All Types",
         "allStatuses": "All Statuses",
         "statusDraft": "Draft",
@@ -2827,7 +2842,11 @@
         "employeeIdPlaceholder": "UUID of employee",
         "reviewerId": "Reviewer ID",
         "reviewerIdPlaceholder": "UUID of reviewer",
-        "assign": "Assign"
+        "assign": "Assign",
+        "employee": "Employee",
+        "reviewer": "Reviewer",
+        "selectEmployee": "Select an employee",
+        "selectReviewer": "Select a reviewer"
       },
       "my": {
         "title": "My Reviews",
@@ -2867,8 +2886,17 @@
       "subtitle": "Review and manage evidence approval requests",
       "tabPending": "Pending",
       "tabCompleted": "Completed",
+      "tabPendingMetrics": "Metrics",
+      "tabPendingValueChanges": "Value Changes",
+      "subTabEvidence": "Evidence",
       "emptyPending": "No pending approvals. You're all caught up!",
       "emptyCompleted": "No completed approvals yet.",
+      "metricItem": {
+        "title": "Metric"
+      },
+      "valueChangeItem": {
+        "title": "Value Change"
+      },
       "table": {
         "goal": "Goal",
         "evidence": "Evidence",
@@ -2938,7 +2966,8 @@
         "categoryPlaceholder": "Category...",
         "startFrom": "Start From",
         "targetTo": "Target To",
-        "rootOnly": "Root goals only"
+        "rootOnly": "Root goals only",
+        "activeFilters": "Active filters"
       },
       "hierarchyTree": {
         "empty": "No child goals yet"
@@ -2988,6 +3017,8 @@
         "versionCurrent": "Current",
         "noVersions": "No versions available.",
         "downloadVersionTitle": "Download this version",
+        "uploadVersion": "Upload version",
+        "uploadVersionTitle": "Upload a new version of this file",
         "systemActor": "System",
         "uploadModal": {
           "title": "Upload Evidence",
@@ -3006,13 +3037,24 @@
           "upload": "Upload Evidence",
           "errorSelectFile": "Please select a file to upload",
           "errorTitleRequired": "Title is required",
-          "errorCommentRequired": "Comment is required"
+          "errorCommentRequired": "Comment is required",
+          "dropToSelect": "Drop file to select",
+          "orDragAndDrop": "or drag and drop"
         },
         "replaceModal": {
           "title": "Replace Evidence File",
           "currentFile": "Current file:",
           "selectReplacement": "Click to select a replacement file",
           "replace": "Replace File"
+        },
+        "versionUploadModal": {
+          "title": "Upload New Version",
+          "currentFile": "Current file:",
+          "selectFile": "Click to select a file",
+          "descriptionLabel": "Version description",
+          "descriptionPlaceholder": "What changed in this version?",
+          "optional": "(optional)",
+          "submit": "Upload Version"
         },
         "transitionModal": {
           "title": "Transition Evidence",
@@ -3034,6 +3076,25 @@
         "no": "No",
         "updateValue": "Update Value",
         "deleteTitle": "Delete metric",
+        "pendingState": "Workflow state",
+        "proposedValue": "Pending",
+        "pendingApproval": "A value change is pending approval",
+        "availableTransitions": "{{count}} actions",
+        "transitionModal": {
+          "title": "Metric Workflow",
+          "transition": "Transition",
+          "commentLabel": "Comment",
+          "commentPlaceholder": "Optional note about this transition...",
+          "submit": "Submit"
+        },
+        "valueChangeHistory": {
+          "heading": "Value change history",
+          "empty": "No value changes recorded.",
+          "proposed": "Proposed",
+          "previous": "Previous",
+          "submittedBy": "Submitted by",
+          "appliedAt": "Applied"
+        },
         "updateModal": {
           "title": "Update Metric Value",
           "currentLabel": "Current:",
@@ -3044,7 +3105,7 @@
           "optional": "(optional)",
           "commentPlaceholder": "Reason for update...",
           "updating": "Updating...",
-          "update": "Update Value",
+          "update": "Submit for Approval",
           "errorInvalidNumber": "Please enter a valid number"
         },
         "importModal": {

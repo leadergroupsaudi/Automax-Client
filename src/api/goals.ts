@@ -36,6 +36,13 @@ import type {
   MetricImportBatchListResponse,
   MetricImportBatchTransitionRequest,
   MetricImportBatchTransitionHistory,
+  MetricTransitionRequest,
+  MetricValueChange,
+  MetricValueChangeListResponse,
+  MetricValueChangeTransitionRequest,
+  MetricApprovalListResponse,
+  MetricValueChangeApprovalListResponse,
+  GoalMetricValueChangeResponse,
 } from "../types/goal";
 
 // ──────────────────────────────────────────────────
@@ -256,10 +263,15 @@ export const metricApi = {
     return res.data;
   },
 
+  /**
+   * Submits a metric value change for approval.
+   * Backend returns HTTP 202 + the created MetricValueChange — the metric
+   * itself is NOT mutated until the change is approved.
+   */
   updateValue: async (
     id: string,
     data: MetricValueUpdateRequest,
-  ): Promise<ApiResponse<GoalMetric>> => {
+  ): Promise<ApiResponse<GoalMetricValueChangeResponse>> => {
     const res = await apiClient.put(`/goals/metrics/${id}/value`, data);
     return res.data;
   },
@@ -272,6 +284,67 @@ export const metricApi = {
     const res = await apiClient.get(`/goals/metrics/${id}/history`, {
       params: { page, limit },
     });
+    return res.data;
+  },
+
+  // ── Metric workflow transitions ──────────────────
+  getAvailableTransitions: async (
+    metricId: string,
+  ): Promise<ApiResponse<AvailableTransition[]>> => {
+    const res = await apiClient.get(
+      `/goal-metrics/${metricId}/available-transitions`,
+    );
+    return res.data;
+  },
+
+  transition: async (
+    metricId: string,
+    data: MetricTransitionRequest,
+  ): Promise<ApiResponse<GoalMetric>> => {
+    const res = await apiClient.post(
+      `/goal-metrics/${metricId}/transition`,
+      data,
+    );
+    return res.data;
+  },
+
+  // ── Value-change history (per metric) ────────────
+  listValueChanges: async (
+    goalId: string,
+    metricId: string,
+    page = 1,
+    limit = 20,
+  ): Promise<MetricValueChangeListResponse> => {
+    const res = await apiClient.get(
+      `/goals/${goalId}/metrics/${metricId}/value-changes`,
+      { params: { page, limit } },
+    );
+    return res.data;
+  },
+};
+
+// ──────────────────────────────────────────────────
+// Metric Value Changes (approval workflow)
+// ──────────────────────────────────────────────────
+
+export const valueChangeApi = {
+  getAvailableTransitions: async (
+    changeId: string,
+  ): Promise<ApiResponse<AvailableTransition[]>> => {
+    const res = await apiClient.get(
+      `/goal-metric-value-changes/${changeId}/available-transitions`,
+    );
+    return res.data;
+  },
+
+  transition: async (
+    changeId: string,
+    data: MetricValueChangeTransitionRequest,
+  ): Promise<ApiResponse<MetricValueChange>> => {
+    const res = await apiClient.post(
+      `/goal-metric-value-changes/${changeId}/transition`,
+      data,
+    );
     return res.data;
   },
 };
@@ -411,6 +484,26 @@ export const approvalApi = {
     limit = 10,
   ): Promise<ApprovalListResponse> => {
     const res = await apiClient.get("/approvals/completed", {
+      params: { page, limit },
+    });
+    return res.data;
+  },
+
+  pendingMetrics: async (
+    page = 1,
+    limit = 10,
+  ): Promise<MetricApprovalListResponse> => {
+    const res = await apiClient.get("/approvals/pending-metrics", {
+      params: { page, limit },
+    });
+    return res.data;
+  },
+
+  pendingMetricValueChanges: async (
+    page = 1,
+    limit = 10,
+  ): Promise<MetricValueChangeApprovalListResponse> => {
+    const res = await apiClient.get("/approvals/pending-metric-value-changes", {
       params: { page, limit },
     });
     return res.data;
