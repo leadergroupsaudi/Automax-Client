@@ -118,8 +118,12 @@ export const CollaboratorPicker: React.FC<CollaboratorPickerProps> = ({
   };
 
   const getRoleLabel = (role: CollaboratorRole): string => {
+    // Fall back to the friendly label from COLLABORATOR_ROLE_OPTIONS if
+    // the i18n key isn't available yet (e.g., during initial hydration);
+    // never expose the raw `reviewer_l1` / `reviewer_l2` variable values.
+    const opt = COLLABORATOR_ROLE_OPTIONS.find((o) => o.value === role);
     return t(`goals.components.collaboratorRole.${role}`, {
-      defaultValue: role,
+      defaultValue: opt?.label ?? role,
     });
   };
 
@@ -209,7 +213,9 @@ export const CollaboratorPicker: React.FC<CollaboratorPickerProps> = ({
             >
               {COLLABORATOR_ROLE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
-                  {t(`goals.components.collaboratorRole.${opt.value}`)}
+                  {t(`goals.components.collaboratorRole.${opt.value}`, {
+                    defaultValue: opt.label,
+                  })}
                 </option>
               ))}
             </select>

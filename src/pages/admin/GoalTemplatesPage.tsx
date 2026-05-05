@@ -595,7 +595,9 @@ function TemplateFormModal({
                     >
                       {COLLABORATOR_ROLE_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>
-                          {opt.label}
+                          {t(`goals.components.collaboratorRole.${opt.value}`, {
+                            defaultValue: opt.label,
+                          })}
                         </option>
                       ))}
                     </select>
