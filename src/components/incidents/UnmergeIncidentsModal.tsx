@@ -122,7 +122,7 @@ export const UnmergeIncidentsModal: React.FC<UnmergeIncidentsModalProps> = ({
             onClick={handleUnmerge}
             isLoading={isUnmerging}
           >
-            {t("incidentMerge.confirmUnmerge")}
+            {t("incidents.merge.confirmUnmerge")}
           </Button>
         </div>
       </div>

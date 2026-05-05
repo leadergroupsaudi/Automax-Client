@@ -53,7 +53,7 @@ export const MergeIncidentsModal: React.FC<MergeIncidentsModalProps> = ({
       });
     } catch (err: any) {
       setError(
-        err.response?.data?.error || t("incidentMerge.validationFailed"),
+        err.response?.data?.error || t("incidents.merge.validationFailed"),
       );
     } finally {
       setIsValidationLoading(false);
@@ -62,7 +62,7 @@ export const MergeIncidentsModal: React.FC<MergeIncidentsModalProps> = ({
 
   const handleMerge = async () => {
     if (!masterIncidentId) {
-      setError(t("incidentMerge.selectMaster"));
+      setError(t("incidents.merge.selectMaster"));
       return;
     }
 
@@ -79,7 +79,7 @@ export const MergeIncidentsModal: React.FC<MergeIncidentsModalProps> = ({
       onMergeSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.error || t("incidentMerge.mergeFailed"));
+      setError(err.response?.data?.error || t("incidents.merge.mergeFailed"));
     } finally {
       setIsMerging(false);
     }
@@ -136,11 +136,11 @@ export const MergeIncidentsModal: React.FC<MergeIncidentsModalProps> = ({
               {/* Master Incident Selection */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-muted-foreground mb-2">
-                  {t("incidentMerge.masterIncidentNumber")}{" "}
+                  {t("incidents.merge.masterIncidentNumber")}{" "}
                   <span className="text-red-500">*</span>
                 </label>
                 <p className="text-xs text-gray-500 mb-3">
-                  {t("incidentMerge.masterIncidentHint")}
+                  {t("incidents.merge.masterIncidentHint")}
                 </p>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {selectedIncidents.map((incident) => (
@@ -168,7 +168,7 @@ export const MergeIncidentsModal: React.FC<MergeIncidentsModalProps> = ({
                           {masterIncidentId === incident.id && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
                               <Crown className="w-3 h-3" />
-                              {t("incidentMerge.master")}
+                              {t("incidents.merge.master")}
                             </span>
                           )}
                         </div>
@@ -185,14 +185,14 @@ export const MergeIncidentsModal: React.FC<MergeIncidentsModalProps> = ({
               {/* Info */}
               <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-800">
-                  {t("incidentMerge.masterRetainInfo")}
+                  {t("incidents.merge.masterRetainInfo")}
                 </p>
               </div>
 
               {/* Comment */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-muted-foreground mb-2">
-                  {t("incidentMerge.comment")}{" "}
+                  {t("incidents.merge.comment")}{" "}
                   <span className="text-gray-400">
                     ({t("common.optional")})
                   </span>
@@ -200,7 +200,7 @@ export const MergeIncidentsModal: React.FC<MergeIncidentsModalProps> = ({
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
-                  placeholder={t("incidentMerge.commentPlaceholder")}
+                  placeholder={t("incidents.merge.commentPlaceholder")}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
@@ -227,7 +227,7 @@ export const MergeIncidentsModal: React.FC<MergeIncidentsModalProps> = ({
               isLoading={isMerging}
               disabled={!masterIncidentId}
             >
-              {t("incidentMerge.confirmMerge")}
+              {t("incidents.merge.confirmMerge")}
             </Button>
           )}
         </div>

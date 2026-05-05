@@ -54,6 +54,7 @@ import { useAuthStore } from "../../stores/authStore";
 import { Modal } from "../../components/ui";
 import { AttachmentPreview } from "@/components/common/AttachmentPreview";
 import { toast } from "sonner";
+import i18n from "@/i18n";
 
 export function IncidentCreatePage() {
   const { t } = useTranslation();
@@ -758,11 +759,15 @@ export function IncidentCreatePage() {
     const priorityCategory = incidentLookupCategories.find(
       (c) => c.code === "PRIORITY",
     );
+    const priorityCategoryName =
+      i18n.language === "ar"
+        ? priorityCategory?.name_ar || priorityCategory?.name
+        : priorityCategory?.name;
     if (priorityCategory) {
       const priorityValue = lookupValues[priorityCategory.id];
       if (!priorityValue) {
         newErrors["lookup:PRIORITY"] = t("incidents.fieldRequired", {
-          field: priorityCategory.name,
+          field: priorityCategoryName,
         });
       }
     }
@@ -784,18 +789,23 @@ export function IncidentCreatePage() {
         const category = incidentLookupCategories.find(
           (c) => c.code === categoryCode,
         );
+        const categoryName =
+          i18n.language === "ar"
+            ? category?.name_ar || category?.name
+            : category?.name;
+
         if (category) {
           const value = lookupValues[category.id];
           // For multiselect, check if array is empty
           if (category.field_type === "multiselect") {
             if (!value || (Array.isArray(value) && value.length === 0)) {
               newErrors[field] = t("incidents.fieldRequired", {
-                field: category.name,
+                field: categoryName,
               });
             }
           } else if (!value) {
             newErrors[field] = t("incidents.fieldRequired", {
-              field: category.name,
+              field: categoryName,
             });
           }
         }
@@ -820,7 +830,9 @@ export function IncidentCreatePage() {
         // Standard field validation - only check fields that exist in formData
         const value = formData[field as keyof typeof formData];
         if (!value || (typeof value === "string" && !value.trim())) {
-          newErrors[field] = t("incidents.fieldRequired", { field });
+          newErrors[field] = t("incidents.fieldRequired", {
+            field: t(`incidents.${field}`, field),
+          });
         }
       }
     }

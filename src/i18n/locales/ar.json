@@ -550,7 +550,29 @@
       "unmergeFailed": "فشل إلغاء دمج البلاغ",
       "unmergeInfo": "سيصبح البلاغ مستقلاً ولن يتبع تغييرات حالة البلاغ الرئيسي بعد الآن.",
       "unmergeTitle": "إلغاء دمج البلاغ",
-      "unmergeWarning": "سيؤدي هذا إلى فصل البلاغ عن البلاغ الرئيسي"
+      "unmergeWarning": "سيؤدي هذا إلى فصل البلاغ عن البلاغ الرئيسي",
+      "selectedIncidents": "البلاغات المحددة ({{count}})",
+      "selectMasterTitle": "البلاغ الرئيسي",
+      "masterIncidentNumber": "رقم البلاغ الرئيسي",
+      "masterIncidentHint": "اختر أحد البلاغات أدناه ليكون البلاغ الرئيسي. سيحتفظ البلاغ الرئيسي بهويته بينما يتم دمج البلاغات الأخرى فيه.",
+      "master": "رئيسي",
+      "masterRetainInfo": "سيحتفظ البلاغ الرئيسي المحدد بهويته. سيتم دمج جميع البلاغات الأخرى فيه وستتبع تغييرات حالته. عند إغلاق البلاغ الرئيسي، سيتم إغلاق جميع البلاغات المدمجة تلقائيًا.",
+      "confirmMerge": "دمج البلاغات",
+      "mergeSuccess": "تم دمج البلاغات بنجاح",
+      "mergeFailed": "فشل دمج البلاغات",
+      "validationFailed": "فشل التحقق من إمكانية الدمج",
+      "selectMaster": "يرجى اختيار بلاغ رئيسي",
+      "unmergeSuccess": "تم إلغاء دمج البلاغ بنجاح",
+      "confirmUnmerge": "إلغاء دمج البلاغ",
+      "mergedIncidents": "البلاغات المدمجة",
+      "mergedInto": "مدمج في {{incidentNumber}}",
+      "hasMergedChildren": "يحتوي هذا البلاغ على {{count}} بلاغ(ات) مدمجة",
+      "viewMerged": "عرض البلاغات المدمجة",
+      "unmerge": "إلغاء الدمج",
+      "bulkUnmerge": "إلغاء دمج الكل",
+      "masterIncidentTitle": "بلاغ رئيسي (يحتوي على بلاغات فرعية مدمجة)",
+      "childIncidentTitle": "بلاغ فرعي (مدمج)",
+      "child": "فرعي"
     },
     "newAttachments": "مرفقات جديدة",
     "notFound": "لم يتم العثور على البلاغ.",
@@ -601,8 +623,11 @@
     "childIncidentMerged": "بلاغ فرعي (مدمج)",
     "child": "فرعي",
     "rolesToMatchSelectOneOrMore": "الأدوار المطابقة (اختر واحدًا أو أكثر):",
-    "transitionInfo": "معلومات الانتقال"
+    "transitionInfo": "معلومات الانتقال",
+    "transitionSuccess": "تم تنفيذ الانتقال بنجاح",
+    "department_id": "القسم"
   },
+
   "priorities": {
     "critical": "حرج",
     "high": "عالي",

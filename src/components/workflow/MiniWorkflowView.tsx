@@ -147,7 +147,7 @@ export const MiniWorkflowView: React.FC<MiniWorkflowViewProps> = ({
               <React.Fragment key={state.id}>
                 {renderState(state)}
                 {index < states.length - 1 && (
-                  <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                  <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0 rtl:-rotate-180" />
                 )}
               </React.Fragment>
             ))}
