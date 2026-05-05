@@ -110,7 +110,7 @@ export const MyIncidentsPage: React.FC<MyIncidentsPageProps> = ({ type }) => {
       });
     } catch (err: any) {
       console.error(
-        err.response?.data?.error || t("incidentMerge.validationFailed"),
+        err.response?.data?.error || t("incidents.merge.validationFailed"),
       );
     } finally {
       setIsValidationLoading(false);
@@ -126,7 +126,7 @@ export const MyIncidentsPage: React.FC<MyIncidentsPageProps> = ({ type }) => {
     setSelectedIncidents([]);
     setShowMergeModal(false);
     refetch();
-    toast.success(t("incidentMerge.mergeSuccess"));
+    toast.success(t("incidents.merge.mergeSuccess"));
   };
 
   const {
@@ -344,7 +344,7 @@ export const MyIncidentsPage: React.FC<MyIncidentsPageProps> = ({ type }) => {
                 leftIcon={<ArrowRightLeft className="w-4 h-4" />}
                 disabled={isMergeDisabled}
               >
-                {t("incidentMerge.title")}
+                {t("incidents.merge.title")}
               </Button>
             </>
           )}

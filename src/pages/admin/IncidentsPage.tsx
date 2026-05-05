@@ -194,7 +194,7 @@ export const IncidentsPage: React.FC = () => {
       });
     } catch (err: any) {
       console.error(
-        err.response?.data?.error || t("incidentMerge.validationFailed"),
+        err.response?.data?.error || t("incidents.merge.validationFailed"),
       );
     } finally {
       setIsValidationLoading(false);
@@ -292,7 +292,7 @@ export const IncidentsPage: React.FC = () => {
     clearSelection();
     setShowMergeModal(false);
     refetch();
-    toast.success(t("incidentMerge.mergeSuccess"));
+    toast.success(t("incidents.merge.mergeSuccess"));
   };
 
   // Queries - only fetch incident-type workflows
@@ -681,7 +681,7 @@ export const IncidentsPage: React.FC = () => {
                 leftIcon={<ArrowRightLeft className="w-4 h-4" />}
                 disabled={isMergeDisabled}
               >
-                {t("incidentMerge.title")}
+                {t("incidents.merge.title")}
               </Button>
             </>
           )}
@@ -1293,11 +1293,11 @@ export const IncidentsPage: React.FC = () => {
                                   <span
                                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-300"
                                     title={t(
-                                      "incidentMerge.masterIncidentTitle",
+                                      "incidents.merge.masterIncidentTitle",
                                     )}
                                   >
                                     <GitMerge className="w-3 h-3" />
-                                    {t("incidentMerge.master")}
+                                    {t("incidents.merge.master")}
                                   </span>
                                 )}
                                 {/* Child incident icon */}
@@ -1305,11 +1305,11 @@ export const IncidentsPage: React.FC = () => {
                                   <span
                                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-300"
                                     title={t(
-                                      "incidentMerge.childIncidentTitle",
+                                      "incidents.merge.childIncidentTitle",
                                     )}
                                   >
                                     <Link2 className="w-3 h-3" />
-                                    {t("incidentMerge.child")}
+                                    {t("incidents.merge.child")}
                                   </span>
                                 )}
                                 <p
