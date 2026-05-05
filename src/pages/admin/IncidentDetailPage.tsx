@@ -144,9 +144,8 @@ export const IncidentDetailPage: React.FC = () => {
   const [transitionUploading, setTransitionUploading] = useState(false);
   const [transitionFeedbackRating, setTransitionFeedbackRating] =
     useState<number>(0);
-  const [transitionFeedbackComment, setTransitionFeedbackComment] = useState(
-    "Missing Incident Information",
-  );
+  const [transitionFeedbackComment, setTransitionFeedbackComment] =
+    useState("");
   const [transitionFieldValues, setTransitionFieldValues] = useState<
     Record<string, string>
   >({});
@@ -436,7 +435,7 @@ export const IncidentDetailPage: React.FC = () => {
         setTransitionComment("");
         setTransitionAttachment(null);
         setTransitionFeedbackRating(0);
-        setTransitionFeedbackComment("Missing Incident Information");
+        setTransitionFeedbackComment("");
         setReadyToCloseDuration("");
         setDepartmentMatchResult(null);
         setUserMatchResult(null);
@@ -554,7 +553,7 @@ export const IncidentDetailPage: React.FC = () => {
         attachments,
         feedback: {
           rating: 1,
-          comment: feedback?.comment || "Missing Incident Information",
+          comment: feedback?.comment,
         },
         department_id,
         user_ids,
@@ -572,14 +571,14 @@ export const IncidentDetailPage: React.FC = () => {
       setTransitionComment("");
       setTransitionAttachment(null);
       setTransitionFeedbackRating(0);
-      setTransitionFeedbackComment("Missing Incident Information");
+      setTransitionFeedbackComment("");
       setTransitionFieldValues({});
       setReadyToCloseDuration("");
       setDepartmentMatchResult(null);
       setUserMatchResult(null);
       setSelectedDepartmentId("");
       setSelectedUserIds([]);
-      toast.success("Transition completed successfully");
+      toast.success(t("incidents.transitionSuccess"));
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
@@ -1543,7 +1542,7 @@ export const IncidentDetailPage: React.FC = () => {
               }}
               leftIcon={<ArrowRightLeft className="w-4 h-4" />}
             >
-              {t("incidentMerge.unmerge")}
+              {t("incidents.merge.unmerge")}
             </Button>
           )}
           {/* Show bulk unmerge button if this incident is a master (has merged children) */}
@@ -1555,7 +1554,8 @@ export const IncidentDetailPage: React.FC = () => {
                 onClick={() => setShowMergedIncidents(!showMergedIncidents)}
                 leftIcon={<Users className="w-4 h-4" />}
               >
-                {t("incidentMerge.mergedIncidents")} ({mergedIncidents.length})
+                {t("incidents.merge.mergedIncidents")} ({mergedIncidents.length}
+                )
               </Button>
               {showMergedIncidents && (
                 <Button
@@ -1570,7 +1570,7 @@ export const IncidentDetailPage: React.FC = () => {
                   }}
                   leftIcon={<ArrowRightLeft className="w-4 h-4" />}
                 >
-                  {t("incidentMerge.bulkUnmerge")} ({mergedIncidents.length})
+                  {t("incidents.merge.bulkUnmerge")} ({mergedIncidents.length})
                 </Button>
               )}
             </>
@@ -1692,7 +1692,7 @@ export const IncidentDetailPage: React.FC = () => {
                     className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                   />
                   <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">
-                    {t("incidentMerge.mergedIncidents")}
+                    {t("incidents.merge.mergedIncidents")}
                   </h3>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1702,7 +1702,7 @@ export const IncidentDetailPage: React.FC = () => {
                       size="sm"
                       onClick={() => setBulkUnmergeModalOpen(true)}
                     >
-                      {t("incidentMerge.confirmUnmerge")} (
+                      {t("incidents.merge.confirmUnmerge")} (
                       {selectedForUnmerge.size})
                     </Button>
                   )}
@@ -1871,12 +1871,15 @@ export const IncidentDetailPage: React.FC = () => {
                     </p>
                   ) : (
                     <div className="relative">
-                      <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-[hsl(var(--border))]" />
+                      <div className="absolute left-4 rtl:right-4 top-0 bottom-0 w-0.5 bg-[hsl(var(--border))]" />
                       {history.map((item: TransitionHistory, index: number) => (
-                        <div key={item.id} className="relative pl-10 pb-6">
+                        <div
+                          key={item.id}
+                          className="relative pl-10 rtl:pl-0 rtl:pr-10 pb-6"
+                        >
                           <div
                             className={cn(
-                              "absolute left-2 w-5 h-5 rounded-full flex items-center justify-center",
+                              "absolute left-2 rtl:right-2 w-5 h-5 rounded-full flex items-center justify-center",
                               index === 0
                                 ? "bg-[hsl(var(--primary))]"
                                 : "bg-[hsl(var(--muted))]",
@@ -1884,7 +1887,7 @@ export const IncidentDetailPage: React.FC = () => {
                           >
                             <ChevronRight
                               className={cn(
-                                "w-3 h-3",
+                                "w-3 h-3 rtl:-rotate-180",
                                 index === 0
                                   ? "text-white"
                                   : "text-[hsl(var(--muted-foreground))]",
@@ -1946,7 +1949,7 @@ export const IncidentDetailPage: React.FC = () => {
                                 >
                                   {item.from_state.name}
                                 </span>
-                                <ChevronRight className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                                <ChevronRight className="w-4 h-4 text-[hsl(var(--muted-foreground))] rtl:-rotate-180" />
                                 <span
                                   className="px-2 py-0.5 rounded text-xs font-medium"
                                   style={{
@@ -3342,7 +3345,7 @@ export const IncidentDetailPage: React.FC = () => {
                     >
                       {trans.from_state?.name || t("incidents.current")}
                     </span>
-                    <ChevronRight className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                    <ChevronRight className="w-4 h-4 text-[hsl(var(--muted-foreground))] rtl:-rotate-180" />
                     <span
                       className="px-3 py-1 rounded-full font-medium"
                       style={{
@@ -3389,7 +3392,7 @@ export const IncidentDetailPage: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    {showModeToggle && (
+                    {showModeToggle ? (
                       <div className="inline-flex border border-border rounded-md overflow-hidden">
                         <button
                           type="button"
@@ -3415,7 +3418,7 @@ export const IncidentDetailPage: React.FC = () => {
                           <List className="w-4 h-4" />
                         </button>
                       </div>
-                    )}
+                    ) : null}
                   </div>
 
                   {/* ── DEPARTMENT STEP ── */}
@@ -4851,7 +4854,7 @@ export const IncidentDetailPage: React.FC = () => {
           onClose={() => setUnmergeModalOpen(false)}
           incident={incident}
           onUnmergeSuccess={() => {
-            toast.success(t("incidentMerge.unmergeSuccess"));
+            toast.success(t("incidents.merge.unmergeSuccess"));
             refetch();
             refetchMergedIncidents();
           }}
@@ -4867,7 +4870,7 @@ export const IncidentDetailPage: React.FC = () => {
           selectedForUnmerge.has(m.id),
         )}
         onUnmergeSuccess={() => {
-          toast.success(t("incidentMerge.unmergeSuccess"));
+          toast.success(t("incidents.merge.unmergeSuccess"));
           setSelectedForUnmerge(new Set());
           refetch();
           refetchMergedIncidents();

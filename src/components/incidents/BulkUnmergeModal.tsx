@@ -131,7 +131,7 @@ export const BulkUnmergeModal: React.FC<BulkUnmergeModalProps> = ({
             onClick={handleBulkUnmerge}
             isLoading={isUnmerging}
           >
-            {t("incidentMerge.confirmUnmerge")} ({incidents.length})
+            {t("incidents.merge.confirmUnmerge")} ({incidents.length})
           </Button>
         </div>
       </div>
