@@ -96,8 +96,16 @@ export const ComplaintsLayout: React.FC = () => {
 
   // Fetch complaint stats
   const { data: statsData } = useQuery({
-    queryKey: ["complaints", "stats"],
-    queryFn: () => incidentApi.getStats("complaint"),
+    queryKey: [
+      "complaints",
+      "stats",
+      canViewAllComplaints ? "all" : "assigned",
+    ],
+    queryFn: () =>
+      incidentApi.getStats(
+        "complaint",
+        canViewAllComplaints ? undefined : "assigned",
+      ),
   });
 
   const handleLogout = async () => {
