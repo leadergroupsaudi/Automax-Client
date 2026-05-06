@@ -160,8 +160,17 @@ export const IncidentLayout: React.FC = () => {
 
   // Fetch incident stats to get statuses
   const { data: statsData } = useQuery({
-    queryKey: ["incidents", "stats", "incident"],
-    queryFn: () => incidentApi.getStats("incident"),
+    queryKey: [
+      "incidents",
+      "stats",
+      "incident",
+      canViewAllIncidents ? "all" : "assigned",
+    ],
+    queryFn: () =>
+      incidentApi.getStats(
+        "incident",
+        canViewAllIncidents ? undefined : "assigned",
+      ),
   });
 
   const handleLogout = async () => {

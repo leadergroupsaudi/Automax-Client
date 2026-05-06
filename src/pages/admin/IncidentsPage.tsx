@@ -194,7 +194,7 @@ export const IncidentsPage: React.FC = () => {
       });
     } catch (err: any) {
       console.error(
-        err.response?.data?.error || t("incidents.merge.validationFailed"),
+        err.response?.data?.error || t("incidentMerge.validationFailed"),
       );
     } finally {
       setIsValidationLoading(false);
@@ -292,7 +292,7 @@ export const IncidentsPage: React.FC = () => {
     clearSelection();
     setShowMergeModal(false);
     refetch();
-    toast.success(t("incidents.merge.mergeSuccess"));
+    toast.success(t("incidentMerge.mergeSuccess"));
   };
 
   // Queries - only fetch incident-type workflows
@@ -393,8 +393,17 @@ export const IncidentsPage: React.FC = () => {
   }, [user, workflowsData?.data, isSuperAdmin]);
 
   const { data: statsData } = useQuery({
-    queryKey: ["incidents", "stats", "incident"],
-    queryFn: () => incidentApi.getStats("incident"),
+    queryKey: [
+      "incidents",
+      "stats",
+      "incident",
+      canViewAllIncidents ? "all" : "assigned",
+    ],
+    queryFn: () =>
+      incidentApi.getStats(
+        "incident",
+        canViewAllIncidents ? undefined : "assigned",
+      ),
   });
 
   const { data: availableTransitions, isLoading: isTransitionsLoading } =
@@ -420,8 +429,18 @@ export const IncidentsPage: React.FC = () => {
     refetch,
     isFetching,
   } = useQuery({
-    queryKey: ["incidents", queryFilter],
-    queryFn: () => incidentApi.list(queryFilter),
+    queryKey: [
+      "incidents",
+      {
+        ...queryFilter,
+        assignee_id: canViewAllIncidents ? queryFilter.assignee_id : user?.id,
+      },
+    ],
+    queryFn: () =>
+      incidentApi.list({
+        ...queryFilter,
+        assignee_id: canViewAllIncidents ? queryFilter.assignee_id : user?.id,
+      }),
     enabled: !isShortSearch,
   });
 
@@ -431,6 +450,7 @@ export const IncidentsPage: React.FC = () => {
   const { data: usersData } = useQuery({
     queryKey: ["admin", "users", 1, 100],
     queryFn: () => userApi.list(1, 100),
+    enabled: canViewAllIncidents,
   });
 
   const { data: departmentsData } = useQuery({
@@ -660,7 +680,9 @@ export const IncidentsPage: React.FC = () => {
               )
             }
           >
-            {showMap ? t("common.hideMap") : t("common.showMap")}
+            {showMap
+              ? t("common.hideMap", "Hide Map")
+              : t("common.showMap", "Show Map")}
           </Button>
           {selectedIncidents?.length >= 2 && canMergeIncidents && (
             <>
@@ -681,7 +703,7 @@ export const IncidentsPage: React.FC = () => {
                 leftIcon={<ArrowRightLeft className="w-4 h-4" />}
                 disabled={isMergeDisabled}
               >
-                {t("incidents.merge.title")}
+                {t("incidentMerge.title")}
               </Button>
             </>
           )}
@@ -745,7 +767,7 @@ export const IncidentsPage: React.FC = () => {
                   {stats.total}
                 </p>
                 <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                  {t("incidents.total")}
+                  {t("incidents.total", "Total")}
                 </p>
               </div>
             </div>
@@ -760,7 +782,7 @@ export const IncidentsPage: React.FC = () => {
                   {stats.open}
                 </p>
                 <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                  {t("incidents.initial")}
+                  {t("incidents.initial", "Initial")}
                 </p>
               </div>
             </div>
@@ -775,7 +797,7 @@ export const IncidentsPage: React.FC = () => {
                   {stats.in_progress}
                 </p>
                 <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                  {t("incidents.inProgress")}
+                  {t("incidents.inProgress", "In Progress")}
                 </p>
               </div>
             </div>
@@ -793,7 +815,7 @@ export const IncidentsPage: React.FC = () => {
                   {stats.sla_breached}
                 </p>
                 <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                  {t("incidents.slaBreached")}
+                  {t("incidents.slaBreached", "SLA Breached")}
                 </p>
               </div>
             </div>
@@ -995,7 +1017,7 @@ export const IncidentsPage: React.FC = () => {
                   )}
                 >
                   {isTransitionsLoading ? (
-                    <option>{t("common.loading")}</option>
+                    <option>Loading...</option>
                   ) : (
                     <>
                       <option value="">{t("incidents.allTransitions")}</option>
@@ -1010,27 +1032,32 @@ export const IncidentsPage: React.FC = () => {
                 </select>
               </div>
             )}
-            <div>
-              <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">
-                {t("common.assignee")}
-              </label>
-              <select
-                value={filter.assignee_id || ""}
-                onChange={(e) =>
-                  handleFilterChange("assignee_id", e.target.value || undefined)
-                }
-                className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
-              >
-                <option value="">{t("common.allAssignees")}</option>
-                {usersData?.data?.map((user: UserType) => (
-                  <option key={user.id} value={user.id}>
-                    {user.first_name
-                      ? `${user.first_name} ${user.last_name || ""}`
-                      : user.username}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {canViewAllIncidents && (
+              <div>
+                <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">
+                  {t("common.assignee")}
+                </label>
+                <select
+                  value={filter.assignee_id || ""}
+                  onChange={(e) =>
+                    handleFilterChange(
+                      "assignee_id",
+                      e.target.value || undefined,
+                    )
+                  }
+                  className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                >
+                  <option value="">{t("common.allAssignees")}</option>
+                  {usersData?.data?.map((user: UserType) => (
+                    <option key={user.id} value={user.id}>
+                      {user.first_name
+                        ? `${user.first_name} ${user.last_name || ""}`
+                        : user.username}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <MultiTreeSelect
               data={departmentsData?.data || []}
               selectedIds={filter.department_ids || []}
@@ -1069,7 +1096,7 @@ export const IncidentsPage: React.FC = () => {
             />
             <div>
               <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">
-                {t("common.priority")}
+                {t("common.priority", "Priority")}
               </label>
               <select
                 value={filter.priority ?? ""}
@@ -1081,12 +1108,16 @@ export const IncidentsPage: React.FC = () => {
                 }
                 className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
               >
-                <option value="">{t("common.allPriorities")}</option>
-                <option value="1">{t("priorities.critical")}</option>
-                <option value="2">{t("priorities.high")}</option>
-                <option value="3">{t("priorities.medium")}</option>
-                <option value="4">{t("priorities.low")}</option>
-                <option value="5">{t("priorities.veryLow")}</option>
+                <option value="">
+                  {t("common.allPriorities", "All Priorities")}
+                </option>
+                <option value="1">
+                  {t("priorities.critical", "Critical")}
+                </option>
+                <option value="2">{t("priorities.high", "High")}</option>
+                <option value="3">{t("priorities.medium", "Medium")}</option>
+                <option value="4">{t("priorities.low", "Low")}</option>
+                <option value="5">{t("priorities.veryLow", "Very Low")}</option>
               </select>
             </div>
             <div>
@@ -1142,12 +1173,15 @@ export const IncidentsPage: React.FC = () => {
             </div>
             <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">
               {isShortSearch
-                ? t("search.minCharsTitle")
+                ? t("search.minCharsTitle", "Keep Typing…")
                 : t("incidents.noIncidents")}
             </h3>
             <p className="text-[hsl(var(--muted-foreground))] mb-6">
               {isShortSearch
-                ? t("search.minCharsDesc")
+                ? t(
+                    "search.minCharsDesc",
+                    "Enter at least 3 characters to search",
+                  )
                 : hasActiveFilters
                   ? t("incidents.adjustFilters")
                   : t("incidents.noIncidentsDesc")}
@@ -1292,24 +1326,20 @@ export const IncidentsPage: React.FC = () => {
                                 {isMasterIncident && (
                                   <span
                                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-300"
-                                    title={t(
-                                      "incidents.merge.masterIncidentTitle",
-                                    )}
+                                    title="Master incident (has merged child tickets)"
                                   >
                                     <GitMerge className="w-3 h-3" />
-                                    {t("incidents.merge.master")}
+                                    Master
                                   </span>
                                 )}
                                 {/* Child incident icon */}
                                 {isChildIncident && (
                                   <span
                                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-300"
-                                    title={t(
-                                      "incidents.merge.childIncidentTitle",
-                                    )}
+                                    title="Child incident (merged)"
                                   >
                                     <Link2 className="w-3 h-3" />
-                                    {t("incidents.merge.child")}
+                                    Child
                                   </span>
                                 )}
                                 <p
@@ -1330,9 +1360,7 @@ export const IncidentsPage: React.FC = () => {
                                   incident.active_viewers > 0 && (
                                     <span
                                       className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-300"
-                                      title={t("incidents.activeViewersTitle", {
-                                        count: incident.active_viewers,
-                                      })}
+                                      title={`${incident.active_viewers} user${incident.active_viewers > 1 ? "s" : ""} currently viewing`}
                                     >
                                       <svg
                                         className="w-3 h-3"
@@ -1476,17 +1504,11 @@ export const IncidentsPage: React.FC = () => {
                               {isExpiringSoon && rtcHours !== null && (
                                 <span
                                   className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-amber-500/10 text-amber-700"
-                                  title={t("incidents.readyToCloseExpiresAt", {
-                                    time: new Date(
-                                      incident.ready_to_close_expires_at!,
-                                    ).toLocaleString(),
-                                  })}
+                                  title={`Ready to Close expires at ${new Date(incident.ready_to_close_expires_at!).toLocaleString()}`}
                                 >
                                   <Clock className="w-3 h-3" />
-                                  {t("incidents.rtcTimeLeft", {
-                                    hours: Math.floor(rtcHours),
-                                    minutes: Math.round((rtcHours % 1) * 60),
-                                  })}
+                                  RTC: {Math.floor(rtcHours)}h{" "}
+                                  {Math.round((rtcHours % 1) * 60)}m left
                                 </span>
                               )}
                             </div>
