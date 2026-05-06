@@ -143,7 +143,7 @@ export function IncidentCreatePage() {
   // Fetch initial state of the selected workflow to detect creation-time assignment config
   const { data: initialStateData } = useQuery({
     queryKey: ["admin", "workflows", formData.workflow_id, "initial-state"],
-    queryFn: () => workflowApi.getInitialState(formData.workflow_id),
+    queryFn: () => workflowApi.getInitialState(formData.workflow_id!),
     enabled: !!formData.workflow_id,
   });
   const initialState = initialStateData?.data;
@@ -169,7 +169,7 @@ export function IncidentCreatePage() {
       formData.department_id,
     ],
     queryFn: () =>
-      workflowApi.getInitialStateMatchingUsers(formData.workflow_id, {
+      workflowApi.getInitialStateMatchingUsers(formData.workflow_id!, {
         classification_id: formData.classification_id || undefined,
         location_id: formData.location_id || undefined,
         department_id: formData.department_id || undefined,
