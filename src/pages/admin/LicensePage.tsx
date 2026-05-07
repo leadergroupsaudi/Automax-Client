@@ -62,7 +62,7 @@ const STATUS_COLORS: Record<
 };
 
 export const LicensePage: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { hasPermission } = usePermissions();
   const canManage = hasPermission(PERMISSIONS.LICENSE_MANAGE);
 
@@ -81,7 +81,7 @@ export const LicensePage: React.FC = () => {
 
   const handleActivate = async () => {
     if (!licenseKey.trim() || !jwks.trim()) {
-      toast.error("Both the license key and JWKS are required");
+      toast.error(t("license.licenseKeyAndJwksRequired"));
       return;
     }
 
@@ -90,7 +90,7 @@ export const LicensePage: React.FC = () => {
     try {
       JSON.parse(jwks);
     } catch {
-      toast.error("JWKS must be valid JSON");
+      toast.error(t("license.jwksMustBeValidJson"));
       return;
     }
 
@@ -99,7 +99,7 @@ export const LicensePage: React.FC = () => {
         license_key: licenseKey.trim(),
         jwks: jwks.trim(),
       });
-      toast.success(result.message || "License activated successfully");
+      toast.success(result.message || t("license.activatedSuccess"));
       setLicenseKey("");
       setJwks("");
       setShowActivationForm(false);
@@ -108,14 +108,13 @@ export const LicensePage: React.FC = () => {
       const error = err as {
         response?: { data?: { message?: string; error?: string } };
       };
-      const msg =
-        error?.response?.data?.message || "Failed to activate license";
+      const msg = error?.response?.data?.message || t("license.activateFailed");
       const errCode = error?.response?.data?.error;
 
       if (errCode === "user_limit_exceeded") {
         toast.error(msg, { duration: 8000 });
       } else if (errCode === "product_mismatch") {
-        toast.error("This license key is not for the Automax product");
+        toast.error(t("license.productMismatch"));
       } else {
         toast.error(msg);
       }
@@ -125,11 +124,11 @@ export const LicensePage: React.FC = () => {
   const handleDeactivate = async () => {
     try {
       await deactivateMutation.mutateAsync();
-      toast.success("License deactivated");
+      toast.success(t("license.deactivatedSuccess"));
       setShowDeactivateConfirm(false);
       refetch();
     } catch {
-      toast.error("Failed to deactivate license");
+      toast.error(t("license.deactivateFailed"));
     }
   };
 
@@ -155,6 +154,25 @@ export const LicensePage: React.FC = () => {
     if (pct >= 100) return "bg-red-500";
     if (pct >= 80) return "bg-amber-500";
     return "bg-emerald-500";
+  };
+
+  const formatLicenseStatus = () => {
+    if (!license) return "";
+    if (license.is_grace_period) return t("license.statusGracePeriod");
+    return t(`license.statuses.${license.validation_status}`, {
+      defaultValue: license.validation_status,
+    });
+  };
+
+  const formatExpirySummary = () => {
+    if (!license || license.days_remaining == null) return "—";
+    if (license.days_remaining > 0) {
+      return t("license.daysRemaining", { count: license.days_remaining });
+    }
+    if (license.days_remaining === 0) return t("license.expiresToday");
+    return t("license.expiredDaysAgo", {
+      count: Math.abs(license.days_remaining),
+    });
   };
 
   if (isLoading) {
@@ -217,8 +235,10 @@ export const LicensePage: React.FC = () => {
             <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
               {t("license.yourLicenseHasExpiredReadOnlyAccess")}
               {license.days_remaining != null
-                ? Math.abs(license.days_remaining)
-                : "?"}
+                ? t("license.moreDays", {
+                    count: Math.abs(license.days_remaining),
+                  })
+                : t("license.limitedTime")}
               {t("license.moreDaysAllWriteOperationsAreBlocked")}
             </p>
           </div>
@@ -231,7 +251,9 @@ export const LicensePage: React.FC = () => {
           <div className="flex items-center gap-2 mb-2">
             <KeyRound className="w-5 h-5 text-indigo-500" />
             <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-              {hasLicense ? "Replace License" : "Activate License"}
+              {hasLicense
+                ? t("license.replaceLicense")
+                : t("license.activateLicense")}
             </h2>
           </div>
 
@@ -274,8 +296,8 @@ export const LicensePage: React.FC = () => {
               }
             >
               {activateMutation.isPending
-                ? "Activating..."
-                : "Activate License"}
+                ? t("license.activating")
+                : t("license.activateLicense")}
             </Button>
             {showActivationForm && (
               <Button
@@ -328,9 +350,7 @@ export const LicensePage: React.FC = () => {
                     <span
                       className={`text-sm font-semibold capitalize ${status.text}`}
                     >
-                      {license.is_grace_period
-                        ? "Grace Period"
-                        : license.validation_status}
+                      {formatLicenseStatus()}
                     </span>
                   </div>
                 );
@@ -374,7 +394,7 @@ export const LicensePage: React.FC = () => {
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(license.license_id || "");
-                    toast.success("License ID copied");
+                    toast.success(t("license.idCopied"));
                   }}
                   className="ml-1 text-slate-400 hover:text-slate-600"
                 >
@@ -396,20 +416,17 @@ export const LicensePage: React.FC = () => {
                   <p
                     className={`text-2xl font-bold tabular-nums ${getExpiryColor(license.days_remaining)}`}
                   >
-                    {license.days_remaining != null
-                      ? license.days_remaining > 0
-                        ? `${license.days_remaining} days`
-                        : license.days_remaining === 0
-                          ? "Expires today"
-                          : `Expired ${Math.abs(license.days_remaining)} days ago`
-                      : "—"}
+                    {formatExpirySummary()}
                   </p>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    {new Date(license.expires_at).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
+                    {new Date(license.expires_at).toLocaleDateString(
+                      i18n.language === "ar" ? "ar-SA" : "en-US",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      },
+                    )}
                   </p>
                 </>
               ) : (
@@ -443,8 +460,8 @@ export const LicensePage: React.FC = () => {
               <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 flex items-center gap-1">
                 <AlertTriangle className="w-3 h-3" />
                 {getUserLimitPercent() >= 100
-                  ? "User limit reached. Cannot create new users."
-                  : "Approaching user limit."}
+                  ? t("license.userLimitReached")
+                  : t("license.approachingUserLimit")}
               </p>
             )}
           </div>
@@ -503,7 +520,9 @@ export const LicensePage: React.FC = () => {
                 </span>
                 <span className="text-slate-700 dark:text-slate-300">
                   {license.activated_at
-                    ? new Date(license.activated_at).toLocaleString()
+                    ? new Date(license.activated_at).toLocaleString(
+                        i18n.language === "ar" ? "ar-SA" : "en-US",
+                      )
                     : "—"}
                 </span>
               </div>
@@ -547,8 +566,8 @@ export const LicensePage: React.FC = () => {
                 disabled={deactivateMutation.isPending}
               >
                 {deactivateMutation.isPending
-                  ? "Deactivating..."
-                  : "Deactivate"}
+                  ? t("license.deactivating")
+                  : t("license.deactivate")}
               </Button>
             </div>
           </div>
