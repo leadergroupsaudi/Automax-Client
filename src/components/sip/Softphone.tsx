@@ -342,6 +342,12 @@ export default function SoftPhone({
     }
   };
 
+  const handleDisconnect = (): void => {
+    sipService.stop();
+    setSipConnected(false);
+    setIsConnecting(false);
+  };
+
   /* ---------------- SIP EVENTS ---------------- */
 
   useEffect(() => {
@@ -721,7 +727,7 @@ export default function SoftPhone({
             </span>
           </div>
           <div className="flex items-center gap-2">
-            {!sipConnected && (
+            {!sipConnected ? (
               <button
                 onClick={tryConnect}
                 disabled={isConnecting}
@@ -730,6 +736,13 @@ export default function SoftPhone({
                 {isConnecting
                   ? t("softphone.connecting")
                   : t("softphone.reconnect")}
+              </button>
+            ) : (
+              <button
+                onClick={handleDisconnect}
+                className="bg-red-500 hover:bg-red-600 text-white text-[10px] px-3 py-1 rounded-full font-medium transition-colors shadow-sm"
+              >
+                {t("softphone.disconnect")}
               </button>
             )}
             <button
