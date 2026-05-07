@@ -239,8 +239,12 @@ export default function SoftPhone({
   const dragRef = useRef<HTMLDivElement | null>(null);
   const { hasPermission } = usePermissions();
 
-  const [sipConnected, setSipConnected] = useState<boolean>(false);
-  const [isConnecting, setIsConnecting] = useState<boolean>(false);
+  const {
+    isConnected: sipConnected,
+    setConnected: setSipConnected,
+    isConnecting,
+    setConnecting: setIsConnecting,
+  } = useSoftphoneStore();
 
   const [dialedNumber, setDialedNumber] = useState<string>("");
   const [callStatus, setCallStatus] = useState<CallStatus>("idle");
@@ -303,13 +307,6 @@ export default function SoftPhone({
   const extension = auth?.user?.extension ?? "";
   const socketURL = settings?.socketURL ?? "";
   const domain = settings?.domain ?? "";
-
-  useEffect(() => {
-    if (!sipConnected && !isConnecting) {
-      tryConnect();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [extension, socketURL, domain]);
 
   const tryConnect = (): void => {
     if (sipConnected || isConnecting) return;
@@ -724,6 +721,17 @@ export default function SoftPhone({
             </span>
           </div>
           <div className="flex items-center gap-2">
+            {!sipConnected && (
+              <button
+                onClick={tryConnect}
+                disabled={isConnecting}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-[10px] px-3 py-1 rounded-full font-medium transition-colors shadow-sm disabled:opacity-50"
+              >
+                {isConnecting
+                  ? t("softphone.connecting")
+                  : t("softphone.reconnect")}
+              </button>
+            )}
             <button
               onClick={() => setShowPasswordPrompt(true)}
               className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition-colors"
@@ -731,14 +739,6 @@ export default function SoftPhone({
             >
               <Settings className="w-3.5 h-3.5" />
             </button>
-            {!sipConnected && !isConnecting && (
-              <button
-                onClick={tryConnect}
-                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-              >
-                {t("softphone.reconnect")}
-              </button>
-            )}
           </div>
         </div>
         {auth?.user?.extension && (
