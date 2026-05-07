@@ -680,7 +680,6 @@
     "transitionSuccess": "Transition completed successfully",
     "department_id": "Department"
   },
-
   "priorities": {
     "critical": "Critical",
     "high": "High",
@@ -2191,7 +2190,8 @@
     "connected": "Connected",
     "connecting": "Connecting...",
     "disconnected": "Disconnected",
-    "reconnect": "Reconnect",
+    "reconnect": "Connect",
+    "disconnect": "Disconnect",
     "incomingCallFrom": "Incoming call from",
     "calling": "Calling...",
     "ringing": "Ringing...",

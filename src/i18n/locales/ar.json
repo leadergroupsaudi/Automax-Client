@@ -684,7 +684,6 @@
     "transitionSuccess": "تم تنفيذ الانتقال بنجاح",
     "department_id": "القسم"
   },
-
   "priorities": {
     "critical": "حرج",
     "high": "عالي",
@@ -2163,13 +2162,14 @@
     "connected": "متصل",
     "connecting": "جاري الاتصال...",
     "disconnected": "غير متصل",
-    "reconnect": "إعادة الاتصال",
     "incomingCallFrom": "مكالمة واردة من",
     "calling": "جاري الاتصال...",
     "ringing": "يرن...",
     "enterNumber": "أدخل الرقم",
     "decline": "رفض",
     "answer": "رد",
+    "reconnect": "اتصال",
+    "disconnect": "قطع الاتصال",
     "endCall": "إنهاء المكالمة",
     "call": "اتصال",
     "callerHistory": "سجل المتصل",
