@@ -989,7 +989,6 @@ export const IncidentDetailPage: React.FC = () => {
             classification_id: incident.classification?.id,
             location_id: incident.location?.id,
             department_id: incident.department?.id,
-            exclude_user_id: incident.assignee?.id,
           });
           if (userResult.success && userResult.data) {
             setUserMatchResult(userResult.data);
