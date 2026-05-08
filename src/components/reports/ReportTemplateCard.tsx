@@ -38,6 +38,7 @@ import ExportDialog from "./ExportDialog";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import i18n from "@/i18n";
+import { getValidFilters } from "@/utils/reportUtils";
 
 interface ReportTemplateCardProps {
   template: ReportTemplate;
@@ -187,11 +188,13 @@ export const ReportTemplateCard: React.FC<ReportTemplateCardProps> = ({
       });
     }
 
-    return updatedFilters.map(({ field, operator, value }) => ({
-      field,
-      operator,
-      value,
-    }));
+    return getValidFilters(updatedFilters).map(
+      ({ field, operator, value }) => ({
+        field,
+        operator,
+        value,
+      }),
+    );
   };
 
   // Generate report — fetches recordLimit rows in a single request, no server pagination

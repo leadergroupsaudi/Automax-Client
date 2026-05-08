@@ -1313,10 +1313,35 @@
       "actionLogsDesc": "Audit trail & activity",
       "users": "Users",
       "usersDesc": "User accounts",
+      "users_performance": "User Performance",
+      "users_performance_desc": "User performance tracking data",
+      "user_types": {
+        "standard": "Users",
+        "performance": "User Performance"
+      },
       "departments": "Departments",
       "departmentsDesc": "Organization structure",
       "locations": "Locations",
       "locationsDesc": "Location hierarchy",
+      "locations_by_count": "Location Count",
+      "locations_by_status": "Location Status",
+      "classifications_by_status": "Classification Status",
+      "classifications_by_count": "Classification Count",
+      "action_logs": "Action Logs",
+      "location_count_based": "Location Count Based",
+      "location_count_based_desc": "Location-wise record counts",
+      "location_types": {
+        "status": "By Status",
+        "count": "By Count"
+      },
+      "classifications": "Classifications",
+      "classificationsDesc": "Classification hierarchy",
+      "classification_count_based": "Classification Count Based",
+      "classification_count_based_desc": "Classification-wise record counts",
+      "classification_types": {
+        "status": "By Status",
+        "count": "By Count"
+      },
       "workflows": "Workflows",
       "workflowsDesc": "Workflow definitions"
     },
@@ -3553,6 +3578,7 @@
     "latency": "Latency:"
   },
   "actionLogs": {
+    "exportTooltip": "Please select a date range of maximum 1 month to export logs.",
     "failedToLoadActionLogs": "Failed to Load Action Logs",
     "thereWasAnErrorLoadingTheAction": "There was an error loading the action logs. Please try again.",
     "trackAndMonitorAllUserActionsIn": "Track and monitor all user actions in the system",

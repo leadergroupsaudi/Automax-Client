@@ -467,17 +467,47 @@ const ReportTemplateBuilderPage: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <select
-            value={dataSource}
-            onChange={(e) => setDataSource(e.target.value)}
-            className="border rounded-lg px-3 py-2 text-sm "
-          >
-            {DATA_SOURCES.map((ds) => (
-              <option className="text-black" key={ds.key} value={ds.key}>
-                {ds.label}
-              </option>
-            ))}
-          </select>
+          <div className="flex flex-col gap-1">
+            <select
+              value={
+                dataSource === "locations_by_status" ||
+                dataSource === "locations_by_count"
+                  ? "locations_by_status"
+                  : dataSource
+              }
+              onChange={(e) => setDataSource(e.target.value)}
+              className="border rounded-lg px-3 py-2 text-sm w-full"
+            >
+              {DATA_SOURCES.filter((ds) => ds.key !== "locations_by_count").map(
+                (ds) => (
+                  <option className="text-black" key={ds.key} value={ds.key}>
+                    {ds.label}
+                  </option>
+                ),
+              )}
+            </select>
+
+            {(dataSource === "locations_by_status" ||
+              dataSource === "locations_by_count") && (
+              <div className="ltr:ml-4 rtl:mr-4 flex items-center gap-2">
+                <span className="text-[10px] uppercase font-bold text-gray-400">
+                  Type
+                </span>
+                <select
+                  value={dataSource}
+                  onChange={(e) => setDataSource(e.target.value)}
+                  className="border rounded-md px-2 py-1 text-xs flex-1 bg-gray-50"
+                >
+                  <option value="locations_by_status">
+                    {t("reports.dataSources.location_types.status")}
+                  </option>
+                  <option value="locations_by_count">
+                    {t("reports.dataSources.location_types.count")}
+                  </option>
+                </select>
+              </div>
+            )}
+          </div>
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
