@@ -771,6 +771,8 @@ export interface WorkflowTransition {
   manual_select_user: boolean;
 
   is_rejection: boolean;
+  is_not_belong: boolean;
+  is_missing_info: boolean;
 
   requirements?: TransitionRequirement[];
   actions?: TransitionAction[];
@@ -905,6 +907,8 @@ export interface WorkflowTransitionCreateRequest {
   auto_match_user?: boolean;
   manual_select_user?: boolean;
   is_rejection?: boolean;
+  is_not_belong?: boolean;
+  is_missing_info?: boolean;
 }
 
 export interface WorkflowTransitionUpdateRequest {
@@ -928,6 +932,8 @@ export interface WorkflowTransitionUpdateRequest {
   auto_match_user?: boolean;
   manual_select_user?: boolean;
   is_rejection?: boolean;
+  is_not_belong?: boolean;
+  is_missing_info?: boolean;
 }
 
 export interface WorkflowImportResponse {
