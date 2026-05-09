@@ -1325,10 +1325,35 @@
       "actionLogsDesc": "Audit trail & activity",
       "users": "Users",
       "usersDesc": "User accounts",
+      "users_performance": "User Performance",
+      "users_performance_desc": "User performance tracking data",
+      "user_types": {
+        "standard": "Users",
+        "performance": "User Performance"
+      },
       "departments": "Departments",
       "departmentsDesc": "Organization structure",
       "locations": "Locations",
       "locationsDesc": "Location hierarchy",
+      "locations_by_count": "Location Count",
+      "locations_by_status": "Location Status",
+      "classifications_by_status": "Classification Status",
+      "classifications_by_count": "Classification Count",
+      "action_logs": "Action Logs",
+      "location_count_based": "Location Count Based",
+      "location_count_based_desc": "Location-wise record counts",
+      "location_types": {
+        "status": "By Status",
+        "count": "By Count"
+      },
+      "classifications": "Classifications",
+      "classificationsDesc": "Classification hierarchy",
+      "classification_count_based": "Classification Count Based",
+      "classification_count_based_desc": "Classification-wise record counts",
+      "classification_types": {
+        "status": "By Status",
+        "count": "By Count"
+      },
       "workflows": "Workflows",
       "workflowsDesc": "Workflow definitions"
     },
@@ -1848,6 +1873,10 @@
     "role": "role",
     "markAsRejectionTransition": "Mark as Rejection Transition",
     "whenEnabledExecutingThisTransitionWillCreate": "When enabled, executing this transition will create a detailed rejection log record used for SLA tracking, analytics, and Power BI reports.",
+    "markAsNotBelongTransition": "Mark as Not Belong Transition",
+    "whenEnabledNotBelongWillSendSMS": "When enabled, executing this transition will send an SMS notification to the citizen informing them that the incident does not belong to the assigned department.",
+    "markAsMissingInfoTransition": "Mark as Missing Incident Information Transition",
+    "whenEnabledMissingInfoWillSendSMS": "When enabled, executing this transition will send an SMS notification to the citizen informing them that the incident was closed due to insufficient information.",
     "configureTransition": "Configure Transition",
     "commentRequired": "Comment Required",
     "attachmentRequired": "Attachment Required",
@@ -2621,6 +2650,7 @@
         "priority": "Priority",
         "owner": "Owner",
         "selectOwner": "Select owner",
+        "searchOwner": "Search by name or email...",
         "department": "Department",
         "noDepartment": "No department",
         "startDate": "Start Date",
@@ -2630,6 +2660,11 @@
       "errors": {
         "titleRequired": "Title is required",
         "ownerRequired": "Owner is required",
+        "priorityRequired": "Priority is required",
+        "descriptionRequired": "Description is required",
+        "startDateRequired": "Start date is required",
+        "targetDateRequired": "Target date is required",
+        "pastDateNotAllowed": "Past dates are not allowed",
         "metricCreateFailed": "Failed to create metric: {{name}}"
       }
     },
@@ -3567,6 +3602,7 @@
     "latency": "Latency:"
   },
   "actionLogs": {
+    "exportTooltip": "Please select a date range of maximum 1 month to export logs.",
     "failedToLoadActionLogs": "Failed to Load Action Logs",
     "thereWasAnErrorLoadingTheAction": "There was an error loading the action logs. Please try again.",
     "trackAndMonitorAllUserActionsIn": "Track and monitor all user actions in the system",

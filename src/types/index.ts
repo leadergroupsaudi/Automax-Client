@@ -789,6 +789,8 @@ export interface WorkflowTransition {
   manual_select_user: boolean;
 
   is_rejection: boolean;
+  is_not_belong: boolean;
+  is_missing_info: boolean;
 
   requirements?: TransitionRequirement[];
   actions?: TransitionAction[];
@@ -933,6 +935,8 @@ export interface WorkflowTransitionCreateRequest {
   auto_match_user?: boolean;
   manual_select_user?: boolean;
   is_rejection?: boolean;
+  is_not_belong?: boolean;
+  is_missing_info?: boolean;
 }
 
 export interface WorkflowTransitionUpdateRequest {
@@ -958,6 +962,8 @@ export interface WorkflowTransitionUpdateRequest {
   auto_match_user?: boolean;
   manual_select_user?: boolean;
   is_rejection?: boolean;
+  is_not_belong?: boolean;
+  is_missing_info?: boolean;
 }
 
 export interface WorkflowImportResponse {
@@ -1451,8 +1457,13 @@ export type ReportDataSource =
   | "requests"
   | "action_logs"
   | "users"
+  | "users_performance"
   | "departments"
+  | "locations_by_status"
+  | "locations_by_count"
   | "locations"
+  | "classifications_by_status"
+  | "classifications_by_count"
   | "workflows";
 
 // Filter Operators
