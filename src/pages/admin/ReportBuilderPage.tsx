@@ -29,6 +29,7 @@ import {
   classificationApi,
   userApi,
 } from "../../api/admin";
+import { getValidFilters } from "@/utils/reportUtils";
 import {
   DATA_SOURCES,
   getFieldsForDataSource,
@@ -303,7 +304,7 @@ export const ReportBuilderPage: React.FC = () => {
       const request: ReportQueryRequest = {
         data_source: dataSource,
         columns: selectedColumns,
-        filters: filters.map(({ field, operator, value }) => ({
+        filters: getValidFilters(filters).map(({ field, operator, value }) => ({
           field,
           operator,
           value,
@@ -314,7 +315,7 @@ export const ReportBuilderPage: React.FC = () => {
       };
 
       const response = await reportApi.query(request);
-      setPreviewData(response.data);
+      setPreviewData(response?.data || []);
       setDbTotalCount(response.total_items);
       setTimeout(
         () =>
@@ -351,11 +352,13 @@ export const ReportBuilderPage: React.FC = () => {
         {
           data_source: dataSource,
           columns: selectedColumns,
-          filters: filters.map(({ field, operator, value }) => ({
-            field,
-            operator,
-            value,
-          })),
+          filters: getValidFilters(filters).map(
+            ({ field, operator, value }) => ({
+              field,
+              operator,
+              value,
+            }),
+          ),
           sorting: [],
           format,
           options: { ...options, title: loadedTemplate?.name || "Report" },
@@ -463,11 +466,13 @@ export const ReportBuilderPage: React.FC = () => {
   };
 
   const canGenerate = dataSource && selectedColumns.length > 0;
-  const canExport = previewData.length > 0;
+  const canExport = (previewData?.length || 0) > 0;
 
   // Client-side display pagination over previewData
-  const displayTotalPages = Math.ceil(previewData.length / DISPLAY_SIZE);
-  const displayData = previewData.slice(
+  const displayTotalPages = Math.ceil(
+    (previewData?.length || 0) / DISPLAY_SIZE,
+  );
+  const displayData = (previewData || []).slice(
     (displayPage - 1) * DISPLAY_SIZE,
     displayPage * DISPLAY_SIZE,
   );

@@ -1451,8 +1451,13 @@ export type ReportDataSource =
   | "requests"
   | "action_logs"
   | "users"
+  | "users_performance"
   | "departments"
+  | "locations_by_status"
+  | "locations_by_count"
   | "locations"
+  | "classifications_by_status"
+  | "classifications_by_count"
   | "workflows";
 
 // Filter Operators
