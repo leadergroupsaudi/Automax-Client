@@ -1031,6 +1031,7 @@ export interface Incident {
   reporter?: User;
   reporter_email: string;
   reporter_name: string;
+  reporter_phone: string;
   // Complaint-specific fields
   channel?: string;
   created_by_name?: string;
