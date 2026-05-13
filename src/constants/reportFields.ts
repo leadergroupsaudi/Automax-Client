@@ -73,6 +73,15 @@ export const incidentFields: ReportFieldDefinition[] = [
     filterable: true,
   },
   {
+    field: "workflow_transition_name",
+    label: "transition",
+    type: "enum",
+    dynamicOptions: "transitions",
+    category: "Core",
+    sortable: true,
+    filterable: true,
+  },
+  {
     field: "incident_number",
     label: "Incident Number",
     type: "string",
@@ -677,10 +686,11 @@ export const incidentFields: ReportFieldDefinition[] = [
   {
     field: "current_state_name",
     label: "Current State Name",
-    type: "string",
+    type: "enum",
     category: "Core",
     sortable: true,
     filterable: true,
+    dynamicOptions: "states",
   },
   {
     field: "current_state_state_type",
@@ -1428,7 +1438,8 @@ export const userPerformanceFields: ReportFieldDefinition[] = [
   {
     field: "status",
     label: "Status",
-    type: "string",
+    type: "enum",
+    dynamicOptions: "states",
     category: "Basic Info",
     sortable: true,
     filterable: true,
@@ -1607,7 +1618,8 @@ export const locationFields: ReportFieldDefinition[] = [
   {
     field: "status_name",
     label: "Status",
-    type: "string",
+    type: "enum",
+    dynamicOptions: "states",
     filterable: false,
     sortable: true,
     category: "Basic Info",
@@ -1750,7 +1762,8 @@ export const classificationFields: ReportFieldDefinition[] = [
   {
     field: "status_name",
     label: "Status",
-    type: "string",
+    type: "enum",
+    dynamicOptions: "states",
     filterable: false,
     sortable: true,
     category: "Basic Info",
