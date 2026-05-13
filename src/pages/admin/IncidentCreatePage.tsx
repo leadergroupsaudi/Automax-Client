@@ -1086,7 +1086,10 @@ export function IncidentCreatePage() {
                     label={t("incidents.reporterName", "Caller Name")}
                     value={formData.reporter_name || ""}
                     onChange={(e) =>
-                      handleChange("reporter_name", e.target.value)
+                      handleChange(
+                        "reporter_name",
+                        e.target.value.replace(/[^a-zA-ZÀ-ɏ؀-ۿ\s\-'.]/g, ""),
+                      )
                     }
                     placeholder={t(
                       "incidents.reporterNamePlaceholder",
