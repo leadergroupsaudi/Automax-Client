@@ -68,6 +68,7 @@ export const PERMISSIONS = {
   INCIDENTS_MANAGE_SLA: "incidents:manage_sla",
   INCIDENTS_MERGE: "incidents:merge",
   INCIDENTS_EDIT_CLOSED: "incidents:edit-closed",
+  INCIDENTS_REQUEST_INFO: "incidents:request-info",
 
   // Request permissions
   REQUESTS_VIEW: "requests:view",
