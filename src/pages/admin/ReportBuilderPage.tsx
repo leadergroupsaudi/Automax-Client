@@ -192,9 +192,26 @@ export const ReportBuilderPage: React.FC = () => {
     queryFn: () => userApi.list(),
   });
 
+  const { data: stateOptions } = useQuery({
+    queryKey: ["admin", "states", "options"],
+    queryFn: () => workflowApi.list(false, "incident"),
+  });
+
   // Build hierarchical options from tree data
   const dynamicOptionsMap = useMemo(() => {
     const map: Record<string, { value: string; label: string }[]> = {};
+
+    if (stateOptions?.data && stateOptions.data.length > 0) {
+      map.states = stateOptions.data[0].states?.map((state) => ({
+        value: state.name,
+        label: state.name,
+      })) as { value: string; label: string }[];
+
+      map.transitions = stateOptions.data[0].transitions?.map((transition) => ({
+        value: transition.name,
+        label: transition.name,
+      })) as { value: string; label: string }[];
+    }
 
     if (departmentsTree?.data) {
       map.departments = flattenTreeWithLabels(
@@ -326,16 +343,6 @@ export const ReportBuilderPage: React.FC = () => {
   // Generate report — fetches recordLimit rows in a single request, no server pagination
   const generateReport = useCallback(async () => {
     if (!dataSource || selectedColumns.length === 0) return;
-    console.log(
-      "filters",
-      filters,
-      getValidFilters(filters).map(({ field, value }) => ({
-        field,
-        operator: "equals",
-        value,
-      })),
-    );
-
     setIsPreviewLoading(true);
     setDisplayPage(1);
     try {
