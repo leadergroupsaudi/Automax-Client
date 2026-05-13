@@ -1330,6 +1330,10 @@
       "usersDesc": "User accounts",
       "users_performance": "User Performance",
       "users_performance_desc": "User performance tracking data",
+      "locationsByStatus": "Locations by Status",
+      "classificationsByStatus": "Classifications by Status",
+      "locationCountBased": "Location Count Based",
+      "classificationCountBased": "Classification Count Based",
       "user_types": {
         "standard": "Users",
         "performance": "User Performance"

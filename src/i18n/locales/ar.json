@@ -1320,6 +1320,10 @@
     "dataSources": {
       "incidents": "البلاغات",
       "requests": "الطلبات",
+      "locationsByStatus": "المواقع حسب الحالة",
+      "classificationsByStatus": "التصنيفات حسب الحالة",
+      "locationCountBased": "المواقع حسب العدد",
+      "classificationCountBased": "التصنيفات حسب العدد",
       "incidentsDesc": "بيانات تتبع البلاغات",
       "requestsDesc": "بيانات تتبع الطلبات",
       "actionLogs": "سجلات العمليات",

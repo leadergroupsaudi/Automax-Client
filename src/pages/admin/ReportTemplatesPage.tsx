@@ -10,6 +10,7 @@ import {
   locationApi,
   reportApi,
   userApi,
+  workflowApi,
 } from "../../api/admin";
 import type {
   ReportTemplate,
@@ -93,6 +94,11 @@ export const ReportTemplatesPage: React.FC = () => {
     queryFn: () => userApi.list(),
   });
 
+  const { data: stateOptions } = useQuery({
+    queryKey: ["admin", "states", "options"],
+    queryFn: () => workflowApi.list(false, "incident"),
+  });
+
   // Fetch templates
   const { data: templatesData, isLoading } = useQuery({
     queryKey: ["admin", "reports", "templates", filterSource],
@@ -169,6 +175,18 @@ export const ReportTemplatesPage: React.FC = () => {
 
   useEffect(() => {
     const map: Record<string, { value: string; label: string }[]> = {};
+
+    if (stateOptions?.data && stateOptions.data.length > 0) {
+      map.states = stateOptions.data[0].states?.map((state) => ({
+        value: state.name,
+        label: state.name,
+      })) as { value: string; label: string }[];
+
+      map.transitions = stateOptions.data[0].transitions?.map((transition) => ({
+        value: transition.name,
+        label: transition.name,
+      })) as { value: string; label: string }[];
+    }
 
     if (departmentsTree?.data) {
       map.departments = flattenTreeWithLabels(
