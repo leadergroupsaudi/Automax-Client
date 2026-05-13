@@ -1541,28 +1541,28 @@ export const WorkflowDesignerPage: React.FC = () => {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-[hsl(var(--border))]">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
+                        <th className="text-start py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
                           {t("common.state")}
                         </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
+                        <th className="text-start py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
                           {t("departments.code")}
                         </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
+                        <th className="text-start py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
                           {t("common.type")}
                         </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
+                        <th className="text-start py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
                           {t("workflows.slaHours")}
                         </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
+                        <th className="text-start py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
                           {t("workflows.mergable")}
                         </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
+                        <th className="text-start py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
                           {t("workflows.viewableRoles")}
                         </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
+                        <th className="text-start py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
                           {t("workflows.editableRoles")}
                         </th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
+                        <th className="text-end py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
                           {t("workflows.actions")}
                         </th>
                       </tr>
@@ -1734,19 +1734,19 @@ export const WorkflowDesignerPage: React.FC = () => {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-[hsl(var(--border))]">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
+                        <th className="text-start py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
                           {t("incidents.transition")}
                         </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
+                        <th className="text-start py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
                           {t("workflows.fromTo")}
                         </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
+                        <th className="text-start py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
                           {t("incidents.roles")}
                         </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
+                        <th className="text-start py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
                           {t("workflows.config")}
                         </th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
+                        <th className="text-end py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
                           {t("workflows.actions")}
                         </th>
                       </tr>
@@ -1781,7 +1781,7 @@ export const WorkflowDesignerPage: React.FC = () => {
                               >
                                 {getStateName(transition.from_state_id)}
                               </span>
-                              <ArrowRight className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                              <ArrowRight className="w-4 h-4 text-[hsl(var(--muted-foreground))] rtl:-rotate-180" />
                               <span
                                 className="px-2 py-1 text-xs font-medium rounded-lg text-white"
                                 style={{
@@ -2492,7 +2492,7 @@ export const WorkflowDesignerPage: React.FC = () => {
                         type="button"
                         onClick={cycleState}
                         className={cn(
-                          "flex items-start gap-3 p-3 rounded-lg transition-colors border text-left w-full",
+                          "flex items-start gap-3 p-3 rounded-lg transition-colors border text-start w-full",
                           isRequired
                             ? "bg-amber-50 border-amber-400"
                             : isOptional
