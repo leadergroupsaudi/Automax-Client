@@ -603,7 +603,7 @@ export const WorkflowsPage: React.FC = () => {
                     key={workflow.id}
                     className="relative bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-6 opacity-75"
                   >
-                    <div className="absolute top-3 right-3 px-2 py-1 text-xs font-medium bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))] rounded-lg">
+                    <div className="absolute top-3 end-3 px-2 py-1 text-xs font-medium bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))] rounded-lg">
                       {t("workflows.deleted")}
                     </div>
 
@@ -1028,12 +1028,27 @@ export const WorkflowsPage: React.FC = () => {
                 <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
                   {t("workflows.selectJsonFile")}
                 </label>
-                <input
-                  type="file"
-                  accept=".json,application/json"
-                  onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-                  className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[hsl(var(--primary))] file:text-white hover:file:bg-[hsl(var(--primary))]/90 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
-                />
+                <label
+                  className={cn(
+                    "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl border cursor-pointer transition-all",
+                    "bg-[hsl(var(--background))] border-[hsl(var(--border))]",
+                    "hover:border-[hsl(var(--primary))]",
+                  )}
+                >
+                  <span className="px-4 py-2 rounded-lg text-sm font-medium bg-[hsl(var(--primary))] text-white whitespace-nowrap">
+                    {t("common.chooseFile")}
+                  </span>
+                  <span className="text-sm text-[hsl(var(--muted-foreground))] truncate">
+                    {importFile ? importFile.name : t("common.noFileChosen")}
+                  </span>
+
+                  <input
+                    type="file"
+                    accept=".json,application/json"
+                    onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                    className="hidden"
+                  />
+                </label>
                 {importFile && (
                   <p className="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
                     {t("common.selected")}: {importFile.name} (
@@ -1092,7 +1107,9 @@ export const WorkflowsPage: React.FC = () => {
                   ) : undefined
                 }
               >
-                {importMutation.isPending ? "Importing..." : "Import Workflow"}
+                {importMutation.isPending
+                  ? t("common.importing")
+                  : t("workflows.importWorkflow")}
               </Button>
             </div>
           </div>
