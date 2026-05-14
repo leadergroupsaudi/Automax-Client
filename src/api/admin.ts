@@ -1251,6 +1251,11 @@ export const incidentApi = {
     if (filter.source) params.append("source", filter.source);
     if (filter.sla_breached !== undefined)
       params.append("sla_breached", String(filter.sla_breached));
+    if (filter.converted_to_request !== undefined)
+      params.append(
+        "converted_to_request",
+        String(filter.converted_to_request),
+      );
     if (filter.record_type) params.append("record_type", filter.record_type);
     if (filter.start_date) params.append("start_date", filter.start_date);
     if (filter.end_date) params.append("end_date", filter.end_date);
