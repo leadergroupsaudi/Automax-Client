@@ -13,6 +13,7 @@ export type ClassificationType =
 // Base types
 export interface User {
   id: string;
+  national_id?: string;
   email: string;
   username: string;
   first_name: string;
@@ -314,6 +315,7 @@ export interface RoleBasic {
 /** Slim user returned by POST /auth/login. Call GET /users/me for the full object. */
 export interface UserLoginResponse {
   id: string;
+  national_id?: string;
   email: string;
   username: string;
   first_name: string;
@@ -351,6 +353,28 @@ export interface AuthResponse {
 
 export interface LoginRequest {
   email: string;
+  password: string;
+  remember_me?: boolean;
+}
+
+export interface SSORegisterRequest {
+  email: string;
+  username: string;
+  password: string;
+  national_id: string;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  department_id?: string;
+  location_id?: string;
+  department_ids?: string[];
+  location_ids?: string[];
+  classification_ids?: string[];
+  role_ids?: string[];
+}
+
+export interface SSOLoginRequest {
+  national_id: string;
   password: string;
   remember_me?: boolean;
 }

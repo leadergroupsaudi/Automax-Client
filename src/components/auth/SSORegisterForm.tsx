@@ -5,21 +5,26 @@ import { z } from "zod";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { User, Mail, Lock, ArrowRight, Fingerprint } from "lucide-react";
-import { Button, Input, Checkbox } from "../ui";
-import { authApi } from "../../api/auth";
+import { Button, Input } from "../ui";
 import { ssoApi } from "../../api/sso";
 import { useAuthStore } from "../../stores/authStore";
 
-export const RegisterForm: React.FC = () => {
+interface SSORegisterFormProps {
+  onSwitchToRegular: () => void;
+}
+
+export const SSORegisterForm: React.FC<SSORegisterFormProps> = ({
+  onSwitchToRegular,
+}) => {
   const { t } = useTranslation();
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [ssoMode, setSsoMode] = useState(false);
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
 
-  const registerSchema = z
+  const ssoRegisterSchema = z
     .object({
+      national_id: z.string().min(1, t("auth.nationalId")),
       email: z.string().email(t("auth.invalidEmail")),
       username: z
         .string()
@@ -35,51 +40,22 @@ export const RegisterForm: React.FC = () => {
       confirmPassword: z.string(),
       first_name: z.string().max(100).optional(),
       last_name: z.string().max(100).optional(),
-      national_id: z.string().optional(),
-      terms: z.boolean().optional(),
     })
-    .superRefine((data, ctx) => {
-      if (data.password !== data.confirmPassword) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: t("auth.pwMismatch"),
-          path: ["confirmPassword"],
-        });
-      }
-      if (ssoMode && !data.national_id) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: t("auth.nationalId"),
-          path: ["national_id"],
-        });
-      }
-      if (!ssoMode && data.terms !== true) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: t("auth.acceptTerms"),
-          path: ["terms"],
-        });
-      }
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t("auth.pwMismatch"),
+      path: ["confirmPassword"],
     });
 
-  type RegisterFormData = z.infer<typeof registerSchema>;
+  type SSORegisterFormData = z.infer<typeof ssoRegisterSchema>;
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     watch,
-    reset,
-  } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: ssoMode ? {} : { terms: false },
+  } = useForm<SSORegisterFormData>({
+    resolver: zodResolver(ssoRegisterSchema),
   });
-
-  const toggleMode = () => {
-    setSsoMode((prev) => !prev);
-    setError("");
-    reset(ssoMode ? {} : { terms: false });
-  };
 
   const password = watch("password", "");
 
@@ -110,38 +86,22 @@ export const RegisterForm: React.FC = () => {
     "bg-emerald-500",
   ];
 
-  const onSubmit = async (data: RegisterFormData) => {
+  const onSubmit = async (data: SSORegisterFormData) => {
     setIsLoading(true);
     setError("");
 
     try {
-      if (ssoMode) {
-        const { confirmPassword: _cp, ...ssoData } =
-          data as RegisterFormData & { national_id: string };
-        const response = await ssoApi.signup(ssoData);
-        if (response.success && response.data) {
-          setAuth(
-            response.data.user,
-            response.data.token,
-            response.data.refresh_token,
-          );
-          navigate("/dashboard");
-        } else {
-          setError(response.error || t("auth.registrationFailed"));
-        }
+      const { confirmPassword: _confirmPassword, ...registerData } = data;
+      const response = await ssoApi.signup(registerData);
+      if (response.success && response.data) {
+        setAuth(
+          response.data.user,
+          response.data.token,
+          response.data.refresh_token,
+        );
+        navigate("/dashboard");
       } else {
-        const { confirmPassword: _cp, terms: _terms, ...registerData } = data;
-        const response = await authApi.register(registerData);
-        if (response.success && response.data) {
-          setAuth(
-            response.data.user,
-            response.data.token,
-            response.data.refresh_token,
-          );
-          navigate("/dashboard");
-        } else {
-          setError(response.error || t("auth.registrationFailed"));
-        }
+        setError(response.error || t("auth.registrationFailed"));
       }
     } catch (err: unknown) {
       const errorMessage =
@@ -160,40 +120,10 @@ export const RegisterForm: React.FC = () => {
   return (
     <div className="animate-fade-in-up">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold ">
-          {ssoMode ? t("auth.ssoRegisterTitle") : t("auth.registerTitle")}
-        </h1>
+        <h1 className="text-3xl font-bold ">{t("auth.ssoRegisterTitle")}</h1>
         <p className="mt-2 text-muted-foreground">
-          {ssoMode ? t("auth.ssoRegisterSubtitle") : t("auth.registerSubtitle")}
+          {t("auth.ssoRegisterSubtitle")}
         </p>
-      </div>
-
-      {/* Mode Toggle */}
-      <div className="mb-6 flex rounded-lg border p-1 bg-gray-50">
-        <button
-          type="button"
-          onClick={() => !ssoMode || toggleMode()}
-          className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
-            !ssoMode
-              ? "bg-white text-blue-600 shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          <Mail className="w-4 h-4 inline mr-1" />
-          {t("auth.regularRegister")}
-        </button>
-        <button
-          type="button"
-          onClick={() => ssoMode || toggleMode()}
-          className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
-            ssoMode
-              ? "bg-white text-blue-600 shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          <Fingerprint className="w-4 h-4 inline mr-1" />
-          {t("auth.ssoRegister")}
-        </button>
       </div>
 
       {error && (
@@ -225,15 +155,13 @@ export const RegisterForm: React.FC = () => {
           />
         </div>
 
-        {ssoMode && (
-          <Input
-            label={t("auth.nationalId")}
-            placeholder={t("auth.nationalIdPlaceholder")}
-            error={errors.national_id?.message}
-            leftIcon={<Fingerprint className="w-5 h-5" />}
-            {...register("national_id")}
-          />
-        )}
+        <Input
+          label={t("auth.nationalId")}
+          placeholder={t("auth.nationalIdPlaceholder")}
+          error={errors.national_id?.message}
+          leftIcon={<Fingerprint className="w-5 h-5" />}
+          {...register("national_id")}
+        />
 
         <Input
           label={t("auth.username")}
@@ -304,44 +232,14 @@ export const RegisterForm: React.FC = () => {
           {...register("confirmPassword")}
         />
 
-        {!ssoMode && (
-          <div>
-            <Checkbox
-              label={t("auth.agreeToTerms")}
-              description={
-                <span>
-                  {t("auth.byCreatingAnAccountYouAgreeTo")}{" "}
-                  <Link to="/terms" className="text-blue-600 hover:underline">
-                    {t("auth.termsOfService")}
-                  </Link>{" "}
-                  {t("auth.and")}{" "}
-                  <Link to="/privacy" className="text-blue-600 hover:underline">
-                    {t("auth.privacyPolicy")}
-                  </Link>
-                </span>
-              }
-              {...register("terms")}
-            />
-            {errors.terms && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.terms.message}
-              </p>
-            )}
-          </div>
-        )}
-
         <Button
           type="submit"
           size="lg"
           fullWidth
           isLoading={isLoading}
-          rightIcon={
-            !isLoading && (
-              <ArrowRight className="w-5 h-5 rtl:rotate-180 ml-2 rtl:mr-2" />
-            )
-          }
+          rightIcon={!isLoading && <ArrowRight className="w-5 h-5" />}
         >
-          {isLoading ? t("auth.creatingAccount") : t("auth.signUp")}
+          {t("auth.signUp")}
         </Button>
       </form>
 
@@ -353,6 +251,14 @@ export const RegisterForm: React.FC = () => {
         >
           {t("auth.signIn")}
         </Link>
+        <span className="mx-2">|</span>
+        <button
+          type="button"
+          onClick={onSwitchToRegular}
+          className="font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+        >
+          {t("auth.switchToRegularRegister")}
+        </button>
       </p>
     </div>
   );
