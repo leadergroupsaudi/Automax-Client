@@ -1,7 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Trash2 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type {
   ReportFilter,
   ReportFieldDefinition,

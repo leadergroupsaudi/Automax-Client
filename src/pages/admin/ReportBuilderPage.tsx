@@ -341,7 +341,7 @@ export const ReportBuilderPage: React.FC = () => {
             setSelectedColumns((prev) => {
               const existingFields = new Set(prev.map((c) => c.field));
               const toAdd = defaultDynamicCols.filter(
-                (c) => !existingFields.has(c.field),
+                (c: any) => !existingFields.has(c.field),
               );
               return [...prev, ...toAdd];
             });
