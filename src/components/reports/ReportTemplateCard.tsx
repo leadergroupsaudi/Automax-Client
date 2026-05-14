@@ -28,13 +28,12 @@ import type {
   ReportDataSource,
   ReportFilter,
   ReportSort,
-  ReportFieldDefinition,
   ReportQueryRequest,
 } from "@/types";
 import { saveAs } from "file-saver";
 import FilterBuilder from "@/components/reports/FilterBuilder";
 import SortingConfig from "@/components/reports/SortingConfig";
-import { DATA_SOURCES, getFieldsForDataSource } from "@/constants/reportFields";
+import { getFieldsForDataSource } from "@/constants/reportFields";
 import { reportApi } from "@/api/admin";
 import ReportPreview from "./ReportPreview";
 import ExportDialog from "./ExportDialog";
