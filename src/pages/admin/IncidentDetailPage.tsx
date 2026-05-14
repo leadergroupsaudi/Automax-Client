@@ -682,6 +682,24 @@ export const IncidentDetailPage: React.FC = () => {
     },
   });
 
+  const requestInfoMutation = useMutation({
+    mutationFn: () => incidentApi.requestCitizenInfo(id!),
+    onSuccess: () => {
+      toast.success(
+        t("incidents.requestInfoSmsSent", "SMS sent successfully to citizen"),
+      );
+    },
+    onError: (err: any) => {
+      const errorMsg =
+        err.response?.data?.error ||
+        t(
+          "incidents.requestInfoFailed",
+          "Failed to send request for information",
+        );
+      toast.error(errorMsg);
+    },
+  });
+
   const availableTransitions = transitionsData?.data || [];
   const history = historyData?.data || [];
   const comments = combinedCommentData || [];
@@ -1498,6 +1516,19 @@ export const IncidentDetailPage: React.FC = () => {
                 )}
             </>
           )}
+          {(isSuperAdmin ||
+            hasPermission(PERMISSIONS.INCIDENTS_REQUEST_INFO)) &&
+            (incident?.attachments_count ?? 0) === 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => requestInfoMutation.mutate()}
+                isLoading={requestInfoMutation.isPending}
+                leftIcon={<Send className="w-4 h-4" />}
+              >
+                {t("incidents.requestInfo", "Request Information")}
+              </Button>
+            )}
           {canViewReports && (
             <Button
               variant="outline"

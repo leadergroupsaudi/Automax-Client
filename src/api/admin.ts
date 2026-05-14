@@ -1605,6 +1605,17 @@ export const incidentApi = {
     );
     return response.data;
   },
+
+  requestCitizenInfo: async (
+    incidentId: string,
+  ): Promise<
+    ApiResponse<{ mobile: string; incident_number: string; status: string }>
+  > => {
+    const response = await apiClient.post<
+      ApiResponse<{ mobile: string; incident_number: string; status: string }>
+    >(`/incidents/${incidentId}/request-info`);
+    return response.data;
+  },
 };
 
 // Complaint API
