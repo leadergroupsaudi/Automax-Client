@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import sipService from "../../lib/services/sipService";
 import { useSoftphoneStore } from "@/stores/softphoneStore";
-import ringtone from "/phone_ring.mp3";
+import { publicUrl } from "@/utils/publicUrl";
 import {
   Phone,
   PhoneOff,
@@ -289,7 +289,7 @@ export default function SoftPhone({
 
   // Initialize ringtone audio and prime it on first interaction
   useEffect(() => {
-    const audio = new Audio(ringtone);
+    const audio = new Audio(publicUrl("phone_ring.mp3"));
     audio.loop = true;
     ringRef.current = audio;
 
