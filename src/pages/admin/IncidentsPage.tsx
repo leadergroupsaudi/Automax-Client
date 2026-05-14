@@ -383,6 +383,8 @@ export const IncidentsPage: React.FC = () => {
 
       current_state_id: currentStateId,
       transition_id: searchParams.get("transition_id") || undefined,
+      converted_to_request:
+        searchParams.get("converted_to_request") === "true" ? true : undefined,
       start_date: searchParams.get("start_date") || undefined,
       end_date: searchParams.get("end_date") || undefined,
     };
@@ -490,6 +492,7 @@ export const IncidentsPage: React.FC = () => {
 
     if (key === "current_state_id") {
       params.delete("transition_id");
+      params.delete("converted_to_request");
     }
 
     if (value !== undefined && value !== "" && value !== null) {
@@ -528,6 +531,7 @@ export const IncidentsPage: React.FC = () => {
     filter.assignee_id ||
     (filter.department_ids && filter.department_ids.length > 0) ||
     filter.sla_breached !== undefined ||
+    filter.converted_to_request !== undefined ||
     filter.priority !== undefined ||
     !!filter.start_date ||
     !!filter.end_date
@@ -1010,13 +1014,28 @@ export const IncidentsPage: React.FC = () => {
                 </label>
 
                 <select
-                  value={filter.transition_id || ""}
-                  onChange={(e) =>
-                    handleFilterChange(
-                      "transition_id",
-                      e.target.value || undefined,
-                    )
+                  value={
+                    filter.converted_to_request
+                      ? "__converted_to_request__"
+                      : filter.transition_id || ""
                   }
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "__converted_to_request__") {
+                      const params = new URLSearchParams(searchParams);
+                      params.delete("transition_id");
+                      params.set("converted_to_request", "true");
+                      params.set("page", "1");
+                      setSearchParams(params);
+                    } else {
+                      const params = new URLSearchParams(searchParams);
+                      params.delete("converted_to_request");
+                      params.delete("transition_id");
+                      if (val) params.set("transition_id", val);
+                      params.set("page", "1");
+                      setSearchParams(params);
+                    }
+                  }}
                   disabled={isTransitionsLoading || !canViewIncident}
                   className={cn(
                     "w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]",
@@ -1030,12 +1049,17 @@ export const IncidentsPage: React.FC = () => {
                   ) : (
                     <>
                       <option value="">{t("incidents.allTransitions")}</option>
-
                       {availableTransitions?.data?.map((transition: any) => (
                         <option key={transition.id} value={transition.id}>
                           {transition.name}
                         </option>
                       ))}
+                      <option value="__converted_to_request__">
+                        {t(
+                          "incidents.convertedToRequest",
+                          "Convert to Request",
+                        )}
+                      </option>
                     </>
                   )}
                 </select>

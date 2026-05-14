@@ -1332,6 +1332,7 @@ export interface IncidentFilter {
   record_type?: RecordType;
   channel?: string; // For complaints
   source?: string;
+  converted_to_request?: boolean;
   start_date?: string;
   end_date?: string;
   page?: number;
