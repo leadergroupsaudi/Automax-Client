@@ -321,8 +321,8 @@ export const IncidentDetailPage: React.FC = () => {
   });
 
   // Fetch duration options for partial-close transitions only
-  const isReadyToCloseTransition =
-    selectedTransition?.transition?.to_state?.is_ready_to_close === true;
+  //const isReadyToCloseTransition =
+  // selectedTransition?.transition?.to_state?.is_ready_to_close === true;
   const isPartialCloseTransition =
     selectedTransition?.transition?.to_state?.is_partial_close === true;
   const isDurationTransition = isPartialCloseTransition;
