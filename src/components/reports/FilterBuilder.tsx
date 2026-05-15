@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Trash2 } from "lucide-react";
 import type {
@@ -306,6 +306,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
   onChange,
 }) => {
   const { t } = useTranslation();
+  const [timestampKey, setTimestampKey] = useState("created_at");
 
   const addFilter = () => {
     const firstFilterableField = fields.find((f) => f.filterable);
@@ -350,8 +351,11 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
       <div className="flex gap-2 items-center">
         <span className="text-sm font-semibold">Timestamp Key</span>
         <select
-          onChange={(e) => onTimestampKeyChange(e.target.value)}
-          value={"created_at"}
+          onChange={(e) => {
+            onTimestampKeyChange(e.target.value);
+            setTimestampKey(e.target.value);
+          }}
+          value={timestampKey}
           className="border border-[hsl(var(--border))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] px-3 py-2"
         >
           {filterableFields
