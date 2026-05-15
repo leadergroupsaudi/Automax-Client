@@ -15,6 +15,7 @@ interface FilterBuilderProps {
   filters: ReportFilter[];
   enableAddFilter?: boolean;
   onChange: (filters: ReportFilter[]) => void;
+  onTimestampKeyChange: (timestampKey: string) => void;
 }
 
 interface FilterRowProps {
@@ -301,6 +302,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
   fields,
   filters,
   enableAddFilter = true,
+  onTimestampKeyChange,
   onChange,
 }) => {
   const { t } = useTranslation();
@@ -345,6 +347,22 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
 
   return (
     <div className="space-y-3">
+      <div className="flex gap-2 items-center">
+        <span className="text-sm font-semibold">Timestamp Key</span>
+        <select
+          onChange={(e) => onTimestampKeyChange(e.target.value)}
+          value={"created_at"}
+          className="border border-[hsl(var(--border))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] px-3 py-2"
+        >
+          {filterableFields
+            .filter((x) => x.type === "datetime" || x.type === "date")
+            .map((t) => (
+              <option key={t.field} value={t.field}>
+                {t.label}
+              </option>
+            ))}
+        </select>
+      </div>
       {/* Filters list */}
       {filters.length === 0 ? (
         <div className="text-sm text-[hsl(var(--muted-foreground))] text-center py-4 border border-dashed border-[hsl(var(--border))] rounded-lg">

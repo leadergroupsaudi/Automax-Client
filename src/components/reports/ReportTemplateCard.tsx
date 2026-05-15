@@ -250,10 +250,12 @@ export const ReportTemplateCard: React.FC<ReportTemplateCardProps> = ({
       const endOfDay = new Date(toDate);
       endOfDay.setHours(23, 59, 59, 999);
 
-      updatedFilters = updatedFilters.filter((f) => f.field !== "created_at");
+      updatedFilters = updatedFilters.filter(
+        (f) => f.field !== template?.timestamp_key || "created_at",
+      );
       updatedFilters.push({
-        id: "created_at",
-        field: "created_at",
+        id: template?.timestamp_key || "created_at",
+        field: template?.timestamp_key || "created_at",
         operator: "between",
         value: {
           from: new Date(fromDate).toISOString(),
@@ -558,6 +560,7 @@ export const ReportTemplateCard: React.FC<ReportTemplateCardProps> = ({
                 filters={filters}
                 onChange={setFilters}
                 enableAddFilter={false}
+                onTimestampKeyChange={() => {}}
               />
             </div>
           )}
