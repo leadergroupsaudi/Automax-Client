@@ -564,6 +564,7 @@ export const ReportBuilderPage: React.FC = () => {
     );
     setSorting(template.config.sorting);
     setLoadedTemplate(template);
+    setTimestampKey(template.timestamp_key || "created_at");
     setPreviewData([]);
     setDbTotalCount(0);
     setDisplayPage(1);
@@ -705,6 +706,8 @@ export const ReportBuilderPage: React.FC = () => {
               filters={filters}
               onChange={setFilters}
               onTimestampKeyChange={setTimestampKey}
+              timestampKey={timestampKey}
+              showTimestampKey={user?.is_super_admin}
             />
           </CollapsibleSection>
         )}

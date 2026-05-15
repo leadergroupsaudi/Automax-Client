@@ -16,6 +16,8 @@ interface FilterBuilderProps {
   enableAddFilter?: boolean;
   onChange: (filters: ReportFilter[]) => void;
   onTimestampKeyChange: (timestampKey: string) => void;
+  timestampKey?: string;
+  showTimestampKey?: boolean;
 }
 
 interface FilterRowProps {
@@ -304,9 +306,20 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
   enableAddFilter = true,
   onTimestampKeyChange,
   onChange,
+  timestampKey: timestampKeyProp,
+  showTimestampKey = true,
 }) => {
   const { t } = useTranslation();
-  const [timestampKey, setTimestampKey] = useState("created_at");
+  const [timestampKey, setTimestampKey] = useState(
+    timestampKeyProp || "created_at",
+  );
+
+  // Sync internal state with prop
+  React.useEffect(() => {
+    if (timestampKeyProp && timestampKeyProp !== timestampKey) {
+      setTimestampKey(timestampKeyProp);
+    }
+  }, [timestampKeyProp]);
 
   const addFilter = () => {
     const firstFilterableField = fields.find((f) => f.filterable);
@@ -348,25 +361,27 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
 
   return (
     <div className="space-y-3">
-      <div className="flex gap-2 items-center">
-        <span className="text-sm font-semibold">Timestamp Key</span>
-        <select
-          onChange={(e) => {
-            onTimestampKeyChange(e.target.value);
-            setTimestampKey(e.target.value);
-          }}
-          value={timestampKey}
-          className="border border-[hsl(var(--border))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] px-3 py-2"
-        >
-          {filterableFields
-            .filter((x) => x.type === "datetime" || x.type === "date")
-            .map((t) => (
-              <option key={t.field} value={t.field}>
-                {t.label}
-              </option>
-            ))}
-        </select>
-      </div>
+      {showTimestampKey && (
+        <div className="flex gap-2 items-center">
+          <span className="text-sm font-semibold">Timestamp Key</span>
+          <select
+            onChange={(e) => {
+              onTimestampKeyChange(e.target.value);
+              setTimestampKey(e.target.value);
+            }}
+            value={timestampKey}
+            className="border border-[hsl(var(--border))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] px-3 py-2"
+          >
+            {filterableFields
+              .filter((x) => x.type === "datetime" || x.type === "date")
+              .map((t) => (
+                <option key={t.field} value={t.field}>
+                  {t.label}
+                </option>
+              ))}
+          </select>
+        </div>
+      )}
       {/* Filters list */}
       {filters.length === 0 ? (
         <div className="text-sm text-[hsl(var(--muted-foreground))] text-center py-4 border border-dashed border-[hsl(var(--border))] rounded-lg">

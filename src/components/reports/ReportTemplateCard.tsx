@@ -558,6 +558,7 @@ export const ReportTemplateCard: React.FC<ReportTemplateCardProps> = ({
                 onChange={setFilters}
                 enableAddFilter={false}
                 onTimestampKeyChange={() => {}}
+                showTimestampKey={false}
               />
             </div>
           )}
