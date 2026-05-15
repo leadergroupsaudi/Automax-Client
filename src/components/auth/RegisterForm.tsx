@@ -1,20 +1,18 @@
-import React, { useState } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { User, Mail, Lock, ArrowRight, Fingerprint } from "lucide-react";
+import { User, Mail, Lock, ArrowRight } from "lucide-react";
 import { Button, Input, Checkbox } from "../ui";
 import { authApi } from "../../api/auth";
-import { ssoApi } from "../../api/sso";
 import { useAuthStore } from "../../stores/authStore";
 
 export const RegisterForm: React.FC = () => {
   const { t } = useTranslation();
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [ssoMode, setSsoMode] = useState(false);
+  const [error, setError] = React.useState("");
+  const [isLoading, setIsLoading] = React.useState(false);
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
 
@@ -26,17 +24,11 @@ export const RegisterForm: React.FC = () => {
         .min(3, t("auth.usernameTooShort"))
         .max(50, t("auth.usernameTooLong"))
         .regex(/^[a-zA-Z0-9_]+$/, t("auth.usernameInvalidChars")),
-      password: z
-        .string()
-        .min(8, t("auth.pwTooShort"))
-        .regex(/[A-Z]/, t("auth.pwUppercase"))
-        .regex(/[a-z]/, t("auth.pwLowercase"))
-        .regex(/[0-9]/, t("auth.pwNumber")),
+      password: z.string().min(8, t("auth.pwTooShort")),
       confirmPassword: z.string(),
       first_name: z.string().max(100).optional(),
       last_name: z.string().max(100).optional(),
-      national_id: z.string().optional(),
-      terms: z.boolean().optional(),
+      terms: z.boolean(),
     })
     .superRefine((data, ctx) => {
       if (data.password !== data.confirmPassword) {
@@ -46,14 +38,7 @@ export const RegisterForm: React.FC = () => {
           path: ["confirmPassword"],
         });
       }
-      if (ssoMode && !data.national_id) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: t("auth.nationalId"),
-          path: ["national_id"],
-        });
-      }
-      if (!ssoMode && data.terms !== true) {
+      if (data.terms !== true) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: t("auth.acceptTerms"),
@@ -68,80 +53,27 @@ export const RegisterForm: React.FC = () => {
     register,
     handleSubmit,
     formState: { errors },
-    watch,
-    reset,
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
-    defaultValues: ssoMode ? {} : { terms: false },
+    defaultValues: { terms: false },
   });
-
-  const toggleMode = () => {
-    setSsoMode((prev) => !prev);
-    setError("");
-    reset(ssoMode ? {} : { terms: false });
-  };
-
-  const password = watch("password", "");
-
-  const getPasswordStrength = (pwd: string) => {
-    let strength = 0;
-    if (pwd.length >= 8) strength++;
-    if (/[A-Z]/.test(pwd)) strength++;
-    if (/[a-z]/.test(pwd)) strength++;
-    if (/[0-9]/.test(pwd)) strength++;
-    if (/[^A-Za-z0-9]/.test(pwd)) strength++;
-    return strength;
-  };
-
-  const passwordStrength = getPasswordStrength(password);
-
-  const strengthLabels = [
-    t("settings.weak"),
-    t("settings.weak"),
-    t("settings.fair"),
-    t("settings.good"),
-    t("settings.strong"),
-  ];
-  const strengthColors = [
-    "bg-red-500",
-    "bg-orange-500",
-    "bg-yellow-500",
-    "bg-lime-500",
-    "bg-emerald-500",
-  ];
 
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     setError("");
 
     try {
-      if (ssoMode) {
-        const { confirmPassword: _cp, ...ssoData } =
-          data as RegisterFormData & { national_id: string };
-        const response = await ssoApi.signup(ssoData);
-        if (response.success && response.data) {
-          setAuth(
-            response.data.user,
-            response.data.token,
-            response.data.refresh_token,
-          );
-          navigate("/dashboard");
-        } else {
-          setError(response.error || t("auth.registrationFailed"));
-        }
+      const { confirmPassword: _cp, terms: _terms, ...registerData } = data;
+      const response = await authApi.register(registerData as any);
+      if (response.success && response.data) {
+        setAuth(
+          response.data.user,
+          response.data.token,
+          response.data.refresh_token,
+        );
+        navigate("/dashboard");
       } else {
-        const { confirmPassword: _cp, terms: _terms, ...registerData } = data;
-        const response = await authApi.register(registerData);
-        if (response.success && response.data) {
-          setAuth(
-            response.data.user,
-            response.data.token,
-            response.data.refresh_token,
-          );
-          navigate("/dashboard");
-        } else {
-          setError(response.error || t("auth.registrationFailed"));
-        }
+        setError(response.error || t("auth.registrationFailed"));
       }
     } catch (err: unknown) {
       const errorMessage =
@@ -160,52 +92,15 @@ export const RegisterForm: React.FC = () => {
   return (
     <div className="animate-fade-in-up">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold ">
-          {ssoMode ? t("auth.ssoRegisterTitle") : t("auth.registerTitle")}
-        </h1>
+        <h1 className="text-3xl font-bold">{t("auth.registerTitle")}</h1>
         <p className="mt-2 text-muted-foreground">
-          {ssoMode ? t("auth.ssoRegisterSubtitle") : t("auth.registerSubtitle")}
+          {t("auth.registerSubtitle")}
         </p>
-      </div>
-
-      {/* Mode Toggle */}
-      <div className="mb-6 flex rounded-lg border p-1 bg-gray-50">
-        <button
-          type="button"
-          onClick={() => !ssoMode || toggleMode()}
-          className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
-            !ssoMode
-              ? "bg-white text-blue-600 shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          <Mail className="w-4 h-4 inline mr-1" />
-          {t("auth.regularRegister")}
-        </button>
-        <button
-          type="button"
-          onClick={() => ssoMode || toggleMode()}
-          className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
-            ssoMode
-              ? "bg-white text-blue-600 shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          <Fingerprint className="w-4 h-4 inline mr-1" />
-          {t("auth.ssoRegister")}
-        </button>
       </div>
 
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl animate-fade-in">
-          <div className="flex items-start gap-3">
-            <div className="w-5 h-5 mt-0.5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-              <span className="text-red-600 text-xs font-bold">!</span>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-red-800">{error}</p>
-            </div>
-          </div>
+          <p className="text-sm font-medium text-red-800">{error}</p>
         </div>
       )}
 
@@ -225,16 +120,6 @@ export const RegisterForm: React.FC = () => {
           />
         </div>
 
-        {ssoMode && (
-          <Input
-            label={t("auth.nationalId")}
-            placeholder={t("auth.nationalIdPlaceholder")}
-            error={errors.national_id?.message}
-            leftIcon={<Fingerprint className="w-5 h-5" />}
-            {...register("national_id")}
-          />
-        )}
-
         <Input
           label={t("auth.username")}
           placeholder={t("auth.usernamePlaceholder")}
@@ -242,7 +127,6 @@ export const RegisterForm: React.FC = () => {
           leftIcon={<User className="w-5 h-5" />}
           {...register("username")}
         />
-
         <Input
           label={t("auth.email")}
           type="email"
@@ -261,40 +145,7 @@ export const RegisterForm: React.FC = () => {
             leftIcon={<Lock className="w-5 h-5" />}
             {...register("password")}
           />
-          {password && (
-            <div className="mt-3">
-              <div className="flex gap-1 mb-2">
-                {[0, 1, 2, 3, 4].map((index) => (
-                  <div
-                    key={index}
-                    className={`h-1.5 flex-1 rounded-full transition-colors ${
-                      index < passwordStrength
-                        ? strengthColors[passwordStrength - 1]
-                        : "bg-gray-200"
-                    }`}
-                  />
-                ))}
-              </div>
-              <p className="text-xs text-gray-500">
-                {t("settings.passwordStrength")}:{" "}
-                <span
-                  className={`font-medium ${
-                    passwordStrength >= 4
-                      ? "text-emerald-600"
-                      : passwordStrength >= 3
-                        ? "text-lime-600"
-                        : passwordStrength >= 2
-                          ? "text-yellow-600"
-                          : "text-red-600"
-                  }`}
-                >
-                  {strengthLabels[passwordStrength - 1] || t("settings.weak")}
-                </span>
-              </p>
-            </div>
-          )}
         </div>
-
         <Input
           label={t("auth.confirmPassword")}
           type="password"
@@ -303,32 +154,12 @@ export const RegisterForm: React.FC = () => {
           leftIcon={<Lock className="w-5 h-5" />}
           {...register("confirmPassword")}
         />
-
-        {!ssoMode && (
-          <div>
-            <Checkbox
-              label={t("auth.agreeToTerms")}
-              description={
-                <span>
-                  {t("auth.byCreatingAnAccountYouAgreeTo")}{" "}
-                  <Link to="/terms" className="text-blue-600 hover:underline">
-                    {t("auth.termsOfService")}
-                  </Link>{" "}
-                  {t("auth.and")}{" "}
-                  <Link to="/privacy" className="text-blue-600 hover:underline">
-                    {t("auth.privacyPolicy")}
-                  </Link>
-                </span>
-              }
-              {...register("terms")}
-            />
-            {errors.terms && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.terms.message}
-              </p>
-            )}
-          </div>
-        )}
+        <div>
+          <Checkbox label={t("auth.agreeToTerms")} {...register("terms")} />
+          {errors.terms && (
+            <p className="mt-1 text-sm text-red-600">{errors.terms.message}</p>
+          )}
+        </div>
 
         <Button
           type="submit"

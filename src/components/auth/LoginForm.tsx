@@ -17,14 +17,14 @@ export const LoginForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [ssoMode, setSsoMode] = useState(false);
+  const [nationalId, setNationalId] = useState("");
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
   const setUser = useAuthStore((state) => state.setUser);
 
   const loginSchema = z.object({
     email: z.string().optional(),
-    national_id: z.string().optional(),
-    password: z.string().min(6, t("auth.passwordMinLength")),
+    password: z.string().min(6, t("auth.passwordMinLength")).optional(),
   });
 
   type LoginFormData = z.infer<typeof loginSchema>;
@@ -42,6 +42,72 @@ export const LoginForm: React.FC = () => {
     setSsoMode((prev) => !prev);
     setError("");
     reset();
+    setNationalId("");
+  };
+
+  const handleSsoLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nationalId.trim()) return;
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const response = await ssoApi.login({ national_id: nationalId });
+      if (response.success && response.data) {
+        const data = response.data as unknown as {
+          token: string;
+          refresh_token: string;
+          user: User;
+          validation_url?: string;
+        };
+        setAuth(data.user, data.token, data.refresh_token);
+
+        if (data.validation_url) {
+          window.location.href = data.validation_url;
+        } else {
+          navigate("/dashboard");
+        }
+      } else {
+        setError(response.error || t("auth.loginError"));
+      }
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : t("auth.loginError");
+      if (typeof err === "object" && err !== null && "response" in err) {
+        const axiosError = err as { response?: { data?: { error?: string } } };
+        setError(axiosError.response?.data?.error || errorMessage);
+      } else {
+        setError(errorMessage);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRegularLogin = async (data: LoginFormData) => {
+    const emailData = data as { email: string; password: string };
+    const response = await authApi.login({
+      ...emailData,
+      remember_me: rememberMe,
+    });
+
+    if (response.success && response.data) {
+      setAuth(
+        response.data.user as unknown as User,
+        response.data.token,
+        response.data.refresh_token,
+        rememberMe,
+      );
+      try {
+        const profileResp = await authApi.getProfile();
+        if (profileResp.success && profileResp.data) {
+          setUser(profileResp.data);
+        }
+      } catch {}
+      navigate("/dashboard");
+    } else {
+      setError(response.error || t("auth.loginError"));
+    }
   };
 
   const onSubmit = async (data: LoginFormData) => {
@@ -49,37 +115,8 @@ export const LoginForm: React.FC = () => {
     setError("");
 
     try {
-      let response;
-      if (ssoMode) {
-        const ssoData = data as { national_id: string; password: string };
-        response = await ssoApi.login({
-          national_id: ssoData.national_id,
-          password: ssoData.password,
-        });
-      } else {
-        const emailData = data as { email: string; password: string };
-        response = await authApi.login({
-          ...emailData,
-          remember_me: rememberMe,
-        });
-      }
-
-      if (response.success && response.data) {
-        setAuth(
-          response.data.user as unknown as User,
-          response.data.token,
-          response.data.refresh_token,
-          !ssoMode ? rememberMe : undefined,
-        );
-        try {
-          const profileResp = await authApi.getProfile();
-          if (profileResp.success && profileResp.data) {
-            setUser(profileResp.data);
-          }
-        } catch {}
-        navigate("/dashboard");
-      } else {
-        setError(response.error || t("auth.loginError"));
+      if (!ssoMode) {
+        await handleRegularLogin(data);
       }
     } catch (err: unknown) {
       const errorMessage =
@@ -106,7 +143,6 @@ export const LoginForm: React.FC = () => {
         </p>
       </div>
 
-      {/* Mode Toggle */}
       <div className="mb-6 flex rounded-lg border p-1 bg-gray-50">
         <button
           type="button"
@@ -136,27 +172,36 @@ export const LoginForm: React.FC = () => {
 
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl animate-fade-in">
-          <div className="flex items-start gap-3">
-            <div className="w-5 h-5 mt-0.5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-              <span className="text-red-600 text-xs font-bold">!</span>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-red-800">{error}</p>
-            </div>
-          </div>
+          <p className="text-sm font-medium text-red-800">{error}</p>
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
-        {ssoMode ? (
+      {ssoMode ? (
+        <form onSubmit={handleSsoLogin} className="space-y-5" noValidate>
           <Input
             label={t("auth.nationalId")}
             placeholder={t("auth.nationalIdPlaceholder")}
-            error={errors.national_id?.message}
+            value={nationalId}
+            onChange={(e) => setNationalId(e.target.value)}
             leftIcon={<Fingerprint className="w-5 h-5" />}
-            {...register("national_id")}
           />
-        ) : (
+
+          <Button
+            type="submit"
+            size="lg"
+            fullWidth
+            isLoading={isLoading}
+            rightIcon={!isLoading && <ArrowRight className="w-5 h-5" />}
+          >
+            {t("auth.signIn")}
+          </Button>
+        </form>
+      ) : (
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-5"
+          noValidate
+        >
           <Input
             label={t("auth.email")}
             type="email"
@@ -165,18 +210,16 @@ export const LoginForm: React.FC = () => {
             leftIcon={<Mail className="w-5 h-5" />}
             {...register("email")}
           />
-        )}
 
-        <Input
-          label={t("auth.password")}
-          type="password"
-          placeholder={t("auth.passwordPlaceholder")}
-          error={errors.password?.message}
-          leftIcon={<Lock className="w-5 h-5" />}
-          {...register("password")}
-        />
+          <Input
+            label={t("auth.password")}
+            type="password"
+            placeholder={t("auth.passwordPlaceholder")}
+            error={errors.password?.message}
+            leftIcon={<Lock className="w-5 h-5" />}
+            {...register("password")}
+          />
 
-        {!ssoMode && (
           <div className="flex items-center justify-between">
             <Checkbox
               label={t("auth.rememberMe")}
@@ -190,18 +233,18 @@ export const LoginForm: React.FC = () => {
               {t("auth.forgotPassword")}
             </Link>
           </div>
-        )}
 
-        <Button
-          type="submit"
-          size="lg"
-          fullWidth
-          isLoading={isLoading}
-          rightIcon={!isLoading && <ArrowRight className="w-5 h-5" />}
-        >
-          {t("auth.signIn")}
-        </Button>
-      </form>
+          <Button
+            type="submit"
+            size="lg"
+            fullWidth
+            isLoading={isLoading}
+            rightIcon={!isLoading && <ArrowRight className="w-5 h-5" />}
+          >
+            {t("auth.signIn")}
+          </Button>
+        </form>
+      )}
 
       <p className="mt-8 text-center text-gray-600">
         {t("auth.noAccount")}{" "}
