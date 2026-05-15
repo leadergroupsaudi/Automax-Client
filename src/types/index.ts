@@ -1621,6 +1621,7 @@ export interface ReportTemplate {
   can_edit?: boolean;
   created_at: string;
   updated_at: string;
+  timestamp_key?: string;
 }
 
 // Report Query Request
@@ -1670,6 +1671,7 @@ export interface ReportTemplateCreateRequest {
   data_source: ReportDataSource;
   config: ReportTemplateConfig;
   is_public?: boolean;
+  timestamp_key?: string;
 }
 
 export interface ReportTemplateUpdateRequest {
@@ -1677,6 +1679,7 @@ export interface ReportTemplateUpdateRequest {
   description?: string;
   config?: ReportTemplateConfig;
   is_public?: boolean;
+  timestamp_key?: string;
 }
 
 export interface ReportTemplateShareRequest {
