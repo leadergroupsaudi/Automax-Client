@@ -29,6 +29,7 @@ import {
   Settings,
   AlertTriangle,
   KeyRound,
+  Form,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/authStore";
 import usePermissions from "@/hooks/usePermissions";
@@ -124,6 +125,12 @@ const sidebarSectionsConfig: SidebarSection[] = [
         labelKey: "lookups.title",
         path: "/admin/lookups",
         permission: "lookups:view",
+      },
+      {
+        icon: Form,
+        labelKey: "notificationTemplates.title",
+        path: "/admin/templates",
+        permission: "templates:view",
       },
       {
         icon: Link2,
