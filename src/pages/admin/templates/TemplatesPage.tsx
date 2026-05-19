@@ -27,6 +27,7 @@ import {
   MODULE_OPTIONS,
   STATUS_OPTIONS,
 } from "@/constants/template";
+import { toast } from "sonner";
 
 export default function TemplatesPage() {
   const { t } = useTranslation();
@@ -54,14 +55,16 @@ export default function TemplatesPage() {
   }));
 
   const statusOptions = STATUS_OPTIONS.map((option) => ({
-    ...option,
+    value: String(option.value),
     label: t(
-      `notificationTemplates.status.${option.value === "true" ? "active" : "inactive"}`,
+      `notificationTemplates.status.${option.value === true ? "active" : "inactive"}`,
     ),
   }));
 
-  const filters = useMemo(
-    () => ({
+  const filters = useMemo(() => {
+    const statusParam = searchParams.get("is_active");
+
+    return {
       page: Number(searchParams.get("page") || 1),
 
       limit: Number(searchParams.get("limit") || 10),
@@ -73,10 +76,14 @@ export default function TemplatesPage() {
       module_type: searchParams.get("module_type") || undefined,
 
       action_type: searchParams.get("action_type") || undefined,
-      is_active: searchParams.get("is_active") || undefined,
-    }),
-    [searchParams],
-  );
+      is_active:
+        statusParam === "true"
+          ? true
+          : statusParam === "false"
+            ? false
+            : undefined,
+    };
+  }, [searchParams]);
 
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["notification-templates", filters],
@@ -89,6 +96,7 @@ export default function TemplatesPage() {
       notificationTemplateApi.toggleStatus(id, is_active),
 
     onSuccess: () => {
+      toast.success("Template status updated");
       queryClient.invalidateQueries({
         queryKey: ["notification-templates"],
       });
@@ -147,7 +155,7 @@ export default function TemplatesPage() {
       !!filters.channel ||
       !!filters.module_type ||
       !!filters.action_type ||
-      !!filters.is_active
+      filters.is_active !== undefined
     );
   }, [filters]);
 
@@ -306,7 +314,11 @@ export default function TemplatesPage() {
                   {t("notificationTemplates.form.status")}
                 </label>
                 <select
-                  value={filters.is_active || ""}
+                  value={
+                    filters.is_active === undefined
+                      ? ""
+                      : String(filters.is_active)
+                  }
                   onChange={(e) =>
                     handleFilterChange("is_active", e.target.value || "")
                   }
@@ -432,7 +444,7 @@ export default function TemplatesPage() {
                         <div className="flex justify-end gap-2">
                           <button
                             onClick={() =>
-                              navigate(`/admin/templates/${item.id}/edit`)
+                              navigate(`/admin/templates/${item.id}`)
                             }
                             className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors"
                             title={t("notificationTemplates.editTemplate")}

@@ -109,9 +109,9 @@ import type {
   EscalationPolicy,
   ResolveUsersRequest,
   AIQualityFeedback,
+  NotificationTemplate,
 } from "../types";
 import type {
-  NotificationTemplate,
   NotificationTemplateCreatePayload,
   NotificationTemplateFilters,
 } from "@/types/templates";
@@ -3207,9 +3207,12 @@ export const notificationTemplateApi = {
     is_active: boolean,
   ): Promise<ApiResponse<NotificationTemplate>> => {
     const response = await apiClient.patch<ApiResponse<NotificationTemplate>>(
-      `/admin/notification-templates/${id}/status`,
+      `/admin/notification-templates/${id}/toggle`,
+      undefined,
       {
-        is_active,
+        params: {
+          is_active,
+        },
       },
     );
 
@@ -3220,6 +3223,28 @@ export const notificationTemplateApi = {
     const response = await apiClient.delete<ApiResponse<unknown>>(
       `/admin/notification-templates/${id}`,
     );
+
+    return response.data;
+  },
+
+  sendTest: async (data: {
+    channel: "email" | "sms";
+    templateCode: string;
+    to: string;
+    language?: string;
+  }): Promise<
+    ApiResponse<{ id: string; status: string; provider: string }>
+  > => {
+    const response = await apiClient.post<
+      ApiResponse<{ id: string; status: string; provider: string }>
+    >("/notifications/send", {
+      channel: data.channel,
+      templateCode: data.templateCode,
+      language: data.language ?? "en",
+      to: [data.to],
+      subject: "",
+      body: "",
+    });
 
     return response.data;
   },

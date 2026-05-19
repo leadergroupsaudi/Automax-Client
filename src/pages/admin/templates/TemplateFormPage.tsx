@@ -45,7 +45,6 @@ export default function TemplateFormPage() {
     channel: "email",
     module_type: "incident",
     action_type: "escalation",
-    description: "",
     subject_en: "",
     body_en: "",
     subject_ar: "",
@@ -53,6 +52,7 @@ export default function TemplateFormPage() {
     language: "en",
     is_active: true,
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const channelOptions = CHANNEL_OPTIONS.map((option) => ({
     ...option,
@@ -108,10 +108,9 @@ export default function TemplateFormPage() {
 
       action_type: template.action_type || "escalation",
 
-      description: template.description || "",
-      subject_en: template.subject || "",
+      subject_en: template.subject_en || "",
 
-      body_en: template.body || "",
+      body_en: template.body_en || "",
 
       subject_ar: template.subject_ar || "",
 
@@ -123,19 +122,38 @@ export default function TemplateFormPage() {
     });
   }, [template]);
 
+  const validate = () => {
+    const e: Record<string, string> = {};
+    const code = formData.code.trim();
+
+    if (!formData.name.trim()) e.name = "Name is required";
+    if (!code) e.code = "Code is required";
+    else if (!/^[A-Z0-9_]+$/.test(code))
+      e.code =
+        "Code must be uppercase letters, digits and underscores only (e.g. SLA_BREACH)";
+    if (!formData.body_en.trim() && !formData.body_ar.trim())
+      e.body_en = "At least one body (EN or AR) is required";
+
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSubmit = () => {
+    if (!validate()) return;
+    mutation.mutate(buildPayload());
+  };
+
   const buildPayload = () => ({
     name: formData.name,
     code: formData.code,
     channel: formData.channel,
     module_type: formData.module_type,
     action_type: formData.action_type,
-    description: formData.description,
-    is_active: formData.is_active,
-    subject:
-      formData.language === "ar" ? formData.subject_ar : formData.subject_en,
-    body: formData.language === "ar" ? formData.body_ar : formData.body_en,
+    subject_en: formData.subject_en,
+    body_en: formData.body_en,
     subject_ar: formData.subject_ar,
     body_ar: formData.body_ar,
+    is_active: formData.is_active,
   });
 
   const mutation = useMutation({
@@ -149,7 +167,7 @@ export default function TemplateFormPage() {
         queryKey: ["notification-templates"],
       });
 
-      navigate("/notification-templates");
+      navigate("/admin/templates");
     },
   });
 
@@ -189,6 +207,8 @@ export default function TemplateFormPage() {
             placeholder={t("notificationTemplates.form.placeholders.name")}
             value={formData.name}
             onChange={(e) => setField("name", e.target.value)}
+            required
+            error={errors.name}
           />
 
           <Input
@@ -197,6 +217,8 @@ export default function TemplateFormPage() {
             disabled={isEdit}
             value={formData.code}
             onChange={(e) => setField("code", e.target.value)}
+            required
+            error={errors.code}
           />
 
           <Select
@@ -204,6 +226,7 @@ export default function TemplateFormPage() {
             value={formData.channel}
             onChange={(e) => setField("channel", e.target.value)}
             options={channelOptions}
+            required
           />
 
           <Select
@@ -211,6 +234,7 @@ export default function TemplateFormPage() {
             value={formData.module_type}
             onChange={(e) => setField("module_type", e.target.value)}
             options={moduleOptions}
+            required
           />
 
           <Select
@@ -218,6 +242,7 @@ export default function TemplateFormPage() {
             value={formData.action_type}
             onChange={(e) => setField("action_type", e.target.value)}
             options={actionOptions}
+            required
           />
 
           <Select
@@ -234,6 +259,7 @@ export default function TemplateFormPage() {
                 value: "false",
               },
             ]}
+            required
           />
         </div>
       </Card>
@@ -280,25 +306,32 @@ export default function TemplateFormPage() {
 
         <div dir={formData.language === "ar" ? "rtl" : undefined}>
           {formData.channel === "email" ? (
-            <label className="text-sm font-medium">
-              {t("notificationTemplates.form.body")}
-            </label>
-          ) : null}
-
-          {formData.channel === "email" ? (
-            <RichTextEditor
-              placeholder={bodyPlaceholder}
-              value={
-                formData.language === "ar" ? formData.body_ar : formData.body_en
-              }
-              onChange={(value: string) =>
-                setField(
-                  formData.language === "ar" ? "body_ar" : "body_en",
-                  value,
-                )
-              }
-              className="flex-1 min-h-72"
-            />
+            <div className="mb-3">
+              <label className="text-sm font-medium">
+                {t("notificationTemplates.form.body")}
+                <span className="text-[hsl(var(--destructive))] ml-1">*</span>
+              </label>
+              <RichTextEditor
+                placeholder={bodyPlaceholder}
+                value={
+                  formData.language === "ar"
+                    ? formData.body_ar
+                    : formData.body_en
+                }
+                onChange={(value: string) =>
+                  setField(
+                    formData.language === "ar" ? "body_ar" : "body_en",
+                    value,
+                  )
+                }
+                className="flex-1 min-h-72"
+              />
+              {errors.body_en && (
+                <p className="mt-2 text-sm text-[hsl(var(--destructive))]">
+                  {errors.body_en}
+                </p>
+              )}
+            </div>
           ) : (
             <Textarea
               dir={formData.language === "ar" ? "rtl" : undefined}
@@ -314,6 +347,8 @@ export default function TemplateFormPage() {
                 )
               }
               className="min-h-72"
+              required
+              error={errors.body_en}
             />
           )}
         </div>
@@ -323,7 +358,7 @@ export default function TemplateFormPage() {
         <Button
           leftIcon={<Save className="w-4 h-4" />}
           isLoading={mutation.isPending}
-          onClick={() => mutation.mutate(buildPayload())}
+          onClick={handleSubmit}
         >
           {isEdit
             ? t("notificationTemplates.form.saveAction")

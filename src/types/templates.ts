@@ -18,9 +18,6 @@ export interface NotificationTemplate {
 
   subject_ar: string;
   body_ar: string;
-
-  description?: string;
-
   variables: string;
 
   is_active: boolean;
@@ -56,6 +53,7 @@ export interface NotificationTemplateFilters {
   channel?: string;
   module_type?: string;
   action_type?: string;
+  is_active?: boolean;
 
   page?: number;
   limit?: number;

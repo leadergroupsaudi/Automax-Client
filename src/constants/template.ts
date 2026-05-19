@@ -50,10 +50,10 @@ export const ACTION_OPTIONS = [
 export const STATUS_OPTIONS = [
   {
     label: "Active",
-    value: "true",
+    value: true,
   },
   {
     label: "Inactive",
-    value: "false",
+    value: false,
   },
 ];
