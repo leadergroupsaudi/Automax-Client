@@ -32,6 +32,7 @@ import {
   Zap,
   Lock,
   Webhook,
+  BellRing,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/authStore";
 import usePermissions from "@/hooks/usePermissions";
@@ -128,6 +129,7 @@ const sidebarSectionsConfig: SidebarSection[] = [
         path: "/admin/lookups",
         permission: "lookups:view",
       },
+
       {
         icon: Link2,
         labelKey: "admin.applicationLinks",
@@ -152,6 +154,12 @@ const sidebarSectionsConfig: SidebarSection[] = [
         path: "/admin/escalation-groups",
         permission: PERMISSIONS.ESCALATION_GROUPS_VIEW,
         licenseFeature: "escalation",
+      },
+      {
+        icon: BellRing,
+        labelKey: "notificationTemplates.title",
+        path: "/admin/templates",
+        permission: "templates:view",
       },
       {
         icon: KeyRound,

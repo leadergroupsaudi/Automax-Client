@@ -109,7 +109,12 @@ import type {
   EscalationPolicy,
   ResolveUsersRequest,
   AIQualityFeedback,
+  NotificationTemplate,
 } from "../types";
+import type {
+  NotificationTemplateCreatePayload,
+  NotificationTemplateFilters,
+} from "@/types/templates";
 
 // User Management
 export const userApi = {
@@ -3153,6 +3158,94 @@ export const feedbackTemplateApi = {
     const response = await apiClient.delete<ApiResponse<unknown>>(
       `/admin/feedback-templates/${id}`,
     );
+    return response.data;
+  },
+};
+
+export const notificationTemplateApi = {
+  list: async (params?: NotificationTemplateFilters): Promise<any> => {
+    const response = await apiClient.get<any>("/admin/notification-templates", {
+      params,
+    });
+
+    return response.data;
+  },
+
+  getById: async (id: string): Promise<ApiResponse<NotificationTemplate>> => {
+    const response = await apiClient.get<ApiResponse<NotificationTemplate>>(
+      `/admin/notification-templates/${id}`,
+    );
+
+    return response.data;
+  },
+
+  create: async (
+    payload: NotificationTemplateCreatePayload,
+  ): Promise<ApiResponse<NotificationTemplate>> => {
+    const response = await apiClient.post<ApiResponse<NotificationTemplate>>(
+      "/admin/notification-templates",
+      payload,
+    );
+
+    return response.data;
+  },
+
+  update: async (
+    id: string,
+    payload: NotificationTemplateCreatePayload,
+  ): Promise<ApiResponse<NotificationTemplate>> => {
+    const response = await apiClient.put<ApiResponse<NotificationTemplate>>(
+      `/admin/notification-templates/${id}`,
+      payload,
+    );
+
+    return response.data;
+  },
+
+  toggleStatus: async (
+    id: string,
+    is_active: boolean,
+  ): Promise<ApiResponse<NotificationTemplate>> => {
+    const response = await apiClient.patch<ApiResponse<NotificationTemplate>>(
+      `/admin/notification-templates/${id}/toggle`,
+      undefined,
+      {
+        params: {
+          is_active,
+        },
+      },
+    );
+
+    return response.data;
+  },
+
+  delete: async (id: string): Promise<ApiResponse<unknown>> => {
+    const response = await apiClient.delete<ApiResponse<unknown>>(
+      `/admin/notification-templates/${id}`,
+    );
+
+    return response.data;
+  },
+
+  sendTest: async (data: {
+    channel: "email" | "sms";
+    templateCode: string;
+    to: string;
+    language?: string;
+  }): Promise<
+    ApiResponse<{ id: string; status: string; provider: string }>
+  > => {
+    const response = await apiClient.post<
+      ApiResponse<{ id: string; status: string; provider: string }>
+    >("/notifications/send", {
+      channel: data.channel,
+      templateCode: data.templateCode,
+      language: data.language ?? "en",
+      to: [data.to],
+      subject: "",
+      body: "",
+    });
+
     return response.data;
   },
 };

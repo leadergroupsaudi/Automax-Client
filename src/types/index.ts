@@ -631,6 +631,7 @@ export interface TransitionEmailConfig {
   enabled: boolean;
   recipients: EmailRecipientType[];
   custom_emails?: string[];
+  template_code?: string; // notification template code — when set, overrides subject/body
   subject_template?: string;
   body_template?: string;
   include_incident_details: boolean;
@@ -785,6 +786,9 @@ export interface WorkflowState {
   assignment_roles?: Role[];
   auto_match_user: boolean;
   manual_select_user: boolean;
+  // New incident notification templates (initial states only)
+  new_incident_email_template_code?: string;
+  new_incident_sms_template_code?: string;
   created_at: string;
 }
 
@@ -920,6 +924,8 @@ export interface WorkflowStateCreateRequest {
   sort_order?: number;
   viewable_role_ids?: string[];
   editable_role_ids?: string[];
+  new_incident_email_template_code?: string;
+  new_incident_sms_template_code?: string;
 }
 
 export interface WorkflowStateUpdateRequest {
@@ -941,6 +947,8 @@ export interface WorkflowStateUpdateRequest {
   is_active?: boolean;
   viewable_role_ids?: string[];
   editable_role_ids?: string[];
+  new_incident_email_template_code?: string;
+  new_incident_sms_template_code?: string;
 }
 
 export interface WorkflowTransitionCreateRequest {
@@ -1010,13 +1018,38 @@ export interface TransitionRequirementRequest {
 }
 
 export interface TransitionActionRequest {
-  action_type: "email" | "field_update" | "webhook" | "notification";
+  action_type: "email" | "field_update" | "webhook" | "notification" | "sms";
   name: string;
   description?: string;
   config?: string;
   execution_order?: number;
   is_async?: boolean;
   is_active?: boolean;
+}
+
+export interface TransitionSmsConfig {
+  recipients: ("assignee" | "reporter" | "creator" | "custom")[];
+  custom_phones: string[];
+  template_code?: string; // notification template code — when set, overrides message_template
+  message_template: string;
+}
+
+export interface NotificationTemplate {
+  id: string;
+  name: string;
+  code: string;
+  channel: "email" | "sms";
+  module_type: string;
+  action_type: string;
+  subject_en?: string;
+  body_en: string;
+  subject_ar?: string;
+  body_ar?: string;
+  variables?: string;
+  transition_id?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 // Incident types
@@ -1951,6 +1984,22 @@ export interface CreateEscalationRequest {
   is_active: boolean;
   user_ids: string[];
   targets?: EscalationGroupTargetRequest[];
+  email_template_code?: string;
+  sms_template_code?: string;
+}
+
+export interface UpdateEscalationRequest {
+  name?: string;
+  classification_ids?: string[];
+  classification_id?: string;
+  channel?: string;
+  frequency?: string;
+  scheduled_time?: string;
+  is_active?: boolean;
+  user_ids?: string[];
+  targets?: EscalationGroupTargetRequest[];
+  email_template_code?: string;
+  sms_template_code?: string;
 }
 
 // ─── Escalation Group Target ──────────────────────────────────────────────────
@@ -1991,6 +2040,8 @@ export interface EscalationPolicyStep {
   step_order: number;
   delay_hours: number;
   channel: "email" | "sms" | "both";
+  email_template_code?: string;
+  sms_template_code?: string;
   targets: EscalationPolicyStepTarget[];
   created_at: string;
 }
@@ -2015,6 +2066,8 @@ export interface EscalationPolicyStepRequest {
   step_order: number;
   delay_hours: number;
   channel: "email" | "sms" | "both";
+  email_template_code?: string;
+  sms_template_code?: string;
   targets: EscalationPolicyStepTargetRequest[];
 }
 

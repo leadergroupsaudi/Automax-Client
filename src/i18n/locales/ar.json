@@ -930,6 +930,7 @@
     "qualityAudit": "تدقيق الجودة",
     "quality": "الجودة",
     "escalationManagement": "إدارة التصعيد",
+    "notificationTemplates": "قوالب الإشعارات",
     "integrations": "التكاملات",
     "integrationScripts": "السكريبتات",
     "integrationVariables": "المتغيرات السرية",
@@ -3781,6 +3782,90 @@
   },
   "linkToRequestConfirmation": "This action will link the incident to the selected existing request.",
   "myGoalsSubtitle": "Goals you own or collaborate on",
+  "notificationTemplates": {
+    "title": "قوالب الإشعارات",
+    "subtitle": "إدارة قوالب الإشعارات",
+    "createTitle": "إنشاء قالب",
+    "editTitle": "تعديل القالب",
+    "form": {
+      "name": "الاسم",
+      "code": "الرمز",
+      "channel": "القناة",
+      "module": "الوحدة",
+      "action": "الإجراء",
+      "description": "الوصف",
+      "status": "الحالة",
+      "subject": "العنوان",
+      "body": "المحتوى",
+      "englishTemplate": "القالب بالإنجليزية",
+      "arabicTemplate": "القالب بالعربية",
+      "saveAction": "حفظ التغييرات",
+      "createAction": "إنشاء القالب",
+      "smsBodyHint": "استخدم نصًا عاديًا لمحتوى الرسائل القصيرة.",
+      "language": "اللغة",
+      "languageOptions": {
+        "english": "الإنجليزية",
+        "arabic": "العربية"
+      },
+      "placeholders": {
+        "name": "أدخل اسم القالب",
+        "code": "أدخل رمز القالب",
+        "subjectEnglish": "أدخل عنوان البريد الإلكتروني باللغة الإنجليزية",
+        "subjectArabic": "أدخل عنوان البريد الإلكتروني باللغة العربية",
+        "bodyEnglish": "أدخل محتوى البريد الإلكتروني باللغة الإنجليزية",
+        "bodyArabic": "أدخل محتوى البريد الإلكتروني باللغة العربية",
+        "bodySmsEnglish": "أدخل محتوى رسالة SMS باللغة الإنجليزية",
+        "bodySmsArabic": "أدخل محتوى رسالة SMS باللغة العربية"
+      },
+      "templateSection": "محتوى القالب",
+      "templateSectionDescription": "اختر اللغة النشطة ثم أنشئ المحتوى."
+    },
+    "channels": {
+      "email": "البريد الإلكتروني",
+      "sms": "رسالة SMS"
+    },
+    "modules": {
+      "incident": "بلاغ",
+      "request": "طلب"
+    },
+    "actions": {
+      "escalation": "تصعيد",
+      "closure": "إغلاق",
+      "reminder": "تذكير",
+      "rejection": "رفض"
+    },
+    "status": {
+      "active": "نشط",
+      "inactive": "غير نشط"
+    },
+    "refresh": "تحديث",
+    "createButton": "إنشاء قالب",
+    "filters": "الفلاتر",
+    "clearFilters": "إلغاء التصفية",
+    "searchPlaceholder": "ابحث في القوالب...",
+    "allChannels": "كل القنوات",
+    "allModules": "كل الوحدات",
+    "allActions": "كل الإجراءات",
+    "allStatuses": "كل الحالات",
+    "table": {
+      "name": "الاسم",
+      "code": "الرمز",
+      "channel": "القناة",
+      "module": "الوحدة",
+      "action": "الإجراء",
+      "status": "الحالة",
+      "actions": "إجراءات"
+    },
+    "emptyState": "لم يتم العثور على أي قوالب.",
+    "showing": "عرض {{from}} إلى {{to}} من أصل {{total}} قالب",
+    "editTemplate": "تعديل القالب",
+    "deleteTemplate": "حذف القالب",
+    "deleteTitle": "حذف القالب",
+    "deleteMessage": "هل أنت متأكد أنك تريد حذف {{name}}؟ لا يمكن التراجع عن هذا الإجراء.",
+    "deleteConfirm": "حذف",
+    "cancel": "إلغاء",
+    "deleteFallback": "هذا القالب"
+  },
   "reportTemplates": {
     "failedToLoadTemplate": "فشل تحميل القالب",
     "templateNameRequired": "اسم القالب مطلوب",
