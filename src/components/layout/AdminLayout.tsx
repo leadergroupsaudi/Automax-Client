@@ -126,6 +126,7 @@ const sidebarSectionsConfig: SidebarSection[] = [
         path: "/admin/lookups",
         permission: "lookups:view",
       },
+
       {
         icon: Link2,
         labelKey: "admin.applicationLinks",
@@ -153,9 +154,9 @@ const sidebarSectionsConfig: SidebarSection[] = [
       },
       {
         icon: BellRing,
-        labelKey: "admin.notificationTemplates",
-        path: "/admin/notification-templates",
-        permission: "templates:read",
+        labelKey: "notificationTemplates.title",
+        path: "/admin/templates",
+        permission: "templates:view",
       },
       {
         icon: KeyRound,

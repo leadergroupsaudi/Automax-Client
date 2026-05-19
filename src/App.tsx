@@ -37,6 +37,7 @@ import { CitizenVerifyPage } from "./pages/CitizenverifyPage";
 import { CitizenIncidentUpdatePage } from "./pages/CitizenIncidentUpdatePage";
 import { UserBootstrap } from "./components/common/UserBootstrap";
 import { ForgotPasswordPage } from "./pages/ForgetPasswordPage";
+import TemplateFormPage from "./pages/admin/templates/TemplateFormPage";
 
 // Lazy: admin/feature pages — only fetched when navigated to.
 // We import each page from its own file (NOT the barrel) so Rollup can emit a
@@ -265,10 +266,8 @@ const ReviewAssignmentPage = lazy(() =>
 );
 const EscalationConfigPage = lazy(() => import("./pages/admin/EsclationPage"));
 const QualityAuditPage = lazy(() => import("./pages/admin/QualityAuditPage"));
-const NotificationTemplatesPage = lazy(() =>
-  import("./pages/admin/NotificationTemplatesPage").then((m) => ({
-    default: m.NotificationTemplatesPage,
-  })),
+const TemplatesPage = lazy(
+  () => import("./pages/admin/templates/TemplatesPage"),
 );
 
 const queryClient = new QueryClient({
@@ -515,22 +514,26 @@ function App() {
                           element={<LicensePage />}
                         />
                       </Route>
+
                       <Route
-                        element={
-                          <PermissionRoute
-                            requiredPermissions={[PERMISSIONS.SETTINGS_UPDATE]}
-                          />
-                        }
-                      >
-                        <Route
-                          path="/admin/escalation-groups"
-                          element={<EscalationConfigPage />}
-                        />
-                        <Route
-                          path="/admin/notification-templates"
-                          element={<NotificationTemplatesPage />}
-                        />
-                      </Route>
+                        path="/admin/escalation-groups"
+                        element={<EscalationConfigPage />}
+                      />
+
+                      <Route
+                        path="/admin/templates"
+                        element={<TemplatesPage />}
+                      />
+
+                      <Route
+                        path="/admin/templates/new"
+                        element={<TemplateFormPage />}
+                      />
+
+                      <Route
+                        path="/admin/templates/:id"
+                        element={<TemplateFormPage />}
+                      />
                     </Route>
                   </Route>
 

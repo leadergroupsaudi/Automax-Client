@@ -3774,6 +3774,90 @@
   },
   "linkToRequestConfirmation": "This action will link the incident to the selected existing request.",
   "myGoalsSubtitle": "Goals you own or collaborate on",
+  "notificationTemplates": {
+    "title": "Notification Templates",
+    "subtitle": "Manage notification templates",
+    "createTitle": "Create Template",
+    "editTitle": "Edit Template",
+    "form": {
+      "name": "Name",
+      "code": "Code",
+      "channel": "Channel",
+      "module": "Module",
+      "action": "Action",
+      "description": "Description",
+      "status": "Status",
+      "subject": "Subject",
+      "body": "Body",
+      "englishTemplate": "English Template",
+      "arabicTemplate": "Arabic Template",
+      "saveAction": "Save Changes",
+      "createAction": "Create Template",
+      "smsBodyHint": "Use plain text for SMS body.",
+      "language": "Language",
+      "languageOptions": {
+        "english": "English",
+        "arabic": "Arabic"
+      },
+      "placeholders": {
+        "name": "Enter template name",
+        "code": "Enter template code",
+        "subjectEnglish": "Enter the email subject in English",
+        "subjectArabic": "Enter the email subject in Arabic",
+        "bodyEnglish": "Enter the email body in English",
+        "bodyArabic": "Enter the email body in Arabic",
+        "bodySmsEnglish": "Enter the SMS body in English",
+        "bodySmsArabic": "Enter the SMS body in Arabic"
+      },
+      "templateSection": "Template content",
+      "templateSectionDescription": "Choose the active language and compose your message."
+    },
+    "channels": {
+      "email": "Email",
+      "sms": "SMS"
+    },
+    "modules": {
+      "incident": "Incident",
+      "request": "Request"
+    },
+    "actions": {
+      "escalation": "Escalation",
+      "closure": "Closure",
+      "reminder": "Reminder",
+      "rejection": "Rejection"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "refresh": "Refresh",
+    "createButton": "Create Template",
+    "filters": "Filters",
+    "clearFilters": "Clear",
+    "searchPlaceholder": "Search templates...",
+    "allChannels": "All Channels",
+    "allModules": "All Modules",
+    "allActions": "All Actions",
+    "allStatuses": "All Statuses",
+    "table": {
+      "name": "Name",
+      "code": "Code",
+      "channel": "Channel",
+      "module": "Module",
+      "action": "Action",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "emptyState": "No templates found.",
+    "showing": "Showing {{from}} to {{to}} of {{total}} templates",
+    "editTemplate": "Edit Template",
+    "deleteTemplate": "Delete Template",
+    "deleteTitle": "Delete template",
+    "deleteMessage": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+    "deleteConfirm": "Delete",
+    "cancel": "Cancel",
+    "deleteFallback": "this template"
+  },
   "reportTemplates": {
     "failedToLoadTemplate": "Failed to load template",
     "templateNameRequired": "Template name is required",
