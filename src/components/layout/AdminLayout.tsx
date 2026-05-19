@@ -29,6 +29,9 @@ import {
   Settings,
   AlertTriangle,
   KeyRound,
+  Zap,
+  Lock,
+  Webhook,
   BellRing,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/authStore";
@@ -163,6 +166,29 @@ const sidebarSectionsConfig: SidebarSection[] = [
         labelKey: "admin.license",
         path: "/admin/license",
         permission: PERMISSIONS.LICENSE_VIEW,
+      },
+    ],
+  },
+  {
+    titleKey: "admin.integrations",
+    items: [
+      {
+        icon: Zap,
+        labelKey: "admin.integrationScripts",
+        path: "/admin/integration-scripts",
+        permission: "admin:integration",
+      },
+      {
+        icon: Lock,
+        labelKey: "admin.integrationVariables",
+        path: "/admin/integration-variables",
+        permission: "admin:integration",
+      },
+      {
+        icon: Webhook,
+        labelKey: "admin.webhookConfigs",
+        path: "/admin/webhook-configs",
+        permission: "admin:integration",
       },
     ],
   },

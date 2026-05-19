@@ -70,6 +70,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "../../components/ui";
 import { WorkflowCanvas } from "../../components/workflow";
+import { IntegrationTriggersPanel } from "./components/IntegrationTriggersPanel";
 
 type TabType = "visual" | "states" | "transitions" | "matching" | "fields";
 
@@ -3475,6 +3476,15 @@ export const WorkflowDesignerPage: React.FC = () => {
                   </div>
                 )}
 
+                {editingState && (
+                  <div className="pt-2 border-t border-[hsl(var(--border))]">
+                    <IntegrationTriggersPanel
+                      triggerId={editingState.id}
+                      type="state"
+                    />
+                  </div>
+                )}
+
                 {/* New Incident Notifications — only for initial states */}
                 {stateFormData.state_type === "initial" && (
                   <div className="border-t border-[hsl(var(--border))] pt-5">
@@ -4167,6 +4177,15 @@ export const WorkflowDesignerPage: React.FC = () => {
                     </p>
                   </div>
                 </label>
+
+                {editingTransition && (
+                  <div className="pt-2 border-t border-[hsl(var(--border))]">
+                    <IntegrationTriggersPanel
+                      triggerId={editingTransition.id}
+                      type="transition"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end gap-3 px-6 py-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.5)]">

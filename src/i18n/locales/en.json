@@ -932,7 +932,11 @@
     "quality": "Quality",
     "qualityAudit": "Quality Audit",
     "escalationManagement": "Escalation Management",
-    "notificationTemplates": "Notification Templates"
+    "notificationTemplates": "Notification Templates",
+    "integrations": "Integrations",
+    "integrationScripts": "Scripts",
+    "integrationVariables": "Secret Variables",
+    "webhookConfigs": "Webhook Callbacks"
   },
   "users": {
     "title": "Users",
