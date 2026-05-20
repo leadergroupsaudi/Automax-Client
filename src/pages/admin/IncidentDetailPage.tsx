@@ -1542,18 +1542,17 @@ export const IncidentDetailPage: React.FC = () => {
             </>
           )}
           {(isSuperAdmin ||
-            hasPermission(PERMISSIONS.INCIDENTS_REQUEST_INFO)) &&
-            incident?.source === "ivr" && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => requestInfoMutation.mutate()}
-                isLoading={requestInfoMutation.isPending}
-                leftIcon={<Send className="w-4 h-4" />}
-              >
-                {t("incidents.requestInfo", "Request Information")}
-              </Button>
-            )}
+            hasPermission(PERMISSIONS.INCIDENTS_REQUEST_INFO)) && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => requestInfoMutation.mutate()}
+              isLoading={requestInfoMutation.isPending}
+              leftIcon={<Send className="w-4 h-4" />}
+            >
+              {t("incidents.requestInfo", "Request Information")}
+            </Button>
+          )}
           {canViewReports && (
             <Button
               variant="outline"
