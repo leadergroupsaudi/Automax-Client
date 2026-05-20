@@ -243,6 +243,8 @@ export default function SoftPhone({
     setConnecting: setIsConnecting,
     shouldConnect,
     setShouldConnect,
+    setOpenCallerIncidents,
+    setIsCallerIncidentsMinimized,
   } = useSoftphoneStore();
 
   const [dialedNumber, setDialedNumber] = useState<string>("");
@@ -398,6 +400,7 @@ export default function SoftPhone({
     setSipConnected(false);
     setIsConnecting(false);
     setShouldConnect(false); // Explicitly reset the auto-connect flag
+    setOpenCallerIncidents(false);
   };
 
   /* ---------------- SIP EVENTS ---------------- */
@@ -411,7 +414,8 @@ export default function SoftPhone({
       wasIncomingCallRef.current = true;
       dialedNumberRef.current =
         session?.remote_identity?.uri?.user ?? "Unknown";
-
+      setOpenCallerIncidents(true);
+      setIsCallerIncidentsMinimized(false);
       setDialedNumber(session?.remote_identity?.uri?.user ?? "Unknown");
       setCallStatus("incoming");
       setIsOpen(true); // Auto-show softphone on incoming call
@@ -563,6 +567,7 @@ export default function SoftPhone({
     stopRingtone();
     const duration = globalCallDuration;
     stopTimer();
+    setOpenCallerIncidents(false);
     if (
       wasIncomingCallRef.current &&
       canCreateSentimentRef.current &&

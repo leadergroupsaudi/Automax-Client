@@ -1120,6 +1120,7 @@ export interface Incident {
   merged_at?: string;
   merged_incidents_count?: number;
   source_incidents?: Incident[];
+  priority?: number;
 }
 
 export interface IncidentDetail extends Incident {
@@ -1404,6 +1405,7 @@ export interface IncidentFilter {
   page?: number;
   limit?: number;
   transition_id?: string;
+  reporter_phone?: string;
 }
 
 // Convert Incident to Request types

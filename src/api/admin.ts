@@ -1250,6 +1250,8 @@ export const incidentApi = {
       params.append("classification_id", id),
     );
     if (filter.priority) params.append("priority", String(filter.priority));
+    if (filter.reporter_phone)
+      params.append("reporter_phone", filter.reporter_phone);
     if (filter.assignee_id) params.append("assignee_id", filter.assignee_id);
     filter.department_ids?.forEach((id) => params.append("department_id", id));
     filter.location_ids?.forEach((id) => params.append("location_id", id));
