@@ -15,6 +15,7 @@ import {
   ChevronUp,
   FileCode2,
   Globe,
+  ScrollText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { integrationApi } from "../../api/integration";
@@ -141,6 +142,8 @@ export const IntegrationScriptsPage: React.FC = () => {
   const [testResult, setTestResult] = useState<IntegrationExecutionLog | null>(
     null,
   );
+  const [activePanel, setActivePanel] = useState<"editor" | "logs">("editor");
+  const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
 
   const { data: scriptsRes, isLoading } = useQuery({
     queryKey: ["integration-scripts"],
@@ -208,6 +211,8 @@ export const IntegrationScriptsPage: React.FC = () => {
     });
     setAuthExpanded(false);
     setBridgeExpanded(false);
+    setActivePanel("editor");
+    setExpandedLogId(null);
   };
 
   const handleNewScript = () => {
@@ -216,6 +221,8 @@ export const IntegrationScriptsPage: React.FC = () => {
     setForm(emptyForm());
     setAuthExpanded(false);
     setBridgeExpanded(false);
+    setActivePanel("editor");
+    setExpandedLogId(null);
   };
 
   const handleSave = () => {
@@ -275,6 +282,17 @@ export const IntegrationScriptsPage: React.FC = () => {
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
   const showPanel = isNew || selectedId !== null;
+
+  const {
+    data: logsRes,
+    isLoading: logsLoading,
+    refetch: refetchLogs,
+  } = useQuery({
+    queryKey: ["script-logs", selectedId],
+    queryFn: () => integrationApi.listScriptLogs(selectedId!, 50, 0),
+    enabled: !!selectedId && activePanel === "logs",
+  });
+  const logs = logsRes?.data?.data?.logs ?? [];
 
   return (
     <div className="p-6 h-[calc(100vh-80px)] flex flex-col gap-6">
@@ -376,452 +394,352 @@ export const IntegrationScriptsPage: React.FC = () => {
         {showPanel ? (
           <div className="flex-1 flex flex-col bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl overflow-hidden shadow-sm min-w-0">
             {/* Panel header */}
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]/40 shrink-0">
-              <h2 className="text-sm font-semibold text-[hsl(var(--foreground))]">
-                {isNew ? "New Script" : form.name || "Edit Script"}
-              </h2>
-              <div className="flex items-center gap-2">
-                {!isNew && selectedId && (
-                  <>
-                    <button
-                      onClick={() => {
-                        setTestModal(true);
-                        setTestResult(null);
-                        setTestIncidentId("");
-                      }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-[hsl(var(--border))] rounded-lg hover:bg-[hsl(var(--muted))] transition-colors text-[hsl(var(--foreground))]"
-                    >
-                      <Play className="w-3.5 h-3.5" />
-                      Test
-                    </button>
-                    {deleteTarget === selectedId ? (
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                          Delete?
-                        </span>
-                        <button
-                          onClick={() => deleteMutation.mutate(selectedId)}
-                          className="px-2.5 py-1 text-xs font-medium bg-[hsl(var(--destructive))] text-white rounded-md hover:opacity-90"
-                        >
-                          Yes
-                        </button>
-                        <button
-                          onClick={() => setDeleteTarget(null)}
-                          className="px-2.5 py-1 text-xs font-medium border border-[hsl(var(--border))] rounded-md hover:bg-[hsl(var(--muted))]"
-                        >
-                          No
-                        </button>
-                      </div>
-                    ) : (
+            <div className="shrink-0 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]/40">
+              <div className="flex items-center justify-between px-5 py-3.5">
+                <h2 className="text-sm font-semibold text-[hsl(var(--foreground))]">
+                  {isNew ? "New Script" : form.name || "Edit Script"}
+                </h2>
+                <div className="flex items-center gap-2">
+                  {!isNew && selectedId && (
+                    <>
                       <button
-                        onClick={() => setDeleteTarget(selectedId)}
-                        className="p-1.5 rounded-lg hover:bg-[hsl(var(--destructive))]/10 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] transition-colors"
+                        onClick={() => {
+                          setTestModal(true);
+                          setTestResult(null);
+                          setTestIncidentId("");
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-[hsl(var(--border))] rounded-lg hover:bg-[hsl(var(--muted))] transition-colors text-[hsl(var(--foreground))]"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Play className="w-3.5 h-3.5" />
+                        Test
                       </button>
-                    )}
-                  </>
-                )}
+                      {deleteTarget === selectedId ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                            Delete?
+                          </span>
+                          <button
+                            onClick={() => deleteMutation.mutate(selectedId)}
+                            className="px-2.5 py-1 text-xs font-medium bg-[hsl(var(--destructive))] text-white rounded-md hover:opacity-90"
+                          >
+                            Yes
+                          </button>
+                          <button
+                            onClick={() => setDeleteTarget(null)}
+                            className="px-2.5 py-1 text-xs font-medium border border-[hsl(var(--border))] rounded-md hover:bg-[hsl(var(--muted))]"
+                          >
+                            No
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setDeleteTarget(selectedId)}
+                          className="p-1.5 rounded-lg hover:bg-[hsl(var(--destructive))]/10 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
+              {/* Tabs — only when editing an existing script */}
+              {!isNew && selectedId && (
+                <div className="flex gap-1 px-5 border-t border-[hsl(var(--border))]/50">
+                  {(["editor", "logs"] as const).map((tab) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => {
+                        setActivePanel(tab);
+                        setExpandedLogId(null);
+                      }}
+                      className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors -mb-px ${
+                        activePanel === tab
+                          ? "border-[hsl(var(--primary))] text-[hsl(var(--primary))]"
+                          : "border-transparent text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                      }`}
+                    >
+                      {tab === "editor" ? (
+                        <FileCode2 className="w-3.5 h-3.5" />
+                      ) : (
+                        <ScrollText className="w-3.5 h-3.5" />
+                      )}
+                      {tab === "editor" ? "Editor" : "Execution Logs"}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Form body */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <InputRow label="Script Name *">
-                  <input
-                    type="text"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    placeholder="Create Jira Ticket"
-                    className={inputCls}
-                  />
-                </InputRow>
-                <InputRow label="Description">
-                  <input
-                    type="text"
-                    value={form.description}
-                    onChange={(e) =>
-                      setForm({ ...form, description: e.target.value })
-                    }
-                    placeholder="Creates a ticket in Jira when incident is assigned"
-                    className={inputCls}
-                  />
-                </InputRow>
-              </div>
-
-              {/* Script type */}
-              <div>
-                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-                  Script Type
-                </label>
-                <div className="flex gap-3">
-                  {(
-                    [
-                      {
-                        value: "http_request",
-                        label: "HTTP Request Template",
-                        icon: Globe,
-                        color: "blue",
-                      },
-                      {
-                        value: "javascript",
-                        label: "JavaScript",
-                        icon: Zap,
-                        color: "yellow",
-                      },
-                    ] as const
-                  ).map((t) => {
-                    const Icon = t.icon;
-                    const active = form.script_type === t.value;
-                    return (
-                      <button
-                        key={t.value}
-                        type="button"
-                        onClick={() => handleScriptTypeChange(t.value)}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${
-                          active
-                            ? t.color === "blue"
-                              ? "bg-blue-500/10 border-blue-500/40 text-blue-600"
-                              : "bg-yellow-500/10 border-yellow-500/40 text-yellow-600"
-                            : "border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]/50"
-                        }`}
-                      >
-                        <Icon className="w-4 h-4" />
-                        {t.label}
-                      </button>
-                    );
-                  })}
+            {activePanel === "editor" && (
+              <div className="flex-1 overflow-y-auto p-5 space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <InputRow label="Script Name *">
+                    <input
+                      type="text"
+                      value={form.name}
+                      onChange={(e) =>
+                        setForm({ ...form, name: e.target.value })
+                      }
+                      placeholder="Create Jira Ticket"
+                      className={inputCls}
+                    />
+                  </InputRow>
+                  <InputRow label="Description">
+                    <input
+                      type="text"
+                      value={form.description}
+                      onChange={(e) =>
+                        setForm({ ...form, description: e.target.value })
+                      }
+                      placeholder="Creates a ticket in Jira when incident is assigned"
+                      className={inputCls}
+                    />
+                  </InputRow>
                 </div>
-              </div>
 
-              {/* Script content */}
-              <InputRow
-                label="Script Content"
-                hint={
-                  form.script_type === "http_request"
-                    ? "JSON config. Use {{incident.field}} and {{vars.NAME}} placeholders."
-                    : "JavaScript. Use the incident object and http helper for API calls."
-                }
-              >
-                <textarea
-                  value={form.script_content}
-                  onChange={(e) =>
-                    setForm({ ...form, script_content: e.target.value })
+                {/* Script type */}
+                <div>
+                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
+                    Script Type
+                  </label>
+                  <div className="flex gap-3">
+                    {(
+                      [
+                        {
+                          value: "http_request",
+                          label: "HTTP Request Template",
+                          icon: Globe,
+                          color: "blue",
+                        },
+                        {
+                          value: "javascript",
+                          label: "JavaScript",
+                          icon: Zap,
+                          color: "yellow",
+                        },
+                      ] as const
+                    ).map((t) => {
+                      const Icon = t.icon;
+                      const active = form.script_type === t.value;
+                      return (
+                        <button
+                          key={t.value}
+                          type="button"
+                          onClick={() => handleScriptTypeChange(t.value)}
+                          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${
+                            active
+                              ? t.color === "blue"
+                                ? "bg-blue-500/10 border-blue-500/40 text-blue-600"
+                                : "bg-yellow-500/10 border-yellow-500/40 text-yellow-600"
+                              : "border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]/50"
+                          }`}
+                        >
+                          <Icon className="w-4 h-4" />
+                          {t.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Script content */}
+                <InputRow
+                  label="Script Content"
+                  hint={
+                    form.script_type === "http_request"
+                      ? "JSON config. Use {{incident.field}} and {{vars.NAME}} placeholders."
+                      : "JavaScript. Use the incident object and http helper for API calls."
                   }
-                  rows={16}
-                  spellCheck={false}
-                  className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--foreground))] font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] transition-colors resize-y"
-                />
-              </InputRow>
-
-              {/* Auth config */}
-              <div className="border border-[hsl(var(--border))] rounded-xl overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setAuthExpanded(!authExpanded)}
-                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-[hsl(var(--muted))]/40 transition-colors"
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-[hsl(var(--foreground))]">
-                      Authentication
-                    </span>
-                    <span className="text-xs px-2 py-0.5 bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] rounded-full">
-                      {authConfig.type || "none"}
-                    </span>
-                  </div>
-                  {authExpanded ? (
-                    <ChevronUp className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                  )}
-                </button>
+                  <textarea
+                    value={form.script_content}
+                    onChange={(e) =>
+                      setForm({ ...form, script_content: e.target.value })
+                    }
+                    rows={16}
+                    spellCheck={false}
+                    className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--foreground))] font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] transition-colors resize-y"
+                  />
+                </InputRow>
 
-                {authExpanded && (
-                  <div className="px-4 pb-4 pt-2 space-y-4 border-t border-[hsl(var(--border))]">
-                    <div>
-                      <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">
-                        Auth Type
-                      </label>
-                      <select
-                        value={authConfig.type || "none"}
-                        onChange={(e) => setAuthField("type", e.target.value)}
-                        className={inputCls}
-                      >
-                        {AUTH_TYPES.map((t) => (
-                          <option key={t.value} value={t.value}>
-                            {t.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {authConfig.type === "api_key" && (
-                      <div className="grid grid-cols-2 gap-4">
-                        <InputRow
-                          label="Header Name"
-                          hint='Default: "X-API-Key"'
-                        >
-                          <input
-                            type="text"
-                            value={authConfig.api_key_header || ""}
-                            onChange={(e) =>
-                              setAuthField("api_key_header", e.target.value)
-                            }
-                            placeholder="X-API-Key"
-                            className={inputCls}
-                          />
-                        </InputRow>
-                        <InputRow
-                          label="API Key Value"
-                          hint="Use {{vars.NAME}} to reference a variable"
-                        >
-                          <input
-                            type="text"
-                            value={authConfig.api_key_value || ""}
-                            onChange={(e) =>
-                              setAuthField("api_key_value", e.target.value)
-                            }
-                            placeholder="{{vars.MY_API_KEY}}"
-                            className={inputCls}
-                          />
-                        </InputRow>
-                      </div>
-                    )}
-
-                    {authConfig.type === "bearer" && (
-                      <InputRow
-                        label="Bearer Token"
-                        hint="Use {{vars.NAME}} to reference a variable"
-                      >
-                        <input
-                          type="text"
-                          value={authConfig.bearer_token || ""}
-                          onChange={(e) =>
-                            setAuthField("bearer_token", e.target.value)
-                          }
-                          placeholder="{{vars.BEARER_TOKEN}}"
-                          className={inputCls}
-                        />
-                      </InputRow>
-                    )}
-
-                    {authConfig.type === "basic" && (
-                      <div className="grid grid-cols-2 gap-4">
-                        <InputRow label="Username">
-                          <input
-                            type="text"
-                            value={authConfig.basic_username || ""}
-                            onChange={(e) =>
-                              setAuthField("basic_username", e.target.value)
-                            }
-                            placeholder="admin"
-                            className={inputCls}
-                          />
-                        </InputRow>
-                        <InputRow
-                          label="Password"
-                          hint="Use {{vars.NAME}} to reference a variable"
-                        >
-                          <input
-                            type="text"
-                            value={authConfig.basic_password || ""}
-                            onChange={(e) =>
-                              setAuthField("basic_password", e.target.value)
-                            }
-                            placeholder="{{vars.BASIC_PASSWORD}}"
-                            className={inputCls}
-                          />
-                        </InputRow>
-                      </div>
-                    )}
-
-                    {authConfig.type === "oauth2_client_credentials" && (
-                      <div className="space-y-4">
-                        <InputRow label="Token URL">
-                          <input
-                            type="text"
-                            value={authConfig.oauth2_token_url || ""}
-                            onChange={(e) =>
-                              setAuthField("oauth2_token_url", e.target.value)
-                            }
-                            placeholder="https://auth.system.com/oauth/token"
-                            className={inputCls}
-                          />
-                        </InputRow>
-                        <div className="grid grid-cols-2 gap-4">
-                          <InputRow label="Client ID">
-                            <input
-                              type="text"
-                              value={authConfig.oauth2_client_id || ""}
-                              onChange={(e) =>
-                                setAuthField("oauth2_client_id", e.target.value)
-                              }
-                              placeholder="{{vars.OAUTH_CLIENT_ID}}"
-                              className={inputCls}
-                            />
-                          </InputRow>
-                          <InputRow
-                            label="Client Secret"
-                            hint="Use {{vars.NAME}} to reference a variable"
-                          >
-                            <input
-                              type="text"
-                              value={authConfig.oauth2_client_secret || ""}
-                              onChange={(e) =>
-                                setAuthField(
-                                  "oauth2_client_secret",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="{{vars.OAUTH_CLIENT_SECRET}}"
-                              className={inputCls}
-                            />
-                          </InputRow>
-                        </div>
-                        <InputRow label="Scope (optional)">
-                          <input
-                            type="text"
-                            value={authConfig.oauth2_scope || ""}
-                            onChange={(e) =>
-                              setAuthField("oauth2_scope", e.target.value)
-                            }
-                            placeholder="openid profile"
-                            className={inputCls}
-                          />
-                        </InputRow>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Bridge Config (HTTP only) */}
-              {form.script_type === "http_request" && (
-                <div className="border border-[hsl(var(--border))] rounded-lg overflow-hidden">
-                  <div
-                    className="flex items-center justify-between px-4 py-3 cursor-pointer bg-[hsl(var(--muted))]/30 hover:bg-[hsl(var(--muted))]/50 transition-colors select-none"
-                    onClick={() => setBridgeExpanded((v) => !v)}
+                {/* Auth config */}
+                <div className="border border-[hsl(var(--border))] rounded-xl overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setAuthExpanded(!authExpanded)}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-[hsl(var(--muted))]/40 transition-colors"
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-[hsl(var(--foreground))]">
-                        Incident Bridge Config
+                        Authentication
                       </span>
-                      {hasBridgeConfig && (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-600 dark:text-blue-400 font-medium">
-                          Enabled
-                        </span>
-                      )}
+                      <span className="text-xs px-2 py-0.5 bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] rounded-full">
+                        {authConfig.type || "none"}
+                      </span>
                     </div>
-                    {bridgeExpanded ? (
+                    {authExpanded ? (
                       <ChevronUp className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
                     ) : (
                       <ChevronDown className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
                     )}
-                  </div>
-                  {bridgeExpanded && (
-                    <div className="p-4 space-y-4 border-t border-[hsl(var(--border))]">
-                      <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                        When enabled, a successful execution auto-creates an
-                        incident bridge linking to the remote incident using
-                        fields from the response body. Use dot-notation for
-                        nested fields (e.g.{" "}
-                        <code className="bg-[hsl(var(--muted))] px-1 rounded">
-                          data.id
-                        </code>
-                        ).
-                      </p>
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={hasBridgeConfig}
-                          onClick={toggleBridgeConfig}
-                          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:ring-offset-2 ${
-                            hasBridgeConfig
-                              ? "bg-[hsl(var(--primary))]"
-                              : "bg-[hsl(var(--muted))]"
-                          }`}
+                  </button>
+
+                  {authExpanded && (
+                    <div className="px-4 pb-4 pt-2 space-y-4 border-t border-[hsl(var(--border))]">
+                      <div>
+                        <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">
+                          Auth Type
+                        </label>
+                        <select
+                          value={authConfig.type || "none"}
+                          onChange={(e) => setAuthField("type", e.target.value)}
+                          className={inputCls}
                         >
-                          <span
-                            className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform shadow-sm ${
-                              hasBridgeConfig
-                                ? "translate-x-[18px]"
-                                : "translate-x-[3px]"
-                            }`}
-                          />
-                        </button>
-                        <span className="text-sm text-[hsl(var(--foreground))]">
-                          Enable bridge tracking for this script
-                        </span>
+                          {AUTH_TYPES.map((t) => (
+                            <option key={t.value} value={t.value}>
+                              {t.label}
+                            </option>
+                          ))}
+                        </select>
                       </div>
-                      {hasBridgeConfig && (
-                        <div className="space-y-3 pt-1">
+
+                      {authConfig.type === "api_key" && (
+                        <div className="grid grid-cols-2 gap-4">
                           <InputRow
-                            label="Remote System Name"
-                            hint='Label shown in the "Linked Systems" panel (e.g. "HQ Automax")'
+                            label="Header Name"
+                            hint='Default: "X-API-Key"'
                           >
                             <input
                               type="text"
-                              value={bridgeConfig.remote_system_name || ""}
+                              value={authConfig.api_key_header || ""}
                               onChange={(e) =>
-                                setBridgeField(
-                                  "remote_system_name",
-                                  e.target.value,
-                                )
+                                setAuthField("api_key_header", e.target.value)
                               }
-                              placeholder="HQ Automax"
+                              placeholder="X-API-Key"
                               className={inputCls}
                             />
                           </InputRow>
                           <InputRow
-                            label="Remote System URL"
-                            hint="Base URL of the remote Automax (used to build deep-link to the remote incident)"
+                            label="API Key Value"
+                            hint="Use {{vars.NAME}} to reference a variable"
                           >
                             <input
                               type="text"
-                              value={bridgeConfig.remote_system_url || ""}
+                              value={authConfig.api_key_value || ""}
                               onChange={(e) =>
-                                setBridgeField(
-                                  "remote_system_url",
-                                  e.target.value,
-                                )
+                                setAuthField("api_key_value", e.target.value)
                               }
-                              placeholder="https://hq.automax.example.com"
+                              placeholder="{{vars.MY_API_KEY}}"
+                              className={inputCls}
+                            />
+                          </InputRow>
+                        </div>
+                      )}
+
+                      {authConfig.type === "bearer" && (
+                        <InputRow
+                          label="Bearer Token"
+                          hint="Use {{vars.NAME}} to reference a variable"
+                        >
+                          <input
+                            type="text"
+                            value={authConfig.bearer_token || ""}
+                            onChange={(e) =>
+                              setAuthField("bearer_token", e.target.value)
+                            }
+                            placeholder="{{vars.BEARER_TOKEN}}"
+                            className={inputCls}
+                          />
+                        </InputRow>
+                      )}
+
+                      {authConfig.type === "basic" && (
+                        <div className="grid grid-cols-2 gap-4">
+                          <InputRow label="Username">
+                            <input
+                              type="text"
+                              value={authConfig.basic_username || ""}
+                              onChange={(e) =>
+                                setAuthField("basic_username", e.target.value)
+                              }
+                              placeholder="admin"
                               className={inputCls}
                             />
                           </InputRow>
                           <InputRow
-                            label="Response ID Field"
-                            hint="Dot-path to the remote incident UUID in the response JSON"
+                            label="Password"
+                            hint="Use {{vars.NAME}} to reference a variable"
                           >
                             <input
                               type="text"
-                              value={bridgeConfig.response_id_field || ""}
+                              value={authConfig.basic_password || ""}
                               onChange={(e) =>
-                                setBridgeField(
-                                  "response_id_field",
-                                  e.target.value,
-                                )
+                                setAuthField("basic_password", e.target.value)
                               }
-                              placeholder="data.id"
+                              placeholder="{{vars.BASIC_PASSWORD}}"
                               className={inputCls}
                             />
                           </InputRow>
-                          <InputRow
-                            label="Response Number Field"
-                            hint="Dot-path to the human-readable incident number in the response JSON"
-                          >
+                        </div>
+                      )}
+
+                      {authConfig.type === "oauth2_client_credentials" && (
+                        <div className="space-y-4">
+                          <InputRow label="Token URL">
                             <input
                               type="text"
-                              value={bridgeConfig.response_number_field || ""}
+                              value={authConfig.oauth2_token_url || ""}
                               onChange={(e) =>
-                                setBridgeField(
-                                  "response_number_field",
-                                  e.target.value,
-                                )
+                                setAuthField("oauth2_token_url", e.target.value)
                               }
-                              placeholder="data.number"
+                              placeholder="https://auth.system.com/oauth/token"
+                              className={inputCls}
+                            />
+                          </InputRow>
+                          <div className="grid grid-cols-2 gap-4">
+                            <InputRow label="Client ID">
+                              <input
+                                type="text"
+                                value={authConfig.oauth2_client_id || ""}
+                                onChange={(e) =>
+                                  setAuthField(
+                                    "oauth2_client_id",
+                                    e.target.value,
+                                  )
+                                }
+                                placeholder="{{vars.OAUTH_CLIENT_ID}}"
+                                className={inputCls}
+                              />
+                            </InputRow>
+                            <InputRow
+                              label="Client Secret"
+                              hint="Use {{vars.NAME}} to reference a variable"
+                            >
+                              <input
+                                type="text"
+                                value={authConfig.oauth2_client_secret || ""}
+                                onChange={(e) =>
+                                  setAuthField(
+                                    "oauth2_client_secret",
+                                    e.target.value,
+                                  )
+                                }
+                                placeholder="{{vars.OAUTH_CLIENT_SECRET}}"
+                                className={inputCls}
+                              />
+                            </InputRow>
+                          </div>
+                          <InputRow label="Scope (optional)">
+                            <input
+                              type="text"
+                              value={authConfig.oauth2_scope || ""}
+                              onChange={(e) =>
+                                setAuthField("oauth2_scope", e.target.value)
+                              }
+                              placeholder="openid profile"
                               className={inputCls}
                             />
                           </InputRow>
@@ -830,58 +748,350 @@ export const IntegrationScriptsPage: React.FC = () => {
                     </div>
                   )}
                 </div>
-              )}
 
-              {/* Active toggle */}
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={form.is_active}
-                  onClick={() =>
-                    setForm({ ...form, is_active: !form.is_active })
-                  }
-                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:ring-offset-2 ${
-                    form.is_active
-                      ? "bg-[hsl(var(--primary))]"
-                      : "bg-[hsl(var(--muted))]"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform shadow-sm ${
+                {/* Bridge Config (HTTP only) */}
+                {form.script_type === "http_request" && (
+                  <div className="border border-[hsl(var(--border))] rounded-lg overflow-hidden">
+                    <div
+                      className="flex items-center justify-between px-4 py-3 cursor-pointer bg-[hsl(var(--muted))]/30 hover:bg-[hsl(var(--muted))]/50 transition-colors select-none"
+                      onClick={() => setBridgeExpanded((v) => !v)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-[hsl(var(--foreground))]">
+                          Incident Bridge Config
+                        </span>
+                        {hasBridgeConfig && (
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-600 dark:text-blue-400 font-medium">
+                            Enabled
+                          </span>
+                        )}
+                      </div>
+                      {bridgeExpanded ? (
+                        <ChevronUp className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                      )}
+                    </div>
+                    {bridgeExpanded && (
+                      <div className="p-4 space-y-4 border-t border-[hsl(var(--border))]">
+                        <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                          When enabled, a successful execution auto-creates an
+                          incident bridge linking to the remote incident using
+                          fields from the response body. Use dot-notation for
+                          nested fields (e.g.{" "}
+                          <code className="bg-[hsl(var(--muted))] px-1 rounded">
+                            data.id
+                          </code>
+                          ).
+                        </p>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={hasBridgeConfig}
+                            onClick={toggleBridgeConfig}
+                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:ring-offset-2 ${
+                              hasBridgeConfig
+                                ? "bg-[hsl(var(--primary))]"
+                                : "bg-[hsl(var(--muted))]"
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform shadow-sm ${
+                                hasBridgeConfig
+                                  ? "translate-x-[18px]"
+                                  : "translate-x-[3px]"
+                              }`}
+                            />
+                          </button>
+                          <span className="text-sm text-[hsl(var(--foreground))]">
+                            Enable bridge tracking for this script
+                          </span>
+                        </div>
+                        {hasBridgeConfig && (
+                          <div className="space-y-3 pt-1">
+                            <InputRow
+                              label="Remote System Name"
+                              hint='Label shown in the "Linked Systems" panel (e.g. "HQ Automax")'
+                            >
+                              <input
+                                type="text"
+                                value={bridgeConfig.remote_system_name || ""}
+                                onChange={(e) =>
+                                  setBridgeField(
+                                    "remote_system_name",
+                                    e.target.value,
+                                  )
+                                }
+                                placeholder="HQ Automax"
+                                className={inputCls}
+                              />
+                            </InputRow>
+                            <InputRow
+                              label="Remote System URL"
+                              hint="Base URL of the remote Automax (used to build deep-link to the remote incident)"
+                            >
+                              <input
+                                type="text"
+                                value={bridgeConfig.remote_system_url || ""}
+                                onChange={(e) =>
+                                  setBridgeField(
+                                    "remote_system_url",
+                                    e.target.value,
+                                  )
+                                }
+                                placeholder="https://hq.automax.example.com"
+                                className={inputCls}
+                              />
+                            </InputRow>
+                            <InputRow
+                              label="Response ID Field"
+                              hint="Dot-path to the remote incident UUID in the response JSON"
+                            >
+                              <input
+                                type="text"
+                                value={bridgeConfig.response_id_field || ""}
+                                onChange={(e) =>
+                                  setBridgeField(
+                                    "response_id_field",
+                                    e.target.value,
+                                  )
+                                }
+                                placeholder="data.id"
+                                className={inputCls}
+                              />
+                            </InputRow>
+                            <InputRow
+                              label="Response Number Field"
+                              hint="Dot-path to the human-readable incident number in the response JSON"
+                            >
+                              <input
+                                type="text"
+                                value={bridgeConfig.response_number_field || ""}
+                                onChange={(e) =>
+                                  setBridgeField(
+                                    "response_number_field",
+                                    e.target.value,
+                                  )
+                                }
+                                placeholder="data.number"
+                                className={inputCls}
+                              />
+                            </InputRow>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Active toggle */}
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={form.is_active}
+                    onClick={() =>
+                      setForm({ ...form, is_active: !form.is_active })
+                    }
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:ring-offset-2 ${
                       form.is_active
-                        ? "translate-x-[18px]"
-                        : "translate-x-[3px]"
+                        ? "bg-[hsl(var(--primary))]"
+                        : "bg-[hsl(var(--muted))]"
                     }`}
-                  />
-                </button>
-                <span className="text-sm text-[hsl(var(--foreground))]">
-                  Script is active
-                </span>
+                  >
+                    <span
+                      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform shadow-sm ${
+                        form.is_active
+                          ? "translate-x-[18px]"
+                          : "translate-x-[3px]"
+                      }`}
+                    />
+                  </button>
+                  <span className="text-sm text-[hsl(var(--foreground))]">
+                    Script is active
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Actions */}
-            <div className="shrink-0 flex items-center gap-3 px-5 py-3.5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted))]/20">
-              <button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium disabled:opacity-50"
-              >
-                {isSaving ? (
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            {activePanel === "editor" && (
+              <div className="shrink-0 flex items-center gap-3 px-5 py-3.5 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted))]/20">
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium disabled:opacity-50"
+                >
+                  {isSaving ? (
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <Check className="w-4 h-4" />
+                  )}
+                  {isNew ? "Create Script" : "Save Changes"}
+                </button>
+                <button
+                  onClick={handleCancel}
+                  className="px-4 py-2 border border-[hsl(var(--border))] text-[hsl(var(--foreground))] rounded-lg hover:bg-[hsl(var(--muted))] transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+
+            {/* Logs panel */}
+            {activePanel === "logs" && selectedId && (
+              <div className="flex-1 overflow-y-auto">
+                <div className="flex items-center justify-between px-5 py-3 border-b border-[hsl(var(--border))]">
+                  <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                    Last 50 executions
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => refetchLogs()}
+                    className="text-xs text-[hsl(var(--primary))] hover:underline"
+                  >
+                    Refresh
+                  </button>
+                </div>
+                {logsLoading ? (
+                  <div className="flex justify-center py-12">
+                    <span className="w-6 h-6 border-2 border-[hsl(var(--primary))]/30 border-t-[hsl(var(--primary))] rounded-full animate-spin" />
+                  </div>
+                ) : logs.length === 0 ? (
+                  <div className="flex flex-col items-center gap-3 py-16 text-center px-8">
+                    <ScrollText className="w-10 h-10 text-[hsl(var(--muted-foreground))]" />
+                    <p className="text-sm font-medium text-[hsl(var(--foreground))]">
+                      No executions yet
+                    </p>
+                    <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                      Use the Test button to run this script against an
+                      incident.
+                    </p>
+                  </div>
                 ) : (
-                  <Check className="w-4 h-4" />
+                  <div className="divide-y divide-[hsl(var(--border))]">
+                    {logs.map((log) => {
+                      const isExpanded = expandedLogId === log.id;
+                      const statusColor =
+                        log.status === "success"
+                          ? "text-green-600 bg-green-500/10"
+                          : log.status === "failed"
+                            ? "text-red-600 bg-red-500/10"
+                            : log.status === "running"
+                              ? "text-blue-600 bg-blue-500/10"
+                              : "text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))]";
+                      const StatusIcon =
+                        log.status === "success"
+                          ? CheckCircle
+                          : log.status === "failed"
+                            ? XCircle
+                            : AlertCircle;
+                      return (
+                        <div key={log.id}>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpandedLogId(isExpanded ? null : log.id)
+                            }
+                            className="w-full flex items-center gap-3 px-5 py-3 hover:bg-[hsl(var(--muted))]/30 transition-colors text-left"
+                          >
+                            <StatusIcon
+                              className={`w-4 h-4 shrink-0 ${statusColor.split(" ")[0]}`}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-[hsl(var(--foreground))]">
+                                  {log.incident_number}
+                                </span>
+                                <span
+                                  className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${statusColor}`}
+                                >
+                                  {log.status}
+                                </span>
+                                {log.status_code > 0 && (
+                                  <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                                    HTTP {log.status_code}
+                                  </span>
+                                )}
+                                <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                                  {log.duration_ms}ms
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                                  {log.trigger_type} · {log.trigger_ref_name}
+                                </span>
+                                <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                                  ·
+                                </span>
+                                <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                                  {new Date(log.executed_at).toLocaleString()}
+                                </span>
+                              </div>
+                              {log.error_message && (
+                                <p className="text-xs text-red-600 mt-0.5 truncate">
+                                  {log.error_message}
+                                </p>
+                              )}
+                            </div>
+                            {isExpanded ? (
+                              <ChevronUp className="w-4 h-4 text-[hsl(var(--muted-foreground))] shrink-0" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4 text-[hsl(var(--muted-foreground))] shrink-0" />
+                            )}
+                          </button>
+                          {isExpanded && (
+                            <div className="px-5 pb-4 space-y-3 bg-[hsl(var(--muted))]/20">
+                              {log.request_payload && (
+                                <div>
+                                  <p className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">
+                                    Request Payload
+                                  </p>
+                                  <pre className="text-xs bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg p-3 overflow-x-auto max-h-48 text-[hsl(var(--foreground))]">
+                                    {(() => {
+                                      try {
+                                        return JSON.stringify(
+                                          JSON.parse(log.request_payload),
+                                          null,
+                                          2,
+                                        );
+                                      } catch {
+                                        return log.request_payload;
+                                      }
+                                    })()}
+                                  </pre>
+                                </div>
+                              )}
+                              {log.response_body && (
+                                <div>
+                                  <p className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">
+                                    Response Body
+                                  </p>
+                                  <pre className="text-xs bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg p-3 overflow-x-auto max-h-48 text-[hsl(var(--foreground))]">
+                                    {(() => {
+                                      try {
+                                        return JSON.stringify(
+                                          JSON.parse(log.response_body),
+                                          null,
+                                          2,
+                                        );
+                                      } catch {
+                                        return log.response_body;
+                                      }
+                                    })()}
+                                  </pre>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
-                {isNew ? "Create Script" : "Save Changes"}
-              </button>
-              <button
-                onClick={handleCancel}
-                className="px-4 py-2 border border-[hsl(var(--border))] text-[hsl(var(--foreground))] rounded-lg hover:bg-[hsl(var(--muted))] transition-colors text-sm"
-              >
-                Cancel
-              </button>
-            </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl shadow-sm">
