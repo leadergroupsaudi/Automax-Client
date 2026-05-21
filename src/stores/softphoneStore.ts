@@ -6,7 +6,13 @@ interface SoftphoneState {
   isConnected: boolean;
   isConnecting: boolean;
   shouldConnect: boolean;
+  openCallerIncidents: boolean;
+  incomingCallNumber: string | null;
+  setIncomingCallNumber: (incomingCallNumber: string | null) => void;
   setIsOpen: (isOpen: boolean) => void;
+  setOpenCallerIncidents: (openCallerIncidents: boolean) => void;
+  isCallerIncidentsMinimized: boolean;
+  setIsCallerIncidentsMinimized: (minimized: boolean) => void;
   setConnected: (isConnected: boolean) => void;
   setConnecting: (isConnecting: boolean) => void;
   setShouldConnect: (shouldConnect: boolean) => void;
@@ -21,7 +27,16 @@ export const useSoftphoneStore = create<SoftphoneState>()(
       isConnected: false,
       isConnecting: false,
       shouldConnect: false,
+      openCallerIncidents: false,
+      isCallerIncidentsMinimized: false,
+      incomingCallNumber: "",
+      setIncomingCallNumber: (incomingCallNumber) =>
+        set({ incomingCallNumber }),
       setIsOpen: (isOpen) => set({ isOpen }),
+      setOpenCallerIncidents: (openCallerIncidents) =>
+        set({ openCallerIncidents }),
+      setIsCallerIncidentsMinimized: (isCallerIncidentsMinimized) =>
+        set({ isCallerIncidentsMinimized }),
       setConnected: (isConnected) => set({ isConnected }),
       setConnecting: (isConnecting) => set({ isConnecting }),
       setShouldConnect: (shouldConnect) => set({ shouldConnect }),
@@ -32,6 +47,7 @@ export const useSoftphoneStore = create<SoftphoneState>()(
           isConnected: false,
           isConnecting: false,
           shouldConnect: false,
+          isCallerIncidentsMinimized: false,
         }),
     }),
     {

@@ -37,6 +37,7 @@ import { CitizenVerifyPage } from "./pages/CitizenverifyPage";
 import { CitizenIncidentUpdatePage } from "./pages/CitizenIncidentUpdatePage";
 import { UserBootstrap } from "./components/common/UserBootstrap";
 import { ForgotPasswordPage } from "./pages/ForgetPasswordPage";
+import IncidentLister from "./components/incidents/IncidentLister";
 import TemplateFormPage from "./pages/admin/templates/TemplateFormPage";
 
 // Lazy: admin/feature pages — only fetched when navigated to.
@@ -937,6 +938,7 @@ function App() {
                     />
                   </Route>
                 </Routes>
+                <IncidentLister />
               </Suspense>
             </ErrorBoundary>
           </UserBootstrap>
