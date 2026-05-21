@@ -80,6 +80,12 @@ const parseCommaSeparatedPhones = (value: string) =>
     .map((phone) => phone.trim())
     .filter(Boolean);
 
+const parseCommaSeparatedEmails = (value: string) =>
+  value
+    .split(",")
+    .map((email) => email.trim())
+    .filter(Boolean);
+
 const sanitizeSmsPhoneInput = (value: string) => value.replace(/[^\d+,]/g, "");
 
 interface StateFormData {
@@ -577,6 +583,9 @@ export const WorkflowDesignerPage: React.FC = () => {
     TransitionRequirementRequest[]
   >([]);
   const [actions, setActions] = useState<TransitionActionRequest[]>([]);
+  const [customEmailInputs, setCustomEmailInputs] = useState<
+    Record<number, string>
+  >({});
   const [smsPhoneInputs, setSmsPhoneInputs] = useState<Record<number, string>>(
     {},
   );
@@ -1148,6 +1157,21 @@ export const WorkflowDesignerPage: React.FC = () => {
       })) || [],
     );
     setActions(transitionActions);
+    setCustomEmailInputs(
+      transitionActions.reduce<Record<number, string>>((acc, action, index) => {
+        const actionType = action.action_type as string;
+        if (actionType !== "email" || !action.config) return acc;
+
+        try {
+          const parsed = JSON.parse(action.config as string);
+          acc[index] = (parsed.custom_emails || []).join(", ");
+        } catch {
+          acc[index] = "";
+        }
+
+        return acc;
+      }, {}),
+    );
     setSmsPhoneInputs(
       transitionActions.reduce<Record<number, string>>((acc, action, index) => {
         const actionType = action.action_type as string;
@@ -1180,6 +1204,7 @@ export const WorkflowDesignerPage: React.FC = () => {
     setConfiguringTransition(null);
     setRequirements([]);
     setActions([]);
+    setCustomEmailInputs({});
     setSmsPhoneInputs({});
     setFieldChanges([]);
   };
@@ -1335,6 +1360,15 @@ export const WorkflowDesignerPage: React.FC = () => {
 
   const removeAction = (index: number) => {
     setActions(actions.filter((_, i) => i !== index));
+    setCustomEmailInputs((prev) => {
+      const next: Record<number, string> = {};
+      Object.entries(prev).forEach(([key, value]) => {
+        const numericKey = Number(key);
+        if (numericKey < index) next[numericKey] = value;
+        if (numericKey > index) next[numericKey - 1] = value;
+      });
+      return next;
+    });
     setSmsPhoneInputs((prev) => {
       const next: Record<number, string> = {};
       Object.entries(prev).forEach(([key, value]) => {
@@ -4733,6 +4767,13 @@ export const WorkflowDesignerPage: React.FC = () => {
                                     config: "",
                                   };
                                   setActions(updated);
+                                  if (newType !== "email") {
+                                    setCustomEmailInputs((prev) => {
+                                      const next = { ...prev };
+                                      delete next[index];
+                                      return next;
+                                    });
+                                  }
                                   if (newType !== "sms") {
                                     setSmsPhoneInputs((prev) => {
                                       const next = { ...prev };
@@ -4837,17 +4878,21 @@ export const WorkflowDesignerPage: React.FC = () => {
                                         "workflows.email1ExampleComEmail2ExampleCom",
                                       )}
                                       value={
-                                        emailConfig.custom_emails?.join(", ") ||
+                                        customEmailInputs[index] ??
+                                        emailConfig.custom_emails?.join(", ") ??
                                         ""
                                       }
-                                      onChange={(e) =>
+                                      onChange={(e) => {
+                                        const value = e.target.value;
+                                        setCustomEmailInputs((prev) => ({
+                                          ...prev,
+                                          [index]: value,
+                                        }));
                                         updateEmailConfig({
-                                          custom_emails: e.target.value
-                                            .split(",")
-                                            .map((s) => s.trim())
-                                            .filter(Boolean),
-                                        })
-                                      }
+                                          custom_emails:
+                                            parseCommaSeparatedEmails(value),
+                                        });
+                                      }}
                                       className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm"
                                     />
                                     <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1">
@@ -4860,9 +4905,6 @@ export const WorkflowDesignerPage: React.FC = () => {
 
                                 {/* Email Notification Template */}
                                 {(() => {
-                                  const selectedTpl = emailTemplates.find(
-                                    (t) => t.code === emailConfig.template_code,
-                                  );
                                   const testEntry = actionTestState[index];
                                   return (
                                     <div className="space-y-2">
@@ -4914,23 +4956,6 @@ export const WorkflowDesignerPage: React.FC = () => {
                                           Send Test
                                         </button>
                                       </div>
-
-                                      {/* Body preview */}
-                                      {selectedTpl && (
-                                        <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)] p-3 text-xs space-y-1">
-                                          {selectedTpl.subject_en && (
-                                            <p>
-                                              <span className="font-semibold text-[hsl(var(--muted-foreground))]">
-                                                Subject:{" "}
-                                              </span>
-                                              {selectedTpl.subject_en}
-                                            </p>
-                                          )}
-                                          <p className="text-[hsl(var(--muted-foreground))] whitespace-pre-wrap line-clamp-4">
-                                            {selectedTpl.body_en}
-                                          </p>
-                                        </div>
-                                      )}
 
                                       {/* Inline test panel */}
                                       {testEntry?.open &&
@@ -5028,15 +5053,6 @@ export const WorkflowDesignerPage: React.FC = () => {
                                             )}
                                           </div>
                                         )}
-
-                                      <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                                        Variables like{" "}
-                                        <code className="bg-[hsl(var(--muted))] px-1 rounded">
-                                          {"{{ .incident_number }}"}
-                                        </code>{" "}
-                                        are substituted automatically at send
-                                        time.
-                                      </p>
                                     </div>
                                   );
                                 })()}
@@ -5203,14 +5219,6 @@ export const WorkflowDesignerPage: React.FC = () => {
                                       </option>
                                     ))}
                                   </select>
-                                  <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1">
-                                    Templates are managed in Notification
-                                    Templates. Variables like{" "}
-                                    <code className="bg-[hsl(var(--muted))] px-1 rounded">
-                                      {"{{ .incident_number }}"}
-                                    </code>{" "}
-                                    are substituted automatically.
-                                  </p>
                                 </div>
                               </div>
                             ) : (
