@@ -1001,6 +1001,11 @@ export const BulkTransitionModal: React.FC<BulkTransitionModalProps> = ({
                             <IncidentMentionTextarea
                               {...commonProps}
                               rows={3}
+                              onChange={(e) => {
+                                commonProps.onChange(
+                                  e as React.ChangeEvent<HTMLTextAreaElement>,
+                                );
+                              }}
                             />
                           );
                         }
