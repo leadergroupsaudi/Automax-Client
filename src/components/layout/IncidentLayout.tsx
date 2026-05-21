@@ -40,6 +40,7 @@ import {
   supportedLanguages,
 } from "../../i18n";
 import { SoftphoneButton } from "../sip/SoftphoneButton";
+import { useSoftphoneStore } from "../../stores/softphoneStore";
 import { usePermissions } from "../../hooks/usePermissions";
 import { PERMISSIONS } from "../../constants/permissions";
 import ThemeToggle from "../common/ThemeToggle";
@@ -64,6 +65,7 @@ export const IncidentLayout: React.FC = () => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
+  const { setIsOpen } = useSoftphoneStore();
   const { hasPermission, isSuperAdmin, hasAnyPermission } = usePermissions();
 
   const canCreateIncident =
@@ -95,6 +97,16 @@ export const IncidentLayout: React.FC = () => {
   });
   const notifications = notifData?.data ?? [];
   const unreadCount = notifications.filter((n) => !n.is_read).length;
+
+  useEffect(() => {
+    const handleInitiateCall = () => {
+      setIsOpen(true);
+    };
+
+    window.addEventListener("initiate-call", handleInitiateCall);
+    return () =>
+      window.removeEventListener("initiate-call", handleInitiateCall);
+  }, [setIsOpen]);
 
   const markReadMutation = useMutation({
     mutationFn: (id: string) => emailApi.markAsRead(id, true),
