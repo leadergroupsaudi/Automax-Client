@@ -25,7 +25,7 @@ export const SMSLegends: React.FC<SMSLegendsProps> = ({ incident }) => {
     (incident.comments_count ?? 0) > 0 || incident.source === "sms-link";
 
   // Attachment: present if attachments_count > 0
-  const hasAttachment = (incident.attachments_count ?? 0) > 0;
+  const hasAttachment = incident.source === "sms-link";
 
   return (
     <div
