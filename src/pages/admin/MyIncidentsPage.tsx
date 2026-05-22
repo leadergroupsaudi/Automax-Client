@@ -39,6 +39,7 @@ import BulkConvertToRequestModal from "@/components/incidents/BulkConvertToReque
 import {
   MergeIncidentsModal,
   BulkTransitionModal,
+  SMSLegends,
 } from "../../components/incidents";
 import LocationMap from "@/components/maps/LocationMap";
 
@@ -646,6 +647,7 @@ export const MyIncidentsPage: React.FC<MyIncidentsPageProps> = ({ type }) => {
                               >
                                 {incident.incident_number}
                               </p>
+                              <SMSLegends incident={incident} />
                               {incident.active_viewers &&
                                 incident.active_viewers > 0 && (
                                   <span
