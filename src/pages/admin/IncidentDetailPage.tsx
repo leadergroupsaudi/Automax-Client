@@ -501,40 +501,6 @@ export const IncidentDetailPage: React.FC = () => {
     refetchOnWindowFocus: false,
   });
 
-  const incidentId = incident?.id;
-  const incidentCommentsCount = incident?.comments_count;
-  const incidentAttachmentsCount = incident?.attachments_count;
-  const incidentLatitude = incident?.latitude;
-  const incidentLongitude = incident?.longitude;
-
-  // Snapshot incident state for SMS Legends read tracking
-  useEffect(() => {
-    if (incidentId) {
-      try {
-        const snapshotsStr = localStorage.getItem("incident_view_snapshots");
-        const snapshots = snapshotsStr ? JSON.parse(snapshotsStr) : {};
-        snapshots[incidentId] = {
-          comments_count: incidentCommentsCount || 0,
-          attachments_count: incidentAttachmentsCount || 0,
-          has_location: !!(incidentLatitude && incidentLongitude),
-          viewed_at: new Date().toISOString(),
-        };
-        localStorage.setItem(
-          "incident_view_snapshots",
-          JSON.stringify(snapshots),
-        );
-      } catch (err) {
-        console.error("Failed to save incident view snapshot", err);
-      }
-    }
-  }, [
-    incidentId,
-    incidentCommentsCount,
-    incidentAttachmentsCount,
-    incidentLatitude,
-    incidentLongitude,
-  ]);
-
   // Mark presence on mount and periodically as backup
   // (WebSocket connection is primary presence indicator)
   useEffect(() => {

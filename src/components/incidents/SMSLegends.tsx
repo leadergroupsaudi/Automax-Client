@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { MapPin, MessageSquare, Paperclip } from "lucide-react";
 import type { Incident } from "../../types";
 
@@ -7,26 +7,6 @@ interface SMSLegendsProps {
 }
 
 export const SMSLegends: React.FC<SMSLegendsProps> = ({ incident }) => {
-  const [snapshot, setSnapshot] = useState<{
-    comments_count: number;
-    attachments_count: number;
-    has_location: boolean;
-  } | null>(null);
-
-  useEffect(() => {
-    try {
-      const snapshotsStr = localStorage.getItem("incident_view_snapshots");
-      if (snapshotsStr) {
-        const snapshots = JSON.parse(snapshotsStr);
-        if (snapshots[incident.id]) {
-          setSnapshot(snapshots[incident.id]);
-        }
-      }
-    } catch (err) {
-      console.error("Failed to load incident snapshot from localStorage", err);
-    }
-  }, [incident.id]);
-
   // Only show for incidents that sent out SMS to citizen requesting more info.
   // When an incident is created through IVR, source is 'ivr' and once citizen updates, it becomes 'sms-link'.
   const isSMSRequested =
@@ -47,16 +27,6 @@ export const SMSLegends: React.FC<SMSLegendsProps> = ({ incident }) => {
   // Attachment: present if attachments_count > 0
   const hasAttachment = (incident.attachments_count ?? 0) > 0;
 
-  // Check if there is new information received after the agent viewed the incident
-  // Condition: we have a viewed snapshot, and current count/presence is greater than when viewed.
-  const newLocation = snapshot ? hasLocation && !snapshot.has_location : false;
-  const newComment = snapshot
-    ? (incident.comments_count ?? 0) > snapshot.comments_count
-    : false;
-  const newAttachment = snapshot
-    ? (incident.attachments_count ?? 0) > snapshot.attachments_count
-    : false;
-
   return (
     <div
       className="inline-flex items-center gap-1.5 ml-2"
@@ -76,12 +46,6 @@ export const SMSLegends: React.FC<SMSLegendsProps> = ({ incident }) => {
         }
       >
         <MapPin className="w-3.5 h-3.5" />
-        {newLocation && (
-          <span className="absolute -top-1 -right-1 flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-          </span>
-        )}
       </div>
 
       {/* Comment Icon */}
@@ -96,12 +60,6 @@ export const SMSLegends: React.FC<SMSLegendsProps> = ({ incident }) => {
         }
       >
         <MessageSquare className="w-3.5 h-3.5" />
-        {newComment && (
-          <span className="absolute -top-1 -right-1 flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-          </span>
-        )}
       </div>
 
       {/* Attachment Icon */}
@@ -118,12 +76,6 @@ export const SMSLegends: React.FC<SMSLegendsProps> = ({ incident }) => {
         }
       >
         <Paperclip className="w-3.5 h-3.5" />
-        {newAttachment && (
-          <span className="absolute -top-1 -right-1 flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-          </span>
-        )}
       </div>
     </div>
   );
