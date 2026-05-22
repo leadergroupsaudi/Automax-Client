@@ -56,6 +56,7 @@ import { PERMISSIONS } from "../../constants/permissions";
 import {
   MergeIncidentsModal,
   BulkTransitionModal,
+  SMSLegends,
 } from "../../components/incidents";
 import BulkConvertToRequestModal from "@/components/incidents/BulkConvertToRequestModal";
 import { useAuthStore } from "@/stores/authStore";
@@ -1413,6 +1414,7 @@ export const IncidentsPage: React.FC = () => {
                                 >
                                   {incident.incident_number}
                                 </p>
+                                <SMSLegends incident={incident} />
                                 {incident.active_viewers &&
                                   incident.active_viewers > 0 && (
                                     <span

@@ -648,6 +648,7 @@ export type IncidentSource =
   | "email"
   | "phone"
   | "ivr"
+  | "sms-link"
   | "walk_in"
   | "api"
   | "social_media"
@@ -663,6 +664,8 @@ export const INCIDENT_SOURCES: { value: IncidentSource; label: string }[] = [
   { value: "mobile", label: "Mobile App" },
   { value: "email", label: "Email" },
   { value: "phone", label: "Phone" },
+  { value: "ivr", label: "IVR" },
+  { value: "sms-link", label: "SMS Link" },
   { value: "walk_in", label: "Walk-in" },
   { value: "api", label: "API Integration" },
   { value: "social_media", label: "Social Media" },
