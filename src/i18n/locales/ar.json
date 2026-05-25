@@ -1889,6 +1889,9 @@
     "policyToFireWhenThisStateS": "السياسة التي تُنفّذ عند تجاوز SLA",
     "mergableStatus": "حالة قابلة للدمج",
     "allowIncidentsInThisStatusToBe": "السماح بدمج البلاغات في هذه الحالة",
+    "aiQualityAudit": "مراجعة جودة الذكاء الاصطناعي",
+    "aiQualityAuditStatus": "مراجعة جودة الذكاء الاصطناعي",
+    "aiQualityAuditDesc": "سيتم تقييم البلاغات التي تصل إلى هذه الحالة تلقائيًا بواسطة نظام مراقبة جودة الذكاء الاصطناعي.",
     "readyToClose": "جاهز للإغلاق",
     "requiresADurationSelectionWhenEnteringThis": "يتطلب اختيار مدة عند الدخول إلى هذه الحالة.",
     "closingDuration": "مدة الإغلاق",
@@ -1908,6 +1911,8 @@
     "whenEnabledNotBelongWillSendSMS": "عند التفعيل، سيؤدي تنفيذ هذا الانتقال إلى إرسال رسالة SMS للمواطن لإعلامه بأن البلاغ لا ينتمي إلى القسم المعين.",
     "markAsMissingInfoTransition": "تحديد كانتقال معلومات ناقصة",
     "whenEnabledMissingInfoWillSendSMS": "عند التفعيل، سيؤدي تنفيذ هذا الانتقال إلى إرسال رسالة SMS للمواطن لإعلامه بأن البلاغ تم إغلاقه بسبب نقص المعلومات.",
+    "markAsReopenTransition": "تحديد كانتقال إعادة فتح",
+    "whenEnabledReopenDesc": "عند التفعيل، سيتم استخدام هذا الانتقال من قبل مراجعة جودة الذكاء الاصطناعي لإعادة فتح البلاغات التي تفشل في فحوصات الجودة.",
     "configureTransition": "تكوين الانتقال",
     "commentRequired": "التعليق مطلوب",
     "attachmentRequired": "المرفق مطلوب",
@@ -3637,7 +3642,9 @@
     "aiResult": "AI Result",
     "changeSummary": "Change Summary",
     "drift": "Drift",
-    "processed": "Processed"
+    "processed": "Processed",
+    "reopen": "إعادة فتح",
+    "reopened": "تمت إعادة الفتح"
   },
   "validation": {
     "required": "مطلوب",
