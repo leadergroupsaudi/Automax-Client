@@ -48,50 +48,6 @@ type TransitionStepKey =
   | "comment"
   | "executing";
 
-const cleanFieldChanges = (
-  fieldChanges: Record<string, string> | undefined,
-) => {
-  if (!fieldChanges) return undefined;
-
-  const cleaned: Record<string, string> = {};
-  for (const [key, val] of Object.entries(fieldChanges)) {
-    if (typeof val !== "string") {
-      cleaned[key] = val;
-      continue;
-    }
-
-    const trimmed = val.trim();
-
-    // Check if key is a lookup field
-    if (key.startsWith("lookup:")) {
-      // Relaxed regexes: matches both formats allowing optional spaces anywhere
-      const oldMentionRegex = /@\{\s*[^:]+:\s*([^}]+?)\s*\}/g;
-      const newMentionRegex = /@\[\s*[^\]]+\s*\]\(incident:\s*([^)]+?)\s*\)/g;
-
-      const oldMatches = [...trimmed.matchAll(oldMentionRegex)];
-      const newMatches = [...trimmed.matchAll(newMentionRegex)];
-
-      const ids: string[] = [];
-      if (oldMatches.length > 0) {
-        ids.push(...oldMatches.map((m) => m[1].trim()));
-      }
-      if (newMatches.length > 0) {
-        ids.push(...newMatches.map((m) => m[1].trim()));
-      }
-
-      if (ids.length > 0) {
-        // Join them by commas (or just send the single one if there's only one)
-        cleaned[key] = ids.join(",");
-        continue;
-      }
-    }
-
-    // Default fallback: just trim the value
-    cleaned[key] = trimmed;
-  }
-  return cleaned;
-};
-
 export const BulkTransitionModal: React.FC<BulkTransitionModalProps> = ({
   isOpen,
   onClose,
