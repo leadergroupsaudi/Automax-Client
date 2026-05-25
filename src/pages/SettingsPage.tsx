@@ -42,6 +42,7 @@ export const SettingsPage: React.FC = () => {
 
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+  const isADUser = user?.is_ad_user;
 
   const passwordSchema = useMemo(
     () =>
@@ -300,7 +301,7 @@ export const SettingsPage: React.FC = () => {
 
         {/* Settings Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Security Section */}
+          {/* Security Section — Change Password disabled for AD users */}
           <Card id="security" className="p-4 scroll-mt-28">
             <div className="flex items-start gap-4 mb-6">
               <div className="p-3 bg-blue-50 rounded-xl">
@@ -314,7 +315,15 @@ export const SettingsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Alerts */}
+            {isADUser && (
+              <div className="mb-6 p-4 bg-amber-50 border border-amber-100 rounded-xl">
+                <p className="text-sm font-medium text-amber-800">
+                  Password is managed by Active Directory and cannot be changed
+                  here.
+                </p>
+              </div>
+            )}
+
             {passwordError && (
               <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl animate-fade-in">
                 <div className="flex items-start gap-3">
@@ -347,6 +356,7 @@ export const SettingsPage: React.FC = () => {
                 placeholder={t("settings.enterCurrentPassword")}
                 error={errors.old_password?.message}
                 leftIcon={<Key className="w-5 h-5" />}
+                disabled={isADUser}
                 {...register("old_password")}
               />
 
@@ -357,6 +367,7 @@ export const SettingsPage: React.FC = () => {
                   placeholder={t("settings.createStrongPassword")}
                   error={errors.new_password?.message}
                   leftIcon={<Lock className="w-5 h-5" />}
+                  disabled={isADUser}
                   {...register("new_password")}
                 />
                 {newPassword && (
@@ -386,6 +397,7 @@ export const SettingsPage: React.FC = () => {
                 placeholder={t("settings.confirmYourPassword")}
                 error={errors.confirm_password?.message}
                 leftIcon={<Lock className="w-5 h-5" />}
+                disabled={isADUser}
                 {...register("confirm_password")}
               />
 
@@ -393,6 +405,7 @@ export const SettingsPage: React.FC = () => {
                 type="submit"
                 isLoading={isPasswordLoading}
                 leftIcon={!isPasswordLoading && <Key className="w-4 h-4" />}
+                disabled={isADUser}
               >
                 {t("settings.changePassword")}
               </Button>
