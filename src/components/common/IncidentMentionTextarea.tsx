@@ -266,7 +266,7 @@ export const IncidentMentionTextarea = React.forwardRef<
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
         className={`${props.className || ""} min-h-[80px] overflow-y-auto whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:text-[hsl(var(--muted-foreground))]`}
-        data-placeholder={props.placeholder}
+        data-placeholder={props.placeholder || t("common.tagIncident")}
       />
       {mention.isActive &&
         typeof document !== "undefined" &&
