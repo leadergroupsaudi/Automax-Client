@@ -775,6 +775,7 @@ export interface WorkflowState {
   escalation_policy_id?: string;
   escalation_policy?: EscalationPolicy;
   is_mergable: boolean;
+  is_ai_qa: boolean;
   /** When true this state requires a duration selection before entering
    *  and triggers automatic reversion if not closed in time. */
   is_ready_to_close: boolean;
@@ -828,6 +829,7 @@ export interface WorkflowTransition {
   is_rejection: boolean;
   is_not_belong: boolean;
   is_missing_info: boolean;
+  is_reopen: boolean;
 
   requirements?: TransitionRequirement[];
   actions?: TransitionAction[];
@@ -924,6 +926,7 @@ export interface WorkflowStateCreateRequest {
   position_y?: number;
   sla_hours?: number;
   is_mergable?: boolean;
+  is_ai_qa?: boolean;
   is_ready_to_close?: boolean;
   is_partial_close?: boolean;
   duration_options?: string[];
@@ -946,6 +949,7 @@ export interface WorkflowStateUpdateRequest {
   position_y?: number;
   sla_hours?: number;
   is_mergable?: boolean;
+  is_ai_qa?: boolean;
   is_ready_to_close?: boolean;
   is_partial_close?: boolean;
   duration_options?: string[];
@@ -981,6 +985,7 @@ export interface WorkflowTransitionCreateRequest {
   is_rejection?: boolean;
   is_not_belong?: boolean;
   is_missing_info?: boolean;
+  is_reopen?: boolean;
 }
 
 export interface WorkflowTransitionUpdateRequest {
@@ -1008,6 +1013,7 @@ export interface WorkflowTransitionUpdateRequest {
   is_rejection?: boolean;
   is_not_belong?: boolean;
   is_missing_info?: boolean;
+  is_reopen?: boolean;
 }
 
 export interface WorkflowImportResponse {
@@ -1178,6 +1184,7 @@ export interface AIQualityFeedback {
   changed_summary: string;
   resolution_status: string;
   distance_meters: number;
+  is_reopened: boolean;
   created_at: string;
   updated_at: string;
   incident?: Incident;

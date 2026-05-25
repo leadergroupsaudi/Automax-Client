@@ -100,6 +100,7 @@ interface StateFormData {
   sla_unit: string;
   escalation_policy_id: string | undefined;
   is_mergable: boolean;
+  is_ai_qa: boolean;
   is_ready_to_close: boolean;
   is_partial_close: boolean;
   duration_options: string; // comma-separated input string
@@ -136,6 +137,7 @@ interface TransitionFormData {
   is_rejection: boolean;
   is_not_belong: boolean;
   is_missing_info: boolean;
+  is_reopen: boolean;
 }
 
 const initialStateFormData: StateFormData = {
@@ -150,6 +152,7 @@ const initialStateFormData: StateFormData = {
   sla_unit: "hours",
   escalation_policy_id: undefined,
   is_mergable: false,
+  is_ai_qa: false,
   is_ready_to_close: false,
   is_partial_close: false,
   duration_options: "",
@@ -185,6 +188,7 @@ const initialTransitionFormData: TransitionFormData = {
   is_rejection: false,
   is_not_belong: false,
   is_missing_info: false,
+  is_reopen: false,
 };
 
 const STATE_COLORS = [
@@ -1067,6 +1071,7 @@ export const WorkflowDesignerPage: React.FC = () => {
       sla_unit: state.sla_unit || "hours",
       escalation_policy_id: state.escalation_policy_id || undefined,
       is_mergable: state.is_mergable || false,
+      is_ai_qa: state.is_ai_qa || false,
       is_ready_to_close: state.is_ready_to_close || false,
       is_partial_close: state.is_partial_close || false,
       duration_options: (state.duration_options || []).join(", "),
@@ -1123,6 +1128,7 @@ export const WorkflowDesignerPage: React.FC = () => {
       is_rejection: transition.is_rejection || false,
       is_not_belong: transition.is_not_belong || false,
       is_missing_info: transition.is_missing_info || false,
+      is_reopen: transition.is_reopen || false,
     });
     setIsTransitionModalOpen(true);
   };
@@ -1223,6 +1229,7 @@ export const WorkflowDesignerPage: React.FC = () => {
       sla_unit: stateFormData.sla_unit || "hours",
       escalation_policy_id: stateFormData.escalation_policy_id || null,
       is_mergable: stateFormData.is_mergable,
+      is_ai_qa: stateFormData.is_ai_qa,
       is_ready_to_close: stateFormData.is_ready_to_close,
       is_partial_close: stateFormData.is_partial_close,
       duration_options: stateFormData.duration_options
@@ -1276,6 +1283,7 @@ export const WorkflowDesignerPage: React.FC = () => {
       is_rejection: transitionFormData.is_rejection,
       is_not_belong: transitionFormData.is_not_belong,
       is_missing_info: transitionFormData.is_missing_info,
+      is_reopen: transitionFormData.is_reopen,
     };
 
     if (editingTransition) {
@@ -1698,6 +1706,9 @@ export const WorkflowDesignerPage: React.FC = () => {
                           {t("workflows.mergable")}
                         </th>
                         <th className="text-start py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
+                          {t("workflows.aiQualityAudit")}
+                        </th>
+                        <th className="text-start py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
                           {t("workflows.viewableRoles")}
                         </th>
                         <th className="text-start py-3 px-4 text-sm font-medium text-[hsl(var(--muted-foreground))]">
@@ -1753,6 +1764,20 @@ export const WorkflowDesignerPage: React.FC = () => {
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded">
                                   <CheckCircle2 className="w-3 h-3" />
                                   {t("workflows.mergable")}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                                  -
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              {state.is_ai_qa ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-800 rounded">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  {t("workflows.aiQualityAudit")}
                                 </span>
                               ) : (
                                 <span className="text-xs text-[hsl(var(--muted-foreground))]">
@@ -3219,6 +3244,27 @@ export const WorkflowDesignerPage: React.FC = () => {
                     {t("workflows.allowIncidentsInThisStatusToBe")}
                   </p>
                 </div>
+                <div>
+                  <label className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={stateFormData.is_ai_qa}
+                      onChange={(e) =>
+                        setStateFormData({
+                          ...stateFormData,
+                          is_ai_qa: e.target.checked,
+                        })
+                      }
+                      className="w-4 h-4 rounded border-gray-300 text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))]"
+                    />
+                    <span className="text-sm font-medium text-[hsl(var(--foreground))]">
+                      {t("workflows.aiQualityAuditStatus")}
+                    </span>
+                  </label>
+                  <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))] ml-7">
+                    {t("workflows.aiQualityAuditDesc")}
+                  </p>
+                </div>
                 {/* Closing Duration (Partial Close) */}
                 <div>
                   <label className="flex items-center gap-3">
@@ -4242,6 +4288,31 @@ export const WorkflowDesignerPage: React.FC = () => {
                     </span>
                     <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
                       {t("workflows.whenEnabledMissingInfoWillSendSMS")}
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              {/* Reopen Transition */}
+              <div className="px-6 py-4 border-t border-[hsl(var(--border))]">
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 w-4 h-4 rounded border-[hsl(var(--border))] text-emerald-600 focus:ring-emerald-500"
+                    checked={transitionFormData.is_reopen}
+                    onChange={(e) =>
+                      setTransitionFormData((prev) => ({
+                        ...prev,
+                        is_reopen: e.target.checked,
+                      }))
+                    }
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-[hsl(var(--foreground))]">
+                      {t("workflows.markAsReopenTransition")}
+                    </span>
+                    <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                      {t("workflows.whenEnabledReopenDesc")}
                     </p>
                   </div>
                 </label>

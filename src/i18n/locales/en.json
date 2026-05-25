@@ -1889,6 +1889,9 @@
     "policyToFireWhenThisStateS": "Policy to fire when this state's SLA is breached",
     "mergableStatus": "Mergable Status",
     "allowIncidentsInThisStatusToBe": "Allow incidents in this status to be merged together",
+    "aiQualityAudit": "AI Quality Audit",
+    "aiQualityAuditStatus": "AI Quality Audit",
+    "aiQualityAuditDesc": "Incidents that reach this state will be automatically evaluated by the AI quality monitor.",
     "readyToClose": "Ready to Close",
     "requiresADurationSelectionWhenEnteringThis": "Requires a duration selection when entering this state. Incident reverts automatically if not closed in time.",
     "closingDuration": "Closing Duration",
@@ -1920,6 +1923,8 @@
     "whenEnabledNotBelongWillSendSMS": "When enabled, executing this transition will send an SMS notification to the citizen informing them that the incident does not belong to the assigned department.",
     "markAsMissingInfoTransition": "Mark as Missing Incident Information Transition",
     "whenEnabledMissingInfoWillSendSMS": "When enabled, executing this transition will send an SMS notification to the citizen informing them that the incident was closed due to insufficient information.",
+    "markAsReopenTransition": "Mark as Reopen Transition",
+    "whenEnabledReopenDesc": "When enabled, this transition will be used by the AI Quality Audit to reopen incidents that fail quality checks.",
     "configureTransition": "Configure Transition",
     "commentRequired": "Comment Required",
     "attachmentRequired": "Attachment Required",
@@ -3566,7 +3571,9 @@
     "aiResult": "AI Result",
     "changeSummary": "Change Summary",
     "drift": "Drift",
-    "processed": "Processed"
+    "processed": "Processed",
+    "reopen": "Reopen",
+    "reopened": "Reopened"
   },
   "validation": {
     "required": "Required",
