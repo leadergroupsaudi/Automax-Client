@@ -114,7 +114,8 @@ const defaultIcon = new Icon({
 const RenderWithIncidentMentions: React.FC<{ text: string }> = ({ text }) => {
   if (!text) return null;
 
-  const regex = /@\{([^:]+):([^}]+)\}/g;
+  // Match both: @[incidentNumber](incident:incidentId) and @{incidentNumber:incidentId}
+  const regex = /@\[([^\]]+)\]\(incident:([^)]+)\)|@\{([^:]+):([^}]+)\}/g;
   const elements: React.ReactNode[] = [];
   let lastIndex = 0;
   let match;
@@ -123,8 +124,8 @@ const RenderWithIncidentMentions: React.FC<{ text: string }> = ({ text }) => {
 
   while ((match = regex.exec(text)) !== null) {
     const matchIndex = match.index;
-    const incidentNumber = match[1];
-    const incidentId = match[2];
+    const incidentNumber = match[1] || match[3];
+    const incidentId = match[2] || match[4];
 
     if (matchIndex > lastIndex) {
       elements.push(text.substring(lastIndex, matchIndex));
@@ -151,41 +152,6 @@ const RenderWithIncidentMentions: React.FC<{ text: string }> = ({ text }) => {
   }
 
   return <>{elements.length > 0 ? elements : text}</>;
-};
-
-const cleanFieldChanges = (
-  fieldChanges: Record<string, string> | undefined,
-) => {
-  if (!fieldChanges) return undefined;
-
-  const cleaned: Record<string, string> = {};
-  for (const [key, val] of Object.entries(fieldChanges)) {
-    if (typeof val !== "string") {
-      cleaned[key] = val;
-      continue;
-    }
-
-    const trimmed = val.trim();
-
-    // Check if key is a lookup field
-    if (key.startsWith("lookup:")) {
-      // Relaxed regex: matches @{incidentNumber:incidentId} allowing optional spaces anywhere
-      const mentionRegex = /@\{\s*[^:]+:\s*([^}]+?)\s*\}/g;
-      const matches = [...trimmed.matchAll(mentionRegex)];
-
-      if (matches.length > 0) {
-        // Extract all captured incidentIds
-        const ids = matches.map((m) => m[1].trim());
-        // Join them by commas (or just send the single one if there's only one)
-        cleaned[key] = ids.join(",");
-        continue;
-      }
-    }
-
-    // Default fallback: just trim the value
-    cleaned[key] = trimmed;
-  }
-  return cleaned;
 };
 
 export const IncidentDetailPage: React.FC = () => {
@@ -672,7 +638,7 @@ export const IncidentDetailPage: React.FC = () => {
         },
         department_id,
         user_ids,
-        field_changes: cleanFieldChanges(field_changes),
+        field_changes,
         ready_to_close_duration,
         version: incident?.version || 1, // Include current version for optimistic locking
       }),
@@ -3351,8 +3317,8 @@ export const IncidentDetailPage: React.FC = () => {
                             style={{
                               backgroundColor: value.color
                                 ? `${value.color}20`
-                                : "hsl(var(--muted))",
-                              color: value.color || "hsl(var(--foreground))",
+                                : "",
+                              color: value.color || "",
                             }}
                           >
                             <RenderWithIncidentMentions

@@ -38,8 +38,18 @@ const parseValueToHtml = (val: string) => {
 
   html = html.replace(/\n/g, "<br>");
 
+  // Support old format for backwards compatibility
   html = html.replace(
     /@\{([^:]+):([^}]+)\}/g,
+    (_match, incidentNumber, incidentId) => {
+      const url = publicUrl(`/admin/incidents/${incidentId}`);
+      return `<a href="${url}" class="text-[hsl(var(--primary))] hover:underline font-medium bg-[hsl(var(--primary)/0.1)] px-1 rounded-sm" contenteditable="false" data-incident-id="${incidentId}" data-incident-number="${incidentNumber}">${incidentNumber}</a>`;
+    },
+  );
+
+  // Support new format: @[INC-1234](incident:uuid)
+  html = html.replace(
+    /@\[([^\]]+)\]\(incident:([^)]+)\)/g,
     (_match, incidentNumber, incidentId) => {
       const url = publicUrl(`/admin/incidents/${incidentId}`);
       return `<a href="${url}" class="text-[hsl(var(--primary))] hover:underline font-medium bg-[hsl(var(--primary)/0.1)] px-1 rounded-sm" contenteditable="false" data-incident-id="${incidentId}" data-incident-number="${incidentNumber}">${incidentNumber}</a>`;
@@ -57,7 +67,7 @@ const getPlainText = (root: Node): string => {
     } else if (node.nodeType === Node.ELEMENT_NODE) {
       const el = node as HTMLElement;
       if (el.tagName === "A" && el.dataset.incidentId) {
-        result += `@{${el.dataset.incidentNumber}:${el.dataset.incidentId}}`;
+        result += `@[${el.dataset.incidentNumber}](incident:${el.dataset.incidentId})`;
       } else if (el.tagName === "BR") {
         result += "\n";
       } else if (el.tagName === "DIV" || el.tagName === "P") {

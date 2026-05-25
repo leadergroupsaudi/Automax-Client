@@ -64,13 +64,22 @@ const cleanFieldChanges = (
 
     // Check if key is a lookup field
     if (key.startsWith("lookup:")) {
-      // Relaxed regex: matches @{incidentNumber:incidentId} allowing optional spaces anywhere
-      const mentionRegex = /@\{\s*[^:]+:\s*([^}]+?)\s*\}/g;
-      const matches = [...trimmed.matchAll(mentionRegex)];
+      // Relaxed regexes: matches both formats allowing optional spaces anywhere
+      const oldMentionRegex = /@\{\s*[^:]+:\s*([^}]+?)\s*\}/g;
+      const newMentionRegex = /@\[\s*[^\]]+\s*\]\(incident:\s*([^)]+?)\s*\)/g;
 
-      if (matches.length > 0) {
-        // Extract all captured incidentIds
-        const ids = matches.map((m) => m[1].trim());
+      const oldMatches = [...trimmed.matchAll(oldMentionRegex)];
+      const newMatches = [...trimmed.matchAll(newMentionRegex)];
+
+      const ids: string[] = [];
+      if (oldMatches.length > 0) {
+        ids.push(...oldMatches.map((m) => m[1].trim()));
+      }
+      if (newMatches.length > 0) {
+        ids.push(...newMatches.map((m) => m[1].trim()));
+      }
+
+      if (ids.length > 0) {
         // Join them by commas (or just send the single one if there's only one)
         cleaned[key] = ids.join(",");
         continue;
@@ -383,10 +392,7 @@ export const BulkTransitionModal: React.FC<BulkTransitionModalProps> = ({
           attachments: uploadedAttachments,
           department_id: departmentId,
           user_ids: userIds,
-          field_changes:
-            Object.keys(fieldValues).length > 0
-              ? cleanFieldChanges(fieldValues)
-              : undefined,
+          field_changes: fieldValues,
           ready_to_close_duration: readyToCloseDuration || undefined,
           feedback: selectedTransition.requirements?.some(
             (r) => r.requirement_type === "feedback",
