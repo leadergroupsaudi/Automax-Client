@@ -62,6 +62,10 @@ export const ACTION_OPTIONS = [
     value: "convert_to_request",
   },
   {
+    label: "Missing Info",
+    value: "missing_info",
+  },
+  {
     label: "Reminder",
     value: "reminder",
   },
