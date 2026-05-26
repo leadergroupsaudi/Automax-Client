@@ -69,6 +69,7 @@ import {
   aiQualityApi,
   commentTemplateApi,
   feedbackTemplateApi,
+  gisLocationApi,
 } from "../../api/admin";
 import type { EscalationSLARecord } from "../../types";
 import { API_URL } from "../../api/client";
@@ -266,6 +267,9 @@ export const IncidentDetailPage: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<IncidentAttachment | null>(
     null,
   );
+
+  const [disableApproveTransition, setDisableApproveTransition] =
+    useState(false);
 
   // Queries
   const {
@@ -474,6 +478,34 @@ export const IncidentDetailPage: React.FC = () => {
     );
   }, [incident?.department?.id, fcDepartmentsData?.data]);
   const user = useAuthStore((state) => state.user);
+
+  useEffect(() => {
+    const checkLocation = async () => {
+      try {
+        if (!incident?.latitude || !incident?.longitude) return;
+
+        const response: any = await gisLocationApi.identifyLocation({
+          x: incident.longitude,
+          y: incident.latitude,
+        });
+
+        const results = response?.results || [];
+
+        // Disable only when results array is empty
+        if (Array.isArray(results) && results.length === 0) {
+          setDisableApproveTransition(true);
+        } else {
+          setDisableApproveTransition(false);
+        }
+      } catch (error) {
+        // API failure should NOT disable approve
+        console.error("GIS identify failed", error);
+        setDisableApproveTransition(false);
+      }
+    };
+
+    checkLocation();
+  }, [incident]);
 
   // State-level edit restriction: if current state has editable_roles configured,
   // user must be in one of those roles (superadmin bypasses this check).
@@ -1489,6 +1521,30 @@ export const IncidentDetailPage: React.FC = () => {
         </div>
       )}
 
+      {disableApproveTransition && (
+        <div className="w-full mb-3">
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800">
+            <div className="flex-shrink-0 mt-0.5">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div className="text-sm">
+              <div className="font-medium">
+                {t(
+                  "incidents.outsideBoundaryTitle",
+                  "Outside Location Boundary",
+                )}
+              </div>
+              <div className="mt-1">
+                {t(
+                  "incidents.outsideBoundary",
+                  "Incident appears outside the defined location boundary — approvals disabled",
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div>
@@ -1607,6 +1663,10 @@ export const IncidentDetailPage: React.FC = () => {
                       size="sm"
                       onClick={() => handleTransitionClick(transition)}
                       leftIcon={<Play className="w-4 h-4" />}
+                      disabled={
+                        transition.transition.name?.toLowerCase() ===
+                          "approve" && disableApproveTransition
+                      }
                     >
                       {transition.transition.name}
                     </Button>
