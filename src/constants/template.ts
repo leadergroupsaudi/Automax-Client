@@ -58,6 +58,10 @@ export const ACTION_OPTIONS = [
     value: "new_incident",
   },
   {
+    label: "Convert to Request",
+    value: "convert_to_request",
+  },
+  {
     label: "Reminder",
     value: "reminder",
   },
