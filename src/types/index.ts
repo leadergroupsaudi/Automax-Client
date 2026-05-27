@@ -830,6 +830,7 @@ export interface WorkflowTransition {
   is_not_belong: boolean;
   is_missing_info: boolean;
   is_reopen: boolean;
+  is_final_close: boolean;
 
   requirements?: TransitionRequirement[];
   actions?: TransitionAction[];

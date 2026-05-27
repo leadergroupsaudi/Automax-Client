@@ -1915,6 +1915,8 @@
     "whenEnabledMissingInfoWillSendSMS": "عند التفعيل، سيؤدي تنفيذ هذا الانتقال إلى إرسال رسالة SMS للمواطن لإعلامه بأن البلاغ تم إغلاقه بسبب نقص المعلومات.",
     "markAsReopenTransition": "تحديد كانتقال إعادة فتح",
     "whenEnabledReopenDesc": "عند التفعيل، سيتم استخدام هذا الانتقال من قبل مراجعة جودة الذكاء الاصطناعي لإعادة فتح البلاغات التي تفشل في فحوصات الجودة.",
+    "markAsFinalCloseTransition": "تحديد كانتقال الإغلاق النهائي",
+    "whenEnabledFinalCloseDesc": "عند التفعيل، يمثل هذا الانتقال الإغلاق النهائي للبلاغ من حالة الجاهز للإغلاق.",
     "configureTransition": "تكوين الانتقال",
     "commentRequired": "التعليق مطلوب",
     "attachmentRequired": "المرفق مطلوب",
