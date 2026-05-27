@@ -5412,8 +5412,7 @@ export const IncidentDetailPage: React.FC = () => {
 // ---------------------------------------------------------------------------
 function AIQualityReport({ feedback }: { feedback: AIQualityFeedback }) {
   const { t } = useTranslation();
-  const isResolved =
-    feedback.resolution_status?.toLowerCase().includes("resolved") ?? false;
+  const isResolved = feedback.resolution_status?.toLowerCase() === "resolved";
 
   console.log("[AIQuality] Rendering AIQualityReport with feedback:", feedback);
 
@@ -5449,7 +5448,9 @@ function AIQualityReport({ feedback }: { feedback: AIQualityFeedback }) {
             <ShieldCheck
               className={cn(
                 "w-4 h-4 flex-shrink-0",
-                isResolved ? "text-emerald-500" : "text-amber-500",
+                isResolved
+                  ? "text-emerald-500"
+                  : "text-yellow-800 dark:text-yellow-600",
               )}
             />
             <span
@@ -5457,10 +5458,10 @@ function AIQualityReport({ feedback }: { feedback: AIQualityFeedback }) {
                 "text-sm font-semibold capitalize",
                 isResolved
                   ? "text-emerald-700 dark:text-emerald-400"
-                  : "text-amber-700 dark:text-amber-400",
+                  : "text-yellow-800 dark:text-yellow-600",
               )}
             >
-              {feedback.resolution_status || "—"}
+              {feedback.resolution_status?.replace(/_/g, " ") || "—"}
             </span>
           </div>
         </div>
