@@ -456,7 +456,9 @@ export const SettingsManagementPage: React.FC = () => {
                       type="text"
                       name={`feature${num}_title`}
                       value={
-                        formData[`feature${num}_title` as keyof typeof formData]
+                        formData[
+                          `feature${num}_title` as keyof typeof formData
+                        ] as string
                       }
                       onChange={handleChange}
                       className="w-full px-3 py-2 rounded border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] text-sm"
@@ -472,7 +474,7 @@ export const SettingsManagementPage: React.FC = () => {
                       value={
                         formData[
                           `feature${num}_description` as keyof typeof formData
-                        ]
+                        ] as string
                       }
                       onChange={handleChange}
                       rows={2}
