@@ -24,7 +24,8 @@ type SipEventName =
   | "call-ended"
   | "permissions-blocked"
   | "permissions-missing"
-  | "myStatusChange";
+  | "myStatusChange"
+  | "call-ringing";
 
 /* -------------------- State -------------------- */
 
@@ -127,6 +128,7 @@ const sipService = {
 
       session.on("progress", () => {
         console.log("📞 Ringing...");
+        dispatch("call-ringing");
       });
 
       session.on("confirmed", () => {
@@ -161,12 +163,12 @@ const sipService = {
         }
       });
 
-      session.on("ended", () => {
-        cleanup();
+      session.on("ended", (e: any) => {
+        cleanup(e?.cause);
       });
 
-      session.on("failed", () => {
-        cleanup();
+      session.on("failed", (e: any) => {
+        cleanup(e?.cause);
       });
     });
 
@@ -259,7 +261,7 @@ const sipService = {
 
 /* -------------------- Cleanup -------------------- */
 
-function cleanup(): void {
+function cleanup(cause?: string): void {
   session = null;
   remoteStreamDispatched = false;
   callAccepted = false;
@@ -268,7 +270,7 @@ function cleanup(): void {
     localStream.getTracks().forEach((track) => track.stop());
     localStream = null;
   }
-  dispatch("call-ended");
+  dispatch("call-ended", { cause });
 }
 
 /* -------------------- Optional API -------------------- */
