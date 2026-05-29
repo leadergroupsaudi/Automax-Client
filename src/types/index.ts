@@ -830,6 +830,8 @@ export interface WorkflowTransition {
   is_not_belong: boolean;
   is_missing_info: boolean;
   is_reopen: boolean;
+  is_final_close: boolean;
+  require_assignee: boolean;
 
   requirements?: TransitionRequirement[];
   actions?: TransitionAction[];
@@ -986,6 +988,7 @@ export interface WorkflowTransitionCreateRequest {
   is_not_belong?: boolean;
   is_missing_info?: boolean;
   is_reopen?: boolean;
+  require_assignee?: boolean;
 }
 
 export interface WorkflowTransitionUpdateRequest {
@@ -1014,6 +1017,7 @@ export interface WorkflowTransitionUpdateRequest {
   is_not_belong?: boolean;
   is_missing_info?: boolean;
   is_reopen?: boolean;
+  require_assignee?: boolean;
 }
 
 export interface WorkflowImportResponse {
@@ -1762,6 +1766,7 @@ export interface Settings {
   default_language: string;
   sip_domain?: string;
   sip_socket_url?: string;
+  show_evaluate_button: boolean;
   updated_at: string;
 }
 
@@ -1790,6 +1795,7 @@ export interface SettingsUpdateRequest {
   default_language?: string;
   sip_domain?: string;
   sip_socket_url?: string;
+  show_evaluate_button?: boolean;
 }
 
 // Re-export report template builder types

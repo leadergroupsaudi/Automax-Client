@@ -14,6 +14,7 @@
     "clear": "Clear",
     "submit": "Submit",
     "back": "Back",
+    "noMatchingIncidents": "No matching incidents",
     "next": "Next",
     "done": "Done",
     "yes": "Yes",
@@ -234,7 +235,8 @@
     "email": "Email",
     "web": "Web",
     "mobile": "Mobile App",
-    "inPerson": "In Person"
+    "inPerson": "In Person",
+    "chatbot": "Chatbot"
   },
   "auth": {
     "login": "Login",
@@ -1926,6 +1928,8 @@
     "whenEnabledMissingInfoWillSendSMS": "When enabled, executing this transition will send an SMS notification to the citizen informing them that the incident was closed due to insufficient information.",
     "markAsReopenTransition": "Mark as Reopen Transition",
     "whenEnabledReopenDesc": "When enabled, this transition will be used by the AI Quality Audit to reopen incidents that fail quality checks.",
+    "markAsFinalCloseTransition": "Mark as Final Close Transition",
+    "whenEnabledFinalCloseDesc": "When enabled, this transition represents the definitive closure of an incident from the Ready-to-Close state.",
     "configureTransition": "Configure Transition",
     "commentRequired": "Comment Required",
     "attachmentRequired": "Attachment Required",
@@ -3866,6 +3870,8 @@
       "status_change": "Status Change",
       "ready_to_close": "Ready to Close",
       "new_incident": "New Incident",
+      "convert_to_request": "Convert to Request",
+      "missing_info": "Missing Info",
       "reminder": "Reminder",
       "rejection": "Rejection",
       "custom": "Custom"

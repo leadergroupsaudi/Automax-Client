@@ -69,6 +69,7 @@ import {
   aiQualityApi,
   commentTemplateApi,
   feedbackTemplateApi,
+  gisLocationApi,
 } from "../../api/admin";
 import type { EscalationSLARecord } from "../../types";
 import { API_URL } from "../../api/client";
@@ -104,6 +105,7 @@ import { integrationApi } from "../../api/integration";
 import type { IncidentBridge } from "../../api/integration";
 import { useSoftphoneStore } from "../../stores/softphoneStore";
 import { IncidentMentionTextarea } from "@/components/common/IncidentMentionTextarea";
+import RenderWithIncidentMentions from "@/components/common/RenderWithIncidentMentions";
 
 // Fix for default marker icon - using local images
 const defaultIcon = new Icon({
@@ -115,49 +117,6 @@ const defaultIcon = new Icon({
   popupAnchor: [1, -34],
   shadowSize: [41, 41],
 });
-
-const RenderWithIncidentMentions: React.FC<{ text: string }> = ({ text }) => {
-  if (!text) return null;
-
-  // Match both: @[incidentNumber](incident:incidentId) and @{incidentNumber:incidentId}
-  const regex = /@\[([^\]]+)\]\(incident:([^)]+)\)|@\{([^:]+):([^}]+)\}/g;
-  const elements: React.ReactNode[] = [];
-  let lastIndex = 0;
-  let match;
-
-  regex.lastIndex = 0;
-
-  while ((match = regex.exec(text)) !== null) {
-    const matchIndex = match.index;
-    const incidentNumber = match[1] || match[3];
-    const incidentId = match[2] || match[4];
-
-    if (matchIndex > lastIndex) {
-      elements.push(text.substring(lastIndex, matchIndex));
-    }
-
-    elements.push(
-      <Link
-        key={`${incidentId}-${matchIndex}`}
-        to={`/incidents/${incidentId}`}
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-        className="text-[hsl(var(--primary))] hover:underline font-medium bg-[hsl(var(--primary)/0.1)] px-1 py-0.5 rounded-sm inline-flex items-center gap-0.5"
-      >
-        {incidentNumber}
-      </Link>,
-    );
-
-    lastIndex = regex.lastIndex;
-  }
-
-  if (lastIndex < text.length) {
-    elements.push(text.substring(lastIndex));
-  }
-
-  return <>{elements.length > 0 ? elements : text}</>;
-};
 
 export const IncidentDetailPage: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -266,6 +225,9 @@ export const IncidentDetailPage: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<IncidentAttachment | null>(
     null,
   );
+
+  const [disableApproveTransition, setDisableApproveTransition] =
+    useState(false);
 
   // Queries
   const {
@@ -474,6 +436,34 @@ export const IncidentDetailPage: React.FC = () => {
     );
   }, [incident?.department?.id, fcDepartmentsData?.data]);
   const user = useAuthStore((state) => state.user);
+
+  useEffect(() => {
+    const checkLocation = async () => {
+      try {
+        if (!incident?.latitude || !incident?.longitude) return;
+
+        const response: any = await gisLocationApi.identifyLocation({
+          x: incident.longitude,
+          y: incident.latitude,
+        });
+
+        const results = response?.results || [];
+
+        // Disable only when results array is empty
+        if (Array.isArray(results) && results.length === 0) {
+          setDisableApproveTransition(true);
+        } else {
+          setDisableApproveTransition(false);
+        }
+      } catch (error) {
+        // API failure should NOT disable approve
+        console.error("GIS identify failed", error);
+        setDisableApproveTransition(false);
+      }
+    };
+
+    checkLocation();
+  }, [incident]);
 
   // State-level edit restriction: if current state has editable_roles configured,
   // user must be in one of those roles (superadmin bypasses this check).
@@ -1489,6 +1479,30 @@ export const IncidentDetailPage: React.FC = () => {
         </div>
       )}
 
+      {disableApproveTransition && (
+        <div className="w-full mb-3">
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800">
+            <div className="flex-shrink-0 mt-0.5">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div className="text-sm">
+              <div className="font-medium">
+                {t(
+                  "incidents.outsideBoundaryTitle",
+                  "Outside Location Boundary",
+                )}
+              </div>
+              <div className="mt-1">
+                {t(
+                  "incidents.outsideBoundary",
+                  "Incident appears outside the defined location boundary — approvals disabled",
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div>
@@ -1607,6 +1621,10 @@ export const IncidentDetailPage: React.FC = () => {
                       size="sm"
                       onClick={() => handleTransitionClick(transition)}
                       leftIcon={<Play className="w-4 h-4" />}
+                      disabled={
+                        transition.transition.name?.toLowerCase() ===
+                          "approve" && disableApproveTransition
+                      }
                     >
                       {transition.transition.name}
                     </Button>
@@ -2174,12 +2192,16 @@ export const IncidentDetailPage: React.FC = () => {
                             )}
                             {item.comment && (
                               <p className="mt-2 text-sm text-[hsl(var(--foreground))] italic">
-                                "{item.comment}"
+                                <RenderWithIncidentMentions
+                                  text={item.comment}
+                                />
                               </p>
                             )}
                             {item.feedbacks?.comment && (
                               <p className="mt-2 text-sm text-[hsl(var(--foreground))] italic">
-                                "{item.feedbacks.comment}"
+                                <RenderWithIncidentMentions
+                                  text={item.feedbacks.comment}
+                                />
                               </p>
                             )}
                           </div>
@@ -4868,6 +4890,16 @@ export const IncidentDetailPage: React.FC = () => {
                                         }
                                         rows={3}
                                         className={`${baseClass} resize-none`}
+                                        filters={{
+                                          classification_ids: incident
+                                            .classification?.id
+                                            ? [incident.classification?.id]
+                                            : [],
+                                          location_ids: incident.location?.id
+                                            ? [incident.location?.id]
+                                            : [],
+                                          currentIncident_ids: [incident.id],
+                                        }}
                                       />
                                     ) : (fieldType === "select" ||
                                         fieldType === "multiselect") &&
@@ -5352,23 +5384,57 @@ export const IncidentDetailPage: React.FC = () => {
 // ---------------------------------------------------------------------------
 function AIQualityReport({ feedback }: { feedback: AIQualityFeedback }) {
   const { t } = useTranslation();
-  const isResolved =
-    feedback.resolution_status?.toLowerCase().includes("resolved") ?? false;
+  const isResolved = feedback.resolution_status?.toLowerCase() === "resolved";
 
   console.log("[AIQuality] Rendering AIQualityReport with feedback:", feedback);
 
   return (
     <div className="space-y-4">
       {/* Header badge */}
-      <div className="flex items-center gap-3 p-3 rounded-lg border border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20">
-        <div className="flex items-center justify-center w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-800/40">
-          <Bot className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+      <div
+        className={cn(
+          "flex items-center gap-3 p-3 rounded-lg border",
+          isResolved
+            ? "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20"
+            : "border-yellow-300 bg-yellow-50 dark:border-yellow-700 dark:bg-yellow-900/20",
+        )}
+      >
+        <div
+          className={cn(
+            "flex items-center justify-center w-9 h-9 rounded-full",
+            isResolved
+              ? "bg-emerald-100 dark:bg-emerald-800/40"
+              : "bg-yellow-100 dark:bg-yellow-800/40",
+          )}
+        >
+          <Bot
+            className={cn(
+              "w-5 h-5",
+              isResolved
+                ? "text-emerald-600 dark:text-emerald-400"
+                : "text-yellow-800 dark:text-yellow-400",
+            )}
+          />
         </div>
         <div>
-          <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+          <p
+            className={cn(
+              "text-sm font-semibold",
+              isResolved
+                ? "text-emerald-800 dark:text-emerald-300"
+                : "text-yellow-800 dark:text-yellow-300",
+            )}
+          >
             {t("incidents.aiQualityAssessment")}
           </p>
-          <p className="text-xs text-emerald-600 dark:text-emerald-500">
+          <p
+            className={cn(
+              "text-xs",
+              isResolved
+                ? "text-emerald-600 dark:text-emerald-500"
+                : "text-yellow-700 dark:text-yellow-500",
+            )}
+          >
             {t("incidents.processedOn")}{" "}
             {new Date(feedback.created_at).toLocaleString(undefined, {
               dateStyle: "medium",
@@ -5389,7 +5455,9 @@ function AIQualityReport({ feedback }: { feedback: AIQualityFeedback }) {
             <ShieldCheck
               className={cn(
                 "w-4 h-4 flex-shrink-0",
-                isResolved ? "text-emerald-500" : "text-amber-500",
+                isResolved
+                  ? "text-emerald-500"
+                  : "text-yellow-800 dark:text-yellow-600",
               )}
             />
             <span
@@ -5397,10 +5465,10 @@ function AIQualityReport({ feedback }: { feedback: AIQualityFeedback }) {
                 "text-sm font-semibold capitalize",
                 isResolved
                   ? "text-emerald-700 dark:text-emerald-400"
-                  : "text-amber-700 dark:text-amber-400",
+                  : "text-yellow-800 dark:text-yellow-600",
               )}
             >
-              {feedback.resolution_status || "—"}
+              {feedback.resolution_status?.replace(/_/g, " ") || "—"}
             </span>
           </div>
         </div>

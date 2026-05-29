@@ -15,6 +15,7 @@
     "submit": "إرسال",
     "back": "رجوع",
     "next": "التالي",
+    "noMatchingIncidents": "لا توجد حالات مطابقة",
     "done": "تم",
     "yes": "نعم",
     "no": "لا",
@@ -234,7 +235,8 @@
     "email": "بريد إلكتروني",
     "web": "ويب",
     "mobile": "تطبيق الجوال",
-    "inPerson": "حضور شخصي"
+    "inPerson": "حضور شخصي",
+    "chatbot": "روبوت المحادثة"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -1914,6 +1916,8 @@
     "whenEnabledMissingInfoWillSendSMS": "عند التفعيل، سيؤدي تنفيذ هذا الانتقال إلى إرسال رسالة SMS للمواطن لإعلامه بأن البلاغ تم إغلاقه بسبب نقص المعلومات.",
     "markAsReopenTransition": "تحديد كانتقال إعادة فتح",
     "whenEnabledReopenDesc": "عند التفعيل، سيتم استخدام هذا الانتقال من قبل مراجعة جودة الذكاء الاصطناعي لإعادة فتح البلاغات التي تفشل في فحوصات الجودة.",
+    "markAsFinalCloseTransition": "تحديد كانتقال الإغلاق النهائي",
+    "whenEnabledFinalCloseDesc": "عند التفعيل، يمثل هذا الانتقال الإغلاق النهائي للبلاغ من حالة الجاهز للإغلاق.",
     "configureTransition": "تكوين الانتقال",
     "commentRequired": "التعليق مطلوب",
     "attachmentRequired": "المرفق مطلوب",
@@ -3870,6 +3874,8 @@
       "status_change": "تغيير الحالة",
       "ready_to_close": "جاهز للإغلاق",
       "new_incident": "بلاغ جديد",
+      "convert_to_request": "تحويل إلى طلب",
+      "missing_info": "معلومات ناقصة",
       "reminder": "تذكير",
       "rejection": "رفض",
       "custom": "مخصص"

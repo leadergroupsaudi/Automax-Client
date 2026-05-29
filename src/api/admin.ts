@@ -3282,3 +3282,20 @@ export const notificationTemplateApi = {
     return response.data;
   },
 };
+export interface IdentifyLocationRequest {
+  x: number;
+  y: number;
+}
+
+export const gisLocationApi = {
+  identifyLocation: async (
+    payload: IdentifyLocationRequest,
+  ): Promise<ApiResponse<unknown>> => {
+    const response = await apiClient.post<ApiResponse<unknown>>(
+      "/gis/identify",
+      payload,
+    );
+
+    return response.data;
+  },
+};

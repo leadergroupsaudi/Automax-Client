@@ -252,6 +252,7 @@ export default function SoftPhone({
   const [dialedNumber, setDialedNumber] = useState<string>("");
   const [callStatus, setCallStatus] = useState<CallStatus>("idle");
   const [callDuration, setCallDuration] = useState<number>(0);
+  const [callEndReason, setCallEndReason] = useState<string>("");
 
   const [incomingCall, setIncomingCall] = useState<any>(null);
   const [, setActiveCall] = useState<any>(null);
@@ -291,6 +292,115 @@ export default function SoftPhone({
   const canCreateSentimentRef = useRef(false);
   const ringRef = useRef<HTMLAudioElement | null>(null);
 
+  const callingToneCtxRef = useRef<AudioContext | null>(null);
+  const callingToneIntervalRef = useRef<any>(null);
+
+  const playCallingTone = useCallback(() => {
+    if (callingToneCtxRef.current) return;
+
+    const AudioContextClass =
+      window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    try {
+      const ctx = new AudioContextClass();
+      callingToneCtxRef.current = ctx;
+
+      const playTone = () => {
+        if (
+          !callingToneCtxRef.current ||
+          callingToneCtxRef.current.state === "closed"
+        )
+          return;
+
+        try {
+          const osc1 = callingToneCtxRef.current.createOscillator();
+          const osc2 = callingToneCtxRef.current.createOscillator();
+          const gainNode = callingToneCtxRef.current.createGain();
+
+          osc1.type = "sine";
+          osc1.frequency.setValueAtTime(
+            440,
+            callingToneCtxRef.current.currentTime,
+          );
+
+          osc2.type = "sine";
+          osc2.frequency.setValueAtTime(
+            480,
+            callingToneCtxRef.current.currentTime,
+          );
+
+          gainNode.gain.setValueAtTime(
+            0,
+            callingToneCtxRef.current.currentTime,
+          );
+          gainNode.gain.linearRampToValueAtTime(
+            0.08,
+            callingToneCtxRef.current.currentTime + 0.1,
+          );
+          gainNode.gain.setValueAtTime(
+            0.08,
+            callingToneCtxRef.current.currentTime + 2.0,
+          );
+          gainNode.gain.linearRampToValueAtTime(
+            0,
+            callingToneCtxRef.current.currentTime + 2.1,
+          );
+
+          osc1.connect(gainNode);
+          osc2.connect(gainNode);
+          gainNode.connect(callingToneCtxRef.current.destination);
+
+          osc1.start();
+          osc2.start();
+
+          setTimeout(() => {
+            try {
+              osc1.stop();
+              osc1.disconnect();
+            } catch (e) {
+              console.error(e);
+            }
+            try {
+              osc2.stop();
+              osc2.disconnect();
+            } catch (e) {
+              console.error(e);
+            }
+            try {
+              gainNode.disconnect();
+            } catch (e) {
+              console.error(e);
+            }
+          }, 2200);
+        } catch (e) {
+          console.error("Error playing calling tone chunk:", e);
+        }
+      };
+
+      playTone();
+      callingToneIntervalRef.current = setInterval(playTone, 6000);
+    } catch (err) {
+      console.warn("Failed to initialize calling tone AudioContext:", err);
+    }
+  }, []);
+
+  const stopCallingTone = useCallback(() => {
+    if (callingToneIntervalRef.current) {
+      clearInterval(callingToneIntervalRef.current);
+      callingToneIntervalRef.current = null;
+    }
+
+    if (callingToneCtxRef.current) {
+      try {
+        callingToneCtxRef.current.close();
+      } catch (e) {
+        console.log(e);
+      }
+      callingToneCtxRef.current = null;
+    }
+  }, []);
+
   // Initialize ringtone audio and prime it on first interaction
   useEffect(() => {
     const audio = new Audio(publicUrl("phone_ring.mp3"));
@@ -318,8 +428,9 @@ export default function SoftPhone({
       document.removeEventListener("click", primeAudio);
       audio.pause();
       ringRef.current = null;
+      stopCallingTone();
     };
-  }, []);
+  }, [stopCallingTone]);
 
   useEffect(() => {
     canCreateSentimentRef.current = canCreateSentiment;
@@ -443,9 +554,51 @@ export default function SoftPhone({
         startTimer();
       }
       stopRingtone();
+      stopCallingTone();
     };
 
-    const callEndedHandler = () => {
+    const callRingingHandler = () => {
+      setCallStatus((prev) => (prev === "dialing" ? "ringing" : prev));
+    };
+
+    const callEndedHandler = (e: Event) => {
+      const ce = e as CustomEvent<{ cause?: string }>;
+      const cause = ce.detail?.cause;
+
+      if (cause) {
+        console.log("📞 Call failed/ended with cause:", cause);
+        let reasonText = "";
+        if (cause === "Busy") {
+          reasonText = t("softphone.busy", "Line is busy");
+          toast.error(reasonText);
+        } else if (cause === "Rejected") {
+          reasonText = t("softphone.rejected", "Call declined");
+          toast.error(reasonText);
+        } else if (
+          cause === "Unavailable" ||
+          cause === "Temporarily Unavailable"
+        ) {
+          reasonText = t("softphone.unavailable", "User is unavailable");
+          toast.error(reasonText);
+        } else if (cause === "Not Found") {
+          reasonText = t("softphone.notFound", "Number not found");
+          toast.error(reasonText);
+        } else if (cause !== "Canceled") {
+          reasonText = `${t("softphone.failed", "Call failed")}: ${cause}`;
+          toast.error(reasonText);
+        }
+
+        if (reasonText) {
+          setCallEndReason(reasonText);
+          setCallStatus("ended");
+          setTimeout(() => {
+            cleanup();
+            setCallEndReason("");
+          }, 3000);
+          return;
+        }
+      }
+
       setCallStatus("ended");
       cleanup();
     };
@@ -476,6 +629,7 @@ export default function SoftPhone({
     window.addEventListener("sip-registered", registeredHandler);
     window.addEventListener("sip-registration-failed", failedHandler);
     window.addEventListener("call-connected", callConnectedHandler);
+    window.addEventListener("call-ringing", callRingingHandler);
     window.addEventListener("call-ended", callEndedHandler);
     window.addEventListener(
       "remote-stream",
@@ -494,6 +648,7 @@ export default function SoftPhone({
       window.removeEventListener("sip-registered", registeredHandler);
       window.removeEventListener("sip-registration-failed", failedHandler);
       window.removeEventListener("call-connected", callConnectedHandler);
+      window.removeEventListener("call-ringing", callRingingHandler);
       window.removeEventListener("call-ended", callEndedHandler);
       window.removeEventListener(
         "remote-stream",
@@ -544,6 +699,7 @@ export default function SoftPhone({
 
     setCallStatus("dialing");
     sipService.makeCall(dialedNumber, false);
+    playCallingTone();
   };
 
   const answerCall = (): void => {
@@ -554,6 +710,7 @@ export default function SoftPhone({
       setCallStatus("connected");
       startTimer();
       stopRingtone();
+      stopCallingTone();
     }
   };
 
@@ -569,6 +726,7 @@ export default function SoftPhone({
 
   const cleanup = (): void => {
     stopRingtone();
+    stopCallingTone();
     const duration = globalCallDuration;
     stopTimer();
     setOpenCallerIncidents(false);
@@ -735,7 +893,8 @@ export default function SoftPhone({
   const isInCall =
     callStatus === "connected" ||
     callStatus === "dialing" ||
-    callStatus === "ringing";
+    callStatus === "ringing" ||
+    callStatus === "ended";
   const isIncomingCall = callStatus === "incoming";
 
   return (
@@ -849,13 +1008,19 @@ export default function SoftPhone({
 
         {isInCall && (
           <div className="text-center mb-4">
-            <PhoneOutgoing className="w-12 h-12 text-blue-500 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">
-              {callStatus === "dialing"
-                ? t("softphone.calling")
-                : callStatus === "connected"
-                  ? t("softphone.connected")
-                  : t("softphone.ringing")}
+            {callStatus === "ended" ? (
+              <PhoneOff className="w-12 h-12 text-red-500 mx-auto mb-2" />
+            ) : (
+              <PhoneOutgoing className="w-12 h-12 text-blue-500 mx-auto mb-2" />
+            )}
+            <p className="text-sm text-gray-500 font-medium">
+              {callStatus === "ended"
+                ? callEndReason || t("softphone.ended", "Call ended")
+                : callStatus === "dialing"
+                  ? t("softphone.calling")
+                  : callStatus === "connected"
+                    ? t("softphone.connected")
+                    : t("softphone.ringing")}
             </p>
             <p className="text-2xl font-bold text-gray-900">{dialedNumber}</p>
             {callStatus === "connected" && (
@@ -890,7 +1055,7 @@ export default function SoftPhone({
         )}
 
         {/* In-Call Controls */}
-        {isInCall && (
+        {isInCall && callStatus !== "ended" && (
           <div className="flex justify-center gap-4 mb-4">
             <button
               onClick={toggleMute}
@@ -975,7 +1140,7 @@ export default function SoftPhone({
         )}
 
         {/* Active Call Actions */}
-        {isInCall && (
+        {isInCall && callStatus !== "ended" && (
           <button
             onClick={hangup}
             className="w-full flex items-center justify-center gap-2 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors"
