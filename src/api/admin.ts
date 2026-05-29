@@ -1,4 +1,4 @@
-import apiClient, { publicClient } from "./client";
+import apiClient from "./client";
 import type {
   Category,
   CategoryCreateRequest,
@@ -1336,7 +1336,7 @@ export const incidentApi = {
       incidentId: string,
       signedToken: string,
     ): Promise<ApiResponse<PublicIncidentFeedbackValidationResponse>> => {
-      const response = await publicClient.get<
+      const response = await apiClient.get<
         ApiResponse<PublicIncidentFeedbackValidationResponse>
       >(`/ivr/incident/feedback/${incidentId}?signed_token=${signedToken}`);
       return response.data;
@@ -1347,7 +1347,7 @@ export const incidentApi = {
       signedToken: string,
       data: PublicIncidentFeedbackRequest,
     ): Promise<ApiResponse<any>> => {
-      const response = await publicClient.post<ApiResponse<any>>(
+      const response = await apiClient.put<ApiResponse<any>>(
         `/public-feedback/${incidentId}/submit?signed_token=${signedToken}`,
         data,
       );

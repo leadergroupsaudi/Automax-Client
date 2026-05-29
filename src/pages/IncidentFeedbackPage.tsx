@@ -39,14 +39,13 @@ export const CitizenIncidentFeedbackPage = () => {
     retry: false,
   });
 
-  const validatedIncident = validationQuery.data?.data?.incident;
+  const validatedIncident = validationQuery?.data?.data;
+
   const incident = {
-    incident_number: validatedIncident?.id,
-    title: validatedIncident?.title,
-    description: validatedIncident?.summary,
+    incident_number: validatedIncident?.incident_number,
+    description: validatedIncident?.description,
     status: validatedIncident?.status,
   };
-  const isLinkValid = validationQuery.data?.data?.valid;
 
   const submitMutation = useMutation({
     mutationFn: async () => {
@@ -119,11 +118,7 @@ export const CitizenIncidentFeedbackPage = () => {
       : validationQuery.data?.data?.message ||
         "This feedback link is expired or no longer valid. Please contact support for assistance.";
 
-  const isLinkInvalid =
-    !incidentId ||
-    !signedToken ||
-    validationQuery.isError ||
-    (validationQuery.isSuccess && !isLinkValid);
+  const isLinkInvalid = !incidentId || !signedToken || validationQuery.isError;
 
   if (validationQuery.isLoading) {
     return (

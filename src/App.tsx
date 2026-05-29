@@ -337,7 +337,7 @@ function App() {
                   {/* SSO complete — public, bootstraps its own auth from URL params */}
                   <Route path="/sso-complete" element={<SSOCompletePage />} />
                   <Route
-                    path="/incident/feedback/:incidentId"
+                    path="/feedback/:incidentId"
                     element={<IncidentFeedbackPage />}
                   />
 

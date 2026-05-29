@@ -2138,16 +2138,9 @@ export interface CallerFeedBackRequest {
 export interface PublicIncidentFeedbackValidationResponse {
   valid: boolean;
   message?: string;
-  expires_at?: string;
-  incident: {
-    id: string;
-    title: string;
-    summary?: string;
-    created_at: string;
-    reported_by?: string;
-    status?: string;
-    severity?: string;
-  };
+  description?: string;
+  incident_number: string;
+  status?: string;
 }
 
 export interface PublicIncidentFeedbackRequest {
