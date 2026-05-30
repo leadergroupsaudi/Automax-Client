@@ -320,7 +320,14 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
   // Filter workflows based on selected criteria with exclusion logic
   // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const filteredWorkflows = useMemo(() => {
-    const requestWorkflows = workflows.filter((w) => w.is_active);
+    const requestWorkflows = workflows.filter(
+      (w) =>
+        w.is_active &&
+        w.record_type &&
+        (w.record_type === "request" ||
+          w.record_type === "both" ||
+          w.record_type === "all"),
+    );
 
     if (!classificationId && !locationId && !source) {
       return requestWorkflows;
@@ -373,6 +380,7 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
       location_id: locationId || undefined,
       source: source || undefined,
       priority,
+      record_type: "request",
     };
 
     workflowApi

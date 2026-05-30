@@ -1173,6 +1173,7 @@ export const workflowApi = {
     location_id?: string;
     source?: string;
     priority?: number;
+    record_type?: string;
   }): Promise<
     ApiResponse<{
       matched: boolean;

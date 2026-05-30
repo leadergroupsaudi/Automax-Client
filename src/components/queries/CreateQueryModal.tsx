@@ -334,7 +334,12 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
 
   // Filter workflows based on selected classification
   const filteredWorkflows = useMemo(() => {
-    const requestWorkflows = workflows.filter((w) => w.is_active);
+    const requestWorkflows = workflows.filter(
+      (w) =>
+        w.is_active &&
+        w.record_type &&
+        (w.record_type === "query" || w.record_type === "all"),
+    );
 
     if (!classificationId) {
       return requestWorkflows;
@@ -369,6 +374,7 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
       location_id: locationId || undefined,
       source: source || undefined,
       priority,
+      record_type: "query",
     };
 
     workflowApi
