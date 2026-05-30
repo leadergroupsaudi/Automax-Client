@@ -683,6 +683,7 @@ export interface WorkflowMatchRequest {
   location_id?: string;
   source?: string;
   priority?: number;
+  record_type?: string;
 }
 
 export interface WorkflowMatchResponse {
