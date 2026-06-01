@@ -250,13 +250,15 @@ export const ReportTemplateCard: React.FC<ReportTemplateCardProps> = ({
       updatedFilters = updatedFilters.filter(
         (f) => f.field !== (template?.timestamp_key || "created_at"),
       );
+      // Send datetime-local values as-is (no UTC conversion) so the backend
+      // can display them in the user's timezone without date-shift issues.
       updatedFilters.push({
         id: template?.timestamp_key || "created_at",
         field: template?.timestamp_key || "created_at",
         operator: "between",
         value: {
-          from: new Date(fromDate).toISOString(),
-          to: new Date(toDate).toISOString(),
+          from: fromDate,
+          to: toDate,
         },
       });
     }
@@ -317,6 +319,7 @@ export const ReportTemplateCard: React.FC<ReportTemplateCardProps> = ({
       sorting: sorting,
       page: 1,
       limit: 100,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     };
 
     const response = await reportApi.query(request);
@@ -352,7 +355,11 @@ export const ReportTemplateCard: React.FC<ReportTemplateCardProps> = ({
           filters: buildFilters(),
           sorting: sorting,
           format,
-          options: { ...options, title: template.name || "Report" },
+          options: {
+            ...options,
+            title: template.name || "Report",
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          },
         },
         language,
       );

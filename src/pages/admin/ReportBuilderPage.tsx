@@ -414,6 +414,7 @@ export const ReportBuilderPage: React.FC = () => {
         sorting,
         page: 1,
         limit: recordLimit,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       };
 
       const response = await reportApi.query(request);
@@ -463,7 +464,11 @@ export const ReportBuilderPage: React.FC = () => {
           ),
           sorting: [],
           format,
-          options: { ...options, title: loadedTemplate?.name || "Report" },
+          options: {
+            ...options,
+            title: loadedTemplate?.name || "Report",
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          },
         },
         language,
       );

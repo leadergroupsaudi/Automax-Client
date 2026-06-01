@@ -175,6 +175,7 @@ const ReportTemplatesListPage: React.FC = () => {
         format: exportFilters.format,
         file_name: selectedTemplate.name,
         filters: filters.length > 0 ? filters : undefined,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       };
 
       await downloadReport(request);
@@ -204,6 +205,7 @@ const ReportTemplatesListPage: React.FC = () => {
         data_source: dataSource,
         format: "pdf",
         file_name: template.name,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
       setSuccessMessage(t("reportTemplates.reportDownloaded"));
       setTimeout(() => setSuccessMessage(null), 3000);
