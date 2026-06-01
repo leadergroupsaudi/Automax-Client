@@ -306,6 +306,7 @@ export interface GenerateReportRequest {
   sorting?: ReportSortConfig[];
   format: "pdf" | "xlsx";
   file_name?: string;
+  timezone?: string;
   overrides?: TemplateOverrides;
 }
 

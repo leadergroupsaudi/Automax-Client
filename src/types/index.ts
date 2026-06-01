@@ -1685,6 +1685,7 @@ export interface ReportQueryRequest {
   sorting: ReportSort[];
   page?: number;
   limit?: number;
+  timezone?: string;
   options?: {
     includeSubDepartments?: boolean;
     includeSubLocations?: boolean;
@@ -1713,6 +1714,7 @@ export interface ReportExportRequest {
     title?: string;
     includeFilters?: boolean;
     includeTimestamp?: boolean;
+    timezone?: string;
   };
   title?: string;
 }
