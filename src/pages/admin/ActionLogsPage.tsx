@@ -250,7 +250,8 @@ export const ActionLogsPage: React.FC = () => {
     filter.status ||
     filter.search ||
     filter.start_date ||
-    filter.end_date,
+    filter.end_date ||
+    filter.sort,
   );
 
   // const handleExport = async (format: 'csv' | 'excel') => {
@@ -477,7 +478,7 @@ export const ActionLogsPage: React.FC = () => {
 
           {/* Expanded Filters */}
           {showFilters && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 pt-4 border-t border-[hsl(var(--border))]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 pt-4 border-t border-[hsl(var(--border))]">
               {/* Module Filter */}
               <div>
                 <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">
@@ -561,6 +562,7 @@ export const ActionLogsPage: React.FC = () => {
                     setFilter({
                       ...filter,
                       start_date: e.target.value,
+                      sort: e.target.value ? "asc" : filter.sort,
                       page: 1,
                     })
                   }
@@ -581,6 +583,30 @@ export const ActionLogsPage: React.FC = () => {
                   }
                   className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
                 />
+              </div>
+
+              {/* Sort Order */}
+              <div>
+                <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">
+                  {t("common.sort")}
+                </label>
+                <div className="relative">
+                  <select
+                    value={filter.sort || "desc"}
+                    onChange={(e) =>
+                      setFilter({
+                        ...filter,
+                        sort: e.target.value as "asc" | "desc",
+                        page: 1,
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] appearance-none"
+                  >
+                    <option value="desc">{t("common.newest")}</option>
+                    <option value="asc">{t("common.oldest")}</option>
+                  </select>
+                  <ChevronDown className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))] pointer-events-none" />
+                </div>
               </div>
             </div>
           )}

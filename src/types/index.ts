@@ -566,6 +566,7 @@ export interface ActionLogFilter {
   start_date?: string;
   end_date?: string;
   search?: string;
+  sort?: "asc" | "desc";
   page?: number;
   limit?: number;
 }

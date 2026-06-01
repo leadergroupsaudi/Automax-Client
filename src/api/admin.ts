@@ -825,6 +825,7 @@ export const actionLogApi = {
     if (filter.start_date) params.append("start_date", filter.start_date);
     if (filter.end_date) params.append("end_date", filter.end_date);
     if (filter.search) params.append("search", filter.search);
+    if (filter.sort) params.append("sort", filter.sort);
 
     const response = await apiClient.get<PaginatedResponse<ActionLog>>(
       `/admin/action-logs?${params.toString()}`,
