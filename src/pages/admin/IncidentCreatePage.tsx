@@ -866,7 +866,7 @@ export function IncidentCreatePage() {
           for (let i = 0; i < levels.length - 1; i++) {
             const level = levels[i];
             const nameLower = level.name.toLowerCase().trim();
-            const parentIdToCheck = deepestParentId;
+            const parentIdToCheck: any = deepestParentId;
             const match = allLocations.find(
               (loc) =>
                 loc.name.toLowerCase().trim() === nameLower &&
