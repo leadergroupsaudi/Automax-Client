@@ -20,6 +20,7 @@ export interface LDAPUserListItem {
   display_name: string;
   upn: string;
   email: string;
+  phone?: string;
 }
 
 export interface LDAPSearchRequest {
