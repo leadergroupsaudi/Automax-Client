@@ -2104,6 +2104,10 @@ export const UsersPage: React.FC = () => {
                         (u.email &&
                           u.email
                             .toLowerCase()
+                            .includes(adSearchQuery.toLowerCase())) ||
+                        (u.phone &&
+                          u.phone
+                            .toLowerCase()
                             .includes(adSearchQuery.toLowerCase())),
                     )
                     .map((adUser) => (
@@ -2118,6 +2122,7 @@ export const UsersPage: React.FC = () => {
                           <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">
                             @{adUser.username}
                             {adUser.email && ` - ${adUser.email}`}
+                            {adUser.phone && ` - ${adUser.phone}`}
                           </p>
                         </div>
                         <Button
@@ -2157,11 +2162,45 @@ export const UsersPage: React.FC = () => {
                         </Button>
                       </div>
                     ))}
-                  {adUsers.length === 0 && (
+                  {adUsers.length === 0 && !adSearchQuery && (
                     <p className="text-center text-sm text-[hsl(var(--muted-foreground))] py-8">
                       No Active Directory users found
                     </p>
                   )}
+                  {adUsers.length > 0 &&
+                    adSearchQuery &&
+                    adUsers.filter(
+                      (u) =>
+                        u.username
+                          .toLowerCase()
+                          .includes(adSearchQuery.toLowerCase()) ||
+                        (u.display_name &&
+                          u.display_name
+                            .toLowerCase()
+                            .includes(adSearchQuery.toLowerCase())) ||
+                        (u.email &&
+                          u.email
+                            .toLowerCase()
+                            .includes(adSearchQuery.toLowerCase())) ||
+                        (u.phone &&
+                          u.phone
+                            .toLowerCase()
+                            .includes(adSearchQuery.toLowerCase())),
+                    ).length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-12">
+                        <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-3">
+                          <span className="text-amber-600 text-xl font-bold">
+                            !
+                          </span>
+                        </div>
+                        <p className="text-sm font-medium text-[hsl(var(--foreground))]">
+                          No results found
+                        </p>
+                        <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
+                          No AD user matches &quot;{adSearchQuery}&quot;
+                        </p>
+                      </div>
+                    )}
                 </div>
               )}
             </div>
