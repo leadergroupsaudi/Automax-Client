@@ -467,6 +467,7 @@ export interface LocationCreateRequest {
   latitude?: number;
   longitude?: number;
   sort_order?: number;
+  link_default_department?: boolean;
 }
 
 export interface LocationUpdateRequest {
