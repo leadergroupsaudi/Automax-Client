@@ -1195,6 +1195,7 @@ export interface AIQualityFeedback {
   created_at: string;
   updated_at: string;
   incident?: Incident;
+  raw_response?: any;
 }
 
 export interface TransitionHistory {
