@@ -5497,7 +5497,8 @@ function AIQualityReport({ feedback }: { feedback: AIQualityFeedback }) {
             {t("incidents.changeSummary")}
           </p>
           <p className="text-sm text-[hsl(var(--foreground))] leading-relaxed">
-            {feedback.changed_summary}
+            {feedback.changed_summary} |{" "}
+            {feedback.raw_response?.coordinates_check?.note}
           </p>
         </div>
       )}
