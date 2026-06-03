@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
@@ -348,7 +348,12 @@ export const LookupsPage: React.FC = () => {
   };
 
   // Get values for selected category
-  const selectedCategoryValues = selectedCategory?.values || [];
+  const selectedCategoryValues = useMemo(() => {
+    if (!selectedCategory) return [];
+    return (
+      categories.find((cat) => cat.id === selectedCategory.id)?.values || []
+    );
+  }, [selectedCategory, categories]);
 
   return (
     <div className="space-y-6">
