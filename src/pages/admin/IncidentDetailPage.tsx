@@ -3120,7 +3120,7 @@ export const IncidentDetailPage: React.FC = () => {
                                   {bridge.remote_incident_number}
                                 </span>
                               )}
-                              <span
+                              {/* <span
                                 className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                                   isOpen
                                     ? "bg-green-500/10 text-green-600"
@@ -3128,7 +3128,7 @@ export const IncidentDetailPage: React.FC = () => {
                                 }`}
                               >
                                 {bridge.status}
-                              </span>
+                              </span> */}
                               <span
                                 className={`text-xs px-2 py-0.5 rounded-full ${
                                   isOutbound
