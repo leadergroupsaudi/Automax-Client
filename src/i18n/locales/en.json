@@ -2558,7 +2558,10 @@
       "sentAt": "Sent At",
       "loadError": "Failed to load breach log",
       "stepNumber": "Step {{count}}"
-    }
+    },
+    "emailTemplate": "Email Notification Template",
+    "smsTemplate": "SMS Notification Template",
+    "defaultTemplate": "Use default build in message"
   },
   "goals": {
     "title": "Goals",
