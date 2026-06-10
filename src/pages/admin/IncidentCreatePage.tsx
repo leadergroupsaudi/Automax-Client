@@ -809,6 +809,7 @@ export function IncidentCreatePage() {
         return;
       }
       lastProcessedGeoRef.current = geoKey;
+      setGISData(location?.gis);
 
       if (
         (window.APP_CONFIG?.DISABLE_AUTO_LOCATION_RETRIEVAL ??
@@ -816,8 +817,6 @@ export function IncidentCreatePage() {
       ) {
         return;
       }
-
-      setGISData(location?.gis);
 
       // Try to match against Location master
       setIsMatchingLocation(true);
@@ -1043,7 +1042,8 @@ export function IncidentCreatePage() {
         field === "classification_id" ||
         field === "location_id" ||
         field === "source" ||
-        field === "lookup:PRIORITY"
+        field === "lookup:PRIORITY" ||
+        field === "geolocation"
       ) {
         continue;
       }

@@ -287,8 +287,8 @@ export const integrationApi = {
   gisLocation: async (payload: { lat: number; lng: number }) => {
     try {
       const response = await apiClient.post("/gis/identify", {
-        x: payload.lat,
-        y: payload.lng,
+        x: payload.lng,
+        y: payload.lat,
       });
       if (response.data) {
         const findAttribute = (prop: string) => {
