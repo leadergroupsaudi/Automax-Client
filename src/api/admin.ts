@@ -112,6 +112,7 @@ import type {
   NotificationTemplate,
   PublicIncidentFeedbackRequest,
   PublicIncidentFeedbackValidationResponse,
+  PublicIncidentFeedbackSubmitResponse,
 } from "../types";
 import type {
   NotificationTemplateCreatePayload,
@@ -1348,8 +1349,10 @@ export const incidentApi = {
       incidentId: string,
       signedToken: string,
       data: PublicIncidentFeedbackRequest,
-    ): Promise<ApiResponse<any>> => {
-      const response = await apiClient.put<ApiResponse<any>>(
+    ): Promise<ApiResponse<PublicIncidentFeedbackSubmitResponse>> => {
+      const response = await apiClient.put<
+        ApiResponse<PublicIncidentFeedbackSubmitResponse>
+      >(
         `/public-feedback/${incidentId}/submit?signed_token=${signedToken}`,
         data,
       );
