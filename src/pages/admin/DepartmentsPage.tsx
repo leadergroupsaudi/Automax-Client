@@ -549,10 +549,41 @@ export const DepartmentsPage: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const name = formData.name.trim();
+    const name_ar = formData.name_ar.trim();
+    const code = formData.code.trim();
+    if (!name) {
+      toast.error("Department name cannot be empty");
+      return;
+    }
+    if (!code) {
+      toast.error("Department code cannot be empty");
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9\s]+$/.test(name)) {
+      toast.error(
+        "Department name can only contain letters, numbers and spaces",
+      );
+      return;
+    }
+    if (name_ar && !/^[\u0600-\u06FF0-9\s]+$/.test(name_ar)) {
+      toast.error(
+        "Arabic name can only contain Arabic letters, numbers and spaces",
+      );
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9\s]+$/.test(code)) {
+      toast.error(
+        "Department code can only contain letters, numbers and spaces",
+      );
+      return;
+    }
     const payload = {
-      name: formData.name,
-      name_ar: formData.name_ar || undefined,
-      code: formData.code,
+      name,
+      name_ar: name_ar || undefined,
+      code,
       description: formData.description,
       description_ar: formData.description_ar || undefined,
       type: formData.type,
