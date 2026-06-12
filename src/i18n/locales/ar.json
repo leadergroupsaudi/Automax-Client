@@ -1097,7 +1097,9 @@
     "rolesSkipped": "تم تخطي بعض الأدوار",
     "errors": "الأخطاء:",
     "eGContentManager": "مثال: مدير المحتوى",
-    "roleKeyExample": "مثال: content_manager"
+    "roleKeyExample": "مثال: content_manager",
+    "invalidName": "يجب أن يحتوي اسم الدور على حرف أو رقم واحد على الأقل.",
+    "invalidCode": "رمز الدور يجب أن يحتوي على حرف أو رقم واحد على الأقل"
   },
   "departments": {
     "title": "الأقسام",

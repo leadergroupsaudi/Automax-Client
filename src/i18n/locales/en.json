@@ -1099,7 +1099,9 @@
     "rolesSkipped": "roles skipped",
     "errors": "Errors:",
     "eGContentManager": "e.g., Content Manager",
-    "roleKeyExample": "e.g., content_manager"
+    "roleKeyExample": "e.g., content_manager",
+    "invalidName": "Role name must contain at least one letter or number",
+    "invalidCode": "Role code must contain at least one letter or number"
   },
   "departments": {
     "title": "Departments",
