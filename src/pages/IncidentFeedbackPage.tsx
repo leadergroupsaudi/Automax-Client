@@ -26,6 +26,7 @@ export const CitizenIncidentFeedbackPage = () => {
   const [feedback, setFeedback] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [complaintNumber, setComplaintNumber] = useState<string | null>(null);
 
   const validationQuery = useQuery({
     queryKey: ["citizen-feedback-validate", incidentId, signedToken],
@@ -71,7 +72,10 @@ export const CitizenIncidentFeedbackPage = () => {
         },
       );
     },
-    onSuccess: () => setSubmitted(true),
+    onSuccess: (res) => {
+      setComplaintNumber(res?.data?.complaint_number ?? null);
+      setSubmitted(true);
+    },
     onError: handleFeedbackError,
   });
 
@@ -86,10 +90,13 @@ export const CitizenIncidentFeedbackPage = () => {
         {
           satisfied: false,
           comment: feedback.trim(),
-        } as any,
+        },
       );
     },
-    onSuccess: () => setSubmitted(true),
+    onSuccess: (res) => {
+      setComplaintNumber(res?.data?.complaint_number ?? null);
+      setSubmitted(true);
+    },
     onError: handleFeedbackError,
   });
 
@@ -177,6 +184,17 @@ export const CitizenIncidentFeedbackPage = () => {
             Your feedback has been submitted successfully for incident #
             {incident?.incident_number}.
           </p>
+          {complaintNumber && (
+            <div className="mt-4 inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+              <span>
+                A complaint has been raised on your behalf.{" "}
+                <span className="font-semibold">
+                  Complaint #{complaintNumber}
+                </span>
+              </span>
+            </div>
+          )}
         </div>
       </div>
     );
