@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "../../components/ui";
 import { usePermissions } from "../../hooks/usePermissions";
 import { PERMISSIONS } from "../../constants/permissions";
+import { toast } from "sonner";
 
 interface LocationFormData {
   name: string;
@@ -368,9 +369,27 @@ export const LocationsPage: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const name = formData.name.trim();
+    const name_ar = formData.name_ar.trim();
+
+    if (!name) {
+      toast.error("Location name cannot be empty");
+      return;
+    }
+    if (!/^[a-zA-Z0-9\s]+$/.test(name)) {
+      toast.error("Location name can only contain letters, numbers and spaces");
+      return;
+    }
+    if (name_ar && !/^[\u0600-\u06FF0-9\s]+$/.test(name_ar)) {
+      toast.error(
+        "Arabic name can only contain Arabic letters, numbers and spaces",
+      );
+      return;
+    }
     const payload = {
-      name: formData.name,
-      name_ar: formData.name_ar || undefined,
+      name,
+      name_ar: name_ar || undefined,
       code: formData.code,
       description: formData.description,
       description_ar: formData.description_ar || undefined,
