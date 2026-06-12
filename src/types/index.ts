@@ -2161,6 +2161,16 @@ export interface PublicIncidentFeedbackRequest {
   comment: string;
 }
 
+export interface PublicIncidentFeedbackSubmitResponse {
+  id: string;
+  incident_id: string;
+  satisfied: boolean;
+  comment?: string;
+  complaint_id?: string;
+  complaint_number?: string;
+  submitted_at?: string;
+}
+
 export interface IncidentRejectionLog {
   id: string;
   incident_id: string;
