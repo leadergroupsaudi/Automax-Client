@@ -931,6 +931,9 @@ export const LocationsPage: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
                       {t("locations.name")}
+                      <span className="text-[hsl(var(--destructive))] ml-1">
+                        *
+                      </span>
                     </label>
                     <input
                       type="text"
