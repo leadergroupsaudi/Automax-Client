@@ -83,8 +83,22 @@ export const RoleCreatePage: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim()) {
+    const trimmedName = formData.name.trim();
+    if (!trimmedName) {
       toast.error(t("roles.nameRequired"));
+      return;
+    }
+    if (
+      !/^(?=.*[a-zA-Z\u0600-\u06FF])[a-zA-Z0-9\u0600-\u06FF\s\-'.,&()/]+$/.test(
+        trimmedName,
+      )
+    ) {
+      toast.error(
+        t(
+          "roles.nameInvalid",
+          "Name must contain at least one letter and no special characters",
+        ),
+      );
       return;
     }
     if (!formData.code.trim()) {
@@ -92,7 +106,7 @@ export const RoleCreatePage: React.FC = () => {
       return;
     }
     createMutation.mutate({
-      name: formData.name.trim(),
+      name: trimmedName,
       code: formData.code.trim(),
       description: formData.description,
       permission_ids: formData.permission_ids,
