@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import {
   Plus,
   Edit2,
@@ -293,6 +294,9 @@ export const LocationsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "locations"] });
       closeModal();
     },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.error || "Failed to create location");
+    },
   });
 
   const updateMutation = useMutation({
@@ -301,6 +305,9 @@ export const LocationsPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "locations"] });
       closeModal();
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.error || "Failed to update location");
     },
   });
 
