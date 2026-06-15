@@ -87,7 +87,7 @@ import type {
   IncidentRejectionLog,
   AIQualityFeedback,
 } from "../../types";
-import { cn } from "@/lib/utils";
+import { cn, getLocalizedName } from "@/lib/utils";
 import { usePermissions } from "../../hooks/usePermissions";
 import { PERMISSIONS } from "../../constants/permissions";
 import { useAuthStore } from "../../stores/authStore";
@@ -3895,7 +3895,7 @@ export const IncidentDetailPage: React.FC = () => {
                       <p className="text-sm text-[hsl(var(--foreground))]">
                         {t("incidents.willAssignTo")}{" "}
                         <span className="font-medium">
-                          {trans.assign_department?.name ||
+                          {getLocalizedName(trans.assign_department) ||
                             t("incidents.department")}
                         </span>
                       </p>
@@ -3911,7 +3911,9 @@ export const IncidentDetailPage: React.FC = () => {
                         <p className="text-sm text-[hsl(var(--foreground))]">
                           {t("incidents.willAssignTo")}{" "}
                           <span className="font-medium">
-                            {departmentMatchResult.departments[0]?.name}
+                            {getLocalizedName(
+                              departmentMatchResult.departments[0],
+                            )}
                           </span>
                         </p>
                       ) : (
@@ -3999,7 +4001,7 @@ export const IncidentDetailPage: React.FC = () => {
                                   <span
                                     className={`text-sm flex-1 truncate ${isSelected ? "text-[hsl(var(--primary))] font-medium" : "text-[hsl(var(--foreground))]"} ${!isSelectableLeaf ? "opacity-60" : ""}`}
                                   >
-                                    {dept.name}
+                                    {getLocalizedName(dept)}
                                   </span>
                                   {isSelected && (
                                     <CheckCircle2 className="w-4 h-4 text-[hsl(var(--primary))] flex-shrink-0" />
@@ -4057,7 +4059,7 @@ export const IncidentDetailPage: React.FC = () => {
                                             <span
                                               className={`text-sm flex-1 truncate ${isSel ? "text-[hsl(var(--primary))] font-medium" : "text-[hsl(var(--foreground))]"}`}
                                             >
-                                              {dept.name}
+                                              {getLocalizedName(dept)}
                                             </span>
                                             {isSel && (
                                               <CheckCircle2 className="w-4 h-4 text-[hsl(var(--primary))] flex-shrink-0" />

@@ -50,7 +50,7 @@ import type {
   IncidentMergeOption,
 } from "../../types";
 import { useIncidentListWebSocket } from "../../lib/services/incidentListWebSocket";
-import { cn } from "@/lib/utils";
+import { cn, getLocalizedName } from "@/lib/utils";
 import { usePermissions } from "../../hooks/usePermissions";
 import { PERMISSIONS } from "../../constants/permissions";
 import {
@@ -977,7 +977,7 @@ export const IncidentsPage: React.FC = () => {
                 <option value="">{t("common.allWorkflows")}</option>
                 {workflowsData?.data?.map((workflow: Workflow) => (
                   <option key={workflow.id} value={workflow.id}>
-                    {workflow.name}
+                    {getLocalizedName(workflow)}
                   </option>
                 ))}
               </select>
@@ -1005,7 +1005,7 @@ export const IncidentsPage: React.FC = () => {
                 <option value="">{t("common.allStates")}</option>
                 {uniqueStates.map((state: WorkflowState) => (
                   <option key={state.id} value={state.id}>
-                    {state.name}
+                    {getLocalizedName(state)}
                   </option>
                 ))}
               </select>
@@ -1054,7 +1054,7 @@ export const IncidentsPage: React.FC = () => {
                       <option value="">{t("incidents.allTransitions")}</option>
                       {availableTransitions?.data?.map((transition: any) => (
                         <option key={transition.id} value={transition.id}>
-                          {transition.name}
+                          {getLocalizedName(transition)}
                         </option>
                       ))}
                       <option value="__converted_to_request__">

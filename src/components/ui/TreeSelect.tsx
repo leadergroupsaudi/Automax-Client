@@ -7,7 +7,7 @@ import {
   ChevronsUpDown,
   X,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getLocalizedName } from "@/lib/utils";
 
 import {
   findNodeById,
@@ -105,7 +105,7 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
             !canSelect && "opacity-60",
           )}
         >
-          {node.name}
+          {getLocalizedName(node)}
         </span>
 
         {/* Selected check */}
@@ -299,7 +299,7 @@ export const TreeSelect: React.FC<TreeSelectProps> = ({
           {selectedNode
             ? selectedPath.length > 1
               ? selectedPath.join(" > ")
-              : selectedNode.name
+              : getLocalizedName(selectedNode)
             : resolvedPlaceholder}
         </span>
         <div className="flex items-center gap-1 ml-2">
