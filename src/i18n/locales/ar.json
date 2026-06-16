@@ -1277,7 +1277,7 @@
     "noClassificationsYet": "لا توجد تصنيفات بعد",
     "createFirstClassification": "أنشئ تصنيفك الأول لتنظيم البلاغات والطلبات",
     "deleteConfirmTitle": "حذف التصنيف",
-    "deleteConfirmMessage": "هل أنت متأكد من حذف هذا التصنيف؟ سيتم حذف جميع التصنيفات الفرعية أيضاً.",
+    "deleteConfirmMessage": "هل أنت متأكد من حذف هذا التصنيف؟",
     "deleting": "جاري الحذف...",
     "updateDetails": "تحديث تفاصيل التصنيف",
     "addingUnder": "إضافة تحت",
