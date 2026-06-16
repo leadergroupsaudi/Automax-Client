@@ -1,11 +1,12 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { ChevronRight, ChevronDown, Check, Minus } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getLocalizedName } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
 export interface TreeNode {
   id: string;
   name: string;
+  name_ar?: string | null;
   children?: TreeNode[];
 }
 
@@ -208,7 +209,7 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
               : "text-[hsl(var(--foreground))] opacity-70",
           )}
         >
-          {node.name}
+          {getLocalizedName(node)}
         </span>
 
         {/* Children count badge */}

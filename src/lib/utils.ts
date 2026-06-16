@@ -1,12 +1,15 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import i18n from "i18next";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 export function hexToHSL(hex: string) {
-  let r = 0, g = 0, b = 0;
+  let r = 0,
+    g = 0,
+    b = 0;
 
   if (hex.length === 7) {
     r = parseInt(hex.slice(1, 3), 16);
@@ -20,7 +23,8 @@ export function hexToHSL(hex: string) {
 
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
-  let h = 0, s = 0;
+  let h = 0,
+    s = 0;
   const l = (max + min) / 2;
 
   if (max !== min) {
@@ -43,4 +47,14 @@ export function hexToHSL(hex: string) {
   }
 
   return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+}
+
+/**
+ * Return the localized name based on language preference.
+ * If `lang` is "ar" and `name_ar` is provided, returns `name_ar`, otherwise returns `name`.
+ */
+export function getLocalizedName(value: any): string {
+  const language = i18n?.language;
+  if (!value) return "";
+  return language === "ar" && value?.name_ar ? value?.name_ar : value?.name;
 }
