@@ -2023,7 +2023,11 @@
     "nameRequired": "اسم سير العمل مطلوب",
     "invalidName": "يمكن أن يحتوي اسم سير العمل على أحرف وأرقام ومسافات فقط.",
     "codeRequired": "رمز سير العمل مطلوب",
-    "invalidCode": "لا يمكن أن يحتوي كود سير العمل إلا على أحرف وأرقام ومسافات."
+    "invalidCode": "لا يمكن أن يحتوي كود سير العمل إلا على أحرف وأرقام ومسافات.",
+    "stateAlreadyExists": "اسم الحالة موجود بالفعل",
+    "stateCodeAlreadyExists": "رمز الحالة موجود بالفعل",
+    "transitionAlreadyExists": "اسم الانتقال موجود بالفعل",
+    "transitionCodeAlreadyExists": "رمز الانتقال موجود بالفعل"
   },
   "lookups": {
     "title": "البيانات الرئيسية",

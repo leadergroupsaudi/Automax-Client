@@ -2025,7 +2025,11 @@
     "nameRequired": "Workflow name is required",
     "invalidName": "Workflow name can only contain letters, numbers and spaces",
     "codeRequired": "Workflow code is required",
-    "invalidCode": "Workflow code can only contain letters, numbers and spaces"
+    "invalidCode": "Workflow code can only contain letters, numbers and spaces",
+    "stateAlreadyExists": "State name already exists",
+    "stateCodeAlreadyExists": "State code already exists",
+    "transitionAlreadyExists": "Transition name already exists",
+    "transitionCodeAlreadyExists": "Transition code already exists"
   },
   "lookups": {
     "title": "Master Data",

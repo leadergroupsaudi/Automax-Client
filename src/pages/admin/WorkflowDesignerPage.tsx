@@ -653,6 +653,16 @@ export const WorkflowDesignerPage: React.FC = () => {
     >
   >({});
 
+  const [stateDuplicateErrors, setStateDuplicateErrors] = useState({
+    name: "",
+    code: "",
+  });
+
+  const [transitionDuplicateErrors, setTransitionDuplicateErrors] = useState({
+    name: "",
+    code: "",
+  });
+
   const sendTestMutation = useMutation({
     mutationFn: notificationTemplateApi.sendTest,
     onSuccess: (data, variables) => {
@@ -1056,6 +1066,10 @@ export const WorkflowDesignerPage: React.FC = () => {
 
   // State modal handlers
   const openCreateStateModal = () => {
+    setStateDuplicateErrors({
+      name: "",
+      code: "",
+    });
     setEditingState(null);
     setStateFormData(initialStateFormData);
     setIsStateModalOpen(true);
@@ -1102,6 +1116,10 @@ export const WorkflowDesignerPage: React.FC = () => {
 
   // Transition modal handlers
   const openCreateTransitionModal = () => {
+    setTransitionDuplicateErrors({
+      name: "",
+      code: "",
+    });
     setEditingTransition(null);
     setTransitionFormData(initialTransitionFormData);
     setIsTransitionModalOpen(true);
@@ -1223,6 +1241,42 @@ export const WorkflowDesignerPage: React.FC = () => {
 
   const handleStateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // preventing duplicate states
+    const duplicateName = states.some(
+      (state) =>
+        state.id !== editingState?.id &&
+        state.name.trim().toLowerCase() ===
+          stateFormData.name.trim().toLowerCase(),
+    );
+
+    const duplicateCode = states.some(
+      (state) =>
+        state.id !== editingState?.id &&
+        state.code.trim().toLowerCase() ===
+          stateFormData.code.trim().toLowerCase(),
+    );
+
+    if (duplicateName || duplicateCode) {
+      setStateDuplicateErrors({
+        name: duplicateName ? t("workflows.stateAlreadyExists") : "",
+        code: duplicateCode ? t("workflows.stateCodeAlreadyExists") : "",
+      });
+
+      toast.error(
+        duplicateName
+          ? t("workflows.stateAlreadyExists")
+          : t("workflows.stateCodeAlreadyExists"),
+      );
+
+      return;
+    }
+
+    setStateDuplicateErrors({
+      name: "",
+      code: "",
+    });
+
     const data = {
       name: stateFormData.name,
       name_ar: stateFormData.name_ar,
@@ -1267,6 +1321,40 @@ export const WorkflowDesignerPage: React.FC = () => {
 
   const handleTransitionSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // preventing duplicate transitions
+    const duplicateName = transitions.some(
+      (transition) =>
+        transition.id !== editingTransition?.id &&
+        transition.name.trim().toLowerCase() ===
+          transitionFormData.name.trim().toLowerCase(),
+    );
+
+    const duplicateCode = transitions.some(
+      (transition) =>
+        transition.id !== editingTransition?.id &&
+        transition.code.trim().toLowerCase() ===
+          transitionFormData.code.trim().toLowerCase(),
+    );
+
+    if (duplicateName || duplicateCode) {
+      setTransitionDuplicateErrors({
+        name: duplicateName ? t("workflows.transitionAlreadyExists") : "",
+        code: duplicateCode ? t("workflows.transitionCodeAlreadyExists") : "",
+      });
+
+      toast.error(
+        duplicateName
+          ? t("workflows.transitionAlreadyExists")
+          : t("workflows.transitionCodeAlreadyExists"),
+      );
+
+      return;
+    }
+
+    setTransitionDuplicateErrors({
+      name: "",
+      code: "",
+    });
     const data = {
       name: transitionFormData.name,
       name_ar: transitionFormData.name_ar,
@@ -3030,15 +3118,33 @@ export const WorkflowDesignerPage: React.FC = () => {
                     <input
                       type="text"
                       value={stateFormData.name}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setStateFormData({
                           ...stateFormData,
                           name: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
-                      required
+                        });
+
+                        if (stateDuplicateErrors.name) {
+                          setStateDuplicateErrors((prev) => ({
+                            ...prev,
+                            name: "",
+                          }));
+                        }
+                      }}
+                      // className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                      className={cn(
+                        "w-full px-4 py-2.5 bg-[hsl(var(--background))] rounded-xl text-sm focus:outline-none",
+                        stateDuplicateErrors.name
+                          ? "border border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200"
+                          : "border border-[hsl(var(--border))] focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]",
+                      )}
+                      // required
                     />
+                    {stateDuplicateErrors.name && (
+                      <p className="mt-1 text-sm text-red-500">
+                        {stateDuplicateErrors.name}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
@@ -3065,15 +3171,33 @@ export const WorkflowDesignerPage: React.FC = () => {
                   <input
                     type="text"
                     value={stateFormData.code}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setStateFormData({
                         ...stateFormData,
                         code: e.target.value,
-                      })
-                    }
-                    className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
-                    required
+                      });
+
+                      if (stateDuplicateErrors.code) {
+                        setStateDuplicateErrors((prev) => ({
+                          ...prev,
+                          code: "",
+                        }));
+                      }
+                    }}
+                    // className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                    className={cn(
+                      "w-full px-4 py-2.5 bg-[hsl(var(--background))] rounded-xl text-sm font-mono focus:outline-none",
+                      stateDuplicateErrors.code
+                        ? "border border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200"
+                        : "border border-[hsl(var(--border))] focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]",
+                    )}
+                    // required
                   />
+                  {stateDuplicateErrors.code && (
+                    <p className="mt-1 text-sm text-red-500">
+                      {stateDuplicateErrors.code}
+                    </p>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -3734,16 +3858,34 @@ export const WorkflowDesignerPage: React.FC = () => {
                     <input
                       type="text"
                       value={transitionFormData.name}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setTransitionFormData({
                           ...transitionFormData,
                           name: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                        });
+
+                        if (transitionDuplicateErrors.name) {
+                          setTransitionDuplicateErrors((prev) => ({
+                            ...prev,
+                            name: "",
+                          }));
+                        }
+                      }}
+                      // className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                      className={cn(
+                        "w-full px-4 py-2.5 bg-[hsl(var(--background))] rounded-xl text-sm focus:outline-none",
+                        transitionDuplicateErrors.name
+                          ? "border border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200"
+                          : "border border-[hsl(var(--border))] focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]",
+                      )}
                       placeholder={t("workflows.eGStartWorking")}
-                      required
+                      // required
                     />
+                    {transitionDuplicateErrors.name && (
+                      <p className="mt-1 text-sm text-red-500">
+                        {transitionDuplicateErrors.name}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
@@ -3771,16 +3913,34 @@ export const WorkflowDesignerPage: React.FC = () => {
                   <input
                     type="text"
                     value={transitionFormData.code}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setTransitionFormData({
                         ...transitionFormData,
                         code: e.target.value,
-                      })
-                    }
-                    className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                      });
+
+                      if (transitionDuplicateErrors.code) {
+                        setTransitionDuplicateErrors((prev) => ({
+                          ...prev,
+                          code: "",
+                        }));
+                      }
+                    }}
+                    // className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                    className={cn(
+                      "w-full px-4 py-2.5 bg-[hsl(var(--background))] rounded-xl text-sm font-mono focus:outline-none",
+                      transitionDuplicateErrors.code
+                        ? "border border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200"
+                        : "border border-[hsl(var(--border))] focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]",
+                    )}
                     placeholder={t("workflows.stateKeyExample")}
-                    required
+                    // required
                   />
+                  {transitionDuplicateErrors.code && (
+                    <p className="mt-1 text-sm text-red-500">
+                      {transitionDuplicateErrors.code}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
