@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
-  Search,
   ChevronLeft,
   ChevronRight,
   RefreshCw,
@@ -30,16 +29,22 @@ import {
 } from "lucide-react";
 import { Button, Checkbox } from "../../components/ui";
 import { incidentApi, incidentMergeApi } from "../../api/admin";
-import type { Incident, IncidentMergeOption } from "../../types";
+import type {
+  Incident,
+  IncidentFilter,
+  IncidentMergeOption,
+} from "../../types";
 import { useIncidentListWebSocket } from "../../lib/services/incidentListWebSocket";
 import { cn } from "@/lib/utils";
 import { usePermissions } from "../../hooks/usePermissions";
 import { PERMISSIONS } from "../../constants/permissions";
+import { useAuthStore } from "@/stores/authStore";
 import BulkConvertToRequestModal from "@/components/incidents/BulkConvertToRequestModal";
 import {
   MergeIncidentsModal,
   BulkTransitionModal,
   SMSLegends,
+  IncidentFilters,
 } from "../../components/incidents";
 import LocationMap from "@/components/maps/LocationMap";
 
@@ -50,10 +55,13 @@ interface MyIncidentsPageProps {
 export const MyIncidentsPage: React.FC<MyIncidentsPageProps> = ({ type }) => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  const { user } = useAuthStore();
   const { hasPermission, isSuperAdmin } = usePermissions();
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [filter, setFilter] = useState<IncidentFilter>({
+    record_type: "incident",
+  });
   const [selectedIncidents, setSelectedIncidents] = useState<any[]>([]);
   const [showConvertModal, setShowConvertModal] = useState<boolean>(false);
   const [showBulkTransitionModal, setShowBulkTransitionModal] = useState(false);
@@ -80,6 +88,42 @@ export const MyIncidentsPage: React.FC<MyIncidentsPageProps> = ({ type }) => {
     ? t("incidents.assignedToMeDesc")
     : t("incidents.createdByMeDesc");
   const PageIcon = isAssigned ? UserCheck : PenLine;
+
+  // Filter handlers
+  const handleFilterChange = (key: keyof IncidentFilter, value: any) => {
+    setFilter((prev) => {
+      const next = { ...prev };
+      if (key === "current_state_id") {
+        delete next.transition_id;
+        delete next.converted_to_request;
+      }
+      if (value === undefined || value === "" || value === null) {
+        delete next[key];
+      } else {
+        (next as any)[key] = value;
+      }
+      return next;
+    });
+    setPage(1);
+  };
+
+  const clearFilters = () => {
+    setFilter({ record_type: "incident" });
+    setPage(1);
+  };
+
+  const hasActiveFilters = !!(
+    filter.search ||
+    filter.workflow_id ||
+    filter.current_state_id ||
+    (filter.classification_ids && filter.classification_ids.length > 0) ||
+    (filter.location_ids && filter.location_ids.length > 0) ||
+    (filter.department_ids && filter.department_ids.length > 0) ||
+    filter.sla_breached !== undefined ||
+    filter.priority !== undefined ||
+    !!filter.start_date ||
+    !!filter.end_date
+  );
 
   // Check if all selected incidents belong to the same workflow
   const selectedWorkflowId =
@@ -136,6 +180,28 @@ export const MyIncidentsPage: React.FC<MyIncidentsPageProps> = ({ type }) => {
     toast.success(t("incidents.merge.mergeSuccess"));
   };
 
+  // Build the full filter for the API query
+  const queryFilter: IncidentFilter = useMemo(
+    () => ({
+      ...filter,
+      page,
+      limit,
+      record_type: "incident",
+      ...(isAssigned ? { assignee_id: user?.id } : { reporter_id: user?.id }),
+    }),
+    [filter, page, limit, isAssigned, user?.id],
+  );
+
+  // Skip the API call when search is 1-2 chars
+  const isShortSearch = !!(
+    queryFilter.search &&
+    queryFilter.search.length > 0 &&
+    queryFilter.search.length < 3
+  );
+  const finalFilter = isShortSearch
+    ? { ...queryFilter, search: undefined }
+    : queryFilter;
+
   const {
     data: incidentsData,
     isLoading,
@@ -146,13 +212,11 @@ export const MyIncidentsPage: React.FC<MyIncidentsPageProps> = ({ type }) => {
     queryKey: [
       "incidents",
       type === "assigned" ? "my-assigned" : "my-reported",
-      page,
-      limit,
+      finalFilter,
     ],
-    queryFn: () =>
-      type === "assigned"
-        ? incidentApi.getMyAssigned(page, limit, "incident")
-        : incidentApi.getMyReported(page, limit, "incident"),
+    queryFn: () => incidentApi.list(finalFilter),
+    enabled: !isShortSearch && !!user?.id,
+    placeholderData: keepPreviousData,
   });
 
   const { data: statsData } = useQuery({
@@ -167,17 +231,6 @@ export const MyIncidentsPage: React.FC<MyIncidentsPageProps> = ({ type }) => {
   const incidents = incidentsData?.data || [];
   const totalPages = incidentsData?.total_pages ?? 1;
   const totalItems = incidentsData?.total_items ?? 0;
-
-  // Client-side search filter
-  const filteredIncidents = searchTerm
-    ? incidents.filter(
-        (incident: Incident) =>
-          incident.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          incident.incident_number
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()),
-      )
-    : incidents;
 
   const getLookupValue = (incident: Incident, categoryCode: string) => {
     return incident.lookup_values?.find(
@@ -464,19 +517,16 @@ export const MyIncidentsPage: React.FC<MyIncidentsPageProps> = ({ type }) => {
         </div>
       )}
 
-      {/* Search Bar */}
-      <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-4 shadow-sm">
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[hsl(var(--muted-foreground))] w-5 h-5" />
-          <input
-            type="text"
-            placeholder={t("incidents.searchPlaceholder")}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-[hsl(var(--muted)/0.5)] border border-[hsl(var(--border))] rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] focus:bg-[hsl(var(--background))] transition-all text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))]"
-          />
-        </div>
-      </div>
+      {/* Filters Bar */}
+      <IncidentFilters
+        filter={filter}
+        onFilterChange={handleFilterChange}
+        onClearFilters={clearFilters}
+        hasActiveFilters={hasActiveFilters}
+        recordType="incident"
+        showAssigneeFilter={false}
+        canViewAllIncidents={true}
+      />
 
       {/* Incidents Table */}
       <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] overflow-hidden shadow-sm">
@@ -489,7 +539,7 @@ export const MyIncidentsPage: React.FC<MyIncidentsPageProps> = ({ type }) => {
               {t("incidents.loadingIncidents")}
             </p>
           </div>
-        ) : filteredIncidents.length === 0 ? (
+        ) : isShortSearch || incidents.length === 0 ? (
           <div className="p-12 text-center">
             <div className="inline-flex items-center justify-center w-14 h-14 bg-[hsl(var(--muted))] rounded-2xl mb-4">
               <PageIcon className="w-6 h-6 text-[hsl(var(--muted-foreground))]" />
@@ -498,15 +548,15 @@ export const MyIncidentsPage: React.FC<MyIncidentsPageProps> = ({ type }) => {
               {t("incidents.noIncidents")}
             </h3>
             <p className="text-[hsl(var(--muted-foreground))] mb-6">
-              {searchTerm
+              {hasActiveFilters
                 ? t("incidents.noIncidentsMatch")
                 : isAssigned
                   ? t("incidents.noAssignedIncidents")
                   : t("incidents.noCreatedIncidents")}
             </p>
-            {searchTerm ? (
-              <Button variant="outline" onClick={() => setSearchTerm("")}>
-                {t("incidents.clearSearch")}
+            {hasActiveFilters ? (
+              <Button variant="outline" onClick={clearFilters}>
+                {t("common.clearFilters", "Clear Filters")}
               </Button>
             ) : canCreateIncident ? (
               <Button
@@ -574,7 +624,7 @@ export const MyIncidentsPage: React.FC<MyIncidentsPageProps> = ({ type }) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[hsl(var(--border))]">
-                  {filteredIncidents.map((incident: Incident) => {
+                  {incidents.map((incident: Incident) => {
                     const priority = getLookupValue(incident, "PRIORITY");
 
                     // Detect master and child incidents

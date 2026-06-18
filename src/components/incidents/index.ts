@@ -5,3 +5,5 @@ export { UnmergeIncidentsModal } from "./UnmergeIncidentsModal";
 export { BulkUnmergeModal } from "./BulkUnmergeModal";
 export { BulkTransitionModal } from "./BulkTransitionModal";
 export { SMSLegends } from "./SMSLegends";
+export { IncidentFilters } from "./IncidentFilters";
+export type { IncidentFiltersProps, ColumnConfig } from "./IncidentFilters";

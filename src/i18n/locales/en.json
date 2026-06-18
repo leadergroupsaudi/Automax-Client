@@ -1981,6 +1981,7 @@
     "commentRequired": "Comment Required",
     "attachmentRequired": "Attachment Required",
     "feedbackRequired": "Feedback Required",
+    "ratingRequired": "Rating Required",
     "fieldValueRequired": "Field Value Required",
     "errorMessageOptional": "Error message (optional)",
     "fieldsTheUserCanEditDuringThis": "— fields the user can edit during this transition",

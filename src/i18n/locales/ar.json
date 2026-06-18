@@ -1890,6 +1890,7 @@
     "allRoles": "جميع الأدوار",
     "fromTo": "من → إلى",
     "config": "الإعدادات",
+    "ratingRequired": "التقييم مطلوب",
     "configureRequirementsActions": "تكوين المتطلبات والإجراءات",
     "autoWorkflowMatchingRules": "قواعد المطابقة التلقائية لسير العمل",
     "configureWhichIncidentsShouldAutomaticallyUseThis": "حدد أي البلاغات يجب أن تستخدم سير العمل هذا تلقائيًا بناءً على المصادر والأولويات والتصنيفات والمواقع.",
