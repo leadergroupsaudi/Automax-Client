@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
@@ -359,6 +358,8 @@ export const ClassificationsPage: React.FC = () => {
   const [viewDepartments, setViewDepartments] = useState<Department[]>([]);
   const [viewLoading, setViewLoading] = useState(false);
   const [viewTab, setViewTab] = useState<"users" | "departments">("users");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const canCreateClassification =
     isSuperAdmin || hasPermission(PERMISSIONS.CLASSIFICATIONS_CREATE);
@@ -430,8 +431,10 @@ export const ClassificationsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "classifications"] });
       setDeleteConfirm(null);
     },
-    onError: () => {
-      setDeleteConfirm(null);
+    onError: (err: any) => {
+      setDeleteError(
+        err?.response?.data?.error || t("classifications.deleteError"),
+      );
     },
   });
 
@@ -534,19 +537,20 @@ export const ClassificationsPage: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (formData.types.length === 0) {
-      toast.error(
-        t("classifications.typesRequired", {
-          defaultValue: "Select at least one type",
-        }),
-      );
-      return;
+  const validateForm = (): boolean => {
+    const newErrors: { [key: string]: string } = {};
+    const name = formData.name.trim();
+    if (!name) {
+      newErrors.name = t("common.nameRequired");
+    } else if (!/[A-Za-z]/.test(name)) {
+      newErrors.name = t("common.nameInvalid");
+    } else if (!/^[A-Za-z0-9\s'",.&()/-]+$/.test(name)) {
+      newErrors.name = t("common.nameAllowedCharacters");
     }
 
-    // Validate criticalities - all must have closing time configured
+    if (formData.types.length === 0) {
+      newErrors.types = t("classifications.typesRequired");
+    }
     const hasInvalidCriticality = formData.criticalities.some(
       (c) =>
         c.max_closing_hours < 0 ||
@@ -556,7 +560,16 @@ export const ClassificationsPage: React.FC = () => {
     );
 
     if (hasInvalidCriticality) {
-      toast.error(t("classifications.criticalityRequired"));
+      newErrors.criticalities = t("classifications.criticalityRequired");
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
       return;
     }
 
@@ -1022,7 +1035,7 @@ export const ClassificationsPage: React.FC = () => {
         <div className="fixed inset-0 bg-[hsl(var(--foreground)/0.6)] backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-[hsl(var(--card))] rounded-xl shadow-2xl max-w-md w-full animate-scale-in">
             <div className="p-6">
-              <div className="flex items-start gap-4 mb-6">
+              <div className="flex items-start gap-4 ">
                 <div className="w-12 h-12 bg-[hsl(var(--destructive)/0.1)] rounded-xl flex items-center justify-center flex-shrink-0">
                   <AlertTriangle className="w-6 h-6 text-[hsl(var(--destructive))]" />
                 </div>
@@ -1047,20 +1060,45 @@ export const ClassificationsPage: React.FC = () => {
                   )}
                 </div>
               </div>
-              <div className="flex justify-end gap-3">
-                <Button variant="ghost" onClick={() => setDeleteConfirm(null)}>
-                  {t("common.cancel")}
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => deleteMutation.mutate(deleteConfirm.id)}
-                  isLoading={deleteMutation.isPending}
-                >
-                  {deleteMutation.isPending
-                    ? t("classifications.deleting")
-                    : t("classifications.deleteClassification")}
-                </Button>
-              </div>
+              {deleteError && (
+                <div className="mt-3 rounded-md border border-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.1)] px-4 py-3 text-sm font-medium text-[hsl(var(--destructive))]">
+                  {deleteError}
+                </div>
+              )}
+              {!deleteError ? (
+                <div className="flex justify-end mt-6 gap-3">
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setDeleteConfirm(null);
+                      setDeleteError(null);
+                    }}
+                  >
+                    {t("common.cancel")}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => deleteMutation.mutate(deleteConfirm.id)}
+                    isLoading={deleteMutation.isPending}
+                  >
+                    {deleteMutation.isPending
+                      ? t("classifications.deleting")
+                      : t("classifications.deleteClassification")}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex justify-end mt-6 gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setDeleteConfirm(null);
+                      setDeleteError(null);
+                    }}
+                  >
+                    {t("common.close")}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1102,7 +1140,7 @@ export const ClassificationsPage: React.FC = () => {
             {/* Modal Body - Scrollable */}
             <form
               onSubmit={handleSubmit}
-              className="p-6 space-y-4 overflow-y-auto flex-1"
+              className="p-6 pb-0 space-y-4 overflow-y-auto flex-1"
             >
               {/* Parent Info Banner (when adding child) */}
               {!editingClassification && formData.parent_name && (
@@ -1135,8 +1173,12 @@ export const ClassificationsPage: React.FC = () => {
                       setFormData({ ...formData, name: e.target.value })
                     }
                     className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
-                    required
                   />
+                  {errors.name && (
+                    <p className="text-xs text-[hsl(var(--destructive))] mt-1">
+                      {errors.name}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
@@ -1421,7 +1463,7 @@ export const ClassificationsPage: React.FC = () => {
               </div>
 
               {/* Modal Footer - Fixed at bottom */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-[hsl(var(--border))] flex-shrink-0 sticky bottom-0 bg-[hsl(var(--card))] pt-4">
+              <div className="flex justify-end gap-3 py-4 border-t border-[hsl(var(--border))] flex-shrink-0 sticky bottom-0 bg-[hsl(var(--card))] ">
                 <Button variant="ghost" type="button" onClick={closeModal}>
                   {t("common.cancel")}
                 </Button>

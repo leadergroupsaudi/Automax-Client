@@ -404,11 +404,10 @@ export const LocationsPage: React.FC = () => {
 
     if (!name) {
       newErrors.name = t("locations.nameRequired");
+    } else if (!/[A-Za-z]/.test(name)) {
+      newErrors.name = t("common.nameInvalid");
     } else if (!/^[a-zA-Z0-9\s]+$/.test(name)) {
-      newErrors.name = t("locations.invalidName", {
-        defaultValue:
-          "Location name can only contain letters, numbers and spaces",
-      });
+      newErrors.name = t("locations.invalidName");
     }
 
     if (name_ar && !/^[\u0600-\u06FF0-9\s]+$/.test(name_ar)) {
@@ -928,7 +927,7 @@ export const LocationsPage: React.FC = () => {
       {/* Create/Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-[hsl(var(--foreground)/0.6)] backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[hsl(var(--card))] rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-hidden animate-scale-in">
+          <div className="bg-[hsl(var(--card))] rounded-xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-hidden animate-scale-in">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.5)]">
               <div className="flex items-center gap-3">
@@ -998,10 +997,9 @@ export const LocationsPage: React.FC = () => {
                         }
                       }}
                       className={`w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all ${errors.name ? "border-[hsl(var(--destructive))]" : ""}`}
-                      required
                     />
                     {errors.name && (
-                      <p className="mt-2 text-sm text-[hsl(var(--destructive))]">
+                      <p className="mt-1 text-xs text-[hsl(var(--destructive))]">
                         {errors.name}
                       </p>
                     )}
