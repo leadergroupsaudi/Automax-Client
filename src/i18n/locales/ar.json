@@ -221,7 +221,10 @@
     "descriptionAr": "الوصف (بالعربية)",
     "descriptionArPlaceholder": "الوصف بالعربية",
     "noFileChosen": "لا يوجد ملف مختار",
-    "chooseFile": "اختر ملف"
+    "chooseFile": "اختر ملف",
+    "nameRequired": "الاسم مطلوب.",
+    "nameInvalid": "لا يمكن أن يتكون الاسم من أرقام أو رموز خاصة فقط.",
+    "nameAllowedCharacters": "يمكن أن يحتوي الاسم فقط على أحرف وأرقام ومسافات والرموز التالية: - ' . , & ( ) /."
   },
   "search": {
     "minCharsTitle": "استمر في الكتابة...",
@@ -1027,6 +1030,14 @@
     "usersImportedSuccessfully": "تم استيراد المستخدمين بنجاح",
     "usersSkipped": "تم تخطي بعض المستخدمين",
     "errors": "الأخطاء:",
+    "importUsers": "استيراد المستخدمين",
+    "uploadJsonToImport": "ارفع ملف JSON لاستيراد المستخدمين",
+    "validJsonRequired": "يتم قبول ملفات JSON الصالحة فقط.",
+    "failedImportsDownloadNote": "يمكن تنزيل عمليات الاستيراد الفاشلة كملف JSON بعد المعالجة.",
+    "importFailed": "فشل استيراد المستخدمين. تحقق من الملف وحاول مرة أخرى.",
+    "imported": "تم استيرادها",
+    "importSummary": "نجح {{success}} وفشل {{errors}}",
+    "downloadFailedImports": "تنزيل عمليات الاستيراد الفاشلة",
     "userAgent": "وكيل المستخدم",
     "51234Default": "51234 (افتراضي)",
     "unknownUser": "مستخدم غير معروف",
@@ -1097,7 +1108,9 @@
     "rolesSkipped": "تم تخطي بعض الأدوار",
     "errors": "الأخطاء:",
     "eGContentManager": "مثال: مدير المحتوى",
-    "roleKeyExample": "مثال: content_manager"
+    "roleKeyExample": "مثال: content_manager",
+    "invalidName": "يجب أن يحتوي اسم الدور على حرف أو رقم واحد على الأقل.",
+    "invalidCode": "رمز الدور يجب أن يحتوي على حرف أو رقم واحد على الأقل"
   },
   "departments": {
     "title": "الأقسام",
@@ -1139,6 +1152,8 @@
     "saving": "جاري الحفظ...",
     "active": "نشط",
     "inactive": "غير نشط",
+    "activate": "تفعيل",
+    "deactivate": "تعطيل",
     "loadingDepartment": "جاري تحميل القسم...",
     "departmentNotFound": "القسم غير موجود",
     "departmentNotFoundDesc": "القسم الذي تبحث عنه غير موجود أو تم حذفه.",
@@ -1169,7 +1184,12 @@
     "codePlaceholder": "مثال: ENG",
     "namePlaceholder": "مثال: الهندسة",
     "nameAr": "الاسم (بالعربية)",
-    "descriptionAr": "الوصف (بالعربية)"
+    "descriptionAr": "الوصف (بالعربية)",
+    "nameRequired": "اسم القسم مطلوب",
+    "codeRequired": "رمز القسم مطلوب",
+    "invalidName": "يمكن أن يحتوي اسم القسم على أحرف وأرقام ومسافات فقط.",
+    "invalidArabicName": "يجب ألا يحتوي اسم القسم باللغة العربية إلا على أحرف وأرقام ومسافات.",
+    "invalidCode": "لا يمكن أن يحتوي رمز القسم إلا على أحرف وأرقام ومسافات."
   },
   "locations": {
     "title": "المواقع",
@@ -1207,6 +1227,8 @@
     "saving": "جاري الحفظ...",
     "active": "نشط",
     "inactive": "غير نشط",
+    "activate": "تفعيل",
+    "deactivate": "تعطيل",
     "locationTypes": "أنواع المواقع",
     "typeCountry": "دولة",
     "typeState": "ولاية/محافظة",
@@ -1234,7 +1256,10 @@
     "codePlaceholder": "مثال: NY-OFF",
     "namePlaceholder": "مثال: مكتب نيويورك",
     "nameAr": "الاسم (بالعربية)",
-    "descriptionAr": "الوصف (بالعربية)"
+    "descriptionAr": "الوصف (بالعربية)",
+    "nameRequired": "اسم الموقع مطلوب",
+    "invalidName": "يمكن أن يحتوي اسم الموقع على أحرف وأرقام ومسافات فقط.",
+    "invalidArabicName": "يجب ألا يحتوي اسم الموقع باللغة العربية إلا على أحرف عربية وأرقام ومسافات."
   },
   "classifications": {
     "title": "التصنيفات",
@@ -1256,6 +1281,10 @@
     "createFirstClassification": "أنشئ تصنيفك الأول لتنظيم البلاغات والطلبات",
     "deleteConfirmTitle": "حذف التصنيف",
     "deleteConfirmMessage": "هل أنت متأكد من حذف هذا التصنيف؟ سيتم حذف جميع التصنيفات الفرعية أيضاً.",
+    "deleteHasChildrenTitle": "يحتوي هذا التصنيف على تصنيفات فرعية.",
+    "deleteHasChildrenMessage": "سيؤدي حذفه أيضاً إلى حذف جميع التصنيفات الفرعية المرتبطة به نهائياً. لا يمكن التراجع عن هذا الإجراء.",
+    "deleteFailedTitle": "تعذر حذف التصنيف",
+    "deleteFailedHelp": "قم بحل المشكلة الموضحة أعلاه، ثم حاول مرة أخرى.",
     "deleting": "جاري الحذف...",
     "updateDetails": "تحديث تفاصيل التصنيف",
     "addingUnder": "إضافة تحت",
@@ -1278,6 +1307,8 @@
     "saving": "جاري الحفظ...",
     "active": "نشط",
     "inactive": "غير نشط",
+    "activate": "تفعيل",
+    "deactivate": "تعطيل",
     "level": "المستوى",
     "aboutTitle": "حول التصنيفات",
     "aboutDescription": "تُستخدم التصنيفات لتصنيف البلاغات والطلبات. أنشئ هيكلاً هرمياً لتنظيمها حسب النوع والفئة والفئة الفرعية لإدارة أفضل للتذاكر.",
@@ -1310,7 +1341,8 @@
     "errors": "الأخطاء:",
     "namePlaceholder": "مثال: مشاكل الأجهزة",
     "nameAr": "الاسم (بالعربية)",
-    "descriptionAr": "الوصف (بالعربية)"
+    "descriptionAr": "الوصف (بالعربية)",
+    "deleteError": "فشل في حذف التصنيف"
   },
   "reports": {
     "title": "التقارير",
@@ -1350,6 +1382,8 @@
     "duplicate": "نسخ",
     "delete": "حذف",
     "deleteConfirm": "هل أنت متأكد من حذف",
+    "templateSaved": "تم حفظ القالب بنجاح",
+    "templateUpdated": "تم تحديث القالب بنجاح",
     "dataSources": {
       "incidents": "البلاغات",
       "requests": "الطلبات",
@@ -1440,7 +1474,8 @@
         "isEmpty": "فارغ",
         "isNotEmpty": "غير فارغ"
       },
-      "toDate": "إلى تاريخ"
+      "toDate": "إلى تاريخ",
+      "timestampKey": "مفتاح الطابع الزمني"
     },
     "errors": {
       "invalidDateRange": "كلا التاريخين (من وإلى) مطلوبان",
@@ -1490,10 +1525,14 @@
       "updateTemplate": "تحديث القالب",
       "report": "تقرير",
       "templateName": "اسم القالب",
+      "templateNameAr": "اسم القالب (العربية)",
       "templateNameRequired": "اسم القالب مطلوب",
       "templateNamePlaceholder": "أدخل اسم القالب...",
+      "templateNamePlaceholderAr": "أدخل اسم القالب (العربية)...",
       "description": "الوصف",
+      "descriptionAr": "الوصف (العربية)",
       "descriptionPlaceholder": "وصف اختياري...",
+      "descriptionPlaceholderAr": "وصف اختياري (العربية)...",
       "visibility": "الرؤية",
       "private": "خاص",
       "privateDesc": "أنت فقط يمكنك الوصول",
@@ -1988,7 +2027,15 @@
     "duplicateWorkflowCodesWillBeRenamedAutomatically": "سيتم إعادة تسمية رموز سير العمل المكررة تلقائيًا",
     "missingRolesOrClassificationsWillShowWarnings": "سيتم عرض تحذيرات للأدوار أو التصنيفات المفقودة",
     "noFeedbackOptionsYet": "لا توجد خيارات تقييم حتى الآن",
-    "noCommentOptionsYet": "لا توجد خيارات تعليقات حتى الآن"
+    "noCommentOptionsYet": "لا توجد خيارات تعليقات حتى الآن",
+    "nameRequired": "اسم سير العمل مطلوب",
+    "invalidName": "يمكن أن يحتوي اسم سير العمل على أحرف وأرقام ومسافات فقط.",
+    "codeRequired": "رمز سير العمل مطلوب",
+    "invalidCode": "لا يمكن أن يحتوي كود سير العمل إلا على أحرف وأرقام ومسافات.",
+    "stateAlreadyExists": "اسم الحالة موجود بالفعل",
+    "stateCodeAlreadyExists": "رمز الحالة موجود بالفعل",
+    "transitionAlreadyExists": "اسم الانتقال موجود بالفعل",
+    "transitionCodeAlreadyExists": "رمز الانتقال موجود بالفعل"
   },
   "lookups": {
     "title": "البيانات الرئيسية",

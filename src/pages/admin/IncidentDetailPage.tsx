@@ -45,8 +45,15 @@ import {
   Bot,
   ShieldCheck,
   Phone,
+  Maximize2,
 } from "lucide-react";
-import { Button } from "../../components/ui";
+import {
+  Button,
+  Modal,
+  ModalBody,
+  ModalHeader,
+  ModalTitle,
+} from "../../components/ui";
 import { TreeSelect } from "../../components/ui/TreeSelect";
 import { getNodePath, type TreeSelectNode } from "../../utils/treeUtils";
 import { MiniWorkflowView } from "../../components/workflow";
@@ -87,7 +94,7 @@ import type {
   IncidentRejectionLog,
   AIQualityFeedback,
 } from "../../types";
-import { cn } from "@/lib/utils";
+import { cn, getLocalizedName } from "@/lib/utils";
 import { usePermissions } from "../../hooks/usePermissions";
 import { PERMISSIONS } from "../../constants/permissions";
 import { useAuthStore } from "../../stores/authStore";
@@ -219,6 +226,7 @@ export const IncidentDetailPage: React.FC = () => {
   >([]);
   const [compareModalOpen, setCompareModalOpen] = useState(false);
   const [compareSliderPosition, setCompareSliderPosition] = useState(50);
+  const [locationMapModalOpen, setLocationMapModalOpen] = useState(false);
 
   //Image Editor state
   const [openImageEditor, setOpenImageEditor] = useState(false);
@@ -3657,7 +3665,7 @@ export const IncidentDetailPage: React.FC = () => {
                     </label>
                     <div className="mt-1.5 space-y-1.5">
                       {/* Map - smaller height */}
-                      <div className="h-32 rounded-lg overflow-hidden border border-[hsl(var(--border))]">
+                      <div className="relative h-32 rounded-lg overflow-hidden border border-[hsl(var(--border))]">
                         <MapContainer
                           center={[incident.latitude, incident.longitude]}
                           zoom={15}
@@ -3674,6 +3682,14 @@ export const IncidentDetailPage: React.FC = () => {
                             icon={defaultIcon}
                           />
                         </MapContainer>
+                        <button
+                          type="button"
+                          onClick={() => setLocationMapModalOpen(true)}
+                          className="absolute top-2 right-2 z-50 p-1 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-md shadow-md hover:bg-white transition-all text-gray-600 hover:text-blue-600"
+                          title={t("locationPicker.expandMap")}
+                        >
+                          <Maximize2 className="w-4 h-4" />
+                        </button>
                       </div>
                       {/* Compact location info */}
                       <div className="text-xs text-[hsl(var(--muted-foreground))]">
@@ -3895,7 +3911,7 @@ export const IncidentDetailPage: React.FC = () => {
                       <p className="text-sm text-[hsl(var(--foreground))]">
                         {t("incidents.willAssignTo")}{" "}
                         <span className="font-medium">
-                          {trans.assign_department?.name ||
+                          {getLocalizedName(trans.assign_department) ||
                             t("incidents.department")}
                         </span>
                       </p>
@@ -3911,7 +3927,9 @@ export const IncidentDetailPage: React.FC = () => {
                         <p className="text-sm text-[hsl(var(--foreground))]">
                           {t("incidents.willAssignTo")}{" "}
                           <span className="font-medium">
-                            {departmentMatchResult.departments[0]?.name}
+                            {getLocalizedName(
+                              departmentMatchResult.departments[0],
+                            )}
                           </span>
                         </p>
                       ) : (
@@ -3999,7 +4017,7 @@ export const IncidentDetailPage: React.FC = () => {
                                   <span
                                     className={`text-sm flex-1 truncate ${isSelected ? "text-[hsl(var(--primary))] font-medium" : "text-[hsl(var(--foreground))]"} ${!isSelectableLeaf ? "opacity-60" : ""}`}
                                   >
-                                    {dept.name}
+                                    {getLocalizedName(dept)}
                                   </span>
                                   {isSelected && (
                                     <CheckCircle2 className="w-4 h-4 text-[hsl(var(--primary))] flex-shrink-0" />
@@ -4057,7 +4075,7 @@ export const IncidentDetailPage: React.FC = () => {
                                             <span
                                               className={`text-sm flex-1 truncate ${isSel ? "text-[hsl(var(--primary))] font-medium" : "text-[hsl(var(--foreground))]"}`}
                                             >
-                                              {dept.name}
+                                              {getLocalizedName(dept)}
                                             </span>
                                             {isSel && (
                                               <CheckCircle2 className="w-4 h-4 text-[hsl(var(--primary))] flex-shrink-0" />
@@ -5373,6 +5391,73 @@ export const IncidentDetailPage: React.FC = () => {
           refetchMergedIncidents();
         }}
       />
+
+      {incident.latitude !== undefined && incident.longitude !== undefined && (
+        <Modal
+          isOpen={locationMapModalOpen}
+          onClose={() => setLocationMapModalOpen(false)}
+          size="full"
+          className="max-h-[92vh]"
+        >
+          <ModalHeader>
+            <ModalTitle>{t("incidents.geolocation")}</ModalTitle>
+          </ModalHeader>
+          <ModalBody className="overflow-y-auto">
+            <div className="space-y-4">
+              <div className="h-[65vh] min-h-[420px] rounded-lg overflow-hidden border border-[hsl(var(--border))]">
+                <MapContainer
+                  center={[incident.latitude, incident.longitude]}
+                  zoom={15}
+                  className="h-full w-full z-0"
+                  style={{ height: "100%", width: "100%" }}
+                  scrollWheelZoom={true}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  <Marker
+                    position={[incident.latitude, incident.longitude]}
+                    icon={defaultIcon}
+                  />
+                </MapContainer>
+              </div>
+
+              <div className="rounded-lg bg-[hsl(var(--muted)/0.35)] border border-[hsl(var(--border))] p-4 text-sm">
+                <div className="flex items-start gap-2">
+                  <MapPin className="w-4 h-4 text-[hsl(var(--primary))] mt-0.5 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="font-medium text-[hsl(var(--foreground))]">
+                      {incident.latitude.toFixed(6)},{" "}
+                      {incident.longitude.toFixed(6)}
+                    </p>
+                    {incident.address && (
+                      <p className="mt-1 text-[hsl(var(--muted-foreground))] break-words">
+                        {incident.address}
+                      </p>
+                    )}
+                    {(incident.city ||
+                      incident.state ||
+                      incident.country ||
+                      incident.postal_code) && (
+                      <p className="mt-1 text-[hsl(var(--muted-foreground))]">
+                        {[
+                          incident.city,
+                          incident.state,
+                          incident.country,
+                          incident.postal_code,
+                        ]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ModalBody>
+        </Modal>
+      )}
 
       {/* Image Editor Modal */}
       <ImageEditor

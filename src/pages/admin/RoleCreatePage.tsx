@@ -29,8 +29,10 @@ export const RoleCreatePage: React.FC = () => {
 
   const [formData, setFormData] = useState<RoleFormData>(initialFormData);
   const [permissionSearch, setPermissionSearch] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [permissionFilter, setPermissionFilter] =
     useState<PermissionFilterMode>("all");
+  const [error, setError] = useState<string | null>(null);
 
   const { data: permissionsData } = useQuery({
     queryKey: ["admin", "permissions"],
@@ -54,8 +56,10 @@ export const RoleCreatePage: React.FC = () => {
         navigate("/admin/roles", { replace: true });
       }
     },
-    onError: () => {
-      toast.error(t("roles.createFailed"));
+    onError: (error: any) => {
+      const message = error.response?.data?.error || error.message;
+      setError(message);
+      toast.error(message);
     },
   });
 
@@ -81,33 +85,41 @@ export const RoleCreatePage: React.FC = () => {
     setFormData((prev) => ({ ...prev, permission_ids: [] }));
   };
 
+  //validations
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+
+    const name = formData.name.trim();
+    const code = formData.code.trim();
+    if (!name) {
+      newErrors.name = t("roles.nameRequired");
+    } else if (!/[A-Za-z0-9]/.test(name)) {
+      newErrors.name = t("roles.invalidName");
+    }
+
+    if (!code) {
+      newErrors.code = t("roles.codeRequired");
+    } else if (!/[A-Za-z0-9]/.test(code)) {
+      newErrors.code = t("roles.invalidCode");
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmedName = formData.name.trim();
-    if (!trimmedName) {
-      toast.error(t("roles.nameRequired"));
+    const name = formData.name.trim();
+    const code = formData.code.trim();
+
+    if (!validate()) {
+      toast.error(t("errors.validationError"));
       return;
     }
-    if (
-      !/^(?=.*[a-zA-Z\u0600-\u06FF])[a-zA-Z0-9\u0600-\u06FF\s\-'.,&()/]+$/.test(
-        trimmedName,
-      )
-    ) {
-      toast.error(
-        t(
-          "roles.nameInvalid",
-          "Name must contain at least one letter and no special characters",
-        ),
-      );
-      return;
-    }
-    if (!formData.code.trim()) {
-      toast.error(t("roles.codeRequired"));
-      return;
-    }
+
     createMutation.mutate({
-      name: trimmedName,
-      code: formData.code.trim(),
+      name,
+      code,
       description: formData.description,
       permission_ids: formData.permission_ids,
     });
@@ -149,12 +161,21 @@ export const RoleCreatePage: React.FC = () => {
                 type="text"
                 placeholder={t("roles.eGContentManager")}
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => {
+                  setFormData({ ...formData, name: e.target.value });
+                  if (errors.name) {
+                    setErrors((prev) => ({ ...prev, name: "" }));
+                  }
+                }}
                 required
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] outline-none"
               />
+
+              {errors.name && (
+                <p className="mt-2 text-sm text-[hsl(var(--destructive))]">
+                  {errors.name}
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -164,15 +185,23 @@ export const RoleCreatePage: React.FC = () => {
                 type="text"
                 placeholder={t("roles.roleKeyExample")}
                 value={formData.code}
-                onChange={(e) =>
-                  setFormData({ ...formData, code: e.target.value })
-                }
+                onChange={(e) => {
+                  setFormData({ ...formData, code: e.target.value });
+
+                  setErrors((prev) => ({ ...prev, code: "" }));
+                }}
                 required
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-mono focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] outline-none"
               />
               <p className="mt-1.5 text-xs text-[hsl(var(--muted-foreground))]">
                 {t("roles.roleCodeHint")}
               </p>
+
+              {errors.code && (
+                <p className="mt-2 text-sm text-[hsl(var(--destructive))]">
+                  {errors.code}
+                </p>
+              )}
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -208,7 +237,11 @@ export const RoleCreatePage: React.FC = () => {
             onFilterChange={setPermissionFilter}
           />
         </div>
-
+        {error ? (
+          <div className="p-4 bg-[hsl(var(--destructive)/0.1)] border border-[hsl(var(--destructive))] rounded-xl">
+            <p className="text-sm text-[hsl(var(--destructive))]">{error}</p>
+          </div>
+        ) : null}
         {/* Footer actions */}
         <div className="flex items-center justify-end gap-3 pt-2">
           <Link

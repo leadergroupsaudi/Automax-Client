@@ -23,6 +23,7 @@ import {
   UserMinus,
   Mail,
   Search,
+  Power,
 } from "lucide-react";
 import {
   departmentApi,
@@ -184,6 +185,7 @@ interface TreeNodeProps {
   onAdd: (parentId: string, parentName: string) => void;
   onEdit: (dept: Department) => void;
   onDelete: (id: string) => void;
+  onToggleActive: (dept: Department) => void;
   canCreate: boolean;
   canEdit: boolean;
   canDelete: boolean;
@@ -197,6 +199,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   onAdd,
   onEdit,
   onDelete,
+  onToggleActive,
   canCreate,
   canEdit,
   canDelete,
@@ -285,6 +288,24 @@ const TreeNode: React.FC<TreeNodeProps> = ({
             </button>
             {canEdit && (
               <button
+                onClick={() => onToggleActive(department)}
+                className={cn(
+                  "p-2 rounded-lg transition-colors",
+                  department.is_active
+                    ? "text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.1)]"
+                    : "text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted)/0.5)]",
+                )}
+                title={
+                  department.is_active
+                    ? t("departments.deactivate")
+                    : t("departments.activate")
+                }
+              >
+                <Power className="w-4 h-4" />
+              </button>
+            )}
+            {canEdit && (
+              <button
                 onClick={() => onEdit(department)}
                 className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors"
                 title={t("common.edit")}
@@ -315,6 +336,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
               onAdd={onAdd}
               onEdit={onEdit}
               onDelete={onDelete}
+              onToggleActive={onToggleActive}
               canCreate={canCreate}
               canEdit={canEdit}
               canDelete={canDelete}
@@ -348,6 +370,8 @@ export const DepartmentsPage: React.FC = () => {
   } | null>(null);
   const [modalTab, setModalTab] = useState<"details" | "users">("details");
   const [userSearchTerm, setUserSearchTerm] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const canCreateDepartment =
     isSuperAdmin || hasPermission(PERMISSIONS.DEPARTMENTS_CREATE);
@@ -417,9 +441,9 @@ export const DepartmentsPage: React.FC = () => {
       closeModal();
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.error || "Failed to create department",
-      );
+      const message = error.response?.data?.error || error.message;
+      setError(message);
+      toast.error(message);
     },
   });
 
@@ -442,6 +466,14 @@ export const DepartmentsPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "departments"] });
       setDeleteConfirm(null);
+    },
+  });
+
+  const toggleActiveMutation = useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
+      departmentApi.update(id, { is_active: isActive } as any),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "departments"] });
     },
   });
 
@@ -556,50 +588,55 @@ export const DepartmentsPage: React.FC = () => {
     setModalTab("details");
     setUserSearchTerm("");
   };
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    const name = formData.name.trim();
+    const name_ar = formData.name_ar.trim();
+    const code = formData.code.trim();
+
+    if (!name) {
+      newErrors.name = t("common.nameRequired");
+    } else if (!/[A-Za-z]/.test(name)) {
+      newErrors.name = t("common.nameInvalid");
+    } else if (!/^[A-Za-z0-9\s'",.&()/-]+$/.test(name)) {
+      newErrors.name = t("common.nameAllowedCharacters");
+    }
+
+    if (name_ar && !/^[\u0600-\u06FF0-9\s]+$/.test(name_ar)) {
+      newErrors.name_ar = t("departments.invalidArabicName");
+    }
+
+    if (!code) {
+      newErrors.code = t("departments.codeRequired", {
+        defaultValue: "Department code is required",
+      });
+    } else if (!/^[a-zA-Z0-9\s]+$/.test(code)) {
+      newErrors.code = t("departments.invalidCode", {
+        defaultValue:
+          "Department code can only contain letters, numbers and spaces",
+      });
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmedName = formData.name.trim();
-    const trimmedNameAr = formData.name_ar.trim();
+    const name = formData.name.trim();
+    const name_ar = formData.name_ar.trim();
+    const code = formData.code.trim();
 
-    if (!trimmedName) {
-      toast.error(t("departments.nameRequired", "Name is required"));
-      return;
-    }
-
-    if (
-      !/^(?=.*[a-zA-Z\u0600-\u06FF])[a-zA-Z0-9\u0600-\u06FF\s\-'.,&()/]+$/.test(
-        trimmedName,
-      )
-    ) {
-      toast.error(
-        t(
-          "departments.nameInvalid",
-          "Name must contain at least one letter and no special characters",
-        ),
-      );
-      return;
-    }
-
-    if (
-      trimmedNameAr &&
-      !/^(?=.*[a-zA-Z\u0600-\u06FF])[a-zA-Z0-9\u0600-\u06FF\s\-'.,&()/]+$/.test(
-        trimmedNameAr,
-      )
-    ) {
-      toast.error(
-        t(
-          "departments.nameArInvalid",
-          "Arabic name contains invalid characters",
-        ),
-      );
+    if (!validateForm()) {
+      toast.error(t("errors.validationError"));
       return;
     }
 
     const payload = {
-      name: trimmedName,
-      name_ar: trimmedNameAr || undefined,
-      code: formData.code,
+      name,
+      name_ar: name_ar || undefined,
+      code,
       description: formData.description,
       description_ar: formData.description_ar || undefined,
       type: formData.type,
@@ -801,6 +838,12 @@ export const DepartmentsPage: React.FC = () => {
                 onAdd={openCreateModal}
                 onEdit={openEditModal}
                 onDelete={setDeleteConfirm}
+                onToggleActive={(d) =>
+                  toggleActiveMutation.mutate({
+                    id: d.id,
+                    isActive: !d.is_active,
+                  })
+                }
                 canCreate={canCreateDepartment}
                 canEdit={canEditDepartment}
                 canDelete={canDeleteDepartment}
@@ -1189,17 +1232,32 @@ export const DepartmentsPage: React.FC = () => {
                     <div>
                       <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
                         {t("departments.name")}
+                        <span className="text-[hsl(var(--destructive))] ml-1">
+                          *
+                        </span>
                       </label>
                       <input
                         type="text"
                         placeholder={t("departments.namePlaceholder")}
                         value={formData.name}
-                        onChange={(e) =>
-                          setFormData({ ...formData, name: e.target.value })
-                        }
-                        className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
-                        required
+                        onChange={(e) => {
+                          setFormData({ ...formData, name: e.target.value });
+                          if (errors.name) {
+                            setErrors({ ...errors, name: "" });
+                          }
+                        }}
+                        className={`w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all  ${
+                          errors.name
+                            ? "border-[hsl(var(--destructive))]"
+                            : "border-slate-300 dark:border-slate-600"
+                        }`}
+                        // required
                       />
+                      {errors.name && (
+                        <p className="mt-1 text-xs text-[hsl(var(--destructive))]">
+                          {errors.name}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
@@ -1210,11 +1268,29 @@ export const DepartmentsPage: React.FC = () => {
                         dir="rtl"
                         placeholder="الاسم بالعربية"
                         value={formData.name_ar}
-                        onChange={(e) =>
-                          setFormData({ ...formData, name_ar: e.target.value })
-                        }
-                        className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
+                        onChange={(e) => {
+                          setFormData({ ...formData, name_ar: e.target.value });
+
+                          if (errors.name_ar) {
+                            setErrors((prev) => ({
+                              ...prev,
+                              name_ar: "",
+                            }));
+                          }
+                        }}
+                        // className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
+                        className={`w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all  ${
+                          errors.name_ar
+                            ? "border-[hsl(var(--destructive))]"
+                            : "border-slate-300 dark:border-slate-600"
+                        }`}
                       />
+
+                      {errors.name_ar && (
+                        <p className="mt-1 text-xs text-[hsl(var(--destructive))]">
+                          {errors.name_ar}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -1222,17 +1298,37 @@ export const DepartmentsPage: React.FC = () => {
                     <div>
                       <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
                         {t("departments.code")}
+                        <span className="text-[hsl(var(--destructive))] ml-1">
+                          *
+                        </span>
                       </label>
                       <input
                         type="text"
                         placeholder={t("departments.codePlaceholder")}
                         value={formData.code}
-                        onChange={(e) =>
-                          setFormData({ ...formData, code: e.target.value })
-                        }
-                        className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] font-mono focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
-                        required
+                        onChange={(e) => {
+                          setFormData({ ...formData, code: e.target.value });
+
+                          if (errors.code) {
+                            setErrors((prev) => ({
+                              ...prev,
+                              code: "",
+                            }));
+                          }
+                        }}
+                        // className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] font-mono focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
+                        className={`w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all  ${
+                          errors.code
+                            ? "border-[hsl(var(--destructive))]"
+                            : "border-slate-300 dark:border-slate-600"
+                        }`}
+                        // required
                       />
+                      {errors.code && (
+                        <p className="mt-1 text-xs text-[hsl(var(--destructive))]">
+                          {errors.code}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -1506,6 +1602,13 @@ export const DepartmentsPage: React.FC = () => {
                   </div>
                 </div>
               )}{" "}
+              {error ? (
+                <div className="p-4 bg-[hsl(var(--destructive)/0.1)] border border-[hsl(var(--destructive))] rounded-xl mx-6 mb-4">
+                  <p className="text-sm text-[hsl(var(--destructive))]">
+                    {error}
+                  </p>
+                </div>
+              ) : null}
               {/* end details tab */}
               {/* Modal Footer */}
               <div className="flex justify-end gap-3 px-6 py-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.5)]">

@@ -221,7 +221,10 @@
     "descriptionAr": "Description (Arabic)",
     "descriptionArPlaceholder": "الوصف بالعربية",
     "noFileChosen": "No file chosen",
-    "chooseFile": "Choose File"
+    "chooseFile": "Choose File",
+    "nameRequired": "Name is required.",
+    "nameInvalid": "Name cannot consist only of numbers or special characters.",
+    "nameAllowedCharacters": "Name can only contain letters, numbers, spaces, and - ' . , & ( ) /."
   },
   "search": {
     "minCharsTitle": "Keep Typing…",
@@ -1035,6 +1038,14 @@
     "usersImportedSuccessfully": "users imported successfully",
     "usersSkipped": "users skipped",
     "errors": "Errors:",
+    "importUsers": "Import Users",
+    "uploadJsonToImport": "Upload a JSON file to import users",
+    "validJsonRequired": "Only valid JSON files are accepted.",
+    "failedImportsDownloadNote": "Failed imports can be downloaded as a JSON file after processing.",
+    "importFailed": "User import failed. Please check the file and try again.",
+    "imported": "imported",
+    "importSummary": "{{success}} succeeded, {{errors}} failed",
+    "downloadFailedImports": "Download Failed Imports",
     "userAgent": "User Agent",
     "51234Default": "51234 (default)",
     "unknownUser": "Unknown User",
@@ -1099,7 +1110,9 @@
     "rolesSkipped": "roles skipped",
     "errors": "Errors:",
     "eGContentManager": "e.g., Content Manager",
-    "roleKeyExample": "e.g., content_manager"
+    "roleKeyExample": "e.g., content_manager",
+    "invalidName": "Role name must contain at least one letter or number",
+    "invalidCode": "Role code must contain at least one letter or number"
   },
   "departments": {
     "title": "Departments",
@@ -1141,6 +1154,8 @@
     "saving": "Saving...",
     "active": "Active",
     "inactive": "Inactive",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
     "loadingDepartment": "Loading department...",
     "departmentNotFound": "Department Not Found",
     "departmentNotFoundDesc": "The department you're looking for doesn't exist or has been deleted.",
@@ -1171,7 +1186,12 @@
     "codePlaceholder": "e.g., ENG",
     "namePlaceholder": "e.g., Engineering",
     "nameAr": "Name (Arabic)",
-    "descriptionAr": "Description (Arabic)"
+    "descriptionAr": "Description (Arabic)",
+    "nameRequired": "Department name is required",
+    "codeRequired": "Department code is required",
+    "invalidName": "Department name can only contain letters, numbers and spaces",
+    "invalidArabicName": "Department name in Arabic can only contain letters, numbers and spaces",
+    "invalidCode": "Department code can only contain letters, numbers and spaces"
   },
   "locations": {
     "title": "Locations",
@@ -1209,6 +1229,8 @@
     "saving": "Saving...",
     "active": "Active",
     "inactive": "Inactive",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
     "locationTypes": "Location Types",
     "typeCountry": "Country",
     "typeState": "State/Province",
@@ -1236,7 +1258,10 @@
     "codePlaceholder": "e.g., NY-OFF",
     "namePlaceholder": "e.g., New York Office",
     "nameAr": "Name (Arabic)",
-    "descriptionAr": "Description (Arabic)"
+    "descriptionAr": "Description (Arabic)",
+    "nameRequired": "Location name is required",
+    "invalidName": "Location name can only contain letters, numbers and spaces",
+    "invalidArabicName": "Location name in Arabic can only contain Arabic letters, numbers and spaces"
   },
   "classifications": {
     "title": "Classifications",
@@ -1258,6 +1283,10 @@
     "createFirstClassification": "Create your first classification to categorize tickets",
     "deleteConfirmTitle": "Delete Classification",
     "deleteConfirmMessage": "Are you sure you want to delete this classification? All child classifications will also be deleted.",
+    "deleteHasChildrenTitle": "This classification has child classifications.",
+    "deleteHasChildrenMessage": "Deleting it will also permanently delete all associated child classifications. This action cannot be undone.",
+    "deleteFailedTitle": "Classification could not be deleted",
+    "deleteFailedHelp": "Resolve the issue shown above, then try again.",
     "deleting": "Deleting...",
     "updateDetails": "Update classification details",
     "addingUnder": "Adding under",
@@ -1280,6 +1309,8 @@
     "saving": "Saving...",
     "active": "Active",
     "inactive": "Inactive",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
     "level": "Level",
     "aboutTitle": "About Classifications",
     "aboutDescription": "Classifications are used to categorize incidents and requests. Create a hierarchical structure to organize them by type, category, and subcategory for better ticket management.",
@@ -1312,7 +1343,8 @@
     "errors": "Errors:",
     "namePlaceholder": "e.g., Hardware Issues",
     "nameAr": "Name (Arabic)",
-    "descriptionAr": "Description (Arabic)"
+    "descriptionAr": "Description (Arabic)",
+    "deleteError": "Failed to delete classification."
   },
   "reports": {
     "title": "Reports",
@@ -1352,6 +1384,8 @@
     "duplicate": "Duplicate",
     "delete": "Delete",
     "deleteConfirm": "Are you sure you want to delete",
+    "templateSaved": "Template saved successfully",
+    "templateUpdated": "Template updated successfully",
     "dataSources": {
       "incidents": "Incidents",
       "requests": "Requests",
@@ -1442,7 +1476,8 @@
         "isEmpty": "Is empty",
         "isNotEmpty": "Is not empty"
       },
-      "toDate": "To Date"
+      "toDate": "To Date",
+      "timestampKey": "Timestamp Key"
     },
     "errors": {
       "invalidDateRange": "Both From and To dates are required",
@@ -1492,10 +1527,14 @@
       "updateTemplate": "Update Template",
       "report": "report",
       "templateName": "Template Name",
+      "templateNameAr": "Template Name (Arabic)",
       "templateNameRequired": "Template name is required",
       "templateNamePlaceholder": "Enter template name...",
+      "templateNamePlaceholderAr": "Enter template name (Arabic)...",
       "description": "Description",
+      "descriptionAr": "Description (Arabic)",
       "descriptionPlaceholder": "Optional description...",
+      "descriptionPlaceholderAr": "Optional description (Arabic)...",
       "visibility": "Visibility",
       "private": "Private",
       "privateDesc": "Only you can access",
@@ -1990,7 +2029,15 @@
     "severityPriorityRange": "Severity & Priority Range",
     "severityRange": "Severity Range (1=Critical, 5=Cosmetic)",
     "noFeedbackOptionsYet": "No feedback options yet",
-    "noCommentOptionsYet": "No comment options yet"
+    "noCommentOptionsYet": "No comment options yet",
+    "nameRequired": "Workflow name is required",
+    "invalidName": "Workflow name can only contain letters, numbers and spaces",
+    "codeRequired": "Workflow code is required",
+    "invalidCode": "Workflow code can only contain letters, numbers and spaces",
+    "stateAlreadyExists": "State name already exists",
+    "stateCodeAlreadyExists": "State code already exists",
+    "transitionAlreadyExists": "Transition name already exists",
+    "transitionCodeAlreadyExists": "Transition code already exists"
   },
   "lookups": {
     "title": "Master Data",
