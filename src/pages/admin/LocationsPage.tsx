@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import {
   Plus,
   Edit2,
@@ -34,7 +35,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "../../components/ui";
 import { usePermissions } from "../../hooks/usePermissions";
 import { PERMISSIONS } from "../../constants/permissions";
-import { toast } from "sonner";
 
 interface LocationFormData {
   name: string;
@@ -317,6 +317,9 @@ export const LocationsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "locations"] });
       closeModal();
     },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.error || "Failed to create location");
+    },
   });
 
   const updateMutation = useMutation({
@@ -325,6 +328,9 @@ export const LocationsPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "locations"] });
       closeModal();
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.error || "Failed to update location");
     },
   });
 
@@ -377,6 +383,7 @@ export const LocationsPage: React.FC = () => {
     setIsModalOpen(false);
     setEditingLocation(null);
     setFormData(initialFormData);
+    setErrors({});
   };
 
   const openViewModal = async (location: Location) => {

@@ -42,6 +42,7 @@ import { cn } from "@/lib/utils";
 import { Button, MultiSelect } from "../../components/ui";
 import { usePermissions } from "../../hooks/usePermissions";
 import { PERMISSIONS } from "../../constants/permissions";
+import { toast } from "sonner";
 
 interface ClassificationFormData {
   name: string;
@@ -409,6 +410,11 @@ export const ClassificationsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "classifications"] });
       closeModal();
     },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.error || "Failed to create classification",
+      );
+    },
   });
 
   const updateMutation = useMutation({
@@ -422,6 +428,11 @@ export const ClassificationsPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "classifications"] });
       closeModal();
+    },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.error || "Failed to update classification",
+      );
     },
   });
 
@@ -514,6 +525,7 @@ export const ClassificationsPage: React.FC = () => {
     setIsModalOpen(false);
     setEditingClassification(null);
     setFormData(initialFormData);
+    setErrors({});
   };
 
   const openViewModal = async (classification: Classification) => {
@@ -573,9 +585,12 @@ export const ClassificationsPage: React.FC = () => {
       return;
     }
 
+    const trimmedName = formData.name.trim();
+    const trimmedNameAr = formData.name_ar.trim();
+
     const payload = {
-      name: formData.name,
-      name_ar: formData.name_ar || undefined,
+      name: trimmedName,
+      name_ar: trimmedNameAr || undefined,
       description: formData.description,
       description_ar: formData.description_ar || undefined,
       parent_id: formData.parent_id || undefined,

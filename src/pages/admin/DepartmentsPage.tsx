@@ -454,6 +454,11 @@ export const DepartmentsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "departments"] });
       closeModal();
     },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.error || "Failed to update department",
+      );
+    },
   });
 
   const deleteMutation = useMutation({
@@ -582,6 +587,8 @@ export const DepartmentsPage: React.FC = () => {
     setFormData(initialFormData);
     setModalTab("details");
     setUserSearchTerm("");
+    setError(null);
+    setErrors({});
   };
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
