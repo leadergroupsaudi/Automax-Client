@@ -587,6 +587,8 @@ export const DepartmentsPage: React.FC = () => {
     setFormData(initialFormData);
     setModalTab("details");
     setUserSearchTerm("");
+    setError(null);
+    setErrors({});
   };
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};

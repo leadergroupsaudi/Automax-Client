@@ -383,6 +383,7 @@ export const LocationsPage: React.FC = () => {
     setIsModalOpen(false);
     setEditingLocation(null);
     setFormData(initialFormData);
+    setErrors({});
   };
 
   const openViewModal = async (location: Location) => {
