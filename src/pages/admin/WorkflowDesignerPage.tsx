@@ -1660,6 +1660,22 @@ export const WorkflowDesignerPage: React.FC = () => {
     }
   };
 
+  const getStateTypeLabel = (stateType: string) => {
+    switch (stateType) {
+      case "initial":
+        return t("workflows.initialStartingState", "Initial (Starting state)");
+
+      case "terminal":
+        return t("workflows.terminalEndState", "Terminal (End state)");
+
+      case "normal":
+        return t("common.normal", "Normal");
+
+      default:
+        return stateType;
+    }
+  };
+
   // Canvas handlers
   const handleCanvasTransitionAdd = useCallback(
     (fromStateId: string, toStateId: string) => {
@@ -1955,7 +1971,8 @@ export const WorkflowDesignerPage: React.FC = () => {
                             <div className="flex items-center gap-2">
                               {getStateTypeIcon(state.state_type)}
                               <span className="text-sm text-[hsl(var(--foreground))] capitalize">
-                                {state.state_type}
+                                {/* {state.state_type} */}
+                                {getStateTypeLabel(state.state_type)}
                               </span>
                             </div>
                           </td>
@@ -3961,7 +3978,9 @@ export const WorkflowDesignerPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">
-                    {editingTransition ? "Edit Transition" : "Add Transition"}
+                    {editingTransition
+                      ? t("workflows.editTransition")
+                      : t("workflows.addTransition")}
                   </h3>
                 </div>
               </div>
@@ -4747,7 +4766,9 @@ export const WorkflowDesignerPage: React.FC = () => {
                     ) : undefined
                   }
                 >
-                  {editingTransition ? "Update Transition" : "Add Transition"}
+                  {editingTransition
+                    ? t("workflows.updateTransition")
+                    : t("workflows.addTransition")}
                 </Button>
               </div>
             </form>

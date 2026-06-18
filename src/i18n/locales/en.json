@@ -2037,7 +2037,7 @@
     "notificationTemplatesDesc": "Templates sent to assignee and reporter when an incident enters this state.",
     "emailTemplate": "Email Template",
     "smsTemplate": "SMS Template",
-    "none": "-None-"
+    "none": "-None"
   },
   "lookups": {
     "title": "Master Data",
