@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Filter, Settings2, Check } from "lucide-react";
-import { Button, Checkbox } from "../ui";
+import { Button } from "../ui";
 import { MultiTreeSelect } from "../ui/MultiTreeSelect";
 import {
   workflowApi,
@@ -76,7 +76,6 @@ export const IncidentFilters: React.FC<IncidentFiltersProps> = ({
   disableStateFilter = false,
   disableSlaFilter = false,
   canViewAllIncidents = false,
-  hasStatusFilter = false,
   searchParams,
   setSearchParams,
 }) => {
