@@ -3408,7 +3408,7 @@ export const WorkflowDesignerPage: React.FC = () => {
                   <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
                     {t("workflows.stateColor")}
                   </label>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 items-center">
                     {STATE_COLORS.map((color) => (
                       <button
                         key={color.value}
@@ -3420,15 +3420,34 @@ export const WorkflowDesignerPage: React.FC = () => {
                           })
                         }
                         className={cn(
-                          "w-8 h-8 rounded-lg transition-all",
+                          "w-8 h-8 rounded-lg transition-all cursor-pointer",
                           stateFormData.color === color.value
                             ? "ring-2 ring-offset-2 ring-[hsl(var(--primary))]"
-                            : "hover:scale-110",
+                            : "hover:scale-110 cursor-pointer",
                         )}
                         style={{ backgroundColor: color.value }}
                         title={color.name}
                       />
                     ))}
+                    <input
+                      className={cn(
+                        "w-10 h-10 rounded-lg transition-all cursor-pointer",
+                        !STATE_COLORS.some(
+                          (color) => color.value === stateFormData.color,
+                        )
+                          ? "ring-2 ring-offset-2 ring-[hsl(var(--primary))]"
+                          : "hover:scale-110 cursor-pointer",
+                      )}
+                      type="color"
+                      value={stateFormData.color}
+                      onChange={(e) =>
+                        setStateFormData({
+                          ...stateFormData,
+                          color: e.target.value,
+                        })
+                      }
+                      title={t("common.customColor")}
+                    />
                   </div>
                 </div>
                 <div>
@@ -4860,6 +4879,9 @@ export const WorkflowDesignerPage: React.FC = () => {
                               </option>
                               <option value="feedback">
                                 {t("workflows.feedbackRequired")}
+                              </option>
+                              <option value="rating">
+                                {t("workflows.ratingRequired")}
                               </option>
                               <option value="field_value">
                                 {t("workflows.fieldValueRequired")}
