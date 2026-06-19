@@ -91,7 +91,7 @@ export const ReportTemplatesPage: React.FC = () => {
 
   const { data: userOptions } = useQuery({
     queryKey: ["admin", "users", "options"],
-    queryFn: () => userApi.list(),
+    queryFn: () => userApi.list(1, 100),
   });
 
   const { data: stateOptions } = useQuery({
