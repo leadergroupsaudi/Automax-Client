@@ -234,6 +234,7 @@ export const IncidentDetailPage: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<IncidentAttachment | null>(
     null,
   );
+  const [feedbackRating, setFeedbackRating] = useState<number>(5);
 
   const [disableApproveTransition, setDisableApproveTransition] =
     useState(false);
@@ -638,7 +639,7 @@ export const IncidentDetailPage: React.FC = () => {
         comment,
         attachments,
         feedback: {
-          rating: 5, // Hardcoded rating for now - as it's required by the API.
+          rating: feedbackRating || 0,
           comment: feedback?.comment,
         },
         department_id,
@@ -2218,11 +2219,38 @@ export const IncidentDetailPage: React.FC = () => {
                             )}
                             {item.feedbacks?.comment && (
                               <p className="mt-2 text-sm text-[hsl(var(--foreground))] italic">
+                                "
                                 <RenderWithIncidentMentions
                                   text={item.feedbacks.comment}
                                 />
+                                "
                               </p>
                             )}
+                            {item.feedbacks?.rating > 0 &&
+                              item.transition?.is_final_close && (
+                                <div className="flex items-center gap-1 mt-2">
+                                  {[...Array(5).keys()].map((i) => (
+                                    <Star
+                                      fill={
+                                        i <= item.feedbacks?.rating
+                                          ? "#FFD700"
+                                          : "#CCC"
+                                      }
+                                      name={
+                                        i <= item.feedbacks?.rating
+                                          ? "star"
+                                          : "star-outline"
+                                      }
+                                      size={20}
+                                      color={
+                                        i <= item.feedbacks?.rating
+                                          ? "#FFD700"
+                                          : "#CCC"
+                                      }
+                                    />
+                                  ))}
+                                </div>
+                              )}
                           </div>
                         </div>
                       ))}
@@ -4607,6 +4635,66 @@ export const IncidentDetailPage: React.FC = () => {
                     <div>
                       <div className="p-2 bg-[hsl(var(--muted)/0.5)] rounded-lg space-y-3">
                         {/* Feedback Comment */}
+                        {selectedTransition.requirements?.find(
+                          (x) => x.requirement_type === "rating",
+                        ) && (
+                          <div className="flex flex-col gap-2 w-full p-2 bg-gray-200 rounded-lg">
+                            <span className="text-sm text-[hsl(var(--muted-foreground))] mb-2 flex flex-row gap-1">
+                              {t(
+                                "incidents.rateYourExperience",
+                                "Rate your experience with this resolution",
+                              )}
+                              {selectedTransition.requirements?.find(
+                                (x) => x.requirement_type === "rating",
+                              )?.is_mandatory && (
+                                <span className="text-red-500">*</span>
+                              )}
+                            </span>
+                            <div className="flex flex-col justify-center items-center gap-2">
+                              <div className="flex flex-row">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <div
+                                    key={star}
+                                    onClick={() => setFeedbackRating(star)}
+                                  >
+                                    <Star
+                                      fill={
+                                        star <= feedbackRating
+                                          ? "#FFD700"
+                                          : "#CCC"
+                                      }
+                                      name={
+                                        star <= feedbackRating
+                                          ? "star"
+                                          : "star-outline"
+                                      }
+                                      size={40}
+                                      color={
+                                        star <= feedbackRating
+                                          ? "#FFD700"
+                                          : "#CCC"
+                                      }
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                              {feedbackRating > 0 && (
+                                <span className="text-sm">
+                                  {feedbackRating === 1 &&
+                                    t("incidents.ratingPoor")}
+                                  {feedbackRating === 2 &&
+                                    t("incidents.ratingFair")}
+                                  {feedbackRating === 3 &&
+                                    t("incidents.ratingGood")}
+                                  {feedbackRating === 4 &&
+                                    t("incidents.ratingVeryGood")}
+                                  {feedbackRating === 5 &&
+                                    t("incidents.ratingExcellent")}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
                         <div className="space-y-3">
                           {feedbackTemplates?.length ? (
                             <select
