@@ -172,7 +172,28 @@ export const renderStyledCell = (
       .map((u) => u.trim())
       .filter(Boolean);
 
-    const nameCounts = new Map<string, number>();
+    const displayNameCounts = new Map<string, number>();
+
+    urls.forEach((url, index) => {
+      let displayName = "Link";
+
+      try {
+        const parsed = new URL(url);
+        const segments = parsed.pathname.split("/").filter(Boolean);
+        displayName = decodeURIComponent(
+          segments.at(-1) ?? `Link ${index + 1}`,
+        );
+      } catch {
+        displayName = `Link ${index + 1}`;
+      }
+
+      displayNameCounts.set(
+        displayName,
+        (displayNameCounts.get(displayName) ?? 0) + 1,
+      );
+    });
+
+    const nameIndexes = new Map<string, number>();
 
     return (
       <div className="flex gap-4">
@@ -189,8 +210,10 @@ export const renderStyledCell = (
             displayName = `Link ${index + 1}`;
           }
 
-          const count = (nameCounts.get(displayName) ?? 0) + 1;
-          nameCounts.set(displayName, count);
+          const currentIndex = (nameIndexes.get(displayName) ?? 0) + 1;
+          nameIndexes.set(displayName, currentIndex);
+
+          const isDuplicate = (displayNameCounts.get(displayName) ?? 0) > 1;
 
           return (
             <a
@@ -201,7 +224,7 @@ export const renderStyledCell = (
               className="text-blue-600 flex items-center gap-1 underline capitalize text-sm"
             >
               <Link size={12} />
-              {`${displayName} ${count}`}
+              {isDuplicate ? `${displayName} ${currentIndex}` : displayName}
             </a>
           );
         })}
