@@ -1617,7 +1617,7 @@ export const userFields: ReportFieldDefinition[] = [
 export const userPerformanceFields: ReportFieldDefinition[] = [
   {
     field: "performed_by_id",
-    label: "Performer",
+    label: "User",
     label_ar: "المنفذ",
     type: "enum",
     category: "Basic Info",
