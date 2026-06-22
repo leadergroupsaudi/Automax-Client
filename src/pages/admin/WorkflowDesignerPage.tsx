@@ -2736,7 +2736,7 @@ export const WorkflowDesignerPage: React.FC = () => {
                         />
                         <span className="text-sm text-[hsl(var(--foreground))]">
                           {i18n.language === "ar"
-                            ? priority.name_ar
+                            ? priority.name_ar?.trim() || priority.name
                             : priority.name}
                         </span>
                       </label>
