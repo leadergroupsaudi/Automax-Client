@@ -21,6 +21,7 @@ import StateNode, { type StateNodeData } from "./StateNode";
 import TransitionEdge, { type TransitionEdgeData } from "./TransitionEdge";
 import type { WorkflowState, WorkflowTransition } from "../../types";
 import { Button } from "../ui";
+import i18n from "@/i18n";
 
 interface WorkflowCanvasProps {
   workflowId: string;
@@ -100,6 +101,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         data: {
           id: state.id,
           name: state.name,
+          name_ar: state.name_ar,
           code: state.code,
           state_type: state.state_type as "initial" | "normal" | "terminal",
           color: state.color,
@@ -127,6 +129,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
       data: {
         id: transition.id,
         name: transition.name,
+        name_ar: transition.name_ar,
         code: transition.code,
         hasRequirements: (transition.requirements?.length || 0) > 0,
         hasActions: (transition.actions?.length || 0) > 0,
@@ -370,7 +373,9 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
                         style={{ backgroundColor: selectedState.color }}
                       />
                       <span className="font-medium text-slate-700">
-                        {selectedState.name}
+                        {i18n.language === "ar" && selectedState.name_ar
+                          ? selectedState.name_ar
+                          : selectedState.name}
                       </span>
                     </div>
                     <p className="text-xs text-slate-500 font-mono">
@@ -414,7 +419,9 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
                   </h4>
                   <div className="space-y-2">
                     <span className="font-medium text-slate-700">
-                      {selectedTransition.name}
+                      {i18n.language === "ar" && selectedTransition.name_ar
+                        ? selectedTransition.name_ar
+                        : selectedTransition.name}
                     </span>
                     <p className="text-xs text-slate-500 font-mono">
                       {selectedTransition.code}
@@ -429,9 +436,13 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
                             )?.color || "#6b7280",
                         }}
                       >
-                        {states.find(
-                          (s) => s.id === selectedTransition.from_state_id,
-                        )?.name || "Unknown"}
+                        {i18n.language === "ar"
+                          ? states.find(
+                              (s) => s.id === selectedTransition.from_state_id,
+                            )?.name_ar
+                          : states.find(
+                              (s) => s.id === selectedTransition.from_state_id,
+                            )?.name || "Unknown"}
                       </span>
                       <span className="text-slate-400">→</span>
                       <span
@@ -443,9 +454,13 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
                             )?.color || "#6b7280",
                         }}
                       >
-                        {states.find(
-                          (s) => s.id === selectedTransition.to_state_id,
-                        )?.name || "Unknown"}
+                        {i18n.language === "ar"
+                          ? states.find(
+                              (s) => s.id === selectedTransition.to_state_id,
+                            )?.name_ar
+                          : states.find(
+                              (s) => s.id === selectedTransition.to_state_id,
+                            )?.name || "Unknown"}
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-1 text-xs">
