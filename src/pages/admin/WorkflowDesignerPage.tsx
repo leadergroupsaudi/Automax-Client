@@ -680,11 +680,14 @@ export const WorkflowDesignerPage: React.FC = () => {
     onSuccess: (data, variables) => {
       const status = data?.data?.status ?? "sent";
       toast.success(
-        `Test ${variables.channel.toUpperCase()} sent — status: ${status}`,
+        t("workflows.testSentSuccess", {
+          channel: variables.channel.toUpperCase(),
+          status,
+        }),
       );
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.error ?? "Test send failed");
+      toast.error(err?.response?.data?.error ?? t("workflows.testSendFailed"));
     },
   });
 
@@ -843,7 +846,7 @@ export const WorkflowDesignerPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "workflow", id] });
       queryClient.invalidateQueries({ queryKey: ["admin", "workflows"] });
-      toast.success("Matching rules updated successfully");
+      toast.success(t("workflows.matchingRulesUpdatedSuccessfully"));
     },
     onError: (error: any) => {
       const errorMessage =
@@ -854,12 +857,12 @@ export const WorkflowDesignerPage: React.FC = () => {
 
       // Check if it's a duplicate workflow conflict
       if (errorMessage.includes("workflow rules conflict")) {
-        toast.error("Duplicate Workflow Rules", {
+        toast.error(t("workflows.duplicateWorkflowRules"), {
           description: errorMessage,
           duration: 6000,
         });
       } else {
-        toast.error("Failed to update matching rules", {
+        toast.error(t("workflows.failedToUpdateMatchingRules"), {
           description: errorMessage,
           duration: 5000,
         });
@@ -914,7 +917,7 @@ export const WorkflowDesignerPage: React.FC = () => {
       }
       queryClient.invalidateQueries({ queryKey: ["admin", "workflow", id] });
       queryClient.invalidateQueries({ queryKey: ["admin", "workflows"] });
-      toast.success("Merge permissions updated successfully");
+      toast.success(t("workflows.mergePermissionsUpdatedSuccessfully"));
     },
     onError: (error: any) => {
       const errorMessage =
@@ -922,7 +925,7 @@ export const WorkflowDesignerPage: React.FC = () => {
         error.response?.data?.message ||
         error.message ||
         "Failed to update merge permissions";
-      toast.error("Failed to update merge permissions", {
+      toast.error(t("workflows.failedToUpdateMergePermissions"), {
         description: errorMessage,
         duration: 5000,
       });

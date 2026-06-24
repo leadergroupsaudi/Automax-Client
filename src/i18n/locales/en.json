@@ -2056,7 +2056,14 @@
     "notificationTemplatesDesc": "Templates sent to assignee and reporter when an incident enters this state.",
     "emailTemplate": "Email Template",
     "smsTemplate": "SMS Template",
-    "none": "-None"
+    "none": "-None",
+    "matchingRulesUpdatedSuccessfully": "Matching rules updated successfully",
+    "testSendFailed": "Test send failed",
+    "testSentSuccess": "Test {{channel}} sent — status: {{status}}",
+    "failedToUpdateMergePermissions": "Failed to update merge permissions",
+    "mergePermissionsUpdatedSuccessfully": "Merge permissions updated successfully",
+    "failedToUpdateMatchingRules": "Failed to update matching rules",
+    "duplicateWorkflowRules": "Duplicate Workflow Rules"
   },
   "lookups": {
     "title": "Master Data",

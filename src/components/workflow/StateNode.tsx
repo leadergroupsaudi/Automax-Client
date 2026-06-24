@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 export interface StateNodeData extends Record<string, unknown> {
   id: string;
   name: string;
+  name_ar?: string;
   code: string;
   state_type: "initial" | "normal" | "terminal";
   color: string;
@@ -15,7 +16,7 @@ export interface StateNodeData extends Record<string, unknown> {
 }
 
 function StateNode({ data, selected }: NodeProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const nodeData = data as StateNodeData;
 
   const getStateIcon = () => {
@@ -80,7 +81,9 @@ function StateNode({ data, selected }: NodeProps) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-gray-800 truncate">
-            {nodeData.name}
+            {i18n.language === "ar" && nodeData.name_ar
+              ? nodeData.name_ar
+              : nodeData.name}
           </p>
           <p className="text-xs text-gray-500 font-mono truncate">
             {nodeData.code}

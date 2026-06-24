@@ -20,7 +20,7 @@ import { useAuthStore } from "../../stores/authStore";
 import { authApi } from "../../api/auth";
 import { setLoggingOut } from "../../api/client";
 import { workflowApi } from "../../api/admin";
-import {
+import i18n, {
   setLanguage,
   getCurrentLanguage,
   supportedLanguages,
@@ -217,7 +217,9 @@ export const WorkflowLayout: React.FC = () => {
                       {!collapsed && (
                         <>
                           <span className="ms-3 font-medium text-sm flex-1 truncate">
-                            {workflow.name}
+                            {i18n.language === "ar"
+                              ? workflow.name_ar || workflow.name
+                              : workflow.name}
                           </span>
                           <span
                             className={`text-xs px-1.5 py-0.5 rounded ${workflow.is_active ? "bg-primary/50 text-white" : "bg-slate-700 text-slate-400"}`}

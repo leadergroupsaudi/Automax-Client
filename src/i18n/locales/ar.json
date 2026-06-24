@@ -2054,7 +2054,14 @@
     "notificationTemplatesDesc": "القوالب المرسلة إلى المكلّف ومقدّم البلاغ عند دخول البلاغ إلى هذه الحالة.",
     "emailTemplate": "قالب البريد الإلكتروني",
     "smsTemplate": "قالب الرسائل النصية",
-    "none": "- لا يوجد -"
+    "none": "- لا يوجد -",
+    "matchingRulesUpdatedSuccessfully": "تم تحديث قواعد المطابقة بنجاح",
+    "testSendFailed": "فشل إرسال الاختبار",
+    "testSentSuccess": "تم إرسال اختبار {{channel}} — الحالة: {{status}}",
+    "failedToUpdateMergePermissions": "فشل تحديث صلاحيات الدمج",
+    "mergePermissionsUpdatedSuccessfully": "تم تحديث صلاحيات الدمج بنجاح",
+    "failedToUpdateMatchingRules": "فشل تحديث قواعد المطابقة",
+    "duplicateWorkflowRules": "قواعد سير عمل مكررة"
   },
   "lookups": {
     "title": "البيانات الرئيسية",
