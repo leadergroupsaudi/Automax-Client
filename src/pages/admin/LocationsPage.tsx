@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import {
   Plus,
   Edit2,
@@ -20,6 +21,7 @@ import {
   Eye,
   Users,
   Briefcase,
+  Power,
 } from "lucide-react";
 import { locationApi, userApi, departmentApi } from "../../api/admin";
 import type {
@@ -97,6 +99,7 @@ interface TreeNodeProps {
   onEdit: (loc: Location) => void;
   onDelete: (id: string) => void;
   onView: (loc: Location) => void;
+  onToggleActive: (loc: Location) => void;
   canCreate: boolean;
   canEdit: boolean;
   canDelete: boolean;
@@ -110,6 +113,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   onEdit,
   onDelete,
   onView,
+  onToggleActive,
   canCreate,
   canEdit,
   canDelete,
@@ -196,6 +200,24 @@ const TreeNode: React.FC<TreeNodeProps> = ({
             >
               <Eye className="w-4 h-4" />
             </button>
+            {canEdit && (
+              <button
+                onClick={() => onToggleActive(location)}
+                className={cn(
+                  "p-2 rounded-lg transition-colors",
+                  location.is_active
+                    ? "text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.1)]"
+                    : "text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted)/0.5)]",
+                )}
+                title={
+                  location.is_active
+                    ? t("locations.deactivate")
+                    : t("locations.activate")
+                }
+              >
+                <Power className="w-4 h-4" />
+              </button>
+            )}
             {canCreate && (
               <button
                 onClick={() => onAdd(location.id, displayName)}
@@ -237,6 +259,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
               onEdit={onEdit}
               onDelete={onDelete}
               onView={onView}
+              onToggleActive={onToggleActive}
               canCreate={canCreate}
               canEdit={canEdit}
               canDelete={canDelete}
@@ -269,6 +292,7 @@ export const LocationsPage: React.FC = () => {
   const [viewDepartments, setViewDepartments] = useState<Department[]>([]);
   const [viewLoading, setViewLoading] = useState(false);
   const [viewTab, setViewTab] = useState<"users" | "departments">("users");
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const canCreateLocation =
     isSuperAdmin || hasPermission(PERMISSIONS.LOCATIONS_CREATE);
@@ -293,6 +317,9 @@ export const LocationsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "locations"] });
       closeModal();
     },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.error || "Failed to create location");
+    },
   });
 
   const updateMutation = useMutation({
@@ -302,6 +329,9 @@ export const LocationsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "locations"] });
       closeModal();
     },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.error || "Failed to update location");
+    },
   });
 
   const deleteMutation = useMutation({
@@ -309,6 +339,14 @@ export const LocationsPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "locations"] });
       setDeleteConfirm(null);
+    },
+  });
+
+  const toggleActiveMutation = useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
+      locationApi.update(id, { is_active: isActive } as any),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "locations"] });
     },
   });
 
@@ -345,6 +383,7 @@ export const LocationsPage: React.FC = () => {
     setIsModalOpen(false);
     setEditingLocation(null);
     setFormData(initialFormData);
+    setErrors({});
   };
 
   const openViewModal = async (location: Location) => {
@@ -365,12 +404,44 @@ export const LocationsPage: React.FC = () => {
       setViewLoading(false);
     }
   };
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    const name = formData.name.trim();
+    const name_ar = formData.name_ar.trim();
 
+    if (!name) {
+      newErrors.name = t("locations.nameRequired");
+    } else if (!/[A-Za-z]/.test(name)) {
+      newErrors.name = t("common.nameInvalid");
+    } else if (!/^[a-zA-Z0-9\s]+$/.test(name)) {
+      newErrors.name = t("locations.invalidName");
+    }
+
+    if (name_ar && !/^[\u0600-\u06FF0-9\s]+$/.test(name_ar)) {
+      newErrors.name_ar = t("locations.invalidArabicName", {
+        defaultValue:
+          "Location name in Arabic can only contain Arabic letters, numbers and spaces",
+      });
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const name = formData.name.trim();
+    const name_ar = formData.name_ar.trim();
+
+    if (!validateForm()) {
+      toast.error(t("errors.validationError"));
+      return;
+    }
+
     const payload = {
-      name: formData.name,
-      name_ar: formData.name_ar || undefined,
+      name,
+      name_ar: name_ar || undefined,
       code: formData.code,
       description: formData.description,
       description_ar: formData.description_ar || undefined,
@@ -557,6 +628,12 @@ export const LocationsPage: React.FC = () => {
                 onEdit={openEditModal}
                 onDelete={setDeleteConfirm}
                 onView={openViewModal}
+                onToggleActive={(l) =>
+                  toggleActiveMutation.mutate({
+                    id: l.id,
+                    isActive: !l.is_active,
+                  })
+                }
                 canCreate={canCreateLocation}
                 canEdit={canEditLocation}
                 canDelete={canDeleteLocation}
@@ -857,7 +934,7 @@ export const LocationsPage: React.FC = () => {
       {/* Create/Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-[hsl(var(--foreground)/0.6)] backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[hsl(var(--card))] rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-hidden animate-scale-in">
+          <div className="bg-[hsl(var(--card))] rounded-xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-hidden animate-scale-in">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.5)]">
               <div className="flex items-center gap-3">
@@ -912,17 +989,27 @@ export const LocationsPage: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
                       {t("locations.name")}
+                      <span className="text-[hsl(var(--destructive))] ml-1">
+                        *
+                      </span>
                     </label>
                     <input
                       type="text"
                       placeholder={t("locations.namePlaceholder")}
                       value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
-                      required
+                      onChange={(e) => {
+                        setFormData({ ...formData, name: e.target.value });
+                        if (errors.name) {
+                          setErrors({ ...errors, name: "" });
+                        }
+                      }}
+                      className={`w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all ${errors.name ? "border-[hsl(var(--destructive))]" : ""}`}
                     />
+                    {errors.name && (
+                      <p className="mt-1 text-xs text-[hsl(var(--destructive))]">
+                        {errors.name}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
@@ -933,11 +1020,23 @@ export const LocationsPage: React.FC = () => {
                       dir="rtl"
                       placeholder="الاسم بالعربية"
                       value={formData.name_ar}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name_ar: e.target.value })
-                      }
-                      className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
+                      onChange={(e) => {
+                        setFormData({ ...formData, name_ar: e.target.value });
+
+                        if (errors.name_ar) {
+                          setErrors((prev) => ({
+                            ...prev,
+                            name_ar: "",
+                          }));
+                        }
+                      }}
+                      className={`w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all ${errors.name_ar ? "border-[hsl(var(--destructive))]" : ""}`}
                     />
+                    {errors.name_ar && (
+                      <p className="mt-2 text-sm text-[hsl(var(--destructive))]">
+                        {errors.name_ar}
+                      </p>
+                    )}
                   </div>
                 </div>
 

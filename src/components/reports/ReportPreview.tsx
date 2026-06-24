@@ -1,8 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Link, Loader2 } from "lucide-react";
 import type { ReportFieldDefinition } from "../../types";
+import i18n from "@/i18n";
 
 interface ReportPreviewProps {
   data: Record<string, unknown>[];
@@ -165,6 +166,73 @@ export const renderStyledCell = (
     );
   }
 
+  if (field.isUrl && typeof value === "string") {
+    const urls = value
+      .split("|")
+      .map((u) => u.trim())
+      .filter(Boolean);
+
+    const displayNameCounts = new Map<string, number>();
+
+    urls.forEach((url, index) => {
+      let displayName = "Link";
+
+      try {
+        const parsed = new URL(url);
+        const segments = parsed.pathname.split("/").filter(Boolean);
+        displayName = decodeURIComponent(
+          segments.at(-1) ?? `Link ${index + 1}`,
+        );
+      } catch {
+        displayName = `Link ${index + 1}`;
+      }
+
+      displayNameCounts.set(
+        displayName,
+        (displayNameCounts.get(displayName) ?? 0) + 1,
+      );
+    });
+
+    const nameIndexes = new Map<string, number>();
+
+    return (
+      <div className="flex gap-4">
+        {urls.map((url, index) => {
+          let displayName = "Link";
+
+          try {
+            const parsed = new URL(url);
+            const segments = parsed.pathname.split("/").filter(Boolean);
+            displayName = decodeURIComponent(
+              segments.at(-1) ?? `Link ${index + 1}`,
+            );
+          } catch {
+            displayName = `Link ${index + 1}`;
+          }
+
+          const currentIndex = (nameIndexes.get(displayName) ?? 0) + 1;
+          nameIndexes.set(displayName, currentIndex);
+
+          const isDuplicate = (displayNameCounts.get(displayName) ?? 0) > 1;
+
+          return (
+            <a
+              key={index}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 flex items-center gap-1 underline capitalize text-sm"
+            >
+              <Link size={12} />
+              {isDuplicate
+                ? `${t(`common.${displayName}`, { defaultValue: displayName })} ${currentIndex}`
+                : t(`common.${displayName}`, { defaultValue: displayName })}
+            </a>
+          );
+        })}
+      </div>
+    );
+  }
   return <span>{String(value)}</span>;
 };
 
@@ -253,12 +321,17 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
 
   // Never drop a column — fall back to a human-readable label if the field
   // definition is not found (e.g. relation fields returned differently by API)
-  const columnDefs: ReportFieldDefinition[] = columns.map((col) => {
+  const columnDefs: ReportFieldDefinition[] = columns.map((col: any) => {
     const found = fields.find((f) => f.field === col.field);
-    if (found) return { ...found, label: col.label };
+    const lang = i18n.language;
+    if (found)
+      return {
+        ...found,
+        label: lang === "ar" && col.label_ar ? col.label_ar : col.label,
+      };
     return {
       field: col.field,
-      label: col.label,
+      label: lang === "ar" && col.label_ar ? col.label_ar : col.label,
       type: "string",
     } as ReportFieldDefinition;
   });

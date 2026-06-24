@@ -1,15 +1,17 @@
-import { memo } from 'react';
-import { useTranslation } from 'react-i18next';
+import { memo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   getBezierPath,
   EdgeLabelRenderer,
   BaseEdge,
   type EdgeProps,
-} from '@xyflow/react';
+} from "@xyflow/react";
+import i18n from "@/i18n";
 
 export interface TransitionEdgeData extends Record<string, unknown> {
   id: string;
   name: string;
+  name_ar?: string;
   code: string;
   hasRequirements?: boolean;
   hasActions?: boolean;
@@ -47,16 +49,16 @@ function TransitionEdge({
         path={edgePath}
         markerEnd={markerEnd}
         style={{
-          stroke: selected ? '#3b82f6' : '#94a3b8',
+          stroke: selected ? "#3b82f6" : "#94a3b8",
           strokeWidth: selected ? 2 : 1.5,
         }}
       />
       <EdgeLabelRenderer>
         <div
           style={{
-            position: 'absolute',
+            position: "absolute",
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-            pointerEvents: 'all',
+            pointerEvents: "all",
           }}
           className="nodrag nopan"
         >
@@ -64,23 +66,37 @@ function TransitionEdge({
             className={`
               px-2 py-1 rounded-lg bg-white shadow-md border text-xs font-medium
               cursor-pointer transition-all hover:shadow-lg
-              ${selected ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}
+              ${selected ? "border-blue-500 ring-2 ring-blue-200" : "border-gray-200"}
             `}
           >
-            <span className="text-gray-700">{edgeData?.name || t('incidents.transition')}</span>
+            <span className="text-gray-700">
+              {i18n.language === "ar" && edgeData?.name_ar
+                ? edgeData?.name_ar
+                : edgeData?.name || t("incidents.transition")}
+            </span>
             {/* Indicators */}
             <div className="flex items-center gap-1 mt-1">
               {edgeData?.hasRequirements && (
-                <span className="w-2 h-2 rounded-full bg-blue-500" title={t('incidents.hasRequirements')} />
+                <span
+                  className="w-2 h-2 rounded-full bg-blue-500"
+                  title={t("incidents.hasRequirements")}
+                />
               )}
               {edgeData?.hasActions && (
-                <span className="w-2 h-2 rounded-full bg-emerald-500" title={t('incidents.hasActions')} />
+                <span
+                  className="w-2 h-2 rounded-full bg-emerald-500"
+                  title={t("incidents.hasActions")}
+                />
               )}
-              {edgeData?.allowedRolesCount && edgeData.allowedRolesCount > 0 && (
-                <span className="text-[10px] text-gray-500">
-                  {edgeData.allowedRolesCount} {edgeData.allowedRolesCount > 1 ? t('incidents.roles') : t('incidents.role')}
-                </span>
-              )}
+              {edgeData?.allowedRolesCount &&
+                edgeData.allowedRolesCount > 0 && (
+                  <span className="text-[10px] text-gray-500">
+                    {edgeData.allowedRolesCount}{" "}
+                    {edgeData.allowedRolesCount > 1
+                      ? t("incidents.roles")
+                      : t("incidents.role")}
+                  </span>
+                )}
             </div>
           </div>
         </div>

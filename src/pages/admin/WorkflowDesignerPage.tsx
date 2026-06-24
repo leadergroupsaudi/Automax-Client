@@ -71,6 +71,11 @@ import { cn } from "@/lib/utils";
 import { Button } from "../../components/ui";
 import { WorkflowCanvas } from "../../components/workflow";
 import { IntegrationTriggersPanel } from "./components/IntegrationTriggersPanel";
+import {
+  validateRequired,
+  validateName,
+  validateCode,
+} from "@/utils/validations";
 
 type TabType = "visual" | "states" | "transitions" | "matching" | "fields";
 
@@ -115,7 +120,7 @@ interface StateFormData {
   new_incident_email_template_code: string;
   new_incident_sms_template_code: string;
 }
-
+type StateFormErrors = Partial<Record<"name" | "code", string>>;
 interface TransitionFormData {
   name: string;
   name_ar: string;
@@ -141,6 +146,9 @@ interface TransitionFormData {
   is_final_close: boolean;
   require_assignee: boolean;
 }
+type TransitionFormErrors = Partial<
+  Record<"name" | "code" | "fromState" | "toState", string>
+>;
 
 const initialStateFormData: StateFormData = {
   name: "",
@@ -653,16 +661,33 @@ export const WorkflowDesignerPage: React.FC = () => {
     >
   >({});
 
+  const [stateDuplicateErrors, setStateDuplicateErrors] = useState({
+    name: "",
+    code: "",
+  });
+
+  const [transitionDuplicateErrors, setTransitionDuplicateErrors] = useState({
+    name: "",
+    code: "",
+  });
+
+  const [stateErrors, setStateErrors] = useState<StateFormErrors>({});
+  const [transitionErrors, setTransitionErrors] =
+    useState<TransitionFormErrors>({});
+
   const sendTestMutation = useMutation({
     mutationFn: notificationTemplateApi.sendTest,
     onSuccess: (data, variables) => {
       const status = data?.data?.status ?? "sent";
       toast.success(
-        `Test ${variables.channel.toUpperCase()} sent — status: ${status}`,
+        t("workflows.testSentSuccess", {
+          channel: variables.channel.toUpperCase(),
+          status,
+        }),
       );
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.error ?? "Test send failed");
+      toast.error(err?.response?.data?.error ?? t("workflows.testSendFailed"));
     },
   });
 
@@ -821,7 +846,7 @@ export const WorkflowDesignerPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "workflow", id] });
       queryClient.invalidateQueries({ queryKey: ["admin", "workflows"] });
-      toast.success("Matching rules updated successfully");
+      toast.success(t("workflows.matchingRulesUpdatedSuccessfully"));
     },
     onError: (error: any) => {
       const errorMessage =
@@ -832,12 +857,12 @@ export const WorkflowDesignerPage: React.FC = () => {
 
       // Check if it's a duplicate workflow conflict
       if (errorMessage.includes("workflow rules conflict")) {
-        toast.error("Duplicate Workflow Rules", {
+        toast.error(t("workflows.duplicateWorkflowRules"), {
           description: errorMessage,
           duration: 6000,
         });
       } else {
-        toast.error("Failed to update matching rules", {
+        toast.error(t("workflows.failedToUpdateMatchingRules"), {
           description: errorMessage,
           duration: 5000,
         });
@@ -892,7 +917,7 @@ export const WorkflowDesignerPage: React.FC = () => {
       }
       queryClient.invalidateQueries({ queryKey: ["admin", "workflow", id] });
       queryClient.invalidateQueries({ queryKey: ["admin", "workflows"] });
-      toast.success("Merge permissions updated successfully");
+      toast.success(t("workflows.mergePermissionsUpdatedSuccessfully"));
     },
     onError: (error: any) => {
       const errorMessage =
@@ -900,7 +925,7 @@ export const WorkflowDesignerPage: React.FC = () => {
         error.response?.data?.message ||
         error.message ||
         "Failed to update merge permissions";
-      toast.error("Failed to update merge permissions", {
+      toast.error(t("workflows.failedToUpdateMergePermissions"), {
         description: errorMessage,
         duration: 5000,
       });
@@ -1056,6 +1081,11 @@ export const WorkflowDesignerPage: React.FC = () => {
 
   // State modal handlers
   const openCreateStateModal = () => {
+    setStateDuplicateErrors({
+      name: "",
+      code: "",
+    });
+    setStateErrors({});
     setEditingState(null);
     setStateFormData(initialStateFormData);
     setIsStateModalOpen(true);
@@ -1102,6 +1132,11 @@ export const WorkflowDesignerPage: React.FC = () => {
 
   // Transition modal handlers
   const openCreateTransitionModal = () => {
+    setTransitionDuplicateErrors({
+      name: "",
+      code: "",
+    });
+    setTransitionErrors({});
     setEditingTransition(null);
     setTransitionFormData(initialTransitionFormData);
     setIsTransitionModalOpen(true);
@@ -1221,8 +1256,90 @@ export const WorkflowDesignerPage: React.FC = () => {
     setFieldChanges([]);
   };
 
+  // error p tag
+  const renderFieldError = (message?: string) =>
+    message ? (
+      <p className="mt-1 text-xs font-medium text-[hsl(var(--destructive))]">
+        {message}
+      </p>
+    ) : null;
+
   const handleStateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const validationErrors: StateFormErrors = {};
+
+    const name = stateFormData.name.trim();
+    const code = stateFormData.code.trim();
+
+    if (!validateRequired(name)) {
+      validationErrors.name = t("validation.nameRequired", {
+        field: t("workflows.states"),
+      });
+    } else if (!validateName(name)) {
+      validationErrors.name = t("validation.invalidName", {
+        field: t("workflows.states"),
+      });
+
+      // "State name can only contain letters, numbers, spaces, and basic punctuation (- ' . , & ( ) /)";
+    }
+
+    if (!validateRequired(code)) {
+      validationErrors.code = t("validation.codeRequired", {
+        field: t("workflows.states"),
+      });
+    } else if (!validateCode(code)) {
+      validationErrors.code = t("validation.invalidCode", {
+        field: t("workflows.states"),
+      });
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      setStateErrors(validationErrors);
+      setStateDuplicateErrors({
+        name: "",
+        code: "",
+      });
+      toast.error(t("errors.validationError"));
+      return;
+    }
+
+    setStateErrors({});
+
+    // preventing duplicate states
+    const duplicateName = states.some(
+      (state) =>
+        state.id !== editingState?.id &&
+        state.name.trim().toLowerCase() ===
+          stateFormData.name.trim().toLowerCase(),
+    );
+
+    const duplicateCode = states.some(
+      (state) =>
+        state.id !== editingState?.id &&
+        state.code.trim().toLowerCase() ===
+          stateFormData.code.trim().toLowerCase(),
+    );
+
+    if (duplicateName || duplicateCode) {
+      setStateDuplicateErrors({
+        name: duplicateName ? t("workflows.stateAlreadyExists") : "",
+        code: duplicateCode ? t("workflows.stateCodeAlreadyExists") : "",
+      });
+
+      toast.error(
+        duplicateName
+          ? t("workflows.stateAlreadyExists")
+          : t("workflows.stateCodeAlreadyExists"),
+      );
+
+      return;
+    }
+
+    setStateDuplicateErrors({
+      name: "",
+      code: "",
+    });
+
     const data = {
       name: stateFormData.name,
       name_ar: stateFormData.name_ar,
@@ -1267,6 +1384,92 @@ export const WorkflowDesignerPage: React.FC = () => {
 
   const handleTransitionSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const validationErrors: TransitionFormErrors = {};
+
+    const name = transitionFormData.name.trim();
+    const code = transitionFormData.code.trim();
+    const fromState = transitionFormData.from_state_id;
+    const toState = transitionFormData.to_state_id;
+
+    if (!validateRequired(name)) {
+      validationErrors.name = t("validation.nameRequired", {
+        field: t("workflows.transitions"),
+      });
+    } else if (!validateName(name)) {
+      validationErrors.name = t("validation.invalidName", {
+        field: t("workflows.transitions"),
+      });
+    }
+
+    if (!validateRequired(code)) {
+      validationErrors.code = t("validation.codeRequired", {
+        field: t("workflows.transitions"),
+      });
+    } else if (!validateCode(code)) {
+      validationErrors.code = t("validation.invalidCode", {
+        field: t("workflows.transitions"),
+      });
+    }
+
+    if (!validateRequired(fromState)) {
+      validationErrors.fromState = t("validation.fromStateRequired", {
+        field: t("workflows.transitions"),
+      });
+    }
+
+    if (!validateRequired(toState)) {
+      validationErrors.toState = t("validation.fromStateRequired", {
+        field: t("workflows.transitions"),
+      });
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      setTransitionErrors(validationErrors);
+      setTransitionDuplicateErrors({
+        name: "",
+        code: "",
+      });
+      toast.error(t("errors.validationError"));
+      return;
+    }
+
+    setTransitionErrors({});
+
+    // preventing duplicate transitions
+    const duplicateName = transitions.some(
+      (transition) =>
+        transition.id !== editingTransition?.id &&
+        transition.name.trim().toLowerCase() ===
+          transitionFormData.name.trim().toLowerCase(),
+    );
+
+    const duplicateCode = transitions.some(
+      (transition) =>
+        transition.id !== editingTransition?.id &&
+        transition.code.trim().toLowerCase() ===
+          transitionFormData.code.trim().toLowerCase(),
+    );
+
+    if (duplicateName || duplicateCode) {
+      setTransitionDuplicateErrors({
+        name: duplicateName ? t("workflows.transitionAlreadyExists") : "",
+        code: duplicateCode ? t("workflows.transitionCodeAlreadyExists") : "",
+      });
+
+      toast.error(
+        duplicateName
+          ? t("workflows.transitionAlreadyExists")
+          : t("workflows.transitionCodeAlreadyExists"),
+      );
+
+      return;
+    }
+
+    setTransitionDuplicateErrors({
+      name: "",
+      code: "",
+    });
     const data = {
       name: transitionFormData.name,
       name_ar: transitionFormData.name_ar,
@@ -1457,6 +1660,22 @@ export const WorkflowDesignerPage: React.FC = () => {
         return <Circle className="w-4 h-4 fill-rose-500 text-rose-500" />;
       default:
         return <Circle className="w-4 h-4 fill-blue-500 text-blue-500" />;
+    }
+  };
+
+  const getStateTypeLabel = (stateType: string) => {
+    switch (stateType) {
+      case "initial":
+        return t("workflows.initialStartingState", "Initial (Starting state)");
+
+      case "terminal":
+        return t("workflows.terminalEndState", "Terminal (End state)");
+
+      case "normal":
+        return t("common.normal", "Normal");
+
+      default:
+        return stateType;
     }
   };
 
@@ -1755,7 +1974,8 @@ export const WorkflowDesignerPage: React.FC = () => {
                             <div className="flex items-center gap-2">
                               {getStateTypeIcon(state.state_type)}
                               <span className="text-sm text-[hsl(var(--foreground))] capitalize">
-                                {state.state_type}
+                                {/* {state.state_type} */}
+                                {getStateTypeLabel(state.state_type)}
                               </span>
                             </div>
                           </td>
@@ -2456,7 +2676,13 @@ export const WorkflowDesignerPage: React.FC = () => {
                           className="w-4 h-4 rounded border-[hsl(var(--border))] text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))]"
                         />
                         <span className="text-sm text-[hsl(var(--foreground))]">
-                          {source.label}
+                          {/* {t(
+                            `workflows.incidentSources.${source.value}`,
+                            source.label,
+                          )} */}
+                          {i18n.language === "ar"
+                            ? source.label_ar
+                            : source.label}
                         </span>
                       </label>
                     ))}
@@ -2512,7 +2738,9 @@ export const WorkflowDesignerPage: React.FC = () => {
                           className="w-4 h-4 rounded border-[hsl(var(--border))] text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))]"
                         />
                         <span className="text-sm text-[hsl(var(--foreground))]">
-                          {priority.name}
+                          {i18n.language === "ar"
+                            ? priority.name_ar?.trim() || priority.name
+                            : priority.name}
                         </span>
                       </label>
                     ))}
@@ -3004,7 +3232,9 @@ export const WorkflowDesignerPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">
-                    {editingState ? "Edit State" : "Add State"}
+                    {editingState
+                      ? t("workflows.editState")
+                      : t("workflows.addState")}
                   </h3>
                 </div>
               </div>
@@ -3026,19 +3256,43 @@ export const WorkflowDesignerPage: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
                       {t("common.name")}
+                      <span className="text-[hsl(var(--destructive))] ml-1">
+                        *
+                      </span>
                     </label>
                     <input
                       type="text"
                       value={stateFormData.name}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setStateFormData({
                           ...stateFormData,
                           name: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
-                      required
+                        });
+
+                        if (stateErrors.name) {
+                          setStateErrors((prev) => ({
+                            ...prev,
+                            name: "",
+                          }));
+                        }
+                        if (stateDuplicateErrors.name) {
+                          setStateDuplicateErrors((prev) => ({
+                            ...prev,
+                            name: "",
+                          }));
+                        }
+                      }}
+                      className={`w-full px-4 py-2.5 bg-[hsl(var(--background))] rounded-xl text-sm focus:outline-none ${
+                        stateDuplicateErrors.name || stateErrors.name
+                          ? "border border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200"
+                          : "border border-[hsl(var(--border))] focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                      }`}
+
+                      // required
                     />
+                    {renderFieldError(
+                      stateErrors.name || stateDuplicateErrors.name,
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
@@ -3061,19 +3315,42 @@ export const WorkflowDesignerPage: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
                     {t("departments.code")}
+                    <span className="text-[hsl(var(--destructive))] ml-1">
+                      *
+                    </span>
                   </label>
                   <input
                     type="text"
                     value={stateFormData.code}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setStateFormData({
                         ...stateFormData,
                         code: e.target.value,
-                      })
-                    }
-                    className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
-                    required
+                      });
+                      if (stateErrors.code) {
+                        setStateErrors((prev) => ({
+                          ...prev,
+                          code: "",
+                        }));
+                      }
+                      if (stateDuplicateErrors.code) {
+                        setStateDuplicateErrors((prev) => ({
+                          ...prev,
+                          code: "",
+                        }));
+                      }
+                    }}
+                    // className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                    className={`w-full px-4 py-2.5 bg-[hsl(var(--background))] rounded-xl text-sm focus:outline-none ${
+                      stateDuplicateErrors.code || stateErrors.code
+                        ? "border border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200"
+                        : "border border-[hsl(var(--border))] focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                    }`}
+                    // required
                   />
+                  {renderFieldError(
+                    stateDuplicateErrors.code || stateErrors.code,
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -3137,7 +3414,7 @@ export const WorkflowDesignerPage: React.FC = () => {
                   <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
                     {t("workflows.stateColor")}
                   </label>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 items-center">
                     {STATE_COLORS.map((color) => (
                       <button
                         key={color.value}
@@ -3149,15 +3426,34 @@ export const WorkflowDesignerPage: React.FC = () => {
                           })
                         }
                         className={cn(
-                          "w-8 h-8 rounded-lg transition-all",
+                          "w-8 h-8 rounded-lg transition-all cursor-pointer",
                           stateFormData.color === color.value
                             ? "ring-2 ring-offset-2 ring-[hsl(var(--primary))]"
-                            : "hover:scale-110",
+                            : "hover:scale-110 cursor-pointer",
                         )}
                         style={{ backgroundColor: color.value }}
                         title={color.name}
                       />
                     ))}
+                    <input
+                      className={cn(
+                        "w-10 h-10 rounded-lg transition-all cursor-pointer",
+                        !STATE_COLORS.some(
+                          (color) => color.value === stateFormData.color,
+                        )
+                          ? "ring-2 ring-offset-2 ring-[hsl(var(--primary))]"
+                          : "hover:scale-110 cursor-pointer",
+                      )}
+                      type="color"
+                      value={stateFormData.color}
+                      onChange={(e) =>
+                        setStateFormData({
+                          ...stateFormData,
+                          color: e.target.value,
+                        })
+                      }
+                      title={t("common.customColor")}
+                    />
                   </div>
                 </div>
                 <div>
@@ -3614,17 +3910,16 @@ export const WorkflowDesignerPage: React.FC = () => {
                   <div className="flex items-center gap-2 mb-1">
                     <Mail className="w-4 h-4 text-blue-500" />
                     <label className="text-sm font-semibold text-[hsl(var(--foreground))]">
-                      Notifications
+                      {t("nav.notifications")}
                     </label>
                   </div>
                   <p className="text-xs text-[hsl(var(--muted-foreground))] mb-3">
-                    Templates sent to assignee and reporter when an incident
-                    enters this state.
+                    {t("workflows.notificationTemplatesDesc")}
                   </p>
                   <div className="space-y-3">
                     <div>
                       <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1">
-                        Email Template
+                        {t("workflows.emailTemplate")}
                       </label>
                       <select
                         value={stateFormData.new_incident_email_template_code}
@@ -3636,7 +3931,7 @@ export const WorkflowDesignerPage: React.FC = () => {
                         }
                         className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm bg-[hsl(var(--background))] text-[hsl(var(--foreground))]"
                       >
-                        <option value="">— None —</option>
+                        <option value="">{t("workflows.none")}</option>
                         {emailTemplates.map((tpl) => (
                           <option key={tpl.id} value={tpl.code}>
                             {tpl.name} ({tpl.code})
@@ -3646,7 +3941,7 @@ export const WorkflowDesignerPage: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1">
-                        SMS Template
+                        {t("workflows.smsTemplate")}
                       </label>
                       <select
                         value={stateFormData.new_incident_sms_template_code}
@@ -3658,7 +3953,10 @@ export const WorkflowDesignerPage: React.FC = () => {
                         }
                         className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm bg-[hsl(var(--background))] text-[hsl(var(--foreground))]"
                       >
-                        <option value="">— None —</option>
+                        <option value="">
+                          {/* {t("goals.create.fields.noneCategory")} */}
+                          {t("workflows.none")}
+                        </option>
                         {smsTemplates.map((tpl) => (
                           <option key={tpl.id} value={tpl.code}>
                             {tpl.name} ({tpl.code})
@@ -3689,7 +3987,9 @@ export const WorkflowDesignerPage: React.FC = () => {
                     ) : undefined
                   }
                 >
-                  {editingState ? "Update State" : "Add State"}
+                  {editingState
+                    ? t("workflows.updateState")
+                    : t("workflows.addState")}
                 </Button>
               </div>
             </form>
@@ -3708,7 +4008,9 @@ export const WorkflowDesignerPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">
-                    {editingTransition ? "Edit Transition" : "Add Transition"}
+                    {editingTransition
+                      ? t("workflows.editTransition")
+                      : t("workflows.addTransition")}
                   </h3>
                 </div>
               </div>
@@ -3730,20 +4032,45 @@ export const WorkflowDesignerPage: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
                       {t("common.name")}
+                      <span className="text-[hsl(var(--destructive))] ml-1">
+                        *
+                      </span>
                     </label>
                     <input
                       type="text"
                       value={transitionFormData.name}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setTransitionFormData({
                           ...transitionFormData,
                           name: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                        });
+
+                        if (transitionErrors.name) {
+                          setTransitionErrors((prev) => ({
+                            ...prev,
+                            name: "",
+                          }));
+                        }
+
+                        if (transitionDuplicateErrors.name) {
+                          setTransitionDuplicateErrors((prev) => ({
+                            ...prev,
+                            name: "",
+                          }));
+                        }
+                      }}
+                      // className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                      className={`w-full px-4 py-2.5 bg-[hsl(var(--background))] rounded-xl text-sm focus:outline-none ${
+                        transitionDuplicateErrors.name || transitionErrors.name
+                          ? "border border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200"
+                          : "border border-[hsl(var(--border))] focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                      }`}
                       placeholder={t("workflows.eGStartWorking")}
-                      required
+                      // required
                     />
+                    {renderFieldError(
+                      transitionDuplicateErrors.name || transitionErrors.name,
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
@@ -3767,20 +4094,49 @@ export const WorkflowDesignerPage: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
                     {t("departments.code")}
+                    <span className="text-[hsl(var(--destructive))] ml-1">
+                      *
+                    </span>
                   </label>
                   <input
                     type="text"
                     value={transitionFormData.code}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setTransitionFormData({
                         ...transitionFormData,
                         code: e.target.value,
-                      })
-                    }
-                    className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                      });
+
+                      if (transitionErrors.code) {
+                        setTransitionErrors((prev) => ({
+                          ...prev,
+                          code: "",
+                        }));
+                      }
+                      if (transitionDuplicateErrors.code) {
+                        setTransitionDuplicateErrors((prev) => ({
+                          ...prev,
+                          code: "",
+                        }));
+                      }
+                    }}
+                    // className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                    className={`w-full px-4 py-2.5 bg-[hsl(var(--background))] rounded-xl text-sm focus:outline-none ${
+                      transitionDuplicateErrors.name || transitionErrors.name
+                        ? "border border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200"
+                        : "border border-[hsl(var(--border))] focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                    }`}
                     placeholder={t("workflows.stateKeyExample")}
-                    required
+                    // required
                   />
+                  {/* {transitionDuplicateErrors.code && (
+                    <p className="mt-1 text-sm text-red-500">
+                      {transitionDuplicateErrors.code}
+                    </p>
+                  )} */}
+                  {renderFieldError(
+                    transitionDuplicateErrors.code || transitionErrors.code,
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -3823,16 +4179,30 @@ export const WorkflowDesignerPage: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
                       {t("workflows.fromState")}
+                      <span className="text-[hsl(var(--destructive))] ml-1">
+                        *
+                      </span>
                     </label>
                     <select
                       value={transitionFormData.from_state_id}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setTransitionFormData({
                           ...transitionFormData,
                           from_state_id: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                        });
+
+                        if (transitionErrors.fromState) {
+                          setTransitionErrors((prev) => ({
+                            ...prev,
+                            fromState: "",
+                          }));
+                        }
+                      }}
+                      className={`w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] ${
+                        transitionErrors.fromState
+                          ? "border border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200"
+                          : "border border-[hsl(var(--border))] focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                      }`}
                       required
                     >
                       <option value="">{t("workflows.selectState")}</option>
@@ -3844,20 +4214,35 @@ export const WorkflowDesignerPage: React.FC = () => {
                         </option>
                       ))}
                     </select>
+                    {renderFieldError(transitionErrors.fromState)}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
                       {t("workflows.toState")}
+                      <span className="text-[hsl(var(--destructive))] ml-1">
+                        *
+                      </span>
                     </label>
                     <select
                       value={transitionFormData.to_state_id}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setTransitionFormData({
                           ...transitionFormData,
                           to_state_id: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                        });
+
+                        if (transitionErrors.toState) {
+                          setTransitionErrors((prev) => ({
+                            ...prev,
+                            toState: "",
+                          }));
+                        }
+                      }}
+                      className={`w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] ${
+                        transitionErrors.toState
+                          ? "border border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200"
+                          : "border border-[hsl(var(--border))] focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                      }`}
                       required
                     >
                       <option value="">{t("workflows.selectState")}</option>
@@ -3869,6 +4254,7 @@ export const WorkflowDesignerPage: React.FC = () => {
                         </option>
                       ))}
                     </select>
+                    {renderFieldError(transitionErrors.toState)}
                   </div>
                 </div>
 
@@ -4410,7 +4796,9 @@ export const WorkflowDesignerPage: React.FC = () => {
                     ) : undefined
                   }
                 >
-                  {editingTransition ? "Update Transition" : "Add Transition"}
+                  {editingTransition
+                    ? t("workflows.updateTransition")
+                    : t("workflows.addTransition")}
                 </Button>
               </div>
             </form>
@@ -4497,6 +4885,9 @@ export const WorkflowDesignerPage: React.FC = () => {
                               </option>
                               <option value="feedback">
                                 {t("workflows.feedbackRequired")}
+                              </option>
+                              <option value="rating">
+                                {t("workflows.ratingRequired")}
                               </option>
                               <option value="field_value">
                                 {t("workflows.fieldValueRequired")}

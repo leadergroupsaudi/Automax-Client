@@ -45,8 +45,15 @@ import {
   Bot,
   ShieldCheck,
   Phone,
+  Maximize2,
 } from "lucide-react";
-import { Button } from "../../components/ui";
+import {
+  Button,
+  Modal,
+  ModalBody,
+  ModalHeader,
+  ModalTitle,
+} from "../../components/ui";
 import { TreeSelect } from "../../components/ui/TreeSelect";
 import { getNodePath, type TreeSelectNode } from "../../utils/treeUtils";
 import { MiniWorkflowView } from "../../components/workflow";
@@ -87,7 +94,7 @@ import type {
   IncidentRejectionLog,
   AIQualityFeedback,
 } from "../../types";
-import { cn } from "@/lib/utils";
+import { cn, getLocalizedName } from "@/lib/utils";
 import { usePermissions } from "../../hooks/usePermissions";
 import { PERMISSIONS } from "../../constants/permissions";
 import { useAuthStore } from "../../stores/authStore";
@@ -126,6 +133,10 @@ export const IncidentDetailPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { hasPermission, isSuperAdmin, canViewAllIncidents } = usePermissions();
   const { users } = useAppSelector((state) => state.users);
+
+  const isVd2 =
+    window.APP_CONFIG?.CLIENT === "VD2" ||
+    import.meta.env.VITE_CLIENT === "VD2";
 
   const canViewReports =
     isSuperAdmin || hasPermission(PERMISSIONS.REPORTS_VIEW);
@@ -210,6 +221,7 @@ export const IncidentDetailPage: React.FC = () => {
   const [lightboxImage, setLightboxImage] = useState<{
     url: string;
     name: string;
+    attachment: IncidentAttachment;
   } | null>(null);
 
   // Image comparison state
@@ -219,12 +231,14 @@ export const IncidentDetailPage: React.FC = () => {
   >([]);
   const [compareModalOpen, setCompareModalOpen] = useState(false);
   const [compareSliderPosition, setCompareSliderPosition] = useState(50);
+  const [locationMapModalOpen, setLocationMapModalOpen] = useState(false);
 
   //Image Editor state
   const [openImageEditor, setOpenImageEditor] = useState(false);
   const [selectedImage, setSelectedImage] = useState<IncidentAttachment | null>(
     null,
   );
+  const [feedbackRating, setFeedbackRating] = useState<number>(5);
 
   const [disableApproveTransition, setDisableApproveTransition] =
     useState(false);
@@ -629,7 +643,7 @@ export const IncidentDetailPage: React.FC = () => {
         comment,
         attachments,
         feedback: {
-          rating: 5, // Hardcoded rating for now - as it's required by the API.
+          rating: feedbackRating || 0,
           comment: feedback?.comment,
         },
         department_id,
@@ -765,7 +779,8 @@ export const IncidentDetailPage: React.FC = () => {
     },
   });
 
-  const availableTransitions = transitionsData?.data || [];
+  const availableTransitions =
+    incident?.location?.name != "Default" ? transitionsData?.data || [] : [];
   const history = historyData?.data || [];
   const comments = combinedCommentData || [];
 
@@ -819,6 +834,7 @@ export const IncidentDetailPage: React.FC = () => {
     setLightboxImage({
       url: getAttachmentPreviewUrl(attachment.id),
       name: attachment.file_name,
+      attachment: attachment,
     });
     setLightboxOpen(true);
   };
@@ -1637,7 +1653,8 @@ export const IncidentDetailPage: React.FC = () => {
                     </Button>
                   ))}
               {(!incident.record_type || incident.record_type === "incident") &&
-                canConvertToRequest && (
+                canConvertToRequest &&
+                incident?.location?.name != "Default" && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -2206,11 +2223,38 @@ export const IncidentDetailPage: React.FC = () => {
                             )}
                             {item.feedbacks?.comment && (
                               <p className="mt-2 text-sm text-[hsl(var(--foreground))] italic">
+                                "
                                 <RenderWithIncidentMentions
                                   text={item.feedbacks.comment}
                                 />
+                                "
                               </p>
                             )}
+                            {item.feedbacks?.rating > 0 &&
+                              item.transition?.is_final_close && (
+                                <div className="flex items-center gap-1 mt-2">
+                                  {[...Array(5).keys()].map((i) => (
+                                    <Star
+                                      fill={
+                                        i <= item.feedbacks?.rating
+                                          ? "#FFD700"
+                                          : "#CCC"
+                                      }
+                                      name={
+                                        i <= item.feedbacks?.rating
+                                          ? "star"
+                                          : "star-outline"
+                                      }
+                                      size={20}
+                                      color={
+                                        i <= item.feedbacks?.rating
+                                          ? "#FFD700"
+                                          : "#CCC"
+                                      }
+                                    />
+                                  ))}
+                                </div>
+                              )}
                           </div>
                         </div>
                       ))}
@@ -3232,6 +3276,11 @@ export const IncidentDetailPage: React.FC = () => {
                         incident.location.name
                       )}
                     </div>
+                    {incident.location?.name === "Default" && (
+                      <span className="text-xs text-orange-500">
+                        Location must be updated before performing transitions
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
@@ -3501,7 +3550,9 @@ export const IncidentDetailPage: React.FC = () => {
                 incident.reporter_phone) && (
                 <div className="pt-2 border-t border-[hsl(var(--border))]">
                   <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                    {t("incidents.callerInformation", "Caller Information")}
+                    {isVd2
+                      ? t("incidents.reporter")
+                      : t("incidents.callerInformation", "Caller Information")}
                   </label>
                   <div className="mt-1 space-y-1.5">
                     {incident.reporter_name && (
@@ -3566,80 +3617,83 @@ export const IncidentDetailPage: React.FC = () => {
               )}
 
               {/* Reporter - compact */}
-              <div className="pt-2 border-t border-[hsl(var(--border))]">
-                <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
-                  {t("incidents.reporter")}
-                </label>
-                <div className="mt-1 flex items-center gap-3 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const phone =
-                        incident.reporter_phone || incident.reporter?.phone;
-                      if (phone) {
-                        const reporterName = incident.reporter?.first_name
-                          ? `${incident.reporter.first_name} ${incident.reporter.last_name || ""}`.trim()
-                          : incident.reporter?.username ||
-                            incident.reporter_name ||
-                            "Unknown";
-                        setIncomingCallNumber(phone);
-                        setIncomingCallName(reporterName);
-                        setOpenCallerIncidents(true);
-                        setIsCallerIncidentsMinimized(false);
-                      }
-                    }}
-                    className="text-sm text-[hsl(var(--primary))] hover:underline flex items-center gap-1.5 text-left"
-                  >
-                    <User className="w-3.5 h-3.5" />
-                    {incident.reporter?.first_name
-                      ? `${incident.reporter.first_name} ${incident.reporter.last_name || ""}`
-                      : incident.reporter?.username ||
-                        incident.reporter_name ||
-                        "Unknown"}
-                  </button>
-                  {(incident.reporter_email || incident.reporter?.email) && (
-                    <a
-                      href={`mailto:${incident.reporter_email || incident.reporter?.email}`}
-                      className="text-xs text-[hsl(var(--primary))] hover:underline flex items-center gap-1"
+              {!isVd2 ? (
+                <div className="pt-2 border-t border-[hsl(var(--border))]">
+                  <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                    {t("incidents.reporter")}
+                  </label>
+                  <div className="mt-1 flex items-center gap-3 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const phone =
+                          incident.reporter_phone || incident.reporter?.phone;
+                        if (phone) {
+                          const reporterName = incident.reporter?.first_name
+                            ? `${incident.reporter.first_name} ${incident.reporter.last_name || ""}`.trim()
+                            : incident.reporter?.username ||
+                              incident.reporter_name ||
+                              "Unknown";
+                          setIncomingCallNumber(phone);
+                          setIncomingCallName(reporterName);
+                          setOpenCallerIncidents(true);
+                          setIsCallerIncidentsMinimized(false);
+                        }
+                      }}
+                      className="text-sm text-[hsl(var(--primary))] hover:underline flex items-center gap-1.5 text-left"
                     >
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                        />
-                      </svg>
-                      {incident.reporter_email || incident.reporter?.email}
-                    </a>
-                  )}
-                  {(incident.reporter_phone || incident.reporter?.phone) && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const phone =
-                            incident.reporter_phone || incident.reporter?.phone;
-                          window.dispatchEvent(
-                            new CustomEvent("initiate-call", {
-                              detail: { number: phone },
-                            }),
-                          );
-                        }}
+                      <User className="w-3.5 h-3.5" />
+                      {incident.reporter?.first_name
+                        ? `${incident.reporter.first_name} ${incident.reporter.last_name || ""}`
+                        : incident.reporter?.username ||
+                          incident.reporter_name ||
+                          "Unknown"}
+                    </button>
+                    {(incident.reporter_email || incident.reporter?.email) && (
+                      <a
+                        href={`mailto:${incident.reporter_email || incident.reporter?.email}`}
                         className="text-xs text-[hsl(var(--primary))] hover:underline flex items-center gap-1"
                       >
-                        <Phone className="w-3.5 h-3.5" />
-                        {incident.reporter_phone || incident.reporter?.phone}
-                      </button>
-                    </div>
-                  )}
+                        <svg
+                          className="w-3.5 h-3.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                          />
+                        </svg>
+                        {incident.reporter_email || incident.reporter?.email}
+                      </a>
+                    )}
+                    {(incident.reporter_phone || incident.reporter?.phone) && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const phone =
+                              incident.reporter_phone ||
+                              incident.reporter?.phone;
+                            window.dispatchEvent(
+                              new CustomEvent("initiate-call", {
+                                detail: { number: phone },
+                              }),
+                            );
+                          }}
+                          className="text-xs text-[hsl(var(--primary))] hover:underline flex items-center gap-1"
+                        >
+                          <Phone className="w-3.5 h-3.5" />
+                          {incident.reporter_phone || incident.reporter?.phone}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              ) : null}
 
               {/* Geolocation - only show if has coordinates */}
               {incident.latitude !== undefined &&
@@ -3650,7 +3704,7 @@ export const IncidentDetailPage: React.FC = () => {
                     </label>
                     <div className="mt-1.5 space-y-1.5">
                       {/* Map - smaller height */}
-                      <div className="h-32 rounded-lg overflow-hidden border border-[hsl(var(--border))]">
+                      <div className="relative h-32 rounded-lg overflow-hidden border border-[hsl(var(--border))]">
                         <MapContainer
                           center={[incident.latitude, incident.longitude]}
                           zoom={15}
@@ -3667,6 +3721,14 @@ export const IncidentDetailPage: React.FC = () => {
                             icon={defaultIcon}
                           />
                         </MapContainer>
+                        <button
+                          type="button"
+                          onClick={() => setLocationMapModalOpen(true)}
+                          className="absolute top-2 right-2 z-50 p-1 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-md shadow-md hover:bg-white transition-all text-gray-600 hover:text-blue-600"
+                          title={t("locationPicker.expandMap")}
+                        >
+                          <Maximize2 className="w-4 h-4" />
+                        </button>
                       </div>
                       {/* Compact location info */}
                       <div className="text-xs text-[hsl(var(--muted-foreground))]">
@@ -3894,7 +3956,7 @@ export const IncidentDetailPage: React.FC = () => {
                       <p className="text-sm text-[hsl(var(--foreground))]">
                         {t("incidents.willAssignTo")}{" "}
                         <span className="font-medium">
-                          {trans.assign_department?.name ||
+                          {getLocalizedName(trans.assign_department) ||
                             t("incidents.department")}
                         </span>
                       </p>
@@ -3910,7 +3972,9 @@ export const IncidentDetailPage: React.FC = () => {
                         <p className="text-sm text-[hsl(var(--foreground))]">
                           {t("incidents.willAssignTo")}{" "}
                           <span className="font-medium">
-                            {departmentMatchResult.departments[0]?.name}
+                            {getLocalizedName(
+                              departmentMatchResult.departments[0],
+                            )}
                           </span>
                         </p>
                       ) : (
@@ -3998,7 +4062,7 @@ export const IncidentDetailPage: React.FC = () => {
                                   <span
                                     className={`text-sm flex-1 truncate ${isSelected ? "text-[hsl(var(--primary))] font-medium" : "text-[hsl(var(--foreground))]"} ${!isSelectableLeaf ? "opacity-60" : ""}`}
                                   >
-                                    {dept.name}
+                                    {getLocalizedName(dept)}
                                   </span>
                                   {isSelected && (
                                     <CheckCircle2 className="w-4 h-4 text-[hsl(var(--primary))] flex-shrink-0" />
@@ -4056,7 +4120,7 @@ export const IncidentDetailPage: React.FC = () => {
                                             <span
                                               className={`text-sm flex-1 truncate ${isSel ? "text-[hsl(var(--primary))] font-medium" : "text-[hsl(var(--foreground))]"}`}
                                             >
-                                              {dept.name}
+                                              {getLocalizedName(dept)}
                                             </span>
                                             {isSel && (
                                               <CheckCircle2 className="w-4 h-4 text-[hsl(var(--primary))] flex-shrink-0" />
@@ -4586,6 +4650,66 @@ export const IncidentDetailPage: React.FC = () => {
                     <div>
                       <div className="p-2 bg-[hsl(var(--muted)/0.5)] rounded-lg space-y-3">
                         {/* Feedback Comment */}
+                        {selectedTransition.requirements?.find(
+                          (x) => x.requirement_type === "rating",
+                        ) && (
+                          <div className="flex flex-col gap-2 w-full p-2 bg-gray-200 rounded-lg">
+                            <span className="text-sm text-[hsl(var(--muted-foreground))] mb-2 flex flex-row gap-1">
+                              {t(
+                                "incidents.rateYourExperience",
+                                "Rate your experience with this resolution",
+                              )}
+                              {selectedTransition.requirements?.find(
+                                (x) => x.requirement_type === "rating",
+                              )?.is_mandatory && (
+                                <span className="text-red-500">*</span>
+                              )}
+                            </span>
+                            <div className="flex flex-col justify-center items-center gap-2">
+                              <div className="flex flex-row">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <div
+                                    key={star}
+                                    onClick={() => setFeedbackRating(star)}
+                                  >
+                                    <Star
+                                      fill={
+                                        star <= feedbackRating
+                                          ? "#FFD700"
+                                          : "#CCC"
+                                      }
+                                      name={
+                                        star <= feedbackRating
+                                          ? "star"
+                                          : "star-outline"
+                                      }
+                                      size={40}
+                                      color={
+                                        star <= feedbackRating
+                                          ? "#FFD700"
+                                          : "#CCC"
+                                      }
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                              {feedbackRating > 0 && (
+                                <span className="text-sm">
+                                  {feedbackRating === 1 &&
+                                    t("incidents.ratingPoor")}
+                                  {feedbackRating === 2 &&
+                                    t("incidents.ratingFair")}
+                                  {feedbackRating === 3 &&
+                                    t("incidents.ratingGood")}
+                                  {feedbackRating === 4 &&
+                                    t("incidents.ratingVeryGood")}
+                                  {feedbackRating === 5 &&
+                                    t("incidents.ratingExcellent")}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
                         <div className="space-y-3">
                           {feedbackTemplates?.length ? (
                             <select
@@ -5192,14 +5316,76 @@ export const IncidentDetailPage: React.FC = () => {
           >
             <Download className="w-6 h-6" />
           </a>
+          <div className="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center">
+            {/* Image */}
+            <img
+              src={lightboxImage.url}
+              alt={lightboxImage.name}
+              className="max-w-[90vw] max-h-[90vh] object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-2">
+              <p className="truncate">{lightboxImage?.attachment?.file_name}</p>
+              <p className="text-xs text-white/70 mt-0.5">
+                {formatFileSize(lightboxImage?.attachment?.file_size)} •{" "}
+                {formatDateTime(lightboxImage?.attachment?.created_at)}
+              </p>
+              {lightboxImage?.attachment?.uploaded_by && (
+                <p className="truncate text-white/70 mt-0.5">
+                  {lightboxImage?.attachment?.uploaded_by.first_name}{" "}
+                  {lightboxImage?.attachment?.uploaded_by.last_name}
+                  <span className="ml-1 opacity-60">
+                    ·{" "}
+                    {lightboxImage?.attachment?.uploaded_by.roles?.[0]?.name ||
+                      "No Role"}
+                  </span>
+                  <span className="ml-1">
+                    ·{" "}
+                    {(lightboxImage?.attachment?.uploaded_by?.departments || [])
+                      .map((department: any) => department.name)
+                      .join(", ") || "No Department"}
+                  </span>
+                </p>
+              )}
 
-          {/* Image */}
-          <img
-            src={lightboxImage.url}
-            alt={lightboxImage.name}
-            className="max-w-[90vw] max-h-[90vh] object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
+              {/* transition */}
+              {getHistoryById(
+                lightboxImage?.attachment?.transition_history_id || "",
+              ) && (
+                <div className="flex justify-start items-center gap-2">
+                  <span
+                    className={
+                      "text-xs  mt-0.5" +
+                      getHistoryById(
+                        lightboxImage?.attachment?.transition_history_id || "",
+                      )?.from_state?.color
+                    }
+                  >
+                    {
+                      getHistoryById(
+                        lightboxImage?.attachment?.transition_history_id || "",
+                      )?.from_state?.name
+                    }
+                  </span>
+                  <ArrowRight className="w-4 h-4" />
+                  <span
+                    className={
+                      "text-xs  mt-0.5" +
+                      getHistoryById(
+                        lightboxImage?.attachment?.transition_history_id || "",
+                      )?.to_state?.color
+                    }
+                  >
+                    {
+                      getHistoryById(
+                        lightboxImage?.attachment?.transition_history_id || "",
+                      )?.to_state?.name
+                    }
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -5372,6 +5558,73 @@ export const IncidentDetailPage: React.FC = () => {
           refetchMergedIncidents();
         }}
       />
+
+      {incident.latitude !== undefined && incident.longitude !== undefined && (
+        <Modal
+          isOpen={locationMapModalOpen}
+          onClose={() => setLocationMapModalOpen(false)}
+          size="full"
+          className="max-h-[92vh]"
+        >
+          <ModalHeader>
+            <ModalTitle>{t("incidents.geolocation")}</ModalTitle>
+          </ModalHeader>
+          <ModalBody className="overflow-y-auto">
+            <div className="space-y-4">
+              <div className="h-[65vh] min-h-[420px] rounded-lg overflow-hidden border border-[hsl(var(--border))]">
+                <MapContainer
+                  center={[incident.latitude, incident.longitude]}
+                  zoom={15}
+                  className="h-full w-full z-0"
+                  style={{ height: "100%", width: "100%" }}
+                  scrollWheelZoom={true}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  <Marker
+                    position={[incident.latitude, incident.longitude]}
+                    icon={defaultIcon}
+                  />
+                </MapContainer>
+              </div>
+
+              <div className="rounded-lg bg-[hsl(var(--muted)/0.35)] border border-[hsl(var(--border))] p-4 text-sm">
+                <div className="flex items-start gap-2">
+                  <MapPin className="w-4 h-4 text-[hsl(var(--primary))] mt-0.5 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="font-medium text-[hsl(var(--foreground))]">
+                      {incident.latitude.toFixed(6)},{" "}
+                      {incident.longitude.toFixed(6)}
+                    </p>
+                    {incident.address && (
+                      <p className="mt-1 text-[hsl(var(--muted-foreground))] break-words">
+                        {incident.address}
+                      </p>
+                    )}
+                    {(incident.city ||
+                      incident.state ||
+                      incident.country ||
+                      incident.postal_code) && (
+                      <p className="mt-1 text-[hsl(var(--muted-foreground))]">
+                        {[
+                          incident.city,
+                          incident.state,
+                          incident.country,
+                          incident.postal_code,
+                        ]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ModalBody>
+        </Modal>
+      )}
 
       {/* Image Editor Modal */}
       <ImageEditor

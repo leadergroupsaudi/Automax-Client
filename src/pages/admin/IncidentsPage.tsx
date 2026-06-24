@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
-  Search,
   ChevronLeft,
   ChevronRight,
   RefreshCw,
@@ -15,12 +14,9 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
-  Filter,
   Calendar,
   User,
   Building2,
-  Settings2,
-  Check,
   ArrowRightLeft,
   Repeat,
   Map,
@@ -31,21 +27,11 @@ import {
   Play,
 } from "lucide-react";
 import { Button, Checkbox } from "../../components/ui";
-import { MultiTreeSelect } from "../../components/ui/MultiTreeSelect";
-import {
-  incidentApi,
-  workflowApi,
-  userApi,
-  departmentApi,
-  classificationApi,
-  locationApi,
-  incidentMergeApi,
-} from "../../api/admin";
+import { incidentApi, workflowApi, incidentMergeApi } from "../../api/admin";
 import type {
   Incident,
   IncidentFilter,
   Workflow,
-  User as UserType,
   WorkflowState,
   IncidentMergeOption,
 } from "../../types";
@@ -57,6 +43,7 @@ import {
   MergeIncidentsModal,
   BulkTransitionModal,
   SMSLegends,
+  IncidentFilters,
 } from "../../components/incidents";
 import BulkConvertToRequestModal from "@/components/incidents/BulkConvertToRequestModal";
 import { useAuthStore } from "@/stores/authStore";
@@ -124,7 +111,6 @@ export const IncidentsPage: React.FC = () => {
   const navigate = useNavigate();
   const { hasPermission, isSuperAdmin } = usePermissions();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [showFilters, setShowFilters] = useState(false);
   const statusFilter = useMemo(() => {
     const stateTypeParam = searchParams.get("state_type");
     const statusParam = searchParams.get("status");
@@ -142,10 +128,8 @@ export const IncidentsPage: React.FC = () => {
   const [columns, setColumns] = useState<ColumnConfig[]>(
     loadColumnsFromStorage,
   );
-  const [showColumnConfig, setShowColumnConfig] = useState(false);
   const [selectedIncidents, setSelectedIncidents] = useState<any[]>([]);
   const [showMergeModal, setShowMergeModal] = useState(false);
-  const columnConfigRef = useRef<HTMLDivElement>(null);
   const [showConvertModal, setShowConvertModal] = useState<boolean>(false);
   const [showBulkTransitionModal, setShowBulkTransitionModal] = useState(false);
   const [showMap, setShowMap] = useState(false);
@@ -164,8 +148,6 @@ export const IncidentsPage: React.FC = () => {
     isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_TRANSITION);
   const canCreateIncident =
     isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_CREATE);
-  const canViewIncident =
-    isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_VIEW);
 
   // Check if all selected incidents belong to the same workflow
   const selectedWorkflowId =
@@ -238,20 +220,6 @@ export const IncidentsPage: React.FC = () => {
     navigate,
   ]);
 
-  // Handle click outside column config dropdown
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        columnConfigRef.current &&
-        !columnConfigRef.current.contains(event.target as Node)
-      ) {
-        setShowColumnConfig(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   // Save columns to localStorage when changed
   useEffect(() => {
     localStorage.setItem(COLUMN_STORAGE_KEY, JSON.stringify(columns));
@@ -270,8 +238,6 @@ export const IncidentsPage: React.FC = () => {
   const isColumnVisible = (columnId: string) => {
     return columns.find((c) => c.id === columnId)?.visible ?? true;
   };
-
-  const visibleColumnCount = columns.filter((c) => c.visible).length;
 
   // // Multi-select handlers
   // const toggleSelectIncident = (incidentId: string) => {
@@ -420,14 +386,6 @@ export const IncidentsPage: React.FC = () => {
       ),
   });
 
-  const { data: availableTransitions, isLoading: isTransitionsLoading } =
-    useQuery({
-      queryKey: ["incidents", "available-transitions", filter.current_state_id],
-      queryFn: () =>
-        incidentApi.getTransitionsByState(filter.current_state_id || ""),
-      enabled: !!filter.current_state_id,
-    });
-
   // Skip the API call when search is 1-2 chars — wait for 3+ before fetching
   const isShortSearch = !!(
     filter.search &&
@@ -462,27 +420,6 @@ export const IncidentsPage: React.FC = () => {
   // Real-time viewer count updates via WebSocket (no polling!)
   useIncidentListWebSocket();
 
-  const { data: usersData } = useQuery({
-    queryKey: ["admin", "users", 1, 100],
-    queryFn: () => userApi.list(1, 100),
-    enabled: canViewAllIncidents,
-  });
-
-  const { data: departmentsData } = useQuery({
-    queryKey: ["admin", "departments", "tree"],
-    queryFn: () => departmentApi.getTree(),
-  });
-
-  const { data: classificationsData } = useQuery({
-    queryKey: ["admin", "classifications", "tree"],
-    queryFn: () => classificationApi.getTree(),
-  });
-
-  const { data: locationsData } = useQuery({
-    queryKey: ["admin", "locations", "tree"],
-    queryFn: () => locationApi.getTree(),
-  });
-
   const stats = statsData?.data;
   const incidents = incidentsData?.data || [];
   const totalPages = incidentsData?.total_pages ?? 1;
@@ -490,7 +427,6 @@ export const IncidentsPage: React.FC = () => {
 
   const handleFilterChange = (key: keyof IncidentFilter, value: any) => {
     const params = new URLSearchParams(searchParams);
-
     params.delete(key);
 
     if (key === "current_state_id") {
@@ -849,371 +785,24 @@ export const IncidentsPage: React.FC = () => {
       )}
 
       {/* Filters Bar */}
-      <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-4 shadow-sm">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[hsl(var(--muted-foreground))] w-5 h-5" />
-            <input
-              type="text"
-              placeholder={t("incidents.searchPlaceholder")}
-              value={filter.search || ""}
-              onChange={(e) =>
-                handleFilterChange("search", e.target.value || undefined)
-              }
-              className="w-full pl-12 pr-4 py-3 bg-[hsl(var(--muted)/0.5)] border border-[hsl(var(--border))] rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] focus:bg-[hsl(var(--background))] transition-all text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))]"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant={showFilters ? "secondary" : "outline"}
-              size="sm"
-              leftIcon={<Filter className="w-4 h-4" />}
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              {t("common.filters")}
-              {hasActiveFilters && (
-                <span className="ml-1 w-2 h-2 rounded-full bg-[hsl(var(--primary))]" />
-              )}
-            </Button>
-            {hasActiveFilters && canViewAllIncidents && (
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
-                {t("common.clear")}
-              </Button>
-            )}
-            {/* Column Configuration */}
-            <div className="relative" ref={columnConfigRef}>
-              <Button
-                variant={showColumnConfig ? "secondary" : "outline"}
-                size="sm"
-                leftIcon={<Settings2 className="w-4 h-4" />}
-                onClick={() => setShowColumnConfig(!showColumnConfig)}
-              >
-                {t("common.columns")}
-                <span className="ms-1 text-xs text-[hsl(var(--muted-foreground))]">
-                  ({visibleColumnCount})
-                </span>
-              </Button>
-              {showColumnConfig && (
-                <div className="absolute end-0 top-full mt-2 w-56 bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] shadow-xl z-50 overflow-hidden">
-                  <div className="px-4 py-3 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
-                    <p className="text-sm font-semibold text-[hsl(var(--foreground))]">
-                      {t("common.configureColumns")}
-                    </p>
-                    <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                      {t("common.toggleColumnVisibility")}
-                    </p>
-                  </div>
-                  <div className="py-2 max-h-64 overflow-y-auto">
-                    {columns.map((col) => (
-                      <button
-                        key={col.id}
-                        onClick={() => toggleColumn(col.id)}
-                        disabled={col.required}
-                        className={cn(
-                          "w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors",
-                          col.required
-                            ? "opacity-50 cursor-not-allowed"
-                            : "hover:bg-[hsl(var(--muted)/0.5)]",
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            "w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all",
-                            col.visible
-                              ? "bg-[hsl(var(--primary))] border-[hsl(var(--primary))]"
-                              : "border-[hsl(var(--border))]",
-                          )}
-                        >
-                          {col.visible && (
-                            <Check className="w-3.5 h-3.5 text-white" />
-                          )}
-                        </div>
-                        <span
-                          className={cn(
-                            "flex-1 text-start",
-                            col.visible
-                              ? "text-[hsl(var(--foreground))]"
-                              : "text-[hsl(var(--muted-foreground))]",
-                          )}
-                        >
-                          {t(col.label)}
-                        </span>
-                        {col.required && (
-                          <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                            {t("common.required")}
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="px-4 py-3 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
-                    <button
-                      onClick={() => setColumns(defaultColumns)}
-                      className="text-xs text-[hsl(var(--primary))] hover:text-[hsl(var(--primary)/0.8)] font-medium"
-                    >
-                      {t("common.resetToDefaults")}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Expanded Filters */}
-        {showFilters && (
-          <div className="mt-4 pt-4 border-t border-[hsl(var(--border))] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">
-                {t("common.workflow")}
-              </label>
-              <select
-                value={filter.workflow_id || ""}
-                onChange={(e) =>
-                  handleFilterChange("workflow_id", e.target.value || undefined)
-                }
-                className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
-              >
-                <option value="">{t("common.allWorkflows")}</option>
-                {workflowsData?.data?.map((workflow: Workflow) => (
-                  <option key={workflow.id} value={workflow.id}>
-                    {workflow.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">
-                {t("common.state")}
-              </label>
-              <select
-                value={filter.current_state_id || ""}
-                onChange={(e) =>
-                  handleFilterChange(
-                    "current_state_id",
-                    e.target.value || undefined,
-                  )
-                }
-                disabled={!canViewAllIncidents || hasStatusFilter}
-                className={cn(
-                  "w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]",
-                  !canViewAllIncidents || hasStatusFilter
-                    ? "opacity-60 cursor-not-allowed"
-                    : "",
-                )}
-              >
-                <option value="">{t("common.allStates")}</option>
-                {uniqueStates.map((state: WorkflowState) => (
-                  <option key={state.id} value={state.id}>
-                    {state.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {filter.current_state_id && (
-              <div>
-                <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">
-                  {t("incidents.transition")}
-                </label>
-
-                <select
-                  value={
-                    filter.converted_to_request
-                      ? "__converted_to_request__"
-                      : filter.transition_id || ""
-                  }
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === "__converted_to_request__") {
-                      const params = new URLSearchParams(searchParams);
-                      params.delete("transition_id");
-                      params.set("converted_to_request", "true");
-                      params.set("page", "1");
-                      setSearchParams(params);
-                    } else {
-                      const params = new URLSearchParams(searchParams);
-                      params.delete("converted_to_request");
-                      params.delete("transition_id");
-                      if (val) params.set("transition_id", val);
-                      params.set("page", "1");
-                      setSearchParams(params);
-                    }
-                  }}
-                  disabled={isTransitionsLoading || !canViewIncident}
-                  className={cn(
-                    "w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]",
-                    isTransitionsLoading || !canViewIncident
-                      ? "opacity-60 cursor-not-allowed"
-                      : "",
-                  )}
-                >
-                  {isTransitionsLoading ? (
-                    <option>Loading...</option>
-                  ) : (
-                    <>
-                      <option value="">{t("incidents.allTransitions")}</option>
-                      {availableTransitions?.data?.map((transition: any) => (
-                        <option key={transition.id} value={transition.id}>
-                          {transition.name}
-                        </option>
-                      ))}
-                      <option value="__converted_to_request__">
-                        {t("incidents.convertToRequest", "Convert to Request")}
-                      </option>
-                    </>
-                  )}
-                </select>
-              </div>
-            )}
-            {canViewAllIncidents && (
-              <div>
-                <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">
-                  {t("common.assignee")}
-                </label>
-                <select
-                  value={filter.assignee_id || ""}
-                  onChange={(e) =>
-                    handleFilterChange(
-                      "assignee_id",
-                      e.target.value || undefined,
-                    )
-                  }
-                  className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
-                >
-                  <option value="">{t("common.allAssignees")}</option>
-                  {usersData?.data?.map((user: UserType) => (
-                    <option key={user.id} value={user.id}>
-                      {user.first_name
-                        ? `${user.first_name} ${user.last_name || ""}`
-                        : user.username}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-            <MultiTreeSelect
-              data={departmentsData?.data || []}
-              selectedIds={filter.department_ids || []}
-              onSelectionChange={(ids) =>
-                handleFilterChange(
-                  "department_ids",
-                  ids.length ? ids : undefined,
-                )
-              }
-              label={t("common.department")}
-              placeholder={t("common.allDepartments")}
-              leafOnly={false}
-            />
-            <MultiTreeSelect
-              data={classificationsData?.data || []}
-              selectedIds={filter.classification_ids || []}
-              onSelectionChange={(ids) =>
-                handleFilterChange(
-                  "classification_ids",
-                  ids.length ? ids : undefined,
-                )
-              }
-              label={t("common.classification")}
-              placeholder={t("common.allClassifications")}
-              leafOnly={false}
-            />
-            <MultiTreeSelect
-              data={locationsData?.data || []}
-              selectedIds={filter.location_ids || []}
-              onSelectionChange={(ids) =>
-                handleFilterChange("location_ids", ids.length ? ids : undefined)
-              }
-              label={t("common.location")}
-              placeholder={t("common.allLocations")}
-              leafOnly={false}
-            />
-            <div>
-              <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">
-                {t("common.priority", "Priority")}
-              </label>
-              <select
-                value={filter.priority ?? ""}
-                onChange={(e) =>
-                  handleFilterChange(
-                    "priority",
-                    e.target.value === "" ? undefined : Number(e.target.value),
-                  )
-                }
-                className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
-              >
-                <option value="">
-                  {t("common.allPriorities", "All Priorities")}
-                </option>
-                <option value="1">
-                  {t("priorities.critical", "Critical")}
-                </option>
-                <option value="2">{t("priorities.high", "High")}</option>
-                <option value="3">{t("priorities.medium", "Medium")}</option>
-                <option value="4">{t("priorities.low", "Low")}</option>
-                <option value="5">{t("priorities.veryLow", "Very Low")}</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">
-                {t("incidents.fromDate")}
-              </label>
-              <input
-                type="date"
-                value={filter.start_date || ""}
-                onChange={(e) =>
-                  handleFilterChange("start_date", e.target.value || undefined)
-                }
-                className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">
-                {t("incidents.toDate")}
-              </label>
-              <input
-                type="date"
-                value={filter.end_date || ""}
-                min={filter.start_date || undefined}
-                onChange={(e) =>
-                  handleFilterChange("end_date", e.target.value || undefined)
-                }
-                className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">
-                {t("common.slaStatus")}
-              </label>
-              <select
-                value={
-                  filter.sla_breached === undefined
-                    ? ""
-                    : filter.sla_breached.toString()
-                }
-                onChange={(e) =>
-                  handleFilterChange(
-                    "sla_breached",
-                    e.target.value === ""
-                      ? undefined
-                      : e.target.value === "true",
-                  )
-                }
-                disabled={!canViewAllIncidents && hasUrlFilter}
-                className={cn(
-                  "w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]",
-                  !canViewAllIncidents &&
-                    hasUrlFilter &&
-                    "opacity-60 cursor-not-allowed",
-                )}
-              >
-                <option value="">{t("common.all")}</option>
-                <option value="true">{t("common.breached")}</option>
-                <option value="false">{t("common.onTrack")}</option>
-              </select>
-            </div>
-          </div>
-        )}
-      </div>
+      <IncidentFilters
+        filter={filter}
+        onFilterChange={handleFilterChange}
+        onClearFilters={clearFilters}
+        hasActiveFilters={hasActiveFilters}
+        recordType="incident"
+        showAssigneeFilter={canViewAllIncidents}
+        showColumnConfig={true}
+        columns={columns}
+        onToggleColumn={toggleColumn}
+        onResetColumns={() => setColumns(defaultColumns)}
+        disableStateFilter={!canViewAllIncidents || hasStatusFilter}
+        disableSlaFilter={!canViewAllIncidents && hasUrlFilter}
+        canViewAllIncidents={canViewAllIncidents}
+        hasStatusFilter={hasStatusFilter}
+        searchParams={searchParams}
+        setSearchParams={setSearchParams}
+      />
 
       {/* Incidents Table */}
       <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] overflow-hidden shadow-sm">

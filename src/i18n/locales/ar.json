@@ -221,7 +221,11 @@
     "descriptionAr": "الوصف (بالعربية)",
     "descriptionArPlaceholder": "الوصف بالعربية",
     "noFileChosen": "لا يوجد ملف مختار",
-    "chooseFile": "اختر ملف"
+    "chooseFile": "اختر ملف",
+    "nameRequired": "الاسم مطلوب.",
+    "nameInvalid": "لا يمكن أن يتكون الاسم من أرقام أو رموز خاصة فقط.",
+    "nameAllowedCharacters": "يمكن أن يحتوي الاسم فقط على أحرف وأرقام ومسافات والرموز التالية: - ' . , & ( ) /.",
+    "preview": "معاينة"
   },
   "search": {
     "minCharsTitle": "استمر في الكتابة...",
@@ -414,10 +418,18 @@
     "incidentDetails": "تفاصيل البلاغ",
     "incidentNumber": "رقم البلاغ",
     "incidentTitle": "العنوان",
+    "ratingExcellent": "ممتاز",
+    "ratingGood": "جيد",
+    "ratingAverage": "متوسط",
+    "ratingFair": "مقبول",
+    "ratingVeryGood": "جيد جدا",
+    "ratingPoor": "ضعيف",
+    "ratingVeryPoor": "ضعيف جدا",
     "status": "الحالة",
     "priority": "الأولوية",
     "severity": "الخطورة",
     "description": "الوصف",
+    "gisError": "الموقع خارج المنطقة المسموح بها.",
     "location": "الموقع",
     "department": "القسم",
     "assignee": "المُسند إليه",
@@ -1026,6 +1038,14 @@
     "usersImportedSuccessfully": "تم استيراد المستخدمين بنجاح",
     "usersSkipped": "تم تخطي بعض المستخدمين",
     "errors": "الأخطاء:",
+    "importUsers": "استيراد المستخدمين",
+    "uploadJsonToImport": "ارفع ملف JSON لاستيراد المستخدمين",
+    "validJsonRequired": "يتم قبول ملفات JSON الصالحة فقط.",
+    "failedImportsDownloadNote": "يمكن تنزيل عمليات الاستيراد الفاشلة كملف JSON بعد المعالجة.",
+    "importFailed": "فشل استيراد المستخدمين. تحقق من الملف وحاول مرة أخرى.",
+    "imported": "تم استيرادها",
+    "importSummary": "نجح {{success}} وفشل {{errors}}",
+    "downloadFailedImports": "تنزيل عمليات الاستيراد الفاشلة",
     "userAgent": "وكيل المستخدم",
     "51234Default": "51234 (افتراضي)",
     "unknownUser": "مستخدم غير معروف",
@@ -1096,7 +1116,9 @@
     "rolesSkipped": "تم تخطي بعض الأدوار",
     "errors": "الأخطاء:",
     "eGContentManager": "مثال: مدير المحتوى",
-    "roleKeyExample": "مثال: content_manager"
+    "roleKeyExample": "مثال: content_manager",
+    "invalidName": "يجب أن يحتوي اسم الدور على حرف أو رقم واحد على الأقل.",
+    "invalidCode": "رمز الدور يجب أن يحتوي على حرف أو رقم واحد على الأقل"
   },
   "departments": {
     "title": "الأقسام",
@@ -1138,6 +1160,8 @@
     "saving": "جاري الحفظ...",
     "active": "نشط",
     "inactive": "غير نشط",
+    "activate": "تفعيل",
+    "deactivate": "تعطيل",
     "loadingDepartment": "جاري تحميل القسم...",
     "departmentNotFound": "القسم غير موجود",
     "departmentNotFoundDesc": "القسم الذي تبحث عنه غير موجود أو تم حذفه.",
@@ -1168,7 +1192,12 @@
     "codePlaceholder": "مثال: ENG",
     "namePlaceholder": "مثال: الهندسة",
     "nameAr": "الاسم (بالعربية)",
-    "descriptionAr": "الوصف (بالعربية)"
+    "descriptionAr": "الوصف (بالعربية)",
+    "nameRequired": "اسم القسم مطلوب",
+    "codeRequired": "رمز القسم مطلوب",
+    "invalidName": "يمكن أن يحتوي اسم القسم على أحرف وأرقام ومسافات فقط.",
+    "invalidArabicName": "يجب ألا يحتوي اسم القسم باللغة العربية إلا على أحرف وأرقام ومسافات.",
+    "invalidCode": "لا يمكن أن يحتوي رمز القسم إلا على أحرف وأرقام ومسافات."
   },
   "locations": {
     "title": "المواقع",
@@ -1206,6 +1235,8 @@
     "saving": "جاري الحفظ...",
     "active": "نشط",
     "inactive": "غير نشط",
+    "activate": "تفعيل",
+    "deactivate": "تعطيل",
     "locationTypes": "أنواع المواقع",
     "typeCountry": "دولة",
     "typeState": "ولاية/محافظة",
@@ -1233,7 +1264,10 @@
     "codePlaceholder": "مثال: NY-OFF",
     "namePlaceholder": "مثال: مكتب نيويورك",
     "nameAr": "الاسم (بالعربية)",
-    "descriptionAr": "الوصف (بالعربية)"
+    "descriptionAr": "الوصف (بالعربية)",
+    "nameRequired": "اسم الموقع مطلوب",
+    "invalidName": "يمكن أن يحتوي اسم الموقع على أحرف وأرقام ومسافات فقط.",
+    "invalidArabicName": "يجب ألا يحتوي اسم الموقع باللغة العربية إلا على أحرف عربية وأرقام ومسافات."
   },
   "classifications": {
     "title": "التصنيفات",
@@ -1255,6 +1289,10 @@
     "createFirstClassification": "أنشئ تصنيفك الأول لتنظيم البلاغات والطلبات",
     "deleteConfirmTitle": "حذف التصنيف",
     "deleteConfirmMessage": "هل أنت متأكد من حذف هذا التصنيف؟ سيتم حذف جميع التصنيفات الفرعية أيضاً.",
+    "deleteHasChildrenTitle": "يحتوي هذا التصنيف على تصنيفات فرعية.",
+    "deleteHasChildrenMessage": "سيؤدي حذفه أيضاً إلى حذف جميع التصنيفات الفرعية المرتبطة به نهائياً. لا يمكن التراجع عن هذا الإجراء.",
+    "deleteFailedTitle": "تعذر حذف التصنيف",
+    "deleteFailedHelp": "قم بحل المشكلة الموضحة أعلاه، ثم حاول مرة أخرى.",
     "deleting": "جاري الحذف...",
     "updateDetails": "تحديث تفاصيل التصنيف",
     "addingUnder": "إضافة تحت",
@@ -1277,6 +1315,8 @@
     "saving": "جاري الحفظ...",
     "active": "نشط",
     "inactive": "غير نشط",
+    "activate": "تفعيل",
+    "deactivate": "تعطيل",
     "level": "المستوى",
     "aboutTitle": "حول التصنيفات",
     "aboutDescription": "تُستخدم التصنيفات لتصنيف البلاغات والطلبات. أنشئ هيكلاً هرمياً لتنظيمها حسب النوع والفئة والفئة الفرعية لإدارة أفضل للتذاكر.",
@@ -1309,7 +1349,8 @@
     "errors": "الأخطاء:",
     "namePlaceholder": "مثال: مشاكل الأجهزة",
     "nameAr": "الاسم (بالعربية)",
-    "descriptionAr": "الوصف (بالعربية)"
+    "descriptionAr": "الوصف (بالعربية)",
+    "deleteError": "فشل في حذف التصنيف"
   },
   "reports": {
     "title": "التقارير",
@@ -1349,6 +1390,8 @@
     "duplicate": "نسخ",
     "delete": "حذف",
     "deleteConfirm": "هل أنت متأكد من حذف",
+    "templateSaved": "تم حفظ القالب بنجاح",
+    "templateUpdated": "تم تحديث القالب بنجاح",
     "dataSources": {
       "incidents": "البلاغات",
       "requests": "الطلبات",
@@ -1392,7 +1435,9 @@
         "count": "التصنيفات حسب العدد"
       },
       "workflows": "سير العمل",
-      "workflowsDesc": "تعريفات سير العمل"
+      "workflowsDesc": "تعريفات سير العمل",
+      "usersPerformance": "أداء المستخدمين",
+      "usersPerformanceDesc": "بيانات تتبع أداء المستخدمين"
     },
     "limit": "حد",
     "records": "سجلات",
@@ -1439,7 +1484,8 @@
         "isEmpty": "فارغ",
         "isNotEmpty": "غير فارغ"
       },
-      "toDate": "إلى تاريخ"
+      "toDate": "إلى تاريخ",
+      "timestampKey": "مفتاح الطابع الزمني"
     },
     "errors": {
       "invalidDateRange": "كلا التاريخين (من وإلى) مطلوبان",
@@ -1489,10 +1535,14 @@
       "updateTemplate": "تحديث القالب",
       "report": "تقرير",
       "templateName": "اسم القالب",
+      "templateNameAr": "اسم القالب (العربية)",
       "templateNameRequired": "اسم القالب مطلوب",
       "templateNamePlaceholder": "أدخل اسم القالب...",
+      "templateNamePlaceholderAr": "أدخل اسم القالب (العربية)...",
       "description": "الوصف",
+      "descriptionAr": "الوصف (العربية)",
       "descriptionPlaceholder": "وصف اختياري...",
+      "descriptionPlaceholderAr": "وصف اختياري (العربية)...",
       "visibility": "الرؤية",
       "private": "خاص",
       "privateDesc": "أنت فقط يمكنك الوصول",
@@ -1757,7 +1807,7 @@
     "transitionCode": "رمز الانتقال",
     "fromState": "من حالة",
     "toState": "إلى حالة",
-    "selectState": "Select state...",
+    "selectState": "اختر الولاية...",
     "allowedRoles": "الأدوار المسموح بها",
     "allRolesAllowed": "جميع الأدوار يمكنها تنفيذ هذا الانتقال",
     "noRolesSelected": "لم يتم تحديد أدوار (جميع الأدوار مسموح بها)",
@@ -1848,6 +1898,7 @@
     "allRoles": "جميع الأدوار",
     "fromTo": "من → إلى",
     "config": "الإعدادات",
+    "ratingRequired": "التقييم مطلوب",
     "configureRequirementsActions": "تكوين المتطلبات والإجراءات",
     "autoWorkflowMatchingRules": "قواعد المطابقة التلقائية لسير العمل",
     "configureWhichIncidentsShouldAutomaticallyUseThis": "حدد أي البلاغات يجب أن تستخدم سير العمل هذا تلقائيًا بناءً على المصادر والأولويات والتصنيفات والمواقع.",
@@ -1987,7 +2038,30 @@
     "duplicateWorkflowCodesWillBeRenamedAutomatically": "سيتم إعادة تسمية رموز سير العمل المكررة تلقائيًا",
     "missingRolesOrClassificationsWillShowWarnings": "سيتم عرض تحذيرات للأدوار أو التصنيفات المفقودة",
     "noFeedbackOptionsYet": "لا توجد خيارات تقييم حتى الآن",
-    "noCommentOptionsYet": "لا توجد خيارات تعليقات حتى الآن"
+    "noCommentOptionsYet": "لا توجد خيارات تعليقات حتى الآن",
+    "nameRequired": "اسم سير العمل مطلوب",
+    "invalidName": "يمكن أن يحتوي اسم سير العمل على أحرف وأرقام ومسافات فقط.",
+    "codeRequired": "رمز سير العمل مطلوب",
+    "invalidCode": "لا يمكن أن يحتوي كود سير العمل إلا على أحرف وأرقام ومسافات.",
+    "stateAlreadyExists": "اسم الحالة موجود بالفعل",
+    "stateCodeAlreadyExists": "رمز الحالة موجود بالفعل",
+    "transitionAlreadyExists": "اسم الانتقال موجود بالفعل",
+    "transitionCodeAlreadyExists": "رمز الانتقال موجود بالفعل",
+    "integrationTriggers": "محفزات التكامل",
+    "addIntegrationTrigger": "إضافة مشغل تكامل",
+    "stateTriggerDescription": "السكربتات التي تعمل عند دخول البلاغ إلى هذه الحالة أو الخروج منها.",
+    "transitionTriggerDescription": "السكربتات التي تعمل عند تنفيذ هذا الانتقال.",
+    "notificationTemplatesDesc": "القوالب المرسلة إلى المكلّف ومقدّم البلاغ عند دخول البلاغ إلى هذه الحالة.",
+    "emailTemplate": "قالب البريد الإلكتروني",
+    "smsTemplate": "قالب الرسائل النصية",
+    "none": "- لا يوجد -",
+    "matchingRulesUpdatedSuccessfully": "تم تحديث قواعد المطابقة بنجاح",
+    "testSendFailed": "فشل إرسال الاختبار",
+    "testSentSuccess": "تم إرسال اختبار {{channel}} — الحالة: {{status}}",
+    "failedToUpdateMergePermissions": "فشل تحديث صلاحيات الدمج",
+    "mergePermissionsUpdatedSuccessfully": "تم تحديث صلاحيات الدمج بنجاح",
+    "failedToUpdateMatchingRules": "فشل تحديث قواعد المطابقة",
+    "duplicateWorkflowRules": "قواعد سير عمل مكررة"
   },
   "lookups": {
     "title": "البيانات الرئيسية",
@@ -2303,7 +2377,11 @@
     "permissionDenied": "تم رفض إذن الوصول للموقع",
     "locationUnavailable": "الموقع غير متاح",
     "locationTimeout": "انتهت مهلة طلب الموقع",
-    "locationFailed": "فشل الحصول على الموقع"
+    "locationFailed": "فشل الحصول على الموقع",
+    "district": "المنطقة",
+    "municipality": "البلدية",
+    "street": "الشارع",
+    "planNo": "رقم المخطط"
   },
   "revisionHistory": {
     "loading": "جاري تحميل سجل المراجعات...",
@@ -3449,6 +3527,9 @@
     "ssoCallbackUrlPlaceholder": "https://target.app/sso/callback",
     "ssoCallbackRequired": "رابط الاستدعاء مطلوب — بدونه، لن يتم إعادة توجيه المستخدمين.",
     "ssoCallbackHelp": "رابط URL على التطبيق المستهدف الذي يستقبل رمز JWT للمصادقة الموحدة.",
+    "ssoRedirectPath": "مسار إعادة التوجيه بعد تسجيل الدخول",
+    "ssoRedirectPathPlaceholder": "/dashboard (افتراضي) أو /incidents أو /requests إلخ.",
+    "ssoRedirectPathHelp": "مسار اختياري للانتقال إليه بعد تسجيل الدخول عبر SSO. اتركه فارغاً للانتقال إلى لوحة التحكم.",
     "create": "إنشاء",
     "update": "تحديث",
     "cancel": "إلغاء",
@@ -3665,7 +3746,13 @@
   },
   "validation": {
     "required": "مطلوب",
-    "fieldRequired": "{{field}} مطلوب"
+    "fieldRequired": "{{field}} مطلوب",
+    "nameRequired": "اسم {{field}} مطلوب",
+    "codeRequired": "رمز {{field}} مطلوب",
+    "invalidName": "يمكن أن يحتوي اسم {{field}} فقط على الأحرف والأرقام والمسافات وعلامات الترقيم الأساسية (- ' . , & ( ) /)",
+    "invalidCode": "يمكن أن يحتوي رمز {{field}} فقط على أحرف إنجليزية صغيرة وأرقام وشرطات سفلية (_)",
+    "fromStateRequired": "حالة المصدر لـ {{field}} مطلوبة",
+    "toStateRequired": "حالة الوجهة لـ {{field}} مطلوبة"
   },
   "license": {
     "noActiveLicenseSomeFeaturesMayBe": "لا توجد رخصة نشطة. قد لا تتوفر بعض الميزات. تواصل مع المسؤول.",

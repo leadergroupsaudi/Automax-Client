@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
@@ -20,6 +19,7 @@ import {
   Eye,
   Users,
   Briefcase,
+  Power,
 } from "lucide-react";
 import {
   classificationApi,
@@ -42,6 +42,7 @@ import { cn } from "@/lib/utils";
 import { Button, MultiSelect } from "../../components/ui";
 import { usePermissions } from "../../hooks/usePermissions";
 import { PERMISSIONS } from "../../constants/permissions";
+import { toast } from "sonner";
 
 interface ClassificationFormData {
   name: string;
@@ -143,8 +144,9 @@ interface TreeNodeProps {
   level: number;
   onAdd: (parentId: string, parentName: string) => void;
   onEdit: (cls: Classification) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string, hasChildren: boolean) => void;
   onView: (cls: Classification) => void;
+  onToggleActive: (cls: Classification) => void;
   canCreate: boolean;
   canEdit: boolean;
   canDelete: boolean;
@@ -158,6 +160,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   onEdit,
   onDelete,
   onView,
+  onToggleActive,
   canCreate,
   canEdit,
   canDelete,
@@ -165,8 +168,9 @@ const TreeNode: React.FC<TreeNodeProps> = ({
 }) => {
   const [expanded, setExpanded] = useState(true);
   const { i18n } = useTranslation();
-  const hasChildren =
-    classification.children && classification.children.length > 0;
+  const hasChildren = !!(
+    classification.children && classification.children.length > 0
+  );
   const gradient = levelGradients[level % levelGradients.length];
   const badgeColor = levelBadgeColors[level % levelBadgeColors.length];
   const displayName =
@@ -268,6 +272,24 @@ const TreeNode: React.FC<TreeNodeProps> = ({
             )}
             {canEdit && (
               <button
+                onClick={() => onToggleActive(classification)}
+                className={cn(
+                  "p-2 rounded-lg transition-colors",
+                  classification.is_active
+                    ? "text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.1)]"
+                    : "text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted)/0.5)]",
+                )}
+                title={
+                  classification.is_active
+                    ? t("classifications.deactivate")
+                    : t("classifications.activate")
+                }
+              >
+                <Power className="w-4 h-4" />
+              </button>
+            )}
+            {canEdit && (
+              <button
                 onClick={() => onEdit(classification)}
                 className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors"
                 title={t("common.edit")}
@@ -277,7 +299,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
             )}
             {canDelete && (
               <button
-                onClick={() => onDelete(classification.id)}
+                onClick={() => onDelete(classification.id, hasChildren)}
                 className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] rounded-lg transition-colors"
                 title={t("common.delete")}
               >
@@ -298,6 +320,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
               onEdit={onEdit}
               onDelete={onDelete}
               onView={onView}
+              onToggleActive={onToggleActive}
               canCreate={canCreate}
               canEdit={canEdit}
               canDelete={canDelete}
@@ -319,7 +342,10 @@ export const ClassificationsPage: React.FC = () => {
     useState<Classification | null>(null);
   const [formData, setFormData] =
     useState<ClassificationFormData>(initialFormData);
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    id: string;
+    hasChildren: boolean;
+  } | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [importResult, setImportResult] = useState<{
@@ -333,6 +359,8 @@ export const ClassificationsPage: React.FC = () => {
   const [viewDepartments, setViewDepartments] = useState<Department[]>([]);
   const [viewLoading, setViewLoading] = useState(false);
   const [viewTab, setViewTab] = useState<"users" | "departments">("users");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const canCreateClassification =
     isSuperAdmin || hasPermission(PERMISSIONS.CLASSIFICATIONS_CREATE);
@@ -382,6 +410,11 @@ export const ClassificationsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "classifications"] });
       closeModal();
     },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.error || "Failed to create classification",
+      );
+    },
   });
 
   const updateMutation = useMutation({
@@ -396,6 +429,11 @@ export const ClassificationsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "classifications"] });
       closeModal();
     },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.error || "Failed to update classification",
+      );
+    },
   });
 
   const deleteMutation = useMutation({
@@ -403,6 +441,19 @@ export const ClassificationsPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "classifications"] });
       setDeleteConfirm(null);
+    },
+    onError: (err: any) => {
+      setDeleteError(
+        err?.response?.data?.error || t("classifications.deleteError"),
+      );
+    },
+  });
+
+  const toggleActiveMutation = useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
+      classificationApi.update(id, { is_active: isActive } as any),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "classifications"] });
     },
   });
 
@@ -474,6 +525,7 @@ export const ClassificationsPage: React.FC = () => {
     setIsModalOpen(false);
     setEditingClassification(null);
     setFormData(initialFormData);
+    setErrors({});
   };
 
   const openViewModal = async (classification: Classification) => {
@@ -497,19 +549,20 @@ export const ClassificationsPage: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (formData.types.length === 0) {
-      toast.error(
-        t("classifications.typesRequired", {
-          defaultValue: "Select at least one type",
-        }),
-      );
-      return;
+  const validateForm = (): boolean => {
+    const newErrors: { [key: string]: string } = {};
+    const name = formData.name.trim();
+    if (!name) {
+      newErrors.name = t("common.nameRequired");
+    } else if (!/[A-Za-z]/.test(name)) {
+      newErrors.name = t("common.nameInvalid");
+    } else if (!/^[A-Za-z0-9\s'",.&()/-]+$/.test(name)) {
+      newErrors.name = t("common.nameAllowedCharacters");
     }
 
-    // Validate criticalities - all must have closing time configured
+    if (formData.types.length === 0) {
+      newErrors.types = t("classifications.typesRequired");
+    }
     const hasInvalidCriticality = formData.criticalities.some(
       (c) =>
         c.max_closing_hours < 0 ||
@@ -519,13 +572,25 @@ export const ClassificationsPage: React.FC = () => {
     );
 
     if (hasInvalidCriticality) {
-      toast.error(t("classifications.criticalityRequired"));
+      newErrors.criticalities = t("classifications.criticalityRequired");
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
       return;
     }
 
+    const trimmedName = formData.name.trim();
+    const trimmedNameAr = formData.name_ar.trim();
+
     const payload = {
-      name: formData.name,
-      name_ar: formData.name_ar || undefined,
+      name: trimmedName,
+      name_ar: trimmedNameAr || undefined,
       description: formData.description,
       description_ar: formData.description_ar || undefined,
       parent_id: formData.parent_id || undefined,
@@ -703,8 +768,16 @@ export const ClassificationsPage: React.FC = () => {
                 level={0}
                 onAdd={openCreateModal}
                 onEdit={openEditModal}
-                onDelete={setDeleteConfirm}
+                onDelete={(id, hasChildren) =>
+                  setDeleteConfirm({ id, hasChildren })
+                }
                 onView={openViewModal}
+                onToggleActive={(c) =>
+                  toggleActiveMutation.mutate({
+                    id: c.id,
+                    isActive: !c.is_active,
+                  })
+                }
                 canCreate={canCreateClassification}
                 canEdit={canEditClassification}
                 canDelete={canDeleteClassification}
@@ -977,7 +1050,7 @@ export const ClassificationsPage: React.FC = () => {
         <div className="fixed inset-0 bg-[hsl(var(--foreground)/0.6)] backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-[hsl(var(--card))] rounded-xl shadow-2xl max-w-md w-full animate-scale-in">
             <div className="p-6">
-              <div className="flex items-start gap-4 mb-6">
+              <div className="flex items-start gap-4 ">
                 <div className="w-12 h-12 bg-[hsl(var(--destructive)/0.1)] rounded-xl flex items-center justify-center flex-shrink-0">
                   <AlertTriangle className="w-6 h-6 text-[hsl(var(--destructive))]" />
                 </div>
@@ -985,25 +1058,61 @@ export const ClassificationsPage: React.FC = () => {
                   <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">
                     {t("classifications.deleteConfirmTitle")}
                   </h3>
-                  <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
-                    {t("classifications.deleteConfirmMessage")}
-                  </p>
+                  {deleteConfirm.hasChildren ? (
+                    <div className="mt-2 space-y-2">
+                      <p className="text-sm font-medium text-[hsl(var(--destructive))]">
+                        {t("classifications.deleteHasChildrenTitle")}
+                      </p>
+                      <p className="text-sm text-[hsl(var(--muted-foreground))]">
+                        {t("classifications.deleteHasChildrenMessage")}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
+                      {t("classifications.deleteConfirmMessage")}
+                    </p>
+                  )}
                 </div>
               </div>
-              <div className="flex justify-end gap-3">
-                <Button variant="ghost" onClick={() => setDeleteConfirm(null)}>
-                  {t("common.cancel")}
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => deleteMutation.mutate(deleteConfirm)}
-                  isLoading={deleteMutation.isPending}
-                >
-                  {deleteMutation.isPending
-                    ? t("classifications.deleting")
-                    : t("classifications.deleteClassification")}
-                </Button>
-              </div>
+              {deleteError && (
+                <div className="mt-3 rounded-md border border-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.1)] px-4 py-3 text-sm font-medium text-[hsl(var(--destructive))]">
+                  {deleteError}
+                </div>
+              )}
+              {!deleteError ? (
+                <div className="flex justify-end mt-6 gap-3">
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setDeleteConfirm(null);
+                      setDeleteError(null);
+                    }}
+                  >
+                    {t("common.cancel")}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => deleteMutation.mutate(deleteConfirm.id)}
+                    isLoading={deleteMutation.isPending}
+                  >
+                    {deleteMutation.isPending
+                      ? t("classifications.deleting")
+                      : t("classifications.deleteClassification")}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex justify-end mt-6 gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setDeleteConfirm(null);
+                      setDeleteError(null);
+                    }}
+                  >
+                    {t("common.close")}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1045,7 +1154,7 @@ export const ClassificationsPage: React.FC = () => {
             {/* Modal Body - Scrollable */}
             <form
               onSubmit={handleSubmit}
-              className="p-6 space-y-4 overflow-y-auto flex-1"
+              className="p-6 pb-0 space-y-4 overflow-y-auto flex-1"
             >
               {/* Parent Info Banner (when adding child) */}
               {!editingClassification && formData.parent_name && (
@@ -1066,6 +1175,9 @@ export const ClassificationsPage: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
                     {t("classifications.name")}
+                    <span className="text-[hsl(var(--destructive))] ml-1">
+                      *
+                    </span>
                   </label>
                   <input
                     type="text"
@@ -1075,8 +1187,12 @@ export const ClassificationsPage: React.FC = () => {
                       setFormData({ ...formData, name: e.target.value })
                     }
                     className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
-                    required
                   />
+                  {errors.name && (
+                    <p className="text-xs text-[hsl(var(--destructive))] mt-1">
+                      {errors.name}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
@@ -1162,7 +1278,14 @@ export const ClassificationsPage: React.FC = () => {
               </div>
 
               <MultiSelect
-                label={t("classifications.type")}
+                label={
+                  <>
+                    {t("classifications.type")}
+                    <span className="text-[hsl(var(--destructive))] ml-1">
+                      *
+                    </span>
+                  </>
+                }
                 options={ALL_TYPES.map((type) => ({
                   value: type,
                   label: t(`classifications.${type}`),
@@ -1354,7 +1477,7 @@ export const ClassificationsPage: React.FC = () => {
               </div>
 
               {/* Modal Footer - Fixed at bottom */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-[hsl(var(--border))] flex-shrink-0 sticky bottom-0 bg-[hsl(var(--card))] pt-4">
+              <div className="flex justify-end gap-3 py-4 border-t border-[hsl(var(--border))] flex-shrink-0 sticky bottom-0 bg-[hsl(var(--card))] ">
                 <Button variant="ghost" type="button" onClick={closeModal}>
                   {t("common.cancel")}
                 </Button>
