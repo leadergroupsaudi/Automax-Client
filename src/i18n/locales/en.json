@@ -3588,7 +3588,10 @@
     "drift": "Drift",
     "processed": "Processed",
     "reopen": "Reopen",
-    "reopened": "Reopened"
+    "reopened": "Reopened",
+    "allResults": "All Results",
+    "cannotVerify": "Cannot Verify",
+    "mismatch": "Mismatch"
   },
   "validation": {
     "required": "Required",
