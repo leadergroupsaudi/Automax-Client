@@ -332,14 +332,13 @@ const ReportTemplateBuilderPage: React.FC = () => {
   };
 
   const moveElement = (elementId: string, direction: "up" | "down") => {
-    const currentElements = elements ?? [];
-    const index = currentElements.findIndex((el) => el.id === elementId);
+    const index = elements.findIndex((el) => el.id === elementId);
     if (index === -1) return;
 
-    const newElements = [...currentElements];
+    const newElements = [...elements];
     const newIndex = direction === "up" ? index - 1 : index + 1;
 
-    if (newIndex < 0 || newIndex >= currentElements.length) return;
+    if (newIndex < 0 || newIndex >= elements.length) return;
 
     [newElements[index], newElements[newIndex]] = [
       newElements[newIndex],
