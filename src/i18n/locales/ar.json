@@ -2061,7 +2061,19 @@
     "failedToUpdateMergePermissions": "فشل تحديث صلاحيات الدمج",
     "mergePermissionsUpdatedSuccessfully": "تم تحديث صلاحيات الدمج بنجاح",
     "failedToUpdateMatchingRules": "فشل تحديث قواعد المطابقة",
-    "duplicateWorkflowRules": "قواعد سير عمل مكررة"
+    "duplicateWorkflowRules": "قواعد سير عمل مكررة",
+    "workflowCreatedSuccessfully": "تم إنشاء سير العمل بنجاح",
+    "failedToCreateWorkflow": "فشل في إنشاء سير العمل",
+    "workflowUpdatedSuccessfully": "تم تحديث سير العمل بنجاح",
+    "failedToUpdateWorkflow": "فشل في تحديث سير العمل",
+    "workflowDeletedSuccessfully": "تم حذف سير العمل بنجاح",
+    "failedToDeleteWorkflow": "فشل في حذف سير العمل",
+    "workflowDuplicatedSuccessfully": "تم نسخ سير العمل بنجاح",
+    "failedToDuplicateWorkflow": "فشل في نسخ سير العمل",
+    "workflowRestoredSuccessfully": "تمت استعادة سير العمل بنجاح",
+    "failedToRestoreWorkflow": "فشل في استعادة سير العمل",
+    "workflowPermanentlyDeleted": "تم حذف سير العمل نهائيًا",
+    "failedToPermanentlyDeleteWorkflow": "فشل في حذف سير العمل نهائيًا"
   },
   "lookups": {
     "title": "البيانات الرئيسية",
