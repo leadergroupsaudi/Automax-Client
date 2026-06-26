@@ -29,6 +29,7 @@ import {
   Key,
   EyeOff,
   ChevronDown,
+  FileSpreadsheet,
 } from "lucide-react";
 import {
   Button,
@@ -46,6 +47,7 @@ import { ldapApi } from "../../api/ldap";
 import { toast } from "sonner";
 import type { User, Role, UpdateProfileRequest } from "../../types";
 import type { LDAPUserListItem } from "../../api/ldap";
+import * as XLSX from "xlsx";
 import { cn } from "@/lib/utils";
 import { FolderTree } from "lucide-react";
 import { usePermissions } from "../../hooks/usePermissions";
@@ -75,6 +77,7 @@ type UserFieldErrors = Partial<
 interface UserImportResult {
   imported: number;
   skipped: number;
+  total?: number;
   errors: string[];
   note?: string;
   failed?: unknown[];
@@ -186,6 +189,20 @@ export const UsersPage: React.FC = () => {
     [],
   );
 
+  const flattenTree = useCallback(
+    (
+      nodes: TreeNode[],
+      map: Record<string, string> = {},
+    ): Record<string, string> => {
+      for (const node of nodes) {
+        map[node.id] = node.name;
+        if (node.children) flattenTree(node.children, map);
+      }
+      return map;
+    },
+    [],
+  );
+
   const activeFilterCount =
     filterRoleIds.length +
     filterDepartmentIds.length +
@@ -290,6 +307,28 @@ export const UsersPage: React.FC = () => {
     () => filterTreeNodes(classificationsTree, classSearch),
     [classificationsTree, classSearch, filterTreeNodes],
   );
+
+  const departmentNameMap = useMemo(
+    () => flattenTree(departmentsTree),
+    [departmentsTree, flattenTree],
+  );
+  const locationNameMap = useMemo(
+    () => flattenTree(locationsTree),
+    [locationsTree, flattenTree],
+  );
+  const classificationNameMap = useMemo(
+    () => flattenTree(classificationsTree),
+    [classificationsTree, flattenTree],
+  );
+  const roleNameMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    const roles = (rolesData?.data || []) as Array<{
+      id: string;
+      name: string;
+    }>;
+    for (const r of roles) map[r.id] = r.name;
+    return map;
+  }, [rolesData?.data]);
 
   // Handle dropdown positioning
   const handleDropdownToggle = useCallback(
@@ -636,6 +675,74 @@ export const UsersPage: React.FC = () => {
     try {
       setIsExporting(true);
       const blob = await userApi.export();
+      const jsonText = await blob.text();
+      const users = JSON.parse(jsonText);
+      const resolveNames = (ids: unknown, map: Record<string, string>) =>
+        ids instanceof Array
+          ? ids
+              .map((id: string) => map[id] || id)
+              .filter(Boolean)
+              .join(", ")
+          : "";
+      const rows = users.map((u: Record<string, unknown>) => [
+        u.username,
+        u.email,
+        u.first_name,
+        u.last_name,
+        u.phone,
+        resolveNames(u.department_ids, departmentNameMap),
+        resolveNames(u.location_ids, locationNameMap),
+        resolveNames(u.classification_ids, classificationNameMap),
+        resolveNames(u.role_ids, roleNameMap),
+        u.is_active ? "Yes" : "No",
+        u.is_super_admin ? "Yes" : "No",
+      ]);
+      const ws = XLSX.utils.aoa_to_sheet([
+        [
+          "username",
+          "email",
+          "first_name",
+          "last_name",
+          "phone",
+          "departments",
+          "locations",
+          "classifications",
+          "roles",
+          "is_active",
+          "is_super_admin",
+        ],
+        ...rows,
+      ]);
+      ws["!cols"] = [
+        { wch: 20 },
+        { wch: 30 },
+        { wch: 20 },
+        { wch: 20 },
+        { wch: 20 },
+        { wch: 40 },
+        { wch: 40 },
+        { wch: 40 },
+        { wch: 40 },
+        { wch: 10 },
+        { wch: 16 },
+      ];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Users");
+      XLSX.writeFile(
+        wb,
+        `users_export_${new Date().toISOString().split("T")[0]}.xlsx`,
+      );
+    } catch (error) {
+      console.error("Export failed:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportJson = async () => {
+    try {
+      setIsExporting(true);
+      const blob = await userApi.export();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -649,6 +756,32 @@ export const UsersPage: React.FC = () => {
     } finally {
       setIsExporting(false);
     }
+  };
+
+  const handleDownloadTemplate = () => {
+    const ws = XLSX.utils.aoa_to_sheet([
+      [
+        "username",
+        "email",
+        "password",
+        "first_name",
+        "last_name",
+        "phone",
+        "extension",
+      ],
+    ]);
+    ws["!cols"] = [
+      { wch: 20 },
+      { wch: 30 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 15 },
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Users");
+    XLSX.writeFile(wb, "users_import_template.xlsx");
   };
 
   const closeImportModal = () => {
@@ -668,21 +801,142 @@ export const UsersPage: React.FC = () => {
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0] || null;
-    if (file && !file.name.toLowerCase().endsWith(".json")) {
-      toast.error(t("users.validJsonRequired"));
-      event.target.value = "";
-      setImportFile(null);
-      return;
+    if (file) {
+      const name = file.name.toLowerCase();
+      if (!name.endsWith(".json") && !name.endsWith(".xlsx")) {
+        toast.error(
+          t("users.validJsonOrExcelRequired", {
+            defaultValue:
+              "Please select a valid JSON (.json) or Excel (.xlsx) file",
+          }),
+        );
+        event.target.value = "";
+        setImportFile(null);
+        return;
+      }
     }
     setImportFile(file);
+  };
+
+  const validateImportRows = (
+    rows: Array<{ username?: string; email?: string; password?: string }>,
+  ): string[] => {
+    const errors: string[] = [];
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const usernameSet = new Map<string, number[]>();
+    const emailSet = new Map<string, number[]>();
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const rowNum = i + 1;
+      const rowLabel = `Row ${rowNum}`;
+
+      if (!row.username?.trim()) {
+        errors.push(
+          `${rowLabel}: ${t("users.importUsernameRequired", { defaultValue: "Username is required" })}`,
+        );
+      }
+      if (!row.email?.trim()) {
+        errors.push(
+          `${rowLabel}: ${t("users.importEmailRequired", { defaultValue: "Email is required" })}`,
+        );
+      } else if (!emailRegex.test(row.email.trim())) {
+        errors.push(
+          `${rowLabel}: "${row.email}" - ${t("auth.invalidEmail", { defaultValue: "Invalid email format" })}`,
+        );
+      }
+
+      if (row.username?.trim()) {
+        const existing = usernameSet.get(row.username.trim()) || [];
+        existing.push(rowNum);
+        usernameSet.set(row.username.trim(), existing);
+      }
+      if (row.email?.trim()) {
+        const existing = emailSet.get(row.email.trim()) || [];
+        existing.push(rowNum);
+        emailSet.set(row.email.trim(), existing);
+      }
+    }
+
+    for (const [username, rows] of usernameSet) {
+      if (rows.length > 1) {
+        errors.push(
+          t("users.importDuplicateUsername", {
+            defaultValue: `Duplicate username "${username}" found in rows: ${rows.join(", ")}`,
+          }),
+        );
+      }
+    }
+    for (const [email, rows] of emailSet) {
+      if (rows.length > 1) {
+        errors.push(
+          t("users.importDuplicateEmail", {
+            defaultValue: `Duplicate email "${email}" found in rows: ${rows.join(", ")}`,
+          }),
+        );
+      }
+    }
+
+    return errors;
   };
 
   const handleImport = async () => {
     if (!importFile) return;
     try {
       setIsImporting(true);
-      const result = await userApi.import(importFile);
-      setImportResult((result.data as UserImportResult) || null);
+      let jsonRows: Array<{
+        username: string;
+        email: string;
+        first_name: string;
+        last_name: string;
+        phone: string;
+        extension: string;
+        is_active: boolean;
+        is_super_admin: boolean;
+      }>;
+
+      if (importFile.name.toLowerCase().endsWith(".xlsx")) {
+        const arrayBuffer = await importFile.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer);
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json<Record<string, string>>(sheet);
+        jsonRows = rows.map((row) => ({
+          username: row.username || "",
+          email: row.email || "",
+          first_name: row.first_name || "",
+          last_name: row.last_name || "",
+          phone: row.phone || "",
+          extension: row.extension || "",
+          is_active: true,
+          is_super_admin: false,
+        }));
+      } else {
+        const text = await importFile.text();
+        jsonRows = JSON.parse(text);
+      }
+
+      const validationErrors = validateImportRows(jsonRows);
+      if (validationErrors.length > 0) {
+        setImportResult({
+          imported: 0,
+          skipped: 0,
+          total: jsonRows.length,
+          errors: validationErrors,
+        } as UserImportResult);
+        return;
+      }
+
+      const jsonBlob = new Blob([JSON.stringify(jsonRows, null, 2)], {
+        type: "application/json",
+      });
+      const jsonFile = new File([jsonBlob], "users_import.json", {
+        type: "application/json",
+      });
+
+      const result = await userApi.import(jsonFile);
+      const data = result.data as UserImportResult;
+      setImportResult({ ...data, total: jsonRows.length });
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
       setIsImportModalOpen(false);
       setImportFile(null);
@@ -743,11 +997,32 @@ export const UsersPage: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            leftIcon={<Download className="w-4 h-4" />}
+            leftIcon={<FileSpreadsheet className="w-4 h-4" />}
             onClick={handleExport}
             isLoading={isExporting}
           >
-            {isExporting ? t("common.exporting") : t("common.export")}
+            {isExporting
+              ? t("common.exporting")
+              : t("users.exportExcel", { defaultValue: "Export Excel" })}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Download className="w-4 h-4" />}
+            onClick={handleExportJson}
+            isLoading={isExporting}
+          >
+            {isExporting
+              ? t("common.exporting")
+              : t("users.exportJson", { defaultValue: "Export JSON" })}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<FileSpreadsheet className="w-4 h-4" />}
+            onClick={handleDownloadTemplate}
+          >
+            {t("users.downloadTemplate", { defaultValue: "Download Template" })}
           </Button>
           <Button
             variant="outline"
@@ -2694,7 +2969,10 @@ export const UsersPage: React.FC = () => {
                   </h3>
                 </div>
                 <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1 ml-11">
-                  {t("users.uploadJsonToImport")}
+                  {t("users.uploadJsonOrExcelToImport", {
+                    defaultValue:
+                      "Upload a JSON (.json) or Excel (.xlsx) file to import users",
+                  })}
                 </p>
               </div>
               <button
@@ -2711,7 +2989,9 @@ export const UsersPage: React.FC = () => {
             <div className="p-6 space-y-5">
               <div>
                 <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-                  {t("workflows.selectJsonFile")}
+                  {t("users.selectJsonOrExcelFile", {
+                    defaultValue: "Select JSON (.json) or Excel (.xlsx) file",
+                  })}
                 </label>
                 <label
                   className={cn(
@@ -2730,7 +3010,7 @@ export const UsersPage: React.FC = () => {
                   </span>
                   <input
                     type="file"
-                    accept=".json,application/json"
+                    accept=".json,.xlsx,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     onChange={handleImportFileChange}
                     disabled={isImporting}
                     className="hidden"
@@ -2752,7 +3032,12 @@ export const UsersPage: React.FC = () => {
                       {t("common.importNotes")}
                     </p>
                     <ul className="list-disc list-inside space-y-1">
-                      <li>{t("users.validJsonRequired")}</li>
+                      <li>
+                        {t("users.validJsonOrExcelRequired", {
+                          defaultValue:
+                            "Valid JSON (.json) or Excel (.xlsx) file required",
+                        })}
+                      </li>
                       <li>{t("users.failedImportsDownloadNote")}</li>
                     </ul>
                   </div>
@@ -2814,11 +3099,16 @@ export const UsersPage: React.FC = () => {
 
                 <div className="mt-2 space-y-2">
                   <p className="text-base font-semibold text-[hsl(var(--foreground))]">
+                    <span className="text-[hsl(var(--muted-foreground))]">
+                      {t("users.totalRecords", { defaultValue: "Total" })}:
+                    </span>{" "}
+                    {importResult.total ??
+                      importResult.imported + importResult.skipped}
+                  </p>
+                  <p className="text-base font-semibold text-[hsl(var(--foreground))]">
                     <span className="text-[hsl(var(--success))]">
                       {importResult.imported}
-                    </span>
-                    {" / "}
-                    {importResult.imported + importResult.skipped}{" "}
+                    </span>{" "}
                     {t("users.imported")}
                   </p>
                   {importResult.skipped > 0 && (
