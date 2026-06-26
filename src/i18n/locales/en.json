@@ -2063,7 +2063,19 @@
     "failedToUpdateMergePermissions": "Failed to update merge permissions",
     "mergePermissionsUpdatedSuccessfully": "Merge permissions updated successfully",
     "failedToUpdateMatchingRules": "Failed to update matching rules",
-    "duplicateWorkflowRules": "Duplicate Workflow Rules"
+    "duplicateWorkflowRules": "Duplicate Workflow Rules",
+    "workflowCreatedSuccessfully": "Workflow created successfully",
+    "failedToCreateWorkflow": "Failed to create workflow",
+    "workflowUpdatedSuccessfully": "Workflow updated successfully",
+    "failedToUpdateWorkflow": "Failed to update workflow",
+    "workflowDeletedSuccessfully": "Workflow deleted successfully",
+    "failedToDeleteWorkflow": "Failed to delete workflow",
+    "workflowDuplicatedSuccessfully": "Workflow duplicated successfully",
+    "failedToDuplicateWorkflow": "Failed to duplicate workflow",
+    "workflowRestoredSuccessfully": "Workflow restored successfully",
+    "failedToRestoreWorkflow": "Failed to restore workflow",
+    "workflowPermanentlyDeleted": "Workflow permanently deleted",
+    "failedToPermanentlyDeleteWorkflow": "Failed to permanently delete workflow"
   },
   "lookups": {
     "title": "Master Data",

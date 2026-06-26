@@ -104,7 +104,7 @@ export const WorkflowsPage: React.FC = () => {
     mutationFn: (data: WorkflowCreateRequest) => workflowApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "workflows"] });
-      toast.success("Workflow created successfully");
+      toast.success(t("workflows.workflowCreatedSuccessfully"));
       closeModal();
     },
     onError: (error: any) => {
@@ -112,8 +112,8 @@ export const WorkflowsPage: React.FC = () => {
         error.response?.data?.error ||
         error.response?.data?.message ||
         error.message ||
-        "Failed to create workflow";
-      toast.error("Failed to create workflow", {
+        t("workflows.failedToCreateWorkflow");
+      toast.error(t("workflows.failedToCreateWorkflow"), {
         description: errorMessage,
         duration: 5000,
       });
@@ -126,7 +126,7 @@ export const WorkflowsPage: React.FC = () => {
       workflowApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "workflows"] });
-      toast.success("Workflow updated successfully");
+      toast.success(t("workflows.workflowUpdatedSuccessfully"));
       closeModal();
     },
     onError: (error: any) => {
@@ -134,8 +134,8 @@ export const WorkflowsPage: React.FC = () => {
         error.response?.data?.error ||
         error.response?.data?.message ||
         error.message ||
-        "Failed to update workflow";
-      toast.error("Failed to update workflow", {
+        t("workflows.failedToUpdateWorkflow");
+      toast.error(t("workflows.failedToUpdateWorkflow"), {
         description: errorMessage,
         duration: 5000,
       });
@@ -147,15 +147,17 @@ export const WorkflowsPage: React.FC = () => {
     mutationFn: (id: string) => workflowApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "workflows"] });
-      toast.success("Workflow deleted successfully");
+      toast.success(t("workflows.workflowDeletedSuccessfully"));
       setDeleteConfirm(null);
     },
     onError: (error: any) => {
       const errorMessage =
         error.response?.data?.error ||
         error.message ||
-        "Failed to delete workflow";
-      toast.error("Failed to delete workflow", { description: errorMessage });
+        t("workflows.failedToDeleteWorkflow");
+      toast.error(t("workflows.failedToDeleteWorkflow"), {
+        description: errorMessage,
+      });
     },
   });
 
@@ -163,14 +165,14 @@ export const WorkflowsPage: React.FC = () => {
     mutationFn: (id: string) => workflowApi.duplicate(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "workflows"] });
-      toast.success("Workflow duplicated successfully");
+      toast.success(t("workflows.workflowDuplicatedSuccessfully"));
     },
     onError: (error: any) => {
       const errorMessage =
         error.response?.data?.error ||
         error.message ||
-        "Failed to duplicate workflow";
-      toast.error("Failed to duplicate workflow", {
+        t("workflows.failedToDuplicateWorkflow");
+      toast.error(t("workflows.failedToDuplicateWorkflow"), {
         description: errorMessage,
       });
     },
@@ -183,14 +185,16 @@ export const WorkflowsPage: React.FC = () => {
       queryClient.invalidateQueries({
         queryKey: ["admin", "workflows", "deleted"],
       });
-      toast.success("Workflow restored successfully");
+      toast.success(t("workflows.workflowRestoredSuccessfully"));
     },
     onError: (error: any) => {
       const errorMessage =
         error.response?.data?.error ||
         error.message ||
-        "Failed to restore workflow";
-      toast.error("Failed to restore workflow", { description: errorMessage });
+        t("workflows.failedToRestoreWorkflow");
+      toast.error(t("workflows.failedToRestoreWorkflow"), {
+        description: errorMessage,
+      });
     },
   });
 
@@ -200,15 +204,15 @@ export const WorkflowsPage: React.FC = () => {
       queryClient.invalidateQueries({
         queryKey: ["admin", "workflows", "deleted"],
       });
-      toast.success("Workflow permanently deleted");
+      toast.success(t("workflows.workflowPermanentlyDeleted"));
       setPermanentDeleteConfirm(null);
     },
     onError: (error: any) => {
       const errorMessage =
         error.response?.data?.error ||
         error.message ||
-        "Failed to permanently delete workflow";
-      toast.error("Failed to permanently delete workflow", {
+        t("workflows.failedToPermanentlyDeleteWorkflow");
+      toast.error(t("workflows.failedToPermanentlyDeleteWorkflow"), {
         description: errorMessage,
       });
     },
