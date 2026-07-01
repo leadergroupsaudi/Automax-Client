@@ -34,7 +34,7 @@ import { useAuthStore } from "../../stores/authStore";
 import { authApi } from "../../api/auth";
 import { setLoggingOut } from "../../api/client";
 import { incidentApi, emailApi } from "../../api/admin";
-import {
+import i18n, {
   setLanguage,
   getCurrentLanguage,
   supportedLanguages,
@@ -437,60 +437,58 @@ export const IncidentLayout: React.FC = () => {
                     </div>
                   )}
 
-                  {Object.entries(workflow.by_state || {}).map(
-                    ([stateName, count]) => (
-                      <NavLink
-                        key={stateName}
-                        to={`/incidents?status=${encodeURIComponent(stateName)}`}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={({ isActive }) => {
-                          const isItemActive =
-                            isActive && currentStatus === stateName;
-                          return `group flex items-center px-3 py-2.5 text-slate-400 hover:text-white rounded-xl hover:bg-white/5 transition-colors ${
-                            isItemActive
-                              ? "bg-white/10 text-white shadow-sm"
-                              : ""
-                          }`;
-                        }}
-                      >
-                        {({ isActive }) => {
-                          const isItemActive =
-                            isActive && currentStatus === stateName;
-                          return (
-                            <>
-                              <Circle
-                                size={8}
-                                className={`flex-shrink-0 fill-current ${
-                                  isItemActive
-                                    ? "text-primary shadow-[0_0_8px_rgba(59,130,246,0.5)]"
-                                    : "text-slate-500"
-                                }`}
-                              />
+                  {(workflow.by_state_details || []).map((state) => (
+                    <NavLink
+                      key={state.name}
+                      to={`/incidents?status=${encodeURIComponent(state.name)}`}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={({ isActive }) => {
+                        const isItemActive =
+                          isActive && currentStatus === state.name;
+                        return `group flex items-center px-3 py-2.5 text-slate-400 hover:text-white rounded-xl hover:bg-white/5 transition-colors ${
+                          isItemActive ? "bg-white/10 text-white shadow-sm" : ""
+                        }`;
+                      }}
+                    >
+                      {({ isActive }) => {
+                        const isItemActive =
+                          isActive && currentStatus === state.name;
+                        return (
+                          <>
+                            <Circle
+                              size={8}
+                              className={`flex-shrink-0 fill-current ${
+                                isItemActive
+                                  ? "text-primary shadow-[0_0_8px_rgba(59,130,246,0.5)]"
+                                  : "text-slate-500"
+                              }`}
+                            />
 
-                              {!collapsed && (
-                                <>
-                                  <span
-                                    className={`ms-3 font-medium text-sm flex-1 ${isItemActive ? "text-white" : ""}`}
-                                  >
-                                    {stateName}
-                                  </span>
-                                  <span
-                                    className={`text-xs px-2 py-0.5 rounded-md transition-colors ${
-                                      isItemActive
-                                        ? "bg-primary text-white"
-                                        : "bg-slate-700 text-slate-300"
-                                    }`}
-                                  >
-                                    {count as number}
-                                  </span>
-                                </>
-                              )}
-                            </>
-                          );
-                        }}
-                      </NavLink>
-                    ),
-                  )}
+                            {!collapsed && (
+                              <>
+                                <span
+                                  className={`ms-3 font-medium text-sm flex-1 ${isItemActive ? "text-white" : ""}`}
+                                >
+                                  {i18n.language === "ar" && state.name_ar
+                                    ? state.name_ar
+                                    : state.name}
+                                </span>
+                                <span
+                                  className={`text-xs px-2 py-0.5 rounded-md transition-colors ${
+                                    isItemActive
+                                      ? "bg-primary text-white"
+                                      : "bg-slate-700 text-slate-300"
+                                  }`}
+                                >
+                                  {state.count}
+                                </span>
+                              </>
+                            )}
+                          </>
+                        );
+                      }}
+                    </NavLink>
+                  ))}
                 </div>
               ))}
             </div>
