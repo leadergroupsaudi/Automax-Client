@@ -38,9 +38,7 @@ import type {
   User as UserType,
   Incident,
   CreateQueryRequest,
-  IncidentSource,
 } from "../../types";
-import { INCIDENT_SOURCES } from "../../types";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "../../stores/authStore";
 
@@ -63,7 +61,7 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [comment, setComment] = useState("");
-  const [source, setSource] = useState<IncidentSource | undefined>("web");
+  const [source, setSource] = useState<string | undefined>("web");
   const [channel, setChannel] = useState("");
   const [classificationId, setClassificationId] = useState("");
   const [locationId, setLocationId] = useState("");
@@ -187,6 +185,21 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
     queryFn: () => lookupApi.listCategories(),
     enabled: isOpen,
   });
+
+  const sourceOptions = useMemo(() => {
+    if (!lookupCategoriesData?.data?.length) return [];
+    return (lookupCategoriesData?.data || [])
+      .filter((cat) => cat.code === "SOURCE")
+      .flatMap((cat) =>
+        (cat.values || []).map((value) => ({
+          value: value.code.toLowerCase(),
+          label:
+            i18n.language === "ar" && value.name_ar
+              ? value.name_ar
+              : value.name,
+        })),
+      );
+  }, [lookupCategoriesData, i18n.language]);
 
   // Query for incidents created by the current user (for source incident search)
   const { data: incidentsData, isLoading: incidentsLoading } = useQuery({
@@ -814,12 +827,12 @@ export const CreateQueryModal: React.FC<CreateQueryModalProps> = ({
                 <select
                   value={source || ""}
                   onChange={(e) =>
-                    setSource((e.target.value as IncidentSource) || undefined)
+                    setSource((e.target.value as string) || undefined)
                   }
                   className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 >
                   <option value="">{t("queries.selectSource")}</option>
-                  {INCIDENT_SOURCES.map((s) => (
+                  {sourceOptions.map((s) => (
                     <option key={s.value} value={s.value}>
                       {s.label}
                     </option>

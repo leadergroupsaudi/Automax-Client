@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -55,13 +55,11 @@ import type {
   Location,
   Department,
   User,
-  IncidentSource,
   IncidentFormField,
   LookupCategory,
   NotificationTemplate,
 } from "../../types";
 import {
-  INCIDENT_SOURCES,
   EMAIL_RECIPIENTS,
   type EmailRecipientType,
   type TransitionEmailConfig,
@@ -613,7 +611,7 @@ export const WorkflowDesignerPage: React.FC = () => {
   const [matchingConfig, setMatchingConfig] = useState<{
     classification_ids: string[];
     location_ids: string[];
-    sources: IncidentSource[];
+    sources: string[];
     priorities: number[];
     record_type:
       | "incident"
@@ -790,6 +788,21 @@ export const WorkflowDesignerPage: React.FC = () => {
   const priorityValues = (priorityCategory?.values || []).sort(
     (a, b) => a.sort_order - b.sort_order,
   );
+
+  const sourceOptions = useMemo(() => {
+    if (!lookupCategoriesData?.data?.length) return [];
+    return (lookupCategoriesData?.data || [])
+      .filter((cat) => cat.code === "SOURCE")
+      .flatMap((cat) =>
+        (cat.values || []).map((value) => ({
+          value: value.code.toLowerCase(),
+          label:
+            i18n.language === "ar" && value.name_ar
+              ? value.name_ar
+              : value.name,
+        })),
+      );
+  }, [lookupCategoriesData, i18n.language]);
 
   // Available form fields including dynamic lookup categories
   const availableFormFields = React.useMemo(() => {
@@ -2648,7 +2661,7 @@ export const WorkflowDesignerPage: React.FC = () => {
                     )}
                   </p>
                   <div className="space-y-2">
-                    {INCIDENT_SOURCES.map((source) => (
+                    {sourceOptions.map((source) => (
                       <label
                         key={source.value}
                         className="flex items-center gap-2 p-2 hover:bg-[hsl(var(--muted)/0.5)] rounded-lg cursor-pointer"
@@ -2676,13 +2689,7 @@ export const WorkflowDesignerPage: React.FC = () => {
                           className="w-4 h-4 rounded border-[hsl(var(--border))] text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))]"
                         />
                         <span className="text-sm text-[hsl(var(--foreground))]">
-                          {/* {t(
-                            `workflows.incidentSources.${source.value}`,
-                            source.label,
-                          )} */}
-                          {i18n.language === "ar"
-                            ? source.label_ar
-                            : source.label}
+                          {source.label}
                         </span>
                       </label>
                     ))}

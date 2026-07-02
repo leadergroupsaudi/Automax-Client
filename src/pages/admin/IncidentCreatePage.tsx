@@ -51,11 +51,9 @@ import type {
   Location,
   Workflow,
   Classification,
-  IncidentSource,
   LookupValue,
   iLocationOption,
 } from "../../types";
-import { INCIDENT_SOURCES } from "../../types";
 import { DynamicLookupField } from "../../components/common/DynamicLookupField";
 import { useAuthStore } from "../../stores/authStore";
 import { Modal } from "../../components/ui";
@@ -159,6 +157,21 @@ export function IncidentCreatePage() {
     queryKey: ["admin", "lookups", "categories"],
     queryFn: () => lookupApi.listCategories(),
   });
+
+  const sourceOptions = useMemo(() => {
+    if (!lookupCategoriesData?.data?.length) return [];
+    return (lookupCategoriesData?.data || [])
+      .filter((cat) => cat.code === "SOURCE")
+      .flatMap((cat) =>
+        (cat.values || []).map((value) => ({
+          value: value.code.toLowerCase(),
+          label:
+            i18n.language === "ar" && value.name_ar
+              ? value.name_ar
+              : value.name,
+        })),
+      );
+  }, [lookupCategoriesData, i18n.language]);
 
   // Fetch initial state of the selected workflow to detect creation-time assignment config
   const { data: initialStateData } = useQuery({
@@ -733,7 +746,7 @@ export function IncidentCreatePage() {
 
   const handleChange = (
     field: keyof typeof formData,
-    value: string | IncidentSource | undefined,
+    value: string | undefined,
   ) => {
     if (field === "workflow_id" && value) {
       setIsAutoMatched(false);
@@ -1182,11 +1195,6 @@ export function IncidentCreatePage() {
     createMutation.mutate({ data: submitData, files: attachments });
   };
 
-  const sourceOptions = [
-    { value: "", label: t("incidents.selectSource") },
-    ...INCIDENT_SOURCES.map((s) => ({ value: s.value, label: s.label })),
-  ];
-
   const workflowOptions = [
     { value: "", label: t("incidents.selectWorkflow") },
     ...filteredWorkflows.map((wf) => ({
@@ -1456,10 +1464,13 @@ export function IncidentCreatePage() {
                   onChange={(e) =>
                     handleChange(
                       "source",
-                      (e.target.value as IncidentSource) || undefined,
+                      (e.target.value as string) || undefined,
                     )
                   }
-                  options={sourceOptions}
+                  options={[
+                    { value: "", label: t("incidents.selectSource") },
+                    ...sourceOptions,
+                  ]}
                   required={true}
                   error={errors.source}
                 />
