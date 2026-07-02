@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Filter, Settings2, Check } from "lucide-react";
@@ -11,13 +11,13 @@ import {
   classificationApi,
   locationApi,
   incidentApi,
+  lookupApi,
 } from "../../api/admin";
 import {
   type IncidentFilter,
   type Workflow,
   type User as UserType,
   type WorkflowState,
-  INCIDENT_SOURCES,
 } from "../../types";
 import { cn, getLocalizedName } from "@/lib/utils";
 import i18n from "@/i18n";
@@ -85,14 +85,6 @@ export const IncidentFilters: React.FC<IncidentFiltersProps> = ({
   const [showFilters, setShowFilters] = useState(false);
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
   const columnConfigRef = useRef<HTMLDivElement>(null);
-
-  const sourceOptions = INCIDENT_SOURCES.map((source) => ({
-    value: source.value,
-    label:
-      i18n.language === "ar" && source.label_ar
-        ? source.label_ar
-        : source.label,
-  }));
 
   // Handle click outside column config dropdown
   useEffect(() => {
@@ -177,6 +169,25 @@ export const IncidentFilters: React.FC<IncidentFiltersProps> = ({
     queryKey: ["admin", "locations", "tree"],
     queryFn: () => locationApi.getTree(),
   });
+
+  const { data: sourceData } = useQuery({
+    queryKey: ["lookups", "categories"],
+    queryFn: async () => {
+      const categories = await lookupApi.listCategories();
+      return (
+        (categories.data || []).find((cat) => cat.code === "SOURCE") || null
+      );
+    },
+  });
+
+  const sourceOptions = useMemo(() => {
+    if (!sourceData) return [];
+    return (sourceData.values || []).map((value) => ({
+      value: value.code.toLowerCase(),
+      label:
+        i18n.language === "ar" && value.name_ar ? value.name_ar : value.name,
+    }));
+  }, [sourceData, i18n.language]);
 
   const visibleColumnCount = columns?.filter((c) => c.visible).length ?? 0;
 

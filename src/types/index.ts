@@ -651,106 +651,6 @@ export interface TransitionEmailConfig {
   include_comments: boolean;
 }
 
-// Incident Source types
-export type IncidentSource =
-  | "web"
-  | "mobile"
-  | "email"
-  | "phone"
-  | "ivr"
-  | "sms-link"
-  | "walk_in"
-  | "api"
-  | "social_media"
-  | "940_system"
-  | "940_manual"
-  | "field"
-  | "manual"
-  | "viusional"
-  | "other";
-
-export const INCIDENT_SOURCES: {
-  value: IncidentSource;
-  label: string;
-  label_ar: string;
-}[] = [
-  {
-    value: "web",
-    label: "Web Portal",
-    label_ar: "بوابة الويب",
-  },
-  {
-    value: "mobile",
-    label: "Mobile App",
-    label_ar: "تطبيق الهاتف المحمول",
-  },
-  {
-    value: "email",
-    label: "Email",
-    label_ar: "البريد الإلكتروني",
-  },
-  {
-    value: "phone",
-    label: "Phone",
-    label_ar: "الهاتف",
-  },
-  {
-    value: "ivr",
-    label: "IVR",
-    label_ar: "نظام الرد الصوتي التفاعلي",
-  },
-  {
-    value: "sms-link",
-    label: "SMS Link",
-    label_ar: "رابط الرسائل النصية",
-  },
-  {
-    value: "walk_in",
-    label: "Walk-in",
-    label_ar: "زيارة مباشرة",
-  },
-  {
-    value: "api",
-    label: "API Integration",
-    label_ar: "تكامل واجهة برمجة التطبيقات",
-  },
-  {
-    value: "social_media",
-    label: "Social Media",
-    label_ar: "وسائل التواصل الاجتماعي",
-  },
-  {
-    value: "940_system",
-    label: "940 System",
-    label_ar: "نظام 940",
-  },
-  {
-    value: "940_manual",
-    label: "940 Manual",
-    label_ar: "940 يدوي",
-  },
-  {
-    value: "field",
-    label: "Field",
-    label_ar: "ميداني",
-  },
-  {
-    value: "manual",
-    label: "Manual Entry",
-    label_ar: "إدخال يدوي",
-  },
-  {
-    value: "viusional",
-    label: "Viusional",
-    label_ar: "فيوجنال",
-  },
-  {
-    value: "other",
-    label: "Other",
-    label_ar: "أخرى",
-  },
-];
-
 // Workflow matching API request/response
 export interface WorkflowMatchRequest {
   classification_id?: string;
@@ -775,7 +675,7 @@ export interface WorkflowMatchResponse {
 export interface WorkflowMatchConfig {
   classification_ids?: string[];
   location_ids?: string[];
-  sources?: IncidentSource[];
+  sources?: string[];
   priority_min?: number;
   priority_max?: number;
 }
@@ -823,7 +723,7 @@ export interface Workflow {
   convert_to_request_roles?: Role[];
   merge_allowed_roles?: Role[];
   locations?: Location[];
-  sources?: IncidentSource[];
+  sources?: string[];
   priorities?: number[];
   match_config?: WorkflowMatchConfig;
   states_count: number;
@@ -971,7 +871,7 @@ export interface WorkflowCreateRequest {
   record_type?: ClassificationType;
   classification_ids?: string[];
   location_ids?: string[];
-  sources?: IncidentSource[];
+  sources?: string[];
   priorities?: number[];
   required_fields?: IncidentFormField[];
 }
@@ -990,7 +890,7 @@ export interface WorkflowUpdateRequest {
   convert_to_request_role_ids?: string[];
   merge_allowed_role_ids?: string[];
   location_ids?: string[];
-  sources?: IncidentSource[];
+  sources?: string[];
   priorities?: number[];
   required_fields?: IncidentFormField[];
   optional_fields?: IncidentFormField[];
@@ -1168,7 +1068,7 @@ export interface Incident {
   workflow?: Workflow;
   current_state?: WorkflowState;
   lookup_values?: LookupValue[];
-  source?: IncidentSource;
+  source?: string;
   assignee?: User;
   assignees?: User[];
   department?: Department;
@@ -1384,7 +1284,7 @@ export interface IncidentCreateRequest {
   description?: string;
   classification_id?: string;
   workflow_id?: string; // Now optional - can be auto-matched
-  source?: IncidentSource;
+  source?: string;
   assignee_id?: string;
   department_id?: string;
   location_id?: string;
@@ -1563,7 +1463,7 @@ export interface CreateComplaintRequest {
   classification_id: string;
   workflow_id: string;
   source_incident_id?: string;
-  source?: IncidentSource;
+  source?: string;
   channel?: string;
   reporter_id?: string; // Link to user who reported/created the complaint
   department_id?: string;
@@ -1587,7 +1487,7 @@ export interface CreateQueryRequest {
   classification_id: string;
   workflow_id: string;
   source_incident_id?: string;
-  source?: IncidentSource;
+  source?: string;
   channel?: string;
   department_id?: string;
   assignee_id?: string;
@@ -1610,7 +1510,7 @@ export interface CreateRequestRequest {
   classification_id: string;
   workflow_id: string;
   source_incident_id?: string;
-  source?: IncidentSource;
+  source?: string;
   channel?: string;
   department_id?: string;
   assignee_id?: string;

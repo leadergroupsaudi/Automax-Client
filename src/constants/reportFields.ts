@@ -1,9 +1,7 @@
-import i18n from "@/i18n";
 import {
   type DataSourceDefinition,
   type ReportFieldDefinition,
   type FilterOperator,
-  INCIDENT_SOURCES,
 } from "../types";
 
 // Filter operators by field type
@@ -63,12 +61,6 @@ export const FILTER_OPERATORS_BY_TYPE: Record<
     { value: "is_not_empty", label: "Is not empty" },
   ],
 };
-
-const sourceOptions = INCIDENT_SOURCES.map((source) => ({
-  value: source.value,
-  label:
-    i18n.language === "ar" && source.label_ar ? source.label_ar : source.label,
-}));
 
 // Incidents Data Source Fields
 export const incidentFields: ReportFieldDefinition[] = [
@@ -556,7 +548,7 @@ export const incidentFields: ReportFieldDefinition[] = [
     sortable: true,
     filterable: true,
     multiselect: true,
-    options: sourceOptions,
+    dynamicOptions: "sources",
   },
   {
     field: "created_by_id",
@@ -653,7 +645,7 @@ export const incidentFields: ReportFieldDefinition[] = [
     sortable: true,
     filterable: true,
     multiselect: true,
-    options: sourceOptions,
+    dynamicOptions: "sources",
   },
   {
     field: "version",
@@ -1244,7 +1236,7 @@ export const requestFields: ReportFieldDefinition[] = [
     sortable: true,
     filterable: true,
     multiselect: true,
-    options: sourceOptions,
+    dynamicOptions: "sources",
   },
   {
     field: "status_id",
@@ -2076,7 +2068,7 @@ export const locationFields: ReportFieldDefinition[] = [
     sortable: true,
     filterable: true,
     multiselect: true,
-    options: sourceOptions,
+    dynamicOptions: "sources",
   },
   {
     field: "parent_location_name",
@@ -2257,7 +2249,7 @@ export const classificationFields: ReportFieldDefinition[] = [
     sortable: true,
     filterable: true,
     multiselect: true,
-    options: sourceOptions,
+    dynamicOptions: "sources",
   },
   {
     field: "status_name",

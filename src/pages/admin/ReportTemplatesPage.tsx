@@ -8,6 +8,7 @@ import {
   classificationApi,
   departmentApi,
   locationApi,
+  lookupApi,
   reportApi,
   userApi,
   workflowApi,
@@ -23,6 +24,7 @@ import { ReportTemplateCard } from "@/components/reports";
 import { usePermissions } from "../../hooks/usePermissions";
 import { PERMISSIONS } from "../../constants/permissions";
 import { useAuthStore } from "@/stores/authStore";
+import i18n from "@/i18n";
 
 const dataSourceInfo: Record<
   ReportDataSource,
@@ -109,6 +111,25 @@ export const ReportTemplatesPage: React.FC = () => {
     queryKey: ["admin", "states", "options", "request"],
     queryFn: () => workflowApi.list(false, "request"),
   });
+
+  const { data: sourceData } = useQuery({
+    queryKey: ["lookups", "categories"],
+    queryFn: async () => {
+      const categories = await lookupApi.listCategories();
+      return (
+        (categories.data || []).find((cat) => cat.code === "SOURCE") || null
+      );
+    },
+  });
+
+  const sourceOptions = useMemo(() => {
+    if (!sourceData) return [];
+    return (sourceData.values || []).map((value) => ({
+      value: value.code.toLowerCase(),
+      label:
+        i18n.language === "ar" && value.name_ar ? value.name_ar : value.name,
+    }));
+  }, [sourceData, i18n.language]);
 
   // Fetch templates
   const { data: templatesData, isLoading } = useQuery({
@@ -231,9 +252,19 @@ export const ReportTemplatesPage: React.FC = () => {
       })) as { value: string; label: string }[];
     }
 
+    if (sourceOptions?.length) {
+      map.sources = sourceOptions;
+    }
+
     setDynamicOptionsMap(map);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [departmentsTree, locationsTree, classificationsTree, userOptions]);
+  }, [
+    departmentsTree,
+    locationsTree,
+    classificationsTree,
+    userOptions,
+    sourceOptions,
+  ]);
 
   const stateFields = useMemo(() => {
     if (stateOptions?.data && stateOptions.data.length > 0) {

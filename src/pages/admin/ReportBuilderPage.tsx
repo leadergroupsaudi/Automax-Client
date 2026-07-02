@@ -30,6 +30,7 @@ import {
   classificationApi,
   userApi,
   workflowApi,
+  lookupApi,
 } from "../../api/admin";
 import { getValidFilters } from "@/utils/reportUtils";
 import {
@@ -198,6 +199,25 @@ export const ReportBuilderPage: React.FC = () => {
     queryFn: () => workflowApi.list(false, "request"),
   });
 
+  const { data: sourceData } = useQuery({
+    queryKey: ["lookups", "categories"],
+    queryFn: async () => {
+      const categories = await lookupApi.listCategories();
+      return (
+        (categories.data || []).find((cat) => cat.code === "SOURCE") || null
+      );
+    },
+  });
+
+  const sourceOptions = useMemo(() => {
+    if (!sourceData) return [];
+    return (sourceData.values || []).map((value) => ({
+      value: value.code.toLowerCase(),
+      label:
+        i18n.language === "ar" && value.name_ar ? value.name_ar : value.name,
+    }));
+  }, [sourceData, i18n.language]);
+
   // Build hierarchical options from tree data
   const dynamicOptionsMap = useMemo(() => {
     const map: Record<string, DynamicReportOption[]> = {};
@@ -257,9 +277,18 @@ export const ReportBuilderPage: React.FC = () => {
             : user.username || user.email,
       }));
     }
+    if (sourceOptions?.length) {
+      map.sources = sourceOptions;
+    }
 
     return map;
-  }, [departmentsTree, locationsTree, classificationsTree, userOptions]);
+  }, [
+    departmentsTree,
+    locationsTree,
+    classificationsTree,
+    userOptions,
+    sourceOptions,
+  ]);
 
   // Get fields for current data source with dynamic options enhanced
   const fields = useMemo(() => {
