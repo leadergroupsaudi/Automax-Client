@@ -1356,6 +1356,7 @@ export interface StateStatDetail {
   name: string;
   count: number;
   state_type?: string;
+  name_ar?: string;
 }
 
 export interface WorkflowStats {
