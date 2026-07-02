@@ -138,6 +138,10 @@ export const IncidentDetailPage: React.FC = () => {
     window.APP_CONFIG?.CLIENT === "VD2" ||
     import.meta.env.VITE_CLIENT === "VD2";
 
+  console.log("APP_CONFIG.CLIENT:", window.APP_CONFIG?.CLIENT);
+  console.log("VITE_CLIENT:", import.meta.env.VITE_CLIENT);
+  console.log("isVd2:", isVd2);
+
   const canViewReports =
     isSuperAdmin || hasPermission(PERMISSIONS.REPORTS_VIEW);
   const canMergeIncidents =
