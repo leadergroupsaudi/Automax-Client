@@ -6,6 +6,7 @@ import {
   useKpiTargets,
   useSetKpiTarget,
   useDeleteKpiTarget,
+  useKpiCardDefinitions,
 } from "../../../hooks/useKpi";
 import { Button } from "../../../components/ui/Button";
 import { Modal } from "../../../components/ui/Modal";
@@ -18,6 +19,13 @@ export const KpiTargetsPage: React.FC = () => {
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState<number>(currentYear);
   const [kpiCodeFilter, setKpiCodeFilter] = useState("");
+
+  const { data: allCards } = useKpiCardDefinitions();
+  const cardOptions = (allCards ?? []).map((c) => ({
+    code: c.code,
+    label: `${c.code} — ${c.name_en}`,
+    type: c.type,
+  }));
 
   const {
     data: targets,
@@ -190,11 +198,29 @@ export const KpiTargetsPage: React.FC = () => {
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
             {t("kpi.targets.setTarget")}
           </h2>
-          <Input
-            label={t("kpi.targets.form.kpiCode") + " *"}
-            value={formKpiCode}
-            onChange={(e) => setFormKpiCode(e.target.value)}
-          />
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              {t("kpi.targets.form.kpiCode")} *
+            </label>
+            <select
+              value={formKpiCode}
+              onChange={(e) => {
+                const selected = cardOptions.find(
+                  (c) => c.code === e.target.value,
+                );
+                setFormKpiCode(e.target.value);
+                if (selected) setFormKpiType(selected.type);
+              }}
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+            >
+              <option value="">-- Select KPI --</option>
+              {cardOptions.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </div>
           <Select
             label={t("kpi.targets.form.kpiType")}
             value={formKpiType}
