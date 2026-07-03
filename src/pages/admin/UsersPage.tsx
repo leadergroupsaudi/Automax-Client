@@ -2812,8 +2812,8 @@ export const UsersPage: React.FC = () => {
             {/* Modal Body */}
             <div className="overflow-y-auto max-h-[calc(90vh-140px)] p-6 space-y-6">
               {/* Contact Info */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-1">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1 col-span-2">
                   <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
                     {t("users.email")}
                   </p>
