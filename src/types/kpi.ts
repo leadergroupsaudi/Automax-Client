@@ -5,6 +5,7 @@ export interface UserBrief {
   email: string;
   first_name: string;
   last_name: string;
+  name: string;
   avatar: string;
 }
 
@@ -122,6 +123,67 @@ export interface KpiDashboardData {
   pending_reviews: number;
   kpis_by_status: { status: string; count: number }[];
   kpis_by_goal: { goal: string; count: number }[];
+}
+
+export interface PerformanceTrend {
+  year: number;
+  quarter: number;
+  avg_achievement: number;
+  kpi_count: number;
+}
+
+export interface KpiCardDef {
+  code: string;
+  type: string;
+  name_en: string;
+  name_ar: string;
+  formula: string;
+  baseline: number;
+  polarity: string;
+  reporting_frequency: string;
+  data_source: string;
+  strategic_goal?: string;
+  owner_dept?: string;
+  activation_status: string;
+}
+
+export interface BenchmarkSummaryItem {
+  kpi_code: string;
+  zone: string;
+  benchmark_entity: string;
+  avg_internal: number;
+  avg_benchmark: number;
+  avg_variance: number;
+}
+
+export interface SegSummaryItem {
+  dimension_name: string;
+  segment_name: string;
+  avg_achievement: number;
+  avg_pct: number;
+}
+
+export interface TrendDataPoint {
+  period: string;
+  value: number;
+}
+
+export interface KpiPerformanceSummary {
+  kpi_code: string;
+  total_target: number;
+  total_actual: number;
+  avg_achievement: number;
+  last_updated: string;
+  quarterly_trend?: TrendDataPoint[];
+}
+
+export interface EnhancedKpiDashboardData extends KpiDashboardData {
+  performance_trends: PerformanceTrend[];
+  benchmark_summaries: BenchmarkSummaryItem[];
+  segmentation_summaries: SegSummaryItem[];
+  recent_kpi_cards: KpiCardDef[];
+  top_performers: KpiPerformanceSummary[];
+  low_performers: KpiPerformanceSummary[];
 }
 
 export interface StrategicKPI {
@@ -244,11 +306,29 @@ export interface KpiBenchmark {
   kpi_code: string;
   kpi_type: KPIType;
   year: number;
+  quarter: number;
+  zone: string;
+  department_id?: string;
+  department?: DepartmentBrief;
   benchmark_entity: string;
   internal_achievement: number;
   benchmark_achievement: number;
+  variance: number;
   notes: string;
   created_at: string;
+}
+
+export interface KpiBenchmarkRequest {
+  kpi_code: string;
+  kpi_type: KPIType;
+  year: number;
+  quarter?: number;
+  zone?: string;
+  department_id?: string;
+  benchmark_entity: string;
+  internal_achievement?: number;
+  benchmark_achievement?: number;
+  notes?: string;
 }
 
 export interface KpiSegmentation {
@@ -259,8 +339,26 @@ export interface KpiSegmentation {
   quarter: number;
   dimension_name: string;
   segment_name: string;
+  target: number;
   achievement: number;
+  achievement_pct: number;
+  department_id?: string;
+  department?: DepartmentBrief;
+  zone: string;
   created_at: string;
+}
+
+export interface KpiSegmentationRequest {
+  kpi_code: string;
+  kpi_type: KPIType;
+  year: number;
+  quarter: number;
+  dimension_name: string;
+  segment_name: string;
+  target?: number;
+  achievement?: number;
+  department_id?: string;
+  zone?: string;
 }
 
 export interface PillarRequest {
@@ -402,6 +500,32 @@ export interface KpiPerformanceRequest {
   trend_description?: string;
   justification?: string;
   corrective_action?: string;
+}
+
+export interface WorkflowTransitionBrief {
+  id: string;
+  workflow_id: string;
+  name: string;
+  code: string;
+  from_state_id: string;
+  to_state_id: string;
+  to_state?: { id: string; name: string; code: string };
+  description?: string;
+  is_rejection?: boolean;
+}
+
+export interface KpiWorkflowAction {
+  id: string;
+  workflow_instance_id: string;
+  transition_id: string;
+  transition_name?: string;
+  from_state_name?: string;
+  to_state_name?: string;
+  performed_by_id: string;
+  performed_by?: UserBrief;
+  comment: string;
+  performed_at: string;
+  created_at: string;
 }
 
 export interface PaginatedResponse<T> {

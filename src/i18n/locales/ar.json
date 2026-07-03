@@ -3622,6 +3622,18 @@
         "actual": "الفعلي",
         "achievement": "الإنجاز",
         "status": "الحالة"
+      },
+      "detail": {
+        "details": "تفاصيل الأداء",
+        "type": "النوع",
+        "trend": "وصف الاتجاه",
+        "justification": "المبرر",
+        "correctiveAction": "الإجراء التصحيحي",
+        "availableActions": "الإجراءات المتاحة",
+        "submittedBy": "مقدم من",
+        "approvedBy": "معتمد من",
+        "history": "سجل التحولات",
+        "noHistory": "لا توجد تحولات بعد."
       }
     },
     "targets": {
@@ -3675,7 +3687,36 @@
     "performanceSubmitted": "تم إرسال الأداء",
     "performanceSubmitFailed": "فشل إرسال الأداء",
     "performanceTransitioned": "تم تغيير حالة الأداء",
-    "performanceTransitionFailed": "فشل تغيير حالة الأداء"
+    "performanceTransitionFailed": "فشل تغيير حالة الأداء",
+    "benchmarks": {
+      "title": "مقارنات مؤشرات الأداء",
+      "subtitle": "مقارنة الإنجاز الداخلي مع المقارنات الخارجية حسب المنطقة",
+      "addBenchmark": "إضافة مقارنة",
+      "searchPlaceholder": "البحث بكود المؤشر...",
+      "empty": "لا توجد مقارنات.",
+      "allZones": "جميع المناطق",
+      "year": "السنة",
+      "deleteConfirm": "حذف سجل المقارنة؟"
+    },
+    "segmentation": {
+      "title": "تجزئة مؤشرات الأداء",
+      "subtitle": "تحليل أداء المؤشرات حسب البعد والقسم والمنطقة",
+      "addSegment": "إضافة تجزئة",
+      "searchPlaceholder": "البحث بكود المؤشر...",
+      "empty": "لا توجد بيانات تجزئة.",
+      "allDimensions": "جميع الأبعاد",
+      "year": "السنة",
+      "deleteConfirm": "حذف سجل التجزئة؟"
+    },
+    "report": {
+      "title": "تقرير تعريفات بطاقات المؤشرات",
+      "subtitle": "قائمة كاملة بجميع تعريفات المؤشرات عبر الأنواع الاستراتيجية والتشغيلية والجوائز",
+      "searchPlaceholder": "البحث في المؤشرات...",
+      "allTypes": "جميع الأنواع",
+      "empty": "لا توجد تعريفات بطاقات مؤشرات.",
+      "kpisFound": "تم العثور على {{count}} مؤشر(ات)",
+      "print": "طباعة"
+    }
   },
   "navigation": {
     "streamlineYour": "بسط",

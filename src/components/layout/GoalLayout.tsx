@@ -30,6 +30,7 @@ import {
   BookOpen,
   Crosshair,
   TrendingUp,
+  Layers,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/authStore";
 import { authApi } from "../../api/auth";
@@ -423,6 +424,60 @@ export const GoalLayout: React.FC = () => {
                   <span className="ms-3 font-medium text-sm">
                     {t("kpi.performance.title")}
                   </span>
+                )}
+              </>
+            )}
+          </NavLink>
+
+          <NavLink
+            to="/goals/kpi/benchmarks"
+            onClick={() => setMobileMenuOpen(false)}
+            className={({ isActive }) => navLinkClass(isActive)}
+          >
+            {({ isActive }) => (
+              <>
+                {isActive && (
+                  <div className="absolute start-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-e-full" />
+                )}
+                <BarChart3 size={20} className="flex-shrink-0" />
+                {!collapsed && (
+                  <span className="ms-3 font-medium text-sm">Benchmarks</span>
+                )}
+              </>
+            )}
+          </NavLink>
+
+          <NavLink
+            to="/goals/kpi/segmentation"
+            onClick={() => setMobileMenuOpen(false)}
+            className={({ isActive }) => navLinkClass(isActive)}
+          >
+            {({ isActive }) => (
+              <>
+                {isActive && (
+                  <div className="absolute start-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-e-full" />
+                )}
+                <Layers size={20} className="flex-shrink-0" />
+                {!collapsed && (
+                  <span className="ms-3 font-medium text-sm">Segmentation</span>
+                )}
+              </>
+            )}
+          </NavLink>
+
+          <NavLink
+            to="/goals/kpi/report"
+            onClick={() => setMobileMenuOpen(false)}
+            className={({ isActive }) => navLinkClass(isActive)}
+          >
+            {({ isActive }) => (
+              <>
+                {isActive && (
+                  <div className="absolute start-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-e-full" />
+                )}
+                <FileText size={20} className="flex-shrink-0" />
+                {!collapsed && (
+                  <span className="ms-3 font-medium text-sm">KPI Report</span>
                 )}
               </>
             )}

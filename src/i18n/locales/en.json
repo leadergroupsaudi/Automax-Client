@@ -3624,6 +3624,18 @@
         "actual": "Actual",
         "achievement": "Achievement",
         "status": "Status"
+      },
+      "detail": {
+        "details": "Performance Details",
+        "type": "Type",
+        "trend": "Trend Description",
+        "justification": "Justification",
+        "correctiveAction": "Corrective Action",
+        "availableActions": "Available Actions",
+        "submittedBy": "Submitted By",
+        "approvedBy": "Approved By",
+        "history": "Transition History",
+        "noHistory": "No transitions yet."
       }
     },
     "targets": {
@@ -3677,7 +3689,36 @@
     "performanceSubmitted": "Performance submitted",
     "performanceSubmitFailed": "Failed to submit performance",
     "performanceTransitioned": "Performance transitioned",
-    "performanceTransitionFailed": "Failed to transition performance"
+    "performanceTransitionFailed": "Failed to transition performance",
+    "benchmarks": {
+      "title": "KPI Benchmarks",
+      "subtitle": "Compare internal achievement against external benchmarks by zone",
+      "addBenchmark": "Add Benchmark",
+      "searchPlaceholder": "Search by KPI code...",
+      "empty": "No benchmarks found.",
+      "allZones": "All Zones",
+      "year": "Year",
+      "deleteConfirm": "Delete this benchmark record?"
+    },
+    "segmentation": {
+      "title": "KPI Segmentation",
+      "subtitle": "Breakdown KPI performance by dimension, department, and zone",
+      "addSegment": "Add Segment",
+      "searchPlaceholder": "Search by KPI code...",
+      "empty": "No segmentation data found.",
+      "allDimensions": "All Dimensions",
+      "year": "Year",
+      "deleteConfirm": "Delete this segmentation record?"
+    },
+    "report": {
+      "title": "KPI Card Definitions Report",
+      "subtitle": "Complete listing of all KPI definitions across strategic, operational, and award types",
+      "searchPlaceholder": "Search KPIs...",
+      "allTypes": "All Types",
+      "empty": "No KPI card definitions found.",
+      "kpisFound": "{{count}} KPI(s) found",
+      "print": "Print"
+    }
   },
   "categories": {
     "subtitle": "Manage goal category hierarchy",

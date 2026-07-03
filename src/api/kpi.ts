@@ -30,8 +30,13 @@ import type {
   KpiPerformance,
   KpiPerformanceRequest,
   KpiBenchmark,
+  KpiBenchmarkRequest,
   KpiSegmentation,
+  KpiSegmentationRequest,
   KpiDashboardData,
+  EnhancedKpiDashboardData,
+  PerformanceTrend,
+  KpiCardDef,
   PaginatedResponse,
 } from "../types/kpi";
 
@@ -408,26 +413,54 @@ export const kpiPerformanceApi = {
     const res = await apiClient.post("/kpi/performance", data);
     return res.data;
   },
+  getPerformance: async (id: string): Promise<ApiResponse<KpiPerformance>> => {
+    const res = await apiClient.get(`/kpi/performance/${id}`);
+    return res.data;
+  },
+  getAvailableTransitions: async (
+    id: string,
+  ): Promise<ApiResponse<WorkflowTransition[]>> => {
+    const res = await apiClient.get(`/kpi/performance/${id}/transitions`);
+    return res.data;
+  },
+  getPerformanceHistory: async (
+    id: string,
+  ): Promise<ApiResponse<KpiWorkflowAction[]>> => {
+    const res = await apiClient.get(`/kpi/performance/${id}/history`);
+    return res.data;
+  },
   transitionPerformance: async (
     id: string,
-    action: string,
+    transitionId: string,
     comment?: string,
   ): Promise<ApiResponse<KpiPerformance>> => {
     const res = await apiClient.post(`/kpi/performance/${id}/transition`, {
-      action,
+      transition_id: transitionId,
       comment,
     });
     return res.data;
   },
 
-  listBenchmarks: async (
-    kpi_code?: string,
-  ): Promise<ApiResponse<KpiBenchmark[]>> => {
-    const params = kpi_code ? `?kpi_code=${kpi_code}` : "";
-    const res = await apiClient.get(`/kpi/benchmarks${params}`);
+  listBenchmarks: async (params?: {
+    kpi_code?: string;
+    zone?: string;
+    department_id?: string;
+    year?: number;
+  }): Promise<ApiResponse<KpiBenchmark[]>> => {
+    const searchParams = new URLSearchParams();
+    if (params?.kpi_code) searchParams.append("kpi_code", params.kpi_code);
+    if (params?.zone) searchParams.append("zone", params.zone);
+    if (params?.department_id)
+      searchParams.append("department_id", params.department_id);
+    if (params?.year) searchParams.append("year", String(params.year));
+    const res = await apiClient.get(
+      `/kpi/benchmarks?${searchParams.toString()}`,
+    );
     return res.data;
   },
-  createBenchmark: async (data: any): Promise<ApiResponse<KpiBenchmark>> => {
+  createBenchmark: async (
+    data: KpiBenchmarkRequest,
+  ): Promise<ApiResponse<KpiBenchmark>> => {
     const res = await apiClient.post("/kpi/benchmarks", data);
     return res.data;
   },
@@ -435,23 +468,46 @@ export const kpiPerformanceApi = {
     const res = await apiClient.delete(`/kpi/benchmarks/${id}`);
     return res.data;
   },
+  listBenchmarkSummary: async (): Promise<
+    ApiResponse<
+      {
+        kpi_code: string;
+        zone: string;
+        benchmark_entity: string;
+        avg_internal: number;
+        avg_benchmark: number;
+        avg_variance: number;
+        total_records: number;
+      }[]
+    >
+  > => {
+    const res = await apiClient.get("/kpi/benchmarks/summary");
+    return res.data;
+  },
 
   listSegmentation: async (params?: {
     kpi_code?: string;
     year?: number;
     quarter?: number;
+    dimension?: string;
+    department_id?: string;
+    zone?: string;
   }): Promise<ApiResponse<KpiSegmentation[]>> => {
     const searchParams = new URLSearchParams();
     if (params?.kpi_code) searchParams.append("kpi_code", params.kpi_code);
     if (params?.year) searchParams.append("year", String(params.year));
     if (params?.quarter) searchParams.append("quarter", String(params.quarter));
+    if (params?.dimension) searchParams.append("dimension", params.dimension);
+    if (params?.department_id)
+      searchParams.append("department_id", params.department_id);
+    if (params?.zone) searchParams.append("zone", params.zone);
     const res = await apiClient.get(
       `/kpi/segmentation?${searchParams.toString()}`,
     );
     return res.data;
   },
   createSegmentation: async (
-    data: any,
+    data: KpiSegmentationRequest,
   ): Promise<ApiResponse<KpiSegmentation>> => {
     const res = await apiClient.post("/kpi/segmentation", data);
     return res.data;
@@ -460,11 +516,50 @@ export const kpiPerformanceApi = {
     const res = await apiClient.delete(`/kpi/segmentation/${id}`);
     return res.data;
   },
+  listSegmentationSummary: async (): Promise<
+    ApiResponse<
+      {
+        dimension_name: string;
+        segment_name: string;
+        avg_achievement: number;
+        avg_target: number;
+        avg_pct: number;
+        total_records: number;
+      }[]
+    >
+  > => {
+    const res = await apiClient.get("/kpi/segmentation/summary");
+    return res.data;
+  },
 };
 
 export const kpiDashboardApi = {
-  getDashboard: async (): Promise<ApiResponse<KpiDashboardData>> => {
+  getDashboard: async (): Promise<ApiResponse<EnhancedKpiDashboardData>> => {
     const res = await apiClient.get("/kpi/dashboard");
+    return res.data;
+  },
+  getTrends: async (params?: {
+    kpi_code?: string;
+    year?: number;
+  }): Promise<ApiResponse<PerformanceTrend[]>> => {
+    const searchParams = new URLSearchParams();
+    if (params?.kpi_code) searchParams.append("kpi_code", params.kpi_code);
+    if (params?.year) searchParams.append("year", String(params.year));
+    const res = await apiClient.get(
+      `/kpi/dashboard/trends?${searchParams.toString()}`,
+    );
+    return res.data;
+  },
+  getKpiCardDefinitions: async (params?: {
+    type?: string;
+    search?: string;
+  }): Promise<ApiResponse<KpiCardDef[]>> => {
+    const searchParams = new URLSearchParams();
+    if (params?.type) searchParams.append("type", params.type);
+    if (params?.search) searchParams.append("search", params.search);
+    const res = await apiClient.get(
+      `/kpi/dashboard/cards?${searchParams.toString()}`,
+    );
     return res.data;
   },
 };

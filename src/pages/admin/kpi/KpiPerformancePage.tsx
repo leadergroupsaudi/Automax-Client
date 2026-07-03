@@ -1,22 +1,15 @@
 import React, { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import {
   TrendingUp,
   Search,
   ChevronLeft,
   ChevronRight,
   AlertCircle,
-  CheckCircle,
-  XCircle,
-  Clock,
+  Eye,
 } from "lucide-react";
-import {
-  useKpiPerformances,
-  useTransitionPerformance,
-} from "../../../hooks/useKpi";
-import { Button } from "../../../components/ui/Button";
-import { Modal } from "../../../components/ui/Modal";
-import { Input } from "../../../components/ui/Input";
+import { useKpiPerformances } from "../../../hooks/useKpi";
 import type { KpiPerformance, KPIPerfStatus } from "../../../types/kpi";
 
 const statusColorMap: Record<KPIPerfStatus, string> = {
@@ -33,6 +26,7 @@ const statusColorMap: Record<KPIPerfStatus, string> = {
 
 export const KpiPerformancePage: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [page, setPage] = useState(1);
@@ -49,30 +43,11 @@ export const KpiPerformancePage: React.FC = () => {
   );
 
   const { data, isLoading, error } = useKpiPerformances(params);
-  const transitionPerf = useTransitionPerformance();
 
   const perfData = data ?? { data: [], total_items: 0, page: 1, limit: 10 };
   const items = perfData.data ?? [];
   const total = perfData.total_items ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / limit));
-
-  const [transitionModal, setTransitionModal] = useState<{
-    open: boolean;
-    performance?: KpiPerformance;
-    action?: string;
-  }>({ open: false });
-  const [comment, setComment] = useState("");
-
-  const handleTransition = async () => {
-    if (!transitionModal.performance || !transitionModal.action) return;
-    await transitionPerf.mutateAsync({
-      id: transitionModal.performance.id,
-      action: transitionModal.action,
-      comment: comment || undefined,
-    });
-    setTransitionModal({ open: false });
-    setComment("");
-  };
 
   const statusFilters = [
     { value: "", label: t("common.all") },
@@ -234,68 +209,15 @@ export const KpiPerformancePage: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-1">
-                          {perf.status === "draft" && (
-                            <button
-                              onClick={() =>
-                                setTransitionModal({
-                                  open: true,
-                                  performance: perf,
-                                  action: "submit",
-                                })
-                              }
-                              className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                              title={t("kpi.performance.submit")}
-                            >
-                              <CheckCircle className="w-4 h-4" />
-                            </button>
-                          )}
-                          {perf.status === "submitted" && (
-                            <>
-                              <button
-                                onClick={() =>
-                                  setTransitionModal({
-                                    open: true,
-                                    performance: perf,
-                                    action: "approve",
-                                  })
-                                }
-                                className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
-                                title={t("kpi.performance.approve")}
-                              >
-                                <CheckCircle className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() =>
-                                  setTransitionModal({
-                                    open: true,
-                                    performance: perf,
-                                    action: "reject",
-                                  })
-                                }
-                                className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                title={t("kpi.performance.reject")}
-                              >
-                                <XCircle className="w-4 h-4" />
-                              </button>
-                            </>
-                          )}
-                          {perf.status === "approved" && (
-                            <button
-                              onClick={() =>
-                                setTransitionModal({
-                                  open: true,
-                                  performance: perf,
-                                  action: "publish",
-                                })
-                              }
-                              className="p-1.5 rounded-lg text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
-                              title={t("kpi.performance.publish")}
-                            >
-                              <Clock className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
+                        <button
+                          onClick={() =>
+                            navigate(`/goals/kpi/performance/${perf.id}`)
+                          }
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                        >
+                          <Eye className="w-4 h-4" />
+                          {t("common.view")}
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -333,41 +255,6 @@ export const KpiPerformancePage: React.FC = () => {
           </>
         )}
       </div>
-
-      {/* Transition Modal */}
-      <Modal
-        isOpen={transitionModal.open}
-        onClose={() => setTransitionModal({ open: false })}
-        size="sm"
-      >
-        <div className="p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-            {t(`kpi.performance.transitionTitle`, {
-              action: transitionModal.action,
-            })}
-          </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t(`kpi.performance.transitionConfirm`, {
-              action: transitionModal.action,
-              code: transitionModal.performance?.kpi_code,
-            })}
-          </p>
-          <Input
-            label={t("kpi.performance.comment")}
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-          />
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              variant="outline"
-              onClick={() => setTransitionModal({ open: false })}
-            >
-              {t("common.cancel")}
-            </Button>
-            <Button onClick={handleTransition}>{t("common.confirm")}</Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 };

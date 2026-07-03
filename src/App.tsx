@@ -331,12 +331,35 @@ const KpiPerformancePage = lazy(() =>
     default: m.KpiPerformancePage,
   })),
 );
+const KpiPerformanceDetailPage = lazy(() =>
+  import("./pages/admin/kpi/KpiPerformanceDetailPage").then((m) => ({
+    default: m.KpiPerformanceDetailPage,
+  })),
+);
+
 const KpiTargetsPage = lazy(() =>
   import("./pages/admin/kpi/KpiTargetsPage").then((m) => ({
     default: m.KpiTargetsPage,
   })),
 );
 
+const KpiBenchmarkPage = lazy(() =>
+  import("./pages/admin/kpi/KpiBenchmarkPage").then((m) => ({
+    default: m.KpiBenchmarkPage,
+  })),
+);
+
+const KpiSegmentationPage = lazy(() =>
+  import("./pages/admin/kpi/KpiSegmentationPage").then((m) => ({
+    default: m.KpiSegmentationPage,
+  })),
+);
+
+const KpiReportPage = lazy(() =>
+  import("./pages/admin/kpi/KpiReportPage").then((m) => ({
+    default: m.KpiReportPage,
+  })),
+);
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -1008,8 +1031,24 @@ function App() {
                           element={<KpiPerformancePage />}
                         />
                         <Route
+                          path="/goals/kpi/performance/:id"
+                          element={<KpiPerformanceDetailPage />}
+                        />
+                        <Route
                           path="/goals/kpi/targets"
                           element={<KpiTargetsPage />}
+                        />
+                        <Route
+                          path="/goals/kpi/benchmarks"
+                          element={<KpiBenchmarkPage />}
+                        />
+                        <Route
+                          path="/goals/kpi/segmentation"
+                          element={<KpiSegmentationPage />}
+                        />
+                        <Route
+                          path="/goals/kpi/report"
+                          element={<KpiReportPage />}
                         />
                       </Route>
                     </Route>

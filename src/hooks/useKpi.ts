@@ -726,6 +726,27 @@ export const useKpiPerformances = (params?: {
     queryFn: () => kpiPerformanceApi.listPerformance(params),
   });
 
+export const useKpiPerformance = (id: string) =>
+  useQuery({
+    queryKey: ["kpi", "performance", id],
+    queryFn: () => kpiPerformanceApi.getPerformance(id),
+    enabled: !!id,
+  });
+
+export const useKpiAvailableTransitions = (id: string) =>
+  useQuery({
+    queryKey: ["kpi", "performance", id, "transitions"],
+    queryFn: () => kpiPerformanceApi.getAvailableTransitions(id),
+    enabled: !!id,
+  });
+
+export const useKpiPerformanceHistory = (id: string) =>
+  useQuery({
+    queryKey: ["kpi", "performance", id, "history"],
+    queryFn: () => kpiPerformanceApi.getPerformanceHistory(id),
+    enabled: !!id,
+  });
+
 export const useSubmitPerformance = () => {
   const qc = useQueryClient();
   const { t } = useTranslation();
@@ -746,13 +767,13 @@ export const useTransitionPerformance = () => {
   return useMutation({
     mutationFn: ({
       id,
-      action,
+      transitionId,
       comment,
     }: {
       id: string;
-      action: string;
+      transitionId: string;
       comment?: string;
-    }) => kpiPerformanceApi.transitionPerformance(id, action, comment),
+    }) => kpiPerformanceApi.transitionPerformance(id, transitionId, comment),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["kpi", "performance"] });
       toast.success(t("kpi.performanceTransitioned"));
@@ -783,11 +804,131 @@ export const useKpiStatusTransition = () => {
   });
 };
 
+export const useKpiBenchmarks = (params?: {
+  kpi_code?: string;
+  zone?: string;
+  department_id?: string;
+  year?: number;
+}) =>
+  useQuery({
+    queryKey: ["kpi", "benchmarks", params],
+    queryFn: async () => {
+      const res = await kpiPerformanceApi.listBenchmarks(params);
+      return res.data ?? [];
+    },
+  });
+
+export const useCreateKpiBenchmark = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => kpiPerformanceApi.createBenchmark(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["kpi", "benchmarks"] });
+      toast.success("Benchmark created");
+    },
+    onError: () => toast.error("Failed to create benchmark"),
+  });
+};
+
+export const useDeleteKpiBenchmark = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => kpiPerformanceApi.deleteBenchmark(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["kpi", "benchmarks"] });
+      toast.success("Benchmark deleted");
+    },
+    onError: () => toast.error("Failed to delete benchmark"),
+  });
+};
+
+export const useKpiSegmentations = (params?: {
+  kpi_code?: string;
+  year?: number;
+  quarter?: number;
+  dimension?: string;
+  department_id?: string;
+  zone?: string;
+}) =>
+  useQuery({
+    queryKey: ["kpi", "segmentation", params],
+    queryFn: async () => {
+      const res = await kpiPerformanceApi.listSegmentation(params);
+      return res.data ?? [];
+    },
+  });
+
+export const useCreateKpiSegmentation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => kpiPerformanceApi.createSegmentation(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["kpi", "segmentation"] });
+      toast.success("Segmentation created");
+    },
+    onError: () => toast.error("Failed to create segmentation"),
+  });
+};
+
+export const useDeleteKpiSegmentation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => kpiPerformanceApi.deleteSegmentation(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["kpi", "segmentation"] });
+      toast.success("Segmentation deleted");
+    },
+    onError: () => toast.error("Failed to delete segmentation"),
+  });
+};
+
 export const useKpiDashboard = () =>
   useQuery({
     queryKey: ["kpi", "dashboard"],
     queryFn: async () => {
       const res = await kpiDashboardApi.getDashboard();
       return res.data;
+    },
+  });
+
+export const useKpiDashboardTrends = (params?: {
+  kpi_code?: string;
+  year?: number;
+}) =>
+  useQuery({
+    queryKey: ["kpi", "dashboard", "trends", params],
+    queryFn: async () => {
+      const res = await kpiDashboardApi.getTrends(params);
+      return res.data ?? [];
+    },
+  });
+
+export const useKpiCardDefinitions = (params?: {
+  type?: string;
+  search?: string;
+}) =>
+  useQuery({
+    queryKey: ["kpi", "dashboard", "cards", params],
+    queryFn: async () => {
+      const res = await kpiDashboardApi.getKpiCardDefinitions(params);
+      return res.data ?? [];
+    },
+  });
+
+export const useKpiBenchmarkSummary = () =>
+  useQuery({
+    queryKey: ["kpi", "benchmarks", "summary"],
+    queryFn: async () => {
+      const res = await kpiPerformanceApi.listBenchmarkSummary();
+      return res.data ?? [];
+    },
+  });
+
+export const useKpiSegmentationSummary = () =>
+  useQuery({
+    queryKey: ["kpi", "segmentation", "summary"],
+    queryFn: async () => {
+      const res = await kpiPerformanceApi.listSegmentationSummary();
+      return res.data ?? [];
     },
   });
