@@ -1634,7 +1634,9 @@ export const WorkflowDesignerPage: React.FC = () => {
     if (isViewable && isEditable) {
       const roleName = roles.find((role) => role.id === roleId)?.name ?? "Role";
       toast.error(
-        `Please remove Edit permission from "${roleName}" before removing View permission.`,
+        t("workflows.pleaseRemoveEditPermissionFirst", {
+          role: roleName,
+        }),
       );
       return;
     }
@@ -1656,7 +1658,9 @@ export const WorkflowDesignerPage: React.FC = () => {
     if (!isEditable && !wasViewable) {
       const roleName = roles.find((role) => role.id === roleId)?.name ?? "Role";
       toast.info(
-        `"${roleName}" was automatically added to Viewable Roles because it has Edit permission.`,
+        t("workflows.viewPermissionAutomaticallyAdded", {
+          role: roleName,
+        }),
       );
     }
     setStateFormData((prev) => {
