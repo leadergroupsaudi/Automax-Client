@@ -50,6 +50,14 @@ import {
   useCreateAwardSubCriterion,
   useUpdateAwardSubCriterion,
   useDeleteAwardSubCriterion,
+  useDataSources,
+  useCreateDataSource,
+  useUpdateDataSource,
+  useDeleteDataSource,
+  useSegmentationDimensions,
+  useCreateSegmentationDimension,
+  useUpdateSegmentationDimension,
+  useDeleteSegmentationDimension,
 } from "../../../hooks/useKpi";
 import { usePermissions } from "../../../hooks/usePermissions";
 import { PERMISSIONS } from "../../../constants/permissions";
@@ -59,6 +67,7 @@ import { Button } from "../../../components/ui/Button";
 import { Select } from "../../../components/ui/SelectInput";
 import { userApi } from "../../../api/admin";
 import { departmentApi } from "../../../api/admin";
+import { exportToExcel as exportToExcelUtil } from "../../../utils/exportExcel";
 import type {
   Pillar,
   Enabler,
@@ -69,6 +78,8 @@ import type {
   Domain,
   AwardCriterion,
   AwardSubCriterion,
+  KpiDataSource,
+  KpiSegmentationDimension,
   PillarRequest,
   EnablerRequest,
   StrategicGoalRequest,
@@ -78,6 +89,8 @@ import type {
   DomainRequest,
   AwardCriterionRequest,
   AwardSubCriterionRequest,
+  KpiDataSourceRequest,
+  KpiSegmentationDimensionRequest,
 } from "../../../types/kpi";
 
 type EntityType =
@@ -89,7 +102,9 @@ type EntityType =
   | "initiative"
   | "domain"
   | "award-criterion"
-  | "award-sub-criterion";
+  | "award-sub-criterion"
+  | "data-source"
+  | "segmentation-dimension";
 
 interface FormState {
   name_en: string;
@@ -142,6 +157,15 @@ export const KpiMasterDataPage: React.FC = () => {
     { key: "initiative", label: t("kpi.masterData.initiatives") },
     { key: "domain", label: t("kpi.masterData.domains") },
     { key: "award-criterion", label: t("kpi.masterData.awardCriteria") },
+    {
+      key: "award-sub-criterion",
+      label: t("kpi.masterData.awardSubCriteria"),
+    },
+    { key: "data-source", label: t("kpi.masterData.dataSources") },
+    {
+      key: "segmentation-dimension",
+      label: t("kpi.masterData.segmentationDimensions"),
+    },
   ];
   const validKeys = tabs.map((t) => t.key);
   const activeTab: EntityType =
@@ -169,6 +193,8 @@ export const KpiMasterDataPage: React.FC = () => {
   const { data: domains } = useDomains();
   const { data: awardCriteria } = useAwardCriteria();
   const { data: awardSubCriteria } = useAwardSubCriteria();
+  const { data: dataSources } = useDataSources();
+  const { data: segmentationDimensions } = useSegmentationDimensions();
 
   const { data: usersData } = useQuery({
     queryKey: ["admin", "users", "all"],
@@ -209,11 +235,14 @@ export const KpiMasterDataPage: React.FC = () => {
   const createAwardSubCriterion = useCreateAwardSubCriterion();
   const updateAwardSubCriterion = useUpdateAwardSubCriterion();
   const deleteAwardSubCriterion = useDeleteAwardSubCriterion();
+  const createDataSource = useCreateDataSource();
+  const updateDataSource = useUpdateDataSource();
+  const deleteDataSource = useDeleteDataSource();
+  const createSegmentationDimension = useCreateSegmentationDimension();
+  const updateSegmentationDimension = useUpdateSegmentationDimension();
+  const deleteSegmentationDimension = useDeleteSegmentationDimension();
 
-  const canManage =
-    isSuperAdmin ||
-    hasPermission(PERMISSIONS.GOALS_CREATE) ||
-    hasPermission(PERMISSIONS.GOALS_VIEW);
+  const canManage = isSuperAdmin || hasPermission(PERMISSIONS.GOALS_MANAGE);
 
   const userOptions = users.map((u: any) => ({
     value: u.id,
@@ -357,6 +386,25 @@ export const KpiMasterDataPage: React.FC = () => {
         if (isEdit)
           await updateAwardSubCriterion.mutateAsync({ id: modalItem.id, data });
         else await createAwardSubCriterion.mutateAsync(data);
+      } else if (modalType === "data-source") {
+        const data: KpiDataSourceRequest = {
+          name_en: form.name_en,
+          name_ar: form.name_ar,
+        };
+        if (isEdit)
+          await updateDataSource.mutateAsync({ id: modalItem.id, data });
+        else await createDataSource.mutateAsync(data);
+      } else if (modalType === "segmentation-dimension") {
+        const data: KpiSegmentationDimensionRequest = {
+          name_en: form.name_en,
+          name_ar: form.name_ar,
+        };
+        if (isEdit)
+          await updateSegmentationDimension.mutateAsync({
+            id: modalItem.id,
+            data,
+          });
+        else await createSegmentationDimension.mutateAsync(data);
       }
       setModalOpen(false);
     } catch {
@@ -375,6 +423,8 @@ export const KpiMasterDataPage: React.FC = () => {
       domain: (i) => deleteDomain.mutate(i),
       "award-criterion": (i) => deleteAwardCriterion.mutate(i),
       "award-sub-criterion": (i) => deleteAwardSubCriterion.mutate(i),
+      "data-source": (i) => deleteDataSource.mutate(i),
+      "segmentation-dimension": (i) => deleteSegmentationDimension.mutate(i),
     };
     actions[type]?.(id);
   };
@@ -383,19 +433,13 @@ export const KpiMasterDataPage: React.FC = () => {
 
   const [importType, setImportType] = useState<EntityType>("pillar");
 
-  const exportToExcel = (data: any[], label: string) => {
-    if (!data.length) {
-      toast.error(t("common.noDataToExport"));
-      return;
-    }
-    const headers = Object.keys(data[0]).filter((k) => k !== "id");
-    const rows = data.map((item) => headers.map((h) => item[h] ?? ""));
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, label);
-    XLSX.writeFile(wb, `${label}.xlsx`);
-    toast.success(t("common.exported"));
-  };
+  const exportToExcel = (data: any[], label: string) =>
+    exportToExcelUtil(
+      data,
+      label,
+      t("common.noDataToExport"),
+      t("common.exported"),
+    );
 
   const handleImportExcel = (type: EntityType) => {
     setImportType(type);
@@ -501,6 +545,16 @@ export const KpiMasterDataPage: React.FC = () => {
         award_criterion_id: row.award_criterion_id,
         sub_no: row.sub_no || row.subNo || "1",
       } as AwardSubCriterionRequest);
+    } else if (type === "data-source") {
+      await createDataSource.mutateAsync({
+        name_en,
+        name_ar,
+      } as KpiDataSourceRequest);
+    } else if (type === "segmentation-dimension") {
+      await createSegmentationDimension.mutateAsync({
+        name_en,
+        name_ar,
+      } as KpiSegmentationDimensionRequest);
     }
   };
 
@@ -526,6 +580,8 @@ export const KpiMasterDataPage: React.FC = () => {
     domain: "domains",
     "award-criterion": "awardCriteria",
     "award-sub-criterion": "awardSubCriteria",
+    "data-source": "dataSources",
+    "segmentation-dimension": "segmentationDimensions",
   };
   const modalTitle = modalItem ? t("common.edit") : t("common.add");
   const modalEntityLabel = t(
@@ -807,6 +863,53 @@ export const KpiMasterDataPage: React.FC = () => {
               exportToExcel(awardSubCriteria ?? [], "AwardSubCriteria")
             }
             onImport={() => handleImportExcel("award-sub-criterion")}
+          />
+        )}
+        {activeTab === "data-source" && (
+          <MasterTable<KpiDataSource>
+            data={dataSources ?? []}
+            columns={[
+              { header: t("kpi.masterData.nameEn"), accessor: "name_en" },
+              { header: t("kpi.masterData.nameAr"), accessor: "name_ar" },
+              {
+                header: t("kpi.masterData.active"),
+                accessor: (r) =>
+                  r.is_active ? t("common.yes") : t("common.no"),
+              },
+            ]}
+            emptyMessage={t("kpi.masterData.noDataSources")}
+            canManage={canManage}
+            onEdit={(item) => handleEdit("data-source", item)}
+            onDelete={(id) => handleDelete("data-source", id)}
+            onAdd={() => handleAdd("data-source")}
+            onExport={() => exportToExcel(dataSources ?? [], "DataSources")}
+            onImport={() => handleImportExcel("data-source")}
+          />
+        )}
+        {activeTab === "segmentation-dimension" && (
+          <MasterTable<KpiSegmentationDimension>
+            data={segmentationDimensions ?? []}
+            columns={[
+              { header: t("kpi.masterData.nameEn"), accessor: "name_en" },
+              { header: t("kpi.masterData.nameAr"), accessor: "name_ar" },
+              {
+                header: t("kpi.masterData.active"),
+                accessor: (r) =>
+                  r.is_active ? t("common.yes") : t("common.no"),
+              },
+            ]}
+            emptyMessage={t("kpi.masterData.noSegmentationDimensions")}
+            canManage={canManage}
+            onEdit={(item) => handleEdit("segmentation-dimension", item)}
+            onDelete={(id) => handleDelete("segmentation-dimension", id)}
+            onAdd={() => handleAdd("segmentation-dimension")}
+            onExport={() =>
+              exportToExcel(
+                segmentationDimensions ?? [],
+                "SegmentationDimensions",
+              )
+            }
+            onImport={() => handleImportExcel("segmentation-dimension")}
           />
         )}
       </div>

@@ -146,6 +146,10 @@ export const KpiDictionaryDetailPage: React.FC = () => {
     { label: t("kpi.dictionary.fieldFormula"), value: kpi.formula },
     { label: t("kpi.dictionary.fieldBaseline"), value: String(kpi.baseline) },
     {
+      label: t("kpi.dictionary.fieldUnitOfMeasure"),
+      value: (kpi as any).unit_of_measure,
+    },
+    {
       label: t("kpi.dictionary.fieldFrequency"),
       value: kpi.reporting_frequency,
     },

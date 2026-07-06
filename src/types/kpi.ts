@@ -111,6 +111,30 @@ export interface AwardSubCriterion {
   is_active: boolean;
 }
 
+export interface KpiDataSource {
+  id: string;
+  name_en: string;
+  name_ar: string;
+  is_active: boolean;
+}
+
+export interface KpiDataSourceRequest {
+  name_en: string;
+  name_ar?: string;
+}
+
+export interface KpiSegmentationDimension {
+  id: string;
+  name_en: string;
+  name_ar: string;
+  is_active: boolean;
+}
+
+export interface KpiSegmentationDimensionRequest {
+  name_en: string;
+  name_ar?: string;
+}
+
 export type KPIType = "strategic" | "operational" | "award";
 export type KPIPolarity = "ascending" | "descending";
 export type KPIActivationStatus = "draft" | "active" | "inactive";
@@ -139,6 +163,7 @@ export interface KpiCardDef {
   name_ar: string;
   formula: string;
   baseline: number;
+  unit_of_measure?: string;
   polarity: string;
   reporting_frequency: string;
   data_source: string;
@@ -207,6 +232,7 @@ export interface StrategicKPI {
   description_ar: string;
   formula: string;
   baseline: number;
+  unit_of_measure: string;
   reporting_frequency: string;
   lifecycle: string;
   data_source: string;
@@ -234,6 +260,7 @@ export interface OperationalKPI {
   description_ar: string;
   formula: string;
   baseline: number;
+  unit_of_measure: string;
   reporting_frequency: string;
   data_source: string;
   notes: string;
@@ -256,6 +283,7 @@ export interface AwardKPI {
   description_ar: string;
   formula: string;
   baseline: number;
+  unit_of_measure: string;
   reporting_frequency: string;
   data_source: string;
   notes: string;
@@ -271,11 +299,20 @@ export type KPIPerfStatus =
   | "rejected"
   | "published";
 
+export type KPIPeriodType =
+  | "month"
+  | "quarter"
+  | "semi_annual"
+  | "annual"
+  | "custom";
+
 export interface KpiAnnualTarget {
   id: string;
   kpi_code: string;
   kpi_type: KPIType;
   year: number;
+  period_type: KPIPeriodType;
+  period_key: string;
   target_value: number;
   created_at: string;
 }
@@ -286,6 +323,8 @@ export interface KpiPerformance {
   kpi_type: KPIType;
   year: number;
   quarter: number;
+  period_type: KPIPeriodType;
+  period_key: string;
   target: number;
   actual: number;
   achievement_pct: number;
@@ -359,6 +398,22 @@ export interface KpiSegmentationRequest {
   achievement?: number;
   department_id?: string;
   zone?: string;
+}
+
+// kpi_code === null/undefined means this is the global default band.
+export interface PerformanceBand {
+  id: string;
+  kpi_code?: string | null;
+  green_min: number;
+  amber_min: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PerformanceBandRequest {
+  kpi_code?: string | null;
+  green_min: number;
+  amber_min: number;
 }
 
 export interface PillarRequest {
@@ -439,6 +494,7 @@ export interface StrategicKPIRequest {
   description_ar?: string;
   formula?: string;
   baseline?: number;
+  unit_of_measure?: string;
   reporting_frequency?: string;
   lifecycle?: string;
   data_source?: string;
@@ -461,6 +517,7 @@ export interface OperationalKPIRequest {
   description_ar?: string;
   formula?: string;
   baseline?: number;
+  unit_of_measure?: string;
   reporting_frequency?: string;
   data_source?: string;
   notes?: string;
@@ -478,6 +535,7 @@ export interface AwardKPIRequest {
   description_ar?: string;
   formula?: string;
   baseline?: number;
+  unit_of_measure?: string;
   reporting_frequency?: string;
   data_source?: string;
   notes?: string;
@@ -487,6 +545,8 @@ export interface KpiAnnualTargetRequest {
   kpi_code: string;
   kpi_type: KPIType;
   year: number;
+  period_type?: KPIPeriodType;
+  period_key?: string;
   target_value: number;
 }
 
@@ -495,6 +555,8 @@ export interface KpiPerformanceRequest {
   kpi_type: KPIType;
   year: number;
   quarter: number;
+  period_type?: KPIPeriodType;
+  period_key?: string;
   target?: number;
   actual?: number;
   trend_description?: string;
@@ -526,6 +588,42 @@ export interface KpiWorkflowAction {
   comment: string;
   performed_at: string;
   created_at: string;
+}
+
+export type CorrectiveActionStatus =
+  | "open"
+  | "in_progress"
+  | "closed"
+  | "escalated";
+
+export interface KpiCorrectiveAction {
+  id: string;
+  kpi_performance_id: string;
+  description: string;
+  owner_id: string;
+  owner?: UserBrief;
+  due_date?: string;
+  status: CorrectiveActionStatus;
+  closure_note: string;
+  closure_evidence_url: string;
+  escalated_at?: string;
+  created_by_id: string;
+  created_by?: UserBrief;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface KpiCorrectiveActionRequest {
+  kpi_performance_id: string;
+  description: string;
+  owner_id: string;
+  due_date?: string;
+}
+
+export interface KpiCorrectiveActionStatusRequest {
+  status: CorrectiveActionStatus;
+  closure_note?: string;
+  closure_evidence_url?: string;
 }
 
 export interface PaginatedResponse<T> {

@@ -19,6 +19,10 @@ import type {
   AwardCriterionRequest,
   AwardSubCriterion,
   AwardSubCriterionRequest,
+  KpiDataSource,
+  KpiDataSourceRequest,
+  KpiSegmentationDimension,
+  KpiSegmentationDimensionRequest,
   StrategicKPI,
   StrategicKPIRequest,
   OperationalKPI,
@@ -33,12 +37,17 @@ import type {
   KpiBenchmarkRequest,
   KpiSegmentation,
   KpiSegmentationRequest,
+  PerformanceBand,
+  PerformanceBandRequest,
   EnhancedKpiDashboardData,
   PerformanceTrend,
   KpiCardDef,
   PaginatedResponse,
   WorkflowTransitionBrief,
   KpiWorkflowAction,
+  KpiCorrectiveAction,
+  KpiCorrectiveActionRequest,
+  KpiCorrectiveActionStatusRequest,
 } from "../types/kpi";
 
 export const kpiMasterDataApi = {
@@ -245,6 +254,54 @@ export const kpiMasterDataApi = {
   },
   deleteAwardSubCriterion: async (id: string): Promise<ApiResponse<void>> => {
     const res = await apiClient.delete(`/kpi/award-sub-criteria/${id}`);
+    return res.data;
+  },
+
+  listDataSources: async (): Promise<ApiResponse<KpiDataSource[]>> => {
+    const res = await apiClient.get("/kpi/data-sources");
+    return res.data;
+  },
+  createDataSource: async (
+    data: KpiDataSourceRequest,
+  ): Promise<ApiResponse<KpiDataSource>> => {
+    const res = await apiClient.post("/kpi/data-sources", data);
+    return res.data;
+  },
+  updateDataSource: async (
+    id: string,
+    data: Partial<KpiDataSourceRequest>,
+  ): Promise<ApiResponse<KpiDataSource>> => {
+    const res = await apiClient.put(`/kpi/data-sources/${id}`, data);
+    return res.data;
+  },
+  deleteDataSource: async (id: string): Promise<ApiResponse<void>> => {
+    const res = await apiClient.delete(`/kpi/data-sources/${id}`);
+    return res.data;
+  },
+
+  listSegmentationDimensions: async (): Promise<
+    ApiResponse<KpiSegmentationDimension[]>
+  > => {
+    const res = await apiClient.get("/kpi/segmentation-dimensions");
+    return res.data;
+  },
+  createSegmentationDimension: async (
+    data: KpiSegmentationDimensionRequest,
+  ): Promise<ApiResponse<KpiSegmentationDimension>> => {
+    const res = await apiClient.post("/kpi/segmentation-dimensions", data);
+    return res.data;
+  },
+  updateSegmentationDimension: async (
+    id: string,
+    data: Partial<KpiSegmentationDimensionRequest>,
+  ): Promise<ApiResponse<KpiSegmentationDimension>> => {
+    const res = await apiClient.put(`/kpi/segmentation-dimensions/${id}`, data);
+    return res.data;
+  },
+  deleteSegmentationDimension: async (
+    id: string,
+  ): Promise<ApiResponse<void>> => {
+    const res = await apiClient.delete(`/kpi/segmentation-dimensions/${id}`);
     return res.data;
   },
 };
@@ -534,9 +591,73 @@ export const kpiPerformanceApi = {
   },
 };
 
+export const kpiPerformanceBandApi = {
+  listBands: async (): Promise<ApiResponse<PerformanceBand[]>> => {
+    const res = await apiClient.get("/kpi/performance-bands");
+    return res.data;
+  },
+  getEffectiveBand: async (
+    kpiCode?: string,
+  ): Promise<ApiResponse<PerformanceBand>> => {
+    const searchParams = new URLSearchParams();
+    if (kpiCode) searchParams.append("kpi_code", kpiCode);
+    const res = await apiClient.get(
+      `/kpi/performance-bands/effective?${searchParams.toString()}`,
+    );
+    return res.data;
+  },
+  upsertBand: async (
+    data: PerformanceBandRequest,
+  ): Promise<ApiResponse<PerformanceBand>> => {
+    const res = await apiClient.post("/kpi/performance-bands", data);
+    return res.data;
+  },
+  deleteBand: async (id: string): Promise<ApiResponse<void>> => {
+    const res = await apiClient.delete(`/kpi/performance-bands/${id}`);
+    return res.data;
+  },
+};
+
+export const kpiCorrectiveActionApi = {
+  listByPerformance: async (
+    performanceId: string,
+  ): Promise<ApiResponse<KpiCorrectiveAction[]>> => {
+    const res = await apiClient.get(
+      `/kpi/corrective-actions?performance_id=${performanceId}`,
+    );
+    return res.data;
+  },
+  create: async (
+    data: KpiCorrectiveActionRequest,
+  ): Promise<ApiResponse<KpiCorrectiveAction>> => {
+    const res = await apiClient.post("/kpi/corrective-actions", data);
+    return res.data;
+  },
+  updateStatus: async (
+    id: string,
+    data: KpiCorrectiveActionStatusRequest,
+  ): Promise<ApiResponse<KpiCorrectiveAction>> => {
+    const res = await apiClient.put(
+      `/kpi/corrective-actions/${id}/status`,
+      data,
+    );
+    return res.data;
+  },
+};
+
 export const kpiDashboardApi = {
-  getDashboard: async (): Promise<ApiResponse<EnhancedKpiDashboardData>> => {
-    const res = await apiClient.get("/kpi/dashboard");
+  getDashboard: async (params?: {
+    kpi_type?: string;
+    year?: number;
+    quarter?: number;
+  }): Promise<ApiResponse<EnhancedKpiDashboardData>> => {
+    const searchParams = new URLSearchParams();
+    if (params?.kpi_type) searchParams.append("kpi_type", params.kpi_type);
+    if (params?.year) searchParams.append("year", String(params.year));
+    if (params?.quarter) searchParams.append("quarter", String(params.quarter));
+    const res = await apiClient.get(
+      `/kpi/dashboard?${searchParams.toString()}`,
+    );
     return res.data;
   },
   getTrends: async (params?: {
