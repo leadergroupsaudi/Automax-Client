@@ -2091,7 +2091,8 @@
     "workflowRestoredSuccessfully": "تمت استعادة سير العمل بنجاح",
     "failedToRestoreWorkflow": "فشل في استعادة سير العمل",
     "workflowPermanentlyDeleted": "تم حذف سير العمل نهائيًا",
-    "failedToPermanentlyDeleteWorkflow": "فشل في حذف سير العمل نهائيًا"
+    "failedToPermanentlyDeleteWorkflow": "فشل في حذف سير العمل نهائيًا",
+    "multiple": "متعدد"
   },
   "lookups": {
     "title": "البيانات الرئيسية",

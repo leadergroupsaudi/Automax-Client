@@ -2093,7 +2093,8 @@
     "workflowRestoredSuccessfully": "Workflow restored successfully",
     "failedToRestoreWorkflow": "Failed to restore workflow",
     "workflowPermanentlyDeleted": "Workflow permanently deleted",
-    "failedToPermanentlyDeleteWorkflow": "Failed to permanently delete workflow"
+    "failedToPermanentlyDeleteWorkflow": "Failed to permanently delete workflow",
+    "multiple": "Multiple"
   },
   "lookups": {
     "title": "Master Data",
