@@ -143,6 +143,7 @@ export const PERMISSIONS = {
   GOALS_DELETE: "goals:delete",
   GOALS_ASSIGN: "goals:assign",
   GOALS_APPROVE: "goals:approve",
+  GOALS_MANAGE: "goals:manage",
   DASHBOARD_GOALS: "dashboard:goals",
 
   // KPI permissions
@@ -151,6 +152,20 @@ export const PERMISSIONS = {
   KPI_UPDATE: "kpi:update",
   KPI_DELETE: "kpi:delete",
   KPI_APPROVE: "kpi:approve",
+
+  // KPI performance / targets / benchmark / segmentation permissions
+  PERF_VIEW: "perf:view",
+  PERF_SUBMIT: "perf:submit",
+  PERF_REVIEW: "perf:review",
+  PERF_APPROVE: "perf:approve",
+  PERF_REJECT: "perf:reject",
+  PERF_PUBLISH: "perf:publish",
+  TARGETS_VIEW: "targets:view",
+  TARGETS_SET: "targets:set",
+  TARGETS_APPROVE: "targets:approve",
+  BENCHMARK_MANAGE: "benchmark:manage",
+  SEGMENT_MANAGE: "segment:manage",
+  CORRECTIVE_ACTION_MANAGE: "corrective_action:manage",
 
   CALLER_SENTIMENT_CREATE: "caller-sentiment:create",
   CALLER_SENTIMENT_VIEW: "caller-sentiment:view",

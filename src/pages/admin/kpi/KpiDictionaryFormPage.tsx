@@ -8,6 +8,7 @@ import {
   useStrategicGoals,
   usePillars,
   useDomains,
+  useDataSources,
 } from "../../../hooks/useKpi";
 import { useGoals } from "../../../hooks/useGoals";
 import { Button } from "../../../components/ui/Button";
@@ -23,11 +24,13 @@ export const KpiDictionaryFormPage: React.FC = () => {
   const { data: pillarsData } = usePillars();
   const { data: domainsData } = useDomains();
   const { data: okrGoalsData } = useGoals({ limit: 200 });
+  const { data: dataSourcesData } = useDataSources();
 
   const goals = goalsData ?? [];
   const pillars = pillarsData ?? [];
   const domains = domainsData ?? [];
   const okrGoals = (okrGoalsData as any)?.data ?? [];
+  const dataSources = dataSourcesData ?? [];
 
   const [form, setForm] = useState({
     code: "",
@@ -43,6 +46,7 @@ export const KpiDictionaryFormPage: React.FC = () => {
     description_ar: "",
     formula: "",
     baseline: 0,
+    unit_of_measure: "",
     reporting_frequency: "quarterly",
     lifecycle: "",
     data_source: "",
@@ -233,14 +237,25 @@ export const KpiDictionaryFormPage: React.FC = () => {
             />
           </div>
 
-          <Input
-            label={t("kpi.dictionary.fieldBaseline")}
-            type="number"
-            value={form.baseline}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, baseline: Number(e.target.value) }))
-            }
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label={t("kpi.dictionary.fieldBaseline")}
+              type="number"
+              value={form.baseline}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  baseline: Number(e.target.value),
+                }))
+              }
+            />
+            <Input
+              label={t("kpi.dictionary.fieldUnitOfMeasure")}
+              value={form.unit_of_measure}
+              onChange={handleChange("unit_of_measure")}
+              placeholder="%, days, SAR, count..."
+            />
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Textarea
@@ -270,10 +285,17 @@ export const KpiDictionaryFormPage: React.FC = () => {
               value={form.lifecycle}
               onChange={handleChange("lifecycle")}
             />
-            <Input
+            <Select
               label={t("kpi.dictionary.fieldDataSource")}
               value={form.data_source}
-              onChange={handleChange("data_source")}
+              onChange={(v) =>
+                setForm((prev) => ({ ...prev, data_source: v.target.value }))
+              }
+              options={dataSources.map((d: any) => ({
+                value: d.name_en,
+                label: d.name_en,
+              }))}
+              placeholder={t("common.selectAnOption")}
             />
           </div>
 
