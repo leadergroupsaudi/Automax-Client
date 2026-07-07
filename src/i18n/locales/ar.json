@@ -2483,7 +2483,8 @@
     "submit": "إرسال",
     "callEnded": "Call ended",
     "sentimentSubtitle": "Rate the caller's mood during this call",
-    "skip": "Skip"
+    "skip": "Skip",
+    "cintrix": "سينتريكس"
   },
   "queries": {
     "title": "الاستفسارات",

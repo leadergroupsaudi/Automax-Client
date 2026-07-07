@@ -2485,7 +2485,8 @@
     "noCallerHistory": "No history found for this caller",
     "callerHistory": "Caller History",
     "calls": "Calls",
-    "feedbackSubmitted": "Feedback submitted. Thank you!"
+    "feedbackSubmitted": "Feedback submitted. Thank you!",
+    "cintrix": "Cintrix"
   },
   "queries": {
     "title": "Queries",

@@ -8,6 +8,7 @@ import {
   getCurrentLanguage,
   supportedLanguages,
 } from "../../i18n";
+import { publicUrl } from "../../utils/publicUrl";
 
 export const AuthLayout: React.FC = () => {
   const { t } = useTranslation();
@@ -25,6 +26,9 @@ export const AuthLayout: React.FC = () => {
     setCurrentLang(langCode);
     setIsLangOpen(false);
   };
+  const isEPM940 =
+    window.APP_CONFIG?.CLIENT === "EPM940" ||
+    import.meta.env.VITE_CLIENT === "EPM940";
 
   // Close language dropdown when clicking outside
   useEffect(() => {
@@ -55,11 +59,27 @@ export const AuthLayout: React.FC = () => {
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-between w-full p-12">
           {/* Logo */}
+
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-              <Zap className="w-7 h-7 text-white" />
-            </div>
-            <span className="text-2xl font-bold text-white">Automax</span>
+            {isEPM940 ? (
+              <div className="w-30 h-30 bg-white backdrop-blur-sm rounded-xl flex items-center justify-center">
+                <img
+                  // src={publicUrl("epm-logo-horizontal.png")}
+                  src={publicUrl("epm-ccm.png")}
+                  alt="Automax"
+                  className="h-30 object-contain"
+                />
+              </div>
+            ) : (
+              // </div>
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                <Zap className="w-7 h-7 text-white" />
+              </div>
+            )}
+            <span className="text-2xl font-bold text-white">
+              {" "}
+              {t("citizen.automax")}
+            </span>
           </div>
 
           {/* Main Content */}
@@ -121,10 +141,24 @@ export const AuthLayout: React.FC = () => {
           {/* Mobile Logo */}
           <div className="lg:hidden">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
-                <Zap className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900">Automax</span>
+              {/* <Zap className="w-6 h-6 text-white" /> */}
+              {isEPM940 ? (
+                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
+                  <img
+                    // src={publicUrl("epm-logo-horizontal.png")}
+                    src={publicUrl("epm-ccm.png")}
+                    alt="Automax"
+                    className="h-10 object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+                  <Zap className="w-6 h-6 text-white" />
+                </div>
+              )}
+              <span className="text-xl font-bold text-gray-900">
+                {t("citizen.automax")}
+              </span>
             </Link>
           </div>
           <div className="hidden lg:block" /> {/* Spacer for desktop */}
