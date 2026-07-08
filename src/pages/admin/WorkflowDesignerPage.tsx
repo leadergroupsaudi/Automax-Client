@@ -106,8 +106,7 @@ interface StateFormData {
   is_ai_qa: boolean;
   is_ready_to_close: boolean;
   is_partial_close: boolean;
-  duration_option_value: number | undefined;
-  duration_option_unit: string;
+  duration_options: { value: number | undefined; unit: string }[];
   viewable_role_ids: string[];
   editable_role_ids: string[];
   // Creation-time assignment
@@ -176,8 +175,7 @@ const initialStateFormData: StateFormData = {
   is_ai_qa: false,
   is_ready_to_close: false,
   is_partial_close: false,
-  duration_option_value: undefined,
-  duration_option_unit: "Day",
+  duration_options: [],
   viewable_role_ids: [],
   editable_role_ids: [],
   // Creation-time assignment
@@ -1135,12 +1133,12 @@ export const WorkflowDesignerPage: React.FC = () => {
       is_ai_qa: state.is_ai_qa || false,
       is_ready_to_close: state.is_ready_to_close || false,
       is_partial_close: state.is_partial_close || false,
-      duration_option_value:
-        parseDurationOptionLabel(state.duration_options?.[0] || "")?.value ??
-        undefined,
-      duration_option_unit:
-        parseDurationOptionLabel(state.duration_options?.[0] || "")?.unit ??
-        "Day",
+      duration_options: (state.duration_options || [])
+        .map((label) => parseDurationOptionLabel(label))
+        .filter(
+          (parsed): parsed is { value: number; unit: string } =>
+            parsed !== null && parsed.value !== undefined,
+        ),
       viewable_role_ids: state.viewable_roles?.map((r) => r.id) || [],
       editable_role_ids: state.editable_roles?.map((r) => r.id) || [],
       // Creation-time assignment
@@ -1387,13 +1385,12 @@ export const WorkflowDesignerPage: React.FC = () => {
       is_ai_qa: stateFormData.is_ai_qa,
       is_ready_to_close: stateFormData.is_ready_to_close,
       is_partial_close: stateFormData.is_partial_close,
-      duration_options:
-        stateFormData.duration_option_value &&
-        stateFormData.duration_option_value > 0
-          ? [
-              `${stateFormData.duration_option_value} ${stateFormData.duration_option_unit}`,
-            ]
-          : [],
+      duration_options: stateFormData.duration_options
+        .filter(
+          (opt) =>
+            opt.value !== undefined && opt.value !== null && opt.value > 0,
+        )
+        .map((opt) => `${opt.value} ${opt.unit}`),
       viewable_role_ids: stateFormData.viewable_role_ids,
       editable_role_ids: stateFormData.editable_role_ids,
       // Creation-time assignment
@@ -3626,36 +3623,90 @@ export const WorkflowDesignerPage: React.FC = () => {
                     <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
                       {t("workflows.durationOptions", "Duration Options")}
                     </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="number"
-                        min="1"
-                        value={stateFormData.duration_option_value ?? ""}
-                        onChange={(e) =>
+                    <div className="space-y-2">
+                      {stateFormData.duration_options.map((opt, index) => (
+                        <div key={index} className="flex gap-2">
+                          <input
+                            type="number"
+                            min="1"
+                            value={opt.value ?? ""}
+                            onChange={(e) => {
+                              const next = [...stateFormData.duration_options];
+                              next[index] = {
+                                ...next[index],
+                                value: e.target.value
+                                  ? parseInt(e.target.value)
+                                  : undefined,
+                              };
+                              setStateFormData({
+                                ...stateFormData,
+                                duration_options: next,
+                              });
+                            }}
+                            placeholder={t("workflows.escalationHoursExample")}
+                            className="flex-1 px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                          />
+                          <select
+                            value={opt.unit}
+                            onChange={(e) => {
+                              const next = [...stateFormData.duration_options];
+                              next[index] = {
+                                ...next[index],
+                                unit: e.target.value,
+                              };
+                              setStateFormData({
+                                ...stateFormData,
+                                duration_options: next,
+                              });
+                            }}
+                            className="px-3 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                          >
+                            <option value="Day">{t("workflows.days")}</option>
+                            <option value="Week">{t("workflows.weeks")}</option>
+                            <option value="Month">
+                              {t("workflows.months")}
+                            </option>
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setStateFormData({
+                                ...stateFormData,
+                                duration_options:
+                                  stateFormData.duration_options.filter(
+                                    (_, i) => i !== index,
+                                  ),
+                              })
+                            }
+                            className="px-2.5 py-2.5 rounded-xl border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:text-red-600 hover:border-red-300 transition-colors"
+                            aria-label={t(
+                              "workflows.removeDurationOption",
+                              "Remove duration option",
+                            )}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() =>
                           setStateFormData({
                             ...stateFormData,
-                            duration_option_value: e.target.value
-                              ? parseInt(e.target.value)
-                              : undefined,
+                            duration_options: [
+                              ...stateFormData.duration_options,
+                              { value: undefined, unit: "Day" },
+                            ],
                           })
                         }
-                        placeholder={t("workflows.escalationHoursExample")}
-                        className="flex-1 px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
-                      />
-                      <select
-                        value={stateFormData.duration_option_unit}
-                        onChange={(e) =>
-                          setStateFormData({
-                            ...stateFormData,
-                            duration_option_unit: e.target.value,
-                          })
-                        }
-                        className="px-3 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                        className="flex items-center gap-1.5 text-sm font-medium text-[hsl(var(--primary))] hover:opacity-80 transition-opacity"
                       >
-                        <option value="Day">{t("workflows.days")}</option>
-                        <option value="Week">{t("workflows.weeks")}</option>
-                        <option value="Month">{t("workflows.months")}</option>
-                      </select>
+                        <Plus className="w-4 h-4" />
+                        {t(
+                          "workflows.addDurationOption",
+                          "Add duration option",
+                        )}
+                      </button>
                     </div>
                     <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">
                       {t(
