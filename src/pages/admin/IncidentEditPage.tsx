@@ -126,10 +126,29 @@ export function IncidentEditPage() {
     },
   });
 
+  const classIds = incident?.classification?.id;
+  const locIds = incident?.location?.id;
+  const roleIds = incident?.current_state?.assignment_roles?.map(
+    (role) => role.id,
+  );
+
+  console.log(classIds, locIds, roleIds);
+
   const { data: usersData } = useQuery({
     queryKey: ["admin", "users"],
-    queryFn: () => userApi.list(1, 100),
+    queryFn: () =>
+      userApi.list(
+        1,
+        100,
+        "",
+        roleIds || [],
+        [],
+        locIds ? [locIds] : [],
+        classIds ? [classIds] : [],
+      ),
   });
+
+  // console.log(incident)
 
   const { data: departmentsData } = useQuery({
     queryKey: ["admin", "departments"],
@@ -827,7 +846,12 @@ export function IncidentEditPage() {
                 </h2>
                 <div className="grid grid-cols-2 gap-4">
                   {incidentLookupCategories
-                    .filter((category) => category.code !== "PRIORITY")
+                    .filter(
+                      (category) =>
+                        category.code !== "PRIORITY" &&
+                        category.code !== "SOURCE" &&
+                        category.code !== "IR",
+                    )
                     .map((category) => {
                       const lookupFieldKey = `lookup:${category.code}`;
                       const isRequired = workflowRequiredFields.includes(
