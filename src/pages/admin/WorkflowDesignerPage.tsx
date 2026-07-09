@@ -1665,10 +1665,13 @@ export const WorkflowDesignerPage: React.FC = () => {
     }
     setStateFormData((prev) => {
       if (prev.editable_role_ids.includes(roleId)) {
-        //only removing from edit checkbox
+        // Removing edit permission should also remove view permission
         return {
           ...prev,
           editable_role_ids: prev.editable_role_ids.filter(
+            (id) => id !== roleId,
+          ),
+          viewable_role_ids: prev.viewable_role_ids.filter(
             (id) => id !== roleId,
           ),
         };
