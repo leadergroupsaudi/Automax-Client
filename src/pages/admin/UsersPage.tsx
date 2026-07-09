@@ -998,17 +998,46 @@ export const UsersPage: React.FC = () => {
       }
 
       const validationErrors = validateImportRows(jsonRows);
-      if (validationErrors.length > 0) {
+      const clientSkipped: string[] = [];
+
+      const validRows = jsonRows.filter((row, i) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const usernameRegex = /^[a-zA-Z0-9_]+$/;
+        const rowNum = i + 1;
+        const rowErrors: string[] = [];
+
+        if (!row.email?.trim() || !emailRegex.test(row.email.trim())) {
+          rowErrors.push(
+            `Row ${rowNum}: "${row.email || ""}" - Enter a valid email address`,
+          );
+        }
+        if (!row.username?.trim() || !usernameRegex.test(row.username.trim())) {
+          rowErrors.push(
+            `Row ${rowNum}: "${row.username || ""}" - Invalid username`,
+          );
+        }
+        if (!row.password?.trim()) {
+          rowErrors.push(`Row ${rowNum}: Password is required`);
+        }
+
+        if (rowErrors.length > 0) {
+          clientSkipped.push(...rowErrors);
+          return false;
+        }
+        return true;
+      });
+
+      if (validRows.length === 0) {
         setImportResult({
           imported: 0,
-          skipped: 0,
+          skipped: jsonRows.length,
           total: jsonRows.length,
           errors: validationErrors,
         } as UserImportResult);
         return;
       }
 
-      const jsonBlob = new Blob([JSON.stringify(jsonRows, null, 2)], {
+      const jsonBlob = new Blob([JSON.stringify(validRows, null, 2)], {
         type: "application/json",
       });
       const jsonFile = new File([jsonBlob], "users_import.json", {
@@ -1017,7 +1046,12 @@ export const UsersPage: React.FC = () => {
 
       const result = await userApi.import(jsonFile);
       const data = result.data as UserImportResult;
-      setImportResult({ ...data, total: jsonRows.length });
+      setImportResult({
+        imported: data.imported,
+        skipped: data.skipped + clientSkipped.length,
+        total: jsonRows.length,
+        errors: [...clientSkipped, ...data.errors],
+      });
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
       setIsImportModalOpen(false);
       setImportFile(null);
