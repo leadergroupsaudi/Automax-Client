@@ -2094,7 +2094,9 @@
     "workflowRestoredSuccessfully": "Workflow restored successfully",
     "failedToRestoreWorkflow": "Failed to restore workflow",
     "workflowPermanentlyDeleted": "Workflow permanently deleted",
-    "failedToPermanentlyDeleteWorkflow": "Failed to permanently delete workflow"
+    "failedToPermanentlyDeleteWorkflow": "Failed to permanently delete workflow",
+    "pleaseRemoveEditPermissionFirst": "Please remove Edit permission from \"{{role}}\" before removing View permission.",
+    "viewPermissionAutomaticallyAdded": "\"{{role}}\" was automatically added to Viewable Roles because it has Edit permission."
   },
   "lookups": {
     "title": "Master Data",
