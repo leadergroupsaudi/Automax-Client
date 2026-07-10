@@ -124,17 +124,30 @@ export default function IncidentLister() {
 
   if (isCallerIncidentsMinimized) {
     return (
-      <div className="fixed top-1/2 right-0 -translate-y-1/2 z-[1000]">
+      <div
+        className={cn(
+          "fixed top-1/2 -translate-y-1/2",
+          isCintrixCti ? "left-0 z-40" : "right-0 z-[1000]",
+        )}
+      >
         <button
           onClick={() => setIsCallerIncidentsMinimized(false)}
-          className="bg-white p-3 rounded-l-xl shadow-lg border-y border-l border-gray-200 hover:bg-gray-50 flex flex-col items-center gap-2 group transition-all"
+          className={cn(
+            "bg-white p-3 shadow-lg border-y border-gray-200 hover:bg-gray-50 flex flex-col items-center gap-2 group transition-all",
+            isCintrixCti ? "rounded-r-xl border-r" : "rounded-l-xl border-l",
+          )}
           title={t(
             "softphone.maximizeCallerIncidents",
             "Maximize Caller Incidents",
           )}
         >
           <History className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
-          <span className="text-xs font-bold text-gray-600 [writing-mode:vertical-lr] rotate-180">
+          <span
+            className={cn(
+              "text-xs font-bold text-gray-600 [writing-mode:vertical-lr]",
+              isCintrixCti ? "" : "rotate-180",
+            )}
+          >
             {t("softphone.callerIncidents", "Caller Incidents")}
           </span>
         </button>
@@ -171,12 +184,14 @@ export default function IncidentLister() {
   return (
     <div
       className={cn(
-        "fixed inset-y-2 flex pointer-events-none",
-        // In cintrix mode the embedded call widget sits fixed bottom-4
-        // right-4 z-50 (~340px wide). Offset the pop left of it and drop
-        // below its z-index so the widget's Answer button is never
-        // covered, even transiently while the pop animates in.
-        isCintrixCti ? "right-[380px] z-40" : "right-2 z-[1000]",
+        "fixed flex pointer-events-none",
+        // In cintrix mode the pop docks as a left-edge drawer below the
+        // app header (h-16 navbar) so it never competes with the call
+        // widget, which stays fixed bottom-right. Kept below the widget's
+        // z-50 so the widget's Answer button is never covered.
+        isCintrixCti
+          ? "top-16 bottom-2 left-0 z-40"
+          : "inset-y-2 right-2 z-[1000]",
       )}
     >
       {/* Backdrop for mobile */}
@@ -188,7 +203,9 @@ export default function IncidentLister() {
       <div
         className={cn(
           "relative w-full max-w-[420px] bg-white/95 backdrop-blur-xl shadow-2xl flex flex-col pointer-events-auto",
-          "border-l border-gray-200/50 animate-in slide-in-from-right duration-300",
+          isCintrixCti
+            ? "rounded-r-xl border-r border-y border-gray-200/50 animate-in slide-in-from-left duration-200"
+            : "border-l border-gray-200/50 animate-in slide-in-from-right duration-300",
         )}
       >
         {/* Header */}
