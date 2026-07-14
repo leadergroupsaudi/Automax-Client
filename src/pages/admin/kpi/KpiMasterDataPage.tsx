@@ -695,10 +695,7 @@ export const KpiMasterDataPage: React.FC = () => {
             onDelete={(id) => handleDelete("operational-objective", id)}
             onAdd={() => handleAdd("operational-objective")}
             onExport={() =>
-              exportToExcel(
-                operationalObjectives ?? [],
-                "OperationalObjectives",
-              )
+              exportToExcel(operationalObjectives ?? [], "ParentObjectives")
             }
             onImport={() => handleImportExcel("operational-objective")}
           />
@@ -740,7 +737,9 @@ export const KpiMasterDataPage: React.FC = () => {
             onEdit={(item) => handleEdit("process", item)}
             onDelete={(id) => handleDelete("process", id)}
             onAdd={() => handleAdd("process")}
-            onExport={() => exportToExcel(processes ?? [], "Processes")}
+            onExport={() =>
+              exportToExcel(processes ?? [], "OperationalObjectives")
+            }
             onImport={() => handleImportExcel("process")}
           />
         )}
