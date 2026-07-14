@@ -865,7 +865,6 @@ export interface TransitionFieldChangeRequest {
 export interface WorkflowCreateRequest {
   name: string;
   name_ar?: string;
-  code: string;
   description?: string;
   description_ar?: string;
   record_type?: ClassificationType;
