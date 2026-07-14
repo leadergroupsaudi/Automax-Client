@@ -804,25 +804,47 @@ export const UsersPage: React.FC = () => {
     }
   };
 
+  const normalizeImportHeader = (header: string | undefined) => {
+    if (!header) return "";
+
+    return header
+      .toString()
+      .trim()
+      .replace(/\s*\((required|optional)\)\s*$/i, "")
+      .replace(/\s+/g, "_")
+      .toLowerCase();
+  };
+
+  const isImportMetadataRow = (
+    row: Record<string, string | number | boolean | null | undefined>,
+  ) => {
+    const values = Object.values(row).filter(
+      (value) => value !== undefined && value !== null && value !== "",
+    );
+
+    if (values.length === 0) return true;
+
+    return values.every((value) => {
+      const normalized = String(value).trim().toLowerCase();
+      return (
+        normalized === "(required)" ||
+        normalized === "(optional)" ||
+        normalized === "required" ||
+        normalized === "optional"
+      );
+    });
+  };
+
   const handleDownloadTemplate = () => {
     const ws = XLSX.utils.aoa_to_sheet([
       [
-        "username",
-        "email",
-        "password",
-        "first_name",
-        "last_name",
-        "phone",
-        "extension",
-      ],
-      [
-        "(Required)",
-        "(Required)",
-        "(Required)",
-        "(Optional)",
-        "(Optional)",
-        "(Optional)",
-        "(Optional)",
+        "username (Required)",
+        "email (Required)",
+        "password (Required)",
+        "first_name (Optional)",
+        "last_name (Optional)",
+        "phone (Optional)",
+        "extension (Optional)",
       ],
     ]);
     ws["!cols"] = [
@@ -952,6 +974,7 @@ export const UsersPage: React.FC = () => {
       let jsonRows: Array<{
         username: string;
         email: string;
+        password: string;
         first_name: string;
         last_name: string;
         phone: string;
@@ -965,8 +988,25 @@ export const UsersPage: React.FC = () => {
         const workbook = XLSX.read(arrayBuffer);
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
-        const rows = XLSX.utils.sheet_to_json<Record<string, string>>(sheet);
-        jsonRows = rows.map((row) => ({
+        const rows = XLSX.utils.sheet_to_json<Record<string, string>>(sheet, {
+          defval: "",
+        });
+        const normalizedRows = (rows || [])
+          .filter((row) => !isImportMetadataRow(row))
+          .map((row) => {
+            const normalizedRow: Record<string, string> = {};
+
+            Object.entries(row).forEach(([key, value]) => {
+              const normalizedKey = normalizeImportHeader(key);
+              if (normalizedKey) {
+                normalizedRow[normalizedKey] = String(value ?? "");
+              }
+            });
+
+            return normalizedRow;
+          });
+
+        jsonRows = normalizedRows.map((row) => ({
           username: row.username || "",
           email: row.email || "",
           password: row.password || "",
@@ -998,17 +1038,46 @@ export const UsersPage: React.FC = () => {
       }
 
       const validationErrors = validateImportRows(jsonRows);
-      if (validationErrors.length > 0) {
+      const clientSkipped: string[] = [];
+
+      const validRows = jsonRows.filter((row, i) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const usernameRegex = /^[a-zA-Z0-9_]+$/;
+        const rowNum = i + 1;
+        const rowErrors: string[] = [];
+
+        if (!row.email?.trim() || !emailRegex.test(row.email.trim())) {
+          rowErrors.push(
+            `Row ${rowNum}: "${row.email || ""}" - Enter a valid email address`,
+          );
+        }
+        if (!row.username?.trim() || !usernameRegex.test(row.username.trim())) {
+          rowErrors.push(
+            `Row ${rowNum}: "${row.username || ""}" - Invalid username`,
+          );
+        }
+        if (!row.password?.trim()) {
+          rowErrors.push(`Row ${rowNum}: Password is required`);
+        }
+
+        if (rowErrors.length > 0) {
+          clientSkipped.push(...rowErrors);
+          return false;
+        }
+        return true;
+      });
+
+      if (validRows.length === 0) {
         setImportResult({
           imported: 0,
-          skipped: 0,
+          skipped: jsonRows.length,
           total: jsonRows.length,
           errors: validationErrors,
         } as UserImportResult);
         return;
       }
 
-      const jsonBlob = new Blob([JSON.stringify(jsonRows, null, 2)], {
+      const jsonBlob = new Blob([JSON.stringify(validRows, null, 2)], {
         type: "application/json",
       });
       const jsonFile = new File([jsonBlob], "users_import.json", {
@@ -1017,7 +1086,12 @@ export const UsersPage: React.FC = () => {
 
       const result = await userApi.import(jsonFile);
       const data = result.data as UserImportResult;
-      setImportResult({ ...data, total: jsonRows.length });
+      setImportResult({
+        imported: data.imported,
+        skipped: data.skipped + clientSkipped.length,
+        total: jsonRows.length,
+        errors: [...clientSkipped, ...data.errors],
+      });
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
       setIsImportModalOpen(false);
       setImportFile(null);
