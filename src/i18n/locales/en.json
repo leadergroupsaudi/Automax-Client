@@ -2096,6 +2096,7 @@
     "failedToRestoreWorkflow": "Failed to restore workflow",
     "workflowPermanentlyDeleted": "Workflow permanently deleted",
     "failedToPermanentlyDeleteWorkflow": "Failed to permanently delete workflow",
+    "multiple": "Multiple",
     "pleaseRemoveEditPermissionFirst": "Please remove Edit permission from \"{{role}}\" before removing View permission.",
     "viewPermissionAutomaticallyAdded": "\"{{role}}\" was automatically added to Viewable Roles because it has Edit permission.",
     "recommendedRoles": "Recommended Roles",

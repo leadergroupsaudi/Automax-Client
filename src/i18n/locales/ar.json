@@ -2094,6 +2094,7 @@
     "failedToRestoreWorkflow": "فشل في استعادة سير العمل",
     "workflowPermanentlyDeleted": "تم حذف سير العمل نهائيًا",
     "failedToPermanentlyDeleteWorkflow": "فشل في حذف سير العمل نهائيًا",
+    "multiple": "متعدد",
     "pleaseRemoveEditPermissionFirst": "يرجى إزالة صلاحية التعديل من \"{{role}}\" قبل إزالة صلاحية العرض.",
     "viewPermissionAutomaticallyAdded": "تمت إضافة \"{{role}}\" تلقائيًا إلى أدوار العرض لأنه يمتلك صلاحية التعديل.",
     "recommendedRoles": "الأدوار الموصى بها",
