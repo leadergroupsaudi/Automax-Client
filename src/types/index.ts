@@ -828,6 +828,7 @@ export interface TransitionRequirement {
   field_name?: string;
   field_value?: string;
   is_mandatory: boolean;
+  is_multiple?: boolean;
   error_message?: string;
 }
 
@@ -1014,6 +1015,7 @@ export interface TransitionRequirementRequest {
   field_name?: string;
   field_value?: string;
   is_mandatory: boolean;
+  is_multiple?: boolean;
   error_message?: string;
 }
 
