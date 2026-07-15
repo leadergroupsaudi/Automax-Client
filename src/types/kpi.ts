@@ -35,16 +35,23 @@ export interface Enabler {
   created_at: string;
 }
 
+// "Parent Objective" in product terminology — links directly to a Goal.
 export interface OperationalObjective {
   id: string;
   name_en: string;
   name_ar: string;
   goal_id: string;
   goal?: GoalBrief;
+  pillar_id?: string;
+  pillar?: Pillar;
+  enabler_id?: string;
+  enabler?: Enabler;
   is_active: boolean;
   created_at: string;
 }
 
+// "Child Objective" / "Operational Objective" in product terminology —
+// links to a Parent Objective (OperationalObjective above).
 export interface Process {
   id: string;
   name_en: string;
@@ -53,6 +60,10 @@ export interface Process {
   operational_objective?: OperationalObjective;
   goal_id: string;
   goal?: GoalBrief;
+  pillar_id?: string;
+  pillar?: Pillar;
+  enabler_id?: string;
+  enabler?: Enabler;
   department_id?: string;
   department?: DepartmentBrief;
   unit: string;
@@ -66,6 +77,8 @@ export interface Initiative {
   name_ar: string;
   goal_id: string;
   goal?: GoalBrief;
+  objective_id?: string;
+  objective?: OperationalObjective;
   pillar_id?: string;
   enabler_id?: string;
   owner_id?: string;
@@ -213,6 +226,8 @@ export interface StrategicKPI {
   owner_dept?: DepartmentBrief;
   goal_id: string;
   goal?: GoalBrief;
+  process_id?: string;
+  process?: Process;
   polarity: string;
   activation_status: string;
   description_en: string;
@@ -238,6 +253,7 @@ export interface OperationalKPI {
   goal_id: string;
   goal?: GoalBrief;
   operational_objective_id: string;
+  operational_objective?: OperationalObjective;
   process_id: string;
   process?: Process;
   owner_dept_id?: string;
@@ -420,6 +436,8 @@ export interface OperationalObjectiveRequest {
   name_en: string;
   name_ar?: string;
   goal_id: string;
+  pillar_id?: string;
+  enabler_id?: string;
 }
 
 export interface ProcessRequest {
@@ -427,6 +445,8 @@ export interface ProcessRequest {
   name_ar?: string;
   operational_objective_id: string;
   goal_id: string;
+  pillar_id?: string;
+  enabler_id?: string;
   department_id?: string;
   unit?: string;
 }
@@ -435,6 +455,7 @@ export interface InitiativeRequest {
   name_en: string;
   name_ar?: string;
   goal_id: string;
+  objective_id?: string;
   pillar_id?: string;
   enabler_id?: string;
   owner_id?: string;
@@ -468,6 +489,7 @@ export interface StrategicKPIRequest {
   domain_id?: string;
   owner_dept_id?: string;
   goal_id: string;
+  process_id: string;
   polarity?: string;
   activation_status?: string;
   description_en?: string;
@@ -650,6 +672,8 @@ export interface KpiMetric {
   target_value: number;
   weight: number;
   formula?: string;
+  start_date?: string;
+  due_date?: string;
   created_by_id: string;
   created_by?: UserBrief;
   created_at: string;
@@ -664,6 +688,10 @@ export interface KpiMetricRequest {
   target_value: number;
   weight?: number;
   formula?: string;
+  start_date?: string;
+  due_date?: string;
+  attachment_title?: string;
+  attachment_file_url?: string;
 }
 
 export interface KpiEngagementEvidence {

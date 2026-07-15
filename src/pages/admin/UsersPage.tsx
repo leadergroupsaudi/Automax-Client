@@ -558,7 +558,8 @@ export const UsersPage: React.FC = () => {
     setAvatarPreview(null);
     setCreateFormErrors({});
   };
-
+  // const PHONE_REGEX = /^\+?\d+(?: \d+)*$/; //optional country code , allows spaces between numbers.
+  const PHONE_REGEX = /^\+?\d+$/; // Optional country code (+), digits only.
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const errors: UserFieldErrors = {};
@@ -587,13 +588,22 @@ export const UsersPage: React.FC = () => {
       errors.password = t("users.passwordPolicy");
     }
 
+    if (
+      createFormData.phone.trim() &&
+      !PHONE_REGEX.test(createFormData.phone.trim())
+    ) {
+      errors.phone = t("users.invalidPhone");
+      // toast.error(t("auth.invalidPhone"));
+    }
+
     setCreateFormErrors(errors);
     if (Object.keys(errors).length > 0) {
+      toast.error(t("errors.validationError"));
       return;
     }
 
     createMutation.mutate({
-      data: createFormData,
+      data: { ...createFormData, phone: createFormData.phone.trim() },
       avatar: avatarFile || undefined,
     });
   };
@@ -679,14 +689,19 @@ export const UsersPage: React.FC = () => {
         field: t("users.username"),
       });
     }
+    if (formData.phone.trim() && !PHONE_REGEX.test(formData.phone.trim())) {
+      errors.phone = t("users.invalidPhone");
+      // toast.error(t("auth.invalidPhone"));
+    }
 
     setFormErrors(errors);
     if (Object.keys(errors).length > 0) {
+      toast.error(t("errors.validationError"));
       return;
     }
 
     let phoneChanged = false;
-    if (editingUser.phone !== formData.phone) {
+    if ((editingUser.phone || "").trim() !== formData.phone.trim()) {
       phoneChanged = true;
     }
     const payload: UpdateProfileRequest = {
@@ -694,7 +709,7 @@ export const UsersPage: React.FC = () => {
       last_name: formData.last_name,
       username: formData.username,
       mobile_verified: phoneChanged ? false : editingUser.mobile_verified,
-      phone: formData.phone,
+      phone: formData.phone.trim(),
       extension: formData.extension || "",
       department_id: formData.department_id || undefined,
       location_id: formData.location_id || undefined,
@@ -804,25 +819,47 @@ export const UsersPage: React.FC = () => {
     }
   };
 
+  const normalizeImportHeader = (header: string | undefined) => {
+    if (!header) return "";
+
+    return header
+      .toString()
+      .trim()
+      .replace(/\s*\((required|optional)\)\s*$/i, "")
+      .replace(/\s+/g, "_")
+      .toLowerCase();
+  };
+
+  const isImportMetadataRow = (
+    row: Record<string, string | number | boolean | null | undefined>,
+  ) => {
+    const values = Object.values(row).filter(
+      (value) => value !== undefined && value !== null && value !== "",
+    );
+
+    if (values.length === 0) return true;
+
+    return values.every((value) => {
+      const normalized = String(value).trim().toLowerCase();
+      return (
+        normalized === "(required)" ||
+        normalized === "(optional)" ||
+        normalized === "required" ||
+        normalized === "optional"
+      );
+    });
+  };
+
   const handleDownloadTemplate = () => {
     const ws = XLSX.utils.aoa_to_sheet([
       [
-        "username",
-        "email",
-        "password",
-        "first_name",
-        "last_name",
-        "phone",
-        "extension",
-      ],
-      [
-        "(Required)",
-        "(Required)",
-        "(Required)",
-        "(Optional)",
-        "(Optional)",
-        "(Optional)",
-        "(Optional)",
+        "username (Required)",
+        "email (Required)",
+        "password (Required)",
+        "first_name (Optional)",
+        "last_name (Optional)",
+        "phone (Optional)",
+        "extension (Optional)",
       ],
     ]);
     ws["!cols"] = [
@@ -952,6 +989,7 @@ export const UsersPage: React.FC = () => {
       let jsonRows: Array<{
         username: string;
         email: string;
+        password: string;
         first_name: string;
         last_name: string;
         phone: string;
@@ -965,8 +1003,25 @@ export const UsersPage: React.FC = () => {
         const workbook = XLSX.read(arrayBuffer);
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
-        const rows = XLSX.utils.sheet_to_json<Record<string, string>>(sheet);
-        jsonRows = rows.map((row) => ({
+        const rows = XLSX.utils.sheet_to_json<Record<string, string>>(sheet, {
+          defval: "",
+        });
+        const normalizedRows = (rows || [])
+          .filter((row) => !isImportMetadataRow(row))
+          .map((row) => {
+            const normalizedRow: Record<string, string> = {};
+
+            Object.entries(row).forEach(([key, value]) => {
+              const normalizedKey = normalizeImportHeader(key);
+              if (normalizedKey) {
+                normalizedRow[normalizedKey] = String(value ?? "");
+              }
+            });
+
+            return normalizedRow;
+          });
+
+        jsonRows = normalizedRows.map((row) => ({
           username: row.username || "",
           email: row.email || "",
           password: row.password || "",

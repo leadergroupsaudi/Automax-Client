@@ -1,13 +1,16 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, BookOpen, Save } from "lucide-react";
 import { toast } from "sonner";
 import {
   useCreateStrategicKPI,
+  useUpdateStrategicKPI,
+  useStrategicKPIDetail,
   usePillars,
   useDomains,
   useDataSources,
+  useProcesses,
 } from "../../../hooks/useKpi";
 import { useGoals } from "../../../hooks/useGoals";
 import { Button } from "../../../components/ui/Button";
@@ -17,17 +20,23 @@ import type { StrategicKPIRequest } from "../../../types/kpi";
 export const KpiDictionaryFormPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEdit = !!id;
   const createKpi = useCreateStrategicKPI();
+  const updateKpi = useUpdateStrategicKPI();
+  const { data: existingData } = useStrategicKPIDetail(id ?? "");
 
   const { data: pillarsData } = usePillars();
   const { data: domainsData } = useDomains();
   const { data: okrGoalsData } = useGoals({ limit: 200 });
   const { data: dataSourcesData } = useDataSources();
+  const { data: processesData } = useProcesses();
 
   const pillars = pillarsData ?? [];
   const domains = domainsData ?? [];
   const okrGoals = (okrGoalsData as any)?.data ?? [];
   const dataSources = dataSourcesData ?? [];
+  const processes = processesData ?? [];
 
   const [form, setForm] = useState({
     code: "",
@@ -36,6 +45,7 @@ export const KpiDictionaryFormPage: React.FC = () => {
     pillar_id: "",
     domain_id: "",
     goal_id: "",
+    process_id: "",
     polarity: "ascending",
     activation_status: "draft",
     description_en: "",
@@ -51,6 +61,33 @@ export const KpiDictionaryFormPage: React.FC = () => {
     notes: "",
   });
 
+  useEffect(() => {
+    const kpi = existingData?.data;
+    if (!kpi) return;
+    setForm({
+      code: kpi.code,
+      name_en: kpi.name_en,
+      name_ar: kpi.name_ar ?? "",
+      pillar_id: kpi.pillar_id ?? "",
+      domain_id: kpi.domain_id ?? "",
+      goal_id: kpi.goal_id ?? "",
+      process_id: kpi.process_id ?? "",
+      polarity: kpi.polarity,
+      activation_status: kpi.activation_status,
+      description_en: kpi.description_en ?? "",
+      description_ar: kpi.description_ar ?? "",
+      formula: kpi.formula ?? "",
+      baseline: kpi.baseline,
+      unit_of_measure: kpi.unit_of_measure ?? "",
+      reporting_frequency: kpi.reporting_frequency ?? "quarterly",
+      lifecycle: kpi.lifecycle ?? "",
+      data_source: kpi.data_source ?? "",
+      segmentation_axes: kpi.segmentation_axes ?? "",
+      related_units: kpi.related_units ?? "",
+      notes: kpi.notes ?? "",
+    });
+  }, [existingData]);
+
   const handleChange =
     (field: string) =>
     (
@@ -64,7 +101,7 @@ export const KpiDictionaryFormPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.code || !form.name_en || !form.goal_id) {
+    if (!form.code || !form.name_en || !form.goal_id || !form.process_id) {
       toast.error(t("kpi.targets.formValidation"));
       return;
     }
@@ -73,12 +110,18 @@ export const KpiDictionaryFormPage: React.FC = () => {
       ...form,
       baseline: Number(form.baseline),
       goal_id: form.goal_id,
+      process_id: form.process_id,
       pillar_id: form.pillar_id || undefined,
       domain_id: form.domain_id || undefined,
     };
 
-    await createKpi.mutateAsync(data);
-    navigate("/goals/kpi/dictionary");
+    if (isEdit) {
+      await updateKpi.mutateAsync({ id: id!, data });
+      navigate(`/goals/kpi/dictionary/strategic/${id}`);
+    } else {
+      await createKpi.mutateAsync(data);
+      navigate("/goals/kpi/dictionary");
+    }
   };
 
   return (
@@ -97,7 +140,7 @@ export const KpiDictionaryFormPage: React.FC = () => {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            {t("kpi.dictionary.newKpi")}
+            {isEdit ? "Edit KPI" : t("kpi.dictionary.newKpi")}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
             {t("kpi.dictionary.subtitle")}
@@ -124,6 +167,21 @@ export const KpiDictionaryFormPage: React.FC = () => {
               options={okrGoals.map((g: any) => ({
                 value: g.id,
                 label: g.title,
+              }))}
+              placeholder={t("common.selectAnOption")}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Select
+              label="Objective *"
+              value={form.process_id}
+              onChange={(v) =>
+                setForm((prev) => ({ ...prev, process_id: v.target.value }))
+              }
+              options={processes.map((p: any) => ({
+                value: p.id,
+                label: p.name_en,
               }))}
               placeholder={t("common.selectAnOption")}
             />
@@ -304,7 +362,10 @@ export const KpiDictionaryFormPage: React.FC = () => {
           >
             {t("common.cancel")}
           </Button>
-          <Button type="submit" isLoading={createKpi.isPending}>
+          <Button
+            type="submit"
+            isLoading={isEdit ? updateKpi.isPending : createKpi.isPending}
+          >
             <Save className="w-4 h-4 me-1" />
             {t("common.save")}
           </Button>
