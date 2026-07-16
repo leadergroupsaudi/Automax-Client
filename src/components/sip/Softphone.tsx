@@ -346,7 +346,7 @@ export default function SoftPhone({
 
   const canCreateSentimentRef = useRef(false);
   const ringRef = useRef<HTMLAudioElement | null>(null);
-  const lastPresenceStatusRef = useRef<"available" | "offline" | null>(null);
+  const lastPresenceStatusRef = useRef<"online" | "offline" | null>(null);
 
   const callingToneCtxRef = useRef<AudioContext | null>(null);
   const callingToneIntervalRef = useRef<any>(null);
@@ -510,7 +510,7 @@ export default function SoftPhone({
   const domain = settings?.domain ?? "";
 
   const syncUserPresenceStatus = useCallback(
-    async (status: "available" | "offline") => {
+    async (status: "online" | "offline") => {
       if (!extension) return;
       if (lastPresenceStatusRef.current === status) return;
 
@@ -527,7 +527,7 @@ export default function SoftPhone({
 
   useEffect(() => {
     if (sipConnected) {
-      void syncUserPresenceStatus("available");
+      void syncUserPresenceStatus("online");
     } else {
       void syncUserPresenceStatus("offline");
     }

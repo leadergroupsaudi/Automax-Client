@@ -144,7 +144,7 @@ export function IncidentEditPage() {
         [],
         locIds ? [locIds] : [],
         classIds ? [classIds] : [],
-        "available",
+        "online",
       );
     },
     enabled: incidentSuccess,
