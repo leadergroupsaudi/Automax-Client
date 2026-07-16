@@ -20,7 +20,7 @@ export interface Pillar {
   name_en: string;
   name_ar: string;
   owner_id?: string;
-  owner?: UserBrief;
+  owner?: DepartmentBrief;
   is_active: boolean;
   created_at: string;
 }
@@ -30,7 +30,7 @@ export interface Enabler {
   name_en: string;
   name_ar: string;
   owner_id?: string;
-  owner?: UserBrief;
+  owner?: DepartmentBrief;
   is_active: boolean;
   created_at: string;
 }
