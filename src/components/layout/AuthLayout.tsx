@@ -31,6 +31,8 @@ export const AuthLayout: React.FC = () => {
     window.APP_CONFIG?.CLIENT === "EPM940" ||
     import.meta.env.VITE_CLIENT === "EPM940";
   const { theme } = useTheme();
+
+  const isEpmDark = isEPM940 && theme === "dark";
   // Close language dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -45,16 +47,28 @@ export const AuthLayout: React.FC = () => {
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
-
+  const circleColor = "bg-[rgb(19,116,231)]";
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 relative overflow-hidden">
+      <div
+        className={`hidden lg:flex lg:w-1/2 relative overflow-hidden ${
+          isEpmDark
+            ? "bg-gradient-to-br from-[rgb(1,17,56)] to-[rgb(1,12,42)]"
+            : "bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800"
+        }`}
+      >
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full -translate-x-1/2 -translate-y-1/2" />
-          <div className="absolute bottom-0 right-0 w-[32rem] h-[32rem] bg-white rounded-full translate-x-1/3 translate-y-1/3" />
-          <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-white rounded-full -translate-x-1/2 -translate-y-1/2" />
+          <div
+            className={`absolute top-0 left-0 w-96 h-96  rounded-full -translate-x-1/2 -translate-y-1/2 ${isEpmDark ? circleColor : "bg-white"}`}
+          />
+          <div
+            className={`absolute bottom-0 right-0 w-[32rem] h-[32rem] ${isEpmDark ? circleColor : "bg-white"} rounded-full translate-x-1/3 translate-y-1/3`}
+          />
+          <div
+            className={`absolute top-1/2 left-1/2 w-64 h-64 rounded-full -translate-x-1/2 -translate-y-1/2 ${isEpmDark ? circleColor : "bg-white"}`}
+          />
         </div>
 
         {/* Content */}
@@ -62,22 +76,6 @@ export const AuthLayout: React.FC = () => {
           {/* Logo */}
 
           <div className="flex items-center gap-3">
-            {/* {isEPM940 ? (
-              <div className="w-30 h-30 bg-white backdrop-blur-sm rounded-xl flex items-center justify-center">
-                <img
-                  src={publicUrl("epm-logo.png")}
-                  alt="Automax"
-                  className="h-30 object-contain"
-                />
-              </div>
-            ) : (
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                <Zap className="w-7 h-7 text-white" />
-              </div>
-            )}
-            <span className="text-2xl font-bold text-white">
-              {t("softphone.automax")}
-            </span> */}
             {isEPM940 ? (
               <div>
                 <img
@@ -102,7 +100,14 @@ export const AuthLayout: React.FC = () => {
               <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight">
                 {t("navigation.streamlineYour")}
                 <br />
-                <span className="text-blue-200">
+                <span
+                  className={
+                    isEpmDark
+                      ? // ? "bg-gradient-to-r from-[#39D4FF] via-[#1FA3E8] to-[#166FD6] bg-clip-text text-transparent"
+                        "bg-gradient-to-r from-[#2A70F6]  to-[#0DCBDB] bg-clip-text text-transparent"
+                      : "text-blue-200"
+                  }
+                >
                   {t("navigation.workflowAutomation")}
                 </span>
               </h1>
@@ -119,12 +124,14 @@ export const AuthLayout: React.FC = () => {
                 t("navigation.realTimeAnalyticsDashboard"),
               ].map((feature, index) => (
                 <div key={index} className="flex items-center gap-3">
-                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                  <div
+                    className={`w-6 h-6 rounded-full ${isEpmDark ? "bg-[hsl(218,92%,36%)]" : "bg-white/20"}  flex items-center justify-center`}
+                  >
                     <svg
                       className="w-3.5 h-3.5 text-white"
                       fill="none"
                       viewBox="0 0 24 24"
-                      stroke="currentColor"
+                      stroke={isEpmDark ? "rgba(43, 202, 248)" : "currentColor"}
                     >
                       <path
                         strokeLinecap="round"
@@ -224,9 +231,9 @@ export const AuthLayout: React.FC = () => {
           <div className="flex flex-row justify-center px-6 lg:px-12 pb-4 sm:pb-0">
             <img
               src={publicUrl(
-                theme === "dark"
+                /*  theme === "dark"
                   ? "epm940_rebranding/940-logo-white-hq.png"
-                  : "epm-logo.png",
+                  : */ "epm-logo.png",
               )}
               alt="Automax"
               className="h-33 object-contain"
