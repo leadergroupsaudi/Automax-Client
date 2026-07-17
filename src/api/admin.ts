@@ -1620,6 +1620,23 @@ export const incidentApi = {
     return response.data;
   },
 
+  // Full SMS/Email communication history for this incident's audit trail.
+  getCommunications: async (
+    incidentId: string,
+    filter: { page?: number; limit?: number; channel?: "sms" | "email" } = {},
+  ): Promise<PaginatedResponse<Email>> => {
+    const params = new URLSearchParams();
+    params.append("incident_id", incidentId);
+    if (filter.page) params.append("page", String(filter.page));
+    if (filter.limit) params.append("limit", String(filter.limit));
+    if (filter.channel) params.append("channel", filter.channel);
+
+    const response = await apiClient.get<PaginatedResponse<Email>>(
+      `/notifications?${params.toString()}`,
+    );
+    return response.data;
+  },
+
   // Download Report
   downloadReport: async (
     incidentId: string,
