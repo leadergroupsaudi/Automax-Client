@@ -19,6 +19,7 @@ import { DatePickerWithRange } from "@/ui/date-range-picker";
 import { incidentApi } from "../../api/admin";
 import type { Email } from "../../types";
 import { AppPagination } from "../ui/AppPagination";
+import DOMPurify from "dompurify";
 
 interface CommunicationHistoryProps {
   incidentId: string;
@@ -286,7 +287,7 @@ export const CommunicationHistory: React.FC<CommunicationHistoryProps> = ({
                     <div
                       className="prose prose-sm dark:prose-invert max-w-none"
                       dangerouslySetInnerHTML={{
-                        __html: comm.body || "",
+                        __html: DOMPurify.sanitize(comm.body ?? ""),
                       }}
                     />
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[hsl(var(--muted-foreground))] pt-1">
