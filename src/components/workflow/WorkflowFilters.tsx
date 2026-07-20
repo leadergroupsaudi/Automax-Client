@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Search, Filter } from "lucide-react";
 import { Button } from "../ui";
 import type { WorkflowFilter, User } from "../../types";
 import { useQuery } from "@tanstack/react-query";
-import { lookupApi, userApi } from "@/api/admin";
+import { permissionApi, userApi } from "@/api/admin";
+import { PERMISSIONS } from "@/constants/permissions";
 
 export interface WorkflowFilterProps {
   filter: WorkflowFilter;
@@ -25,31 +26,55 @@ const WorkflowFilters: React.FC<WorkflowFilterProps> = ({
   const { t, i18n } = useTranslation();
   const [showFilters, setShowFilters] = useState(false);
 
-  const { data: sourceData } = useQuery({
-    queryKey: ["lookups", "categories"],
-    queryFn: async () => {
-      const categories = await lookupApi.listCategories();
-      return (
-        (categories.data || []).find(
-          (cat) => cat.code === "WOKRFLOW_CATERGORY_EPM940",
-        ) || null
-      );
-    },
-  });
-
   const { data: usersData } = useQuery({
     queryKey: ["admin", "users", 1, 100],
     queryFn: () => userApi.list(1, 100),
   });
+  /* fetching workflow record type based on dashboard permissions for clients.  */
+  const { data: permissionsData } = useQuery({
+    queryKey: ["admin", "permissions"],
+    queryFn: () => permissionApi.list(),
+  });
 
-  const sourceOptions = useMemo(() => {
-    if (!sourceData) return [];
-    return (sourceData.values || []).map((value) => ({
-      value: value.code.toLowerCase(),
-      label:
-        i18n.language === "ar" && value.name_ar ? value.name_ar : value.name,
-    }));
-  }, [sourceData, i18n.language]);
+  const availablePermissionCodes = React.useMemo(
+    () =>
+      new Set<string>(
+        permissionsData?.data?.map((permission) => permission.code) ?? [],
+      ),
+    [permissionsData],
+  );
+
+  const RECORD_TYPE_PERMISSION_MAP = [
+    {
+      permission: PERMISSIONS.DASHBOARD_INCIDENTS,
+      value: "incident",
+      label: "Incident",
+    },
+    {
+      permission: PERMISSIONS.DASHBOARD_REQUESTS,
+      value: "request",
+      label: "Request",
+    },
+    {
+      permission: PERMISSIONS.DASHBOARD_COMPLAINTS,
+      value: "complaint",
+      label: "Complaint",
+    },
+    {
+      permission: PERMISSIONS.DASHBOARD_QUERIES,
+      value: "query",
+      label: "Query",
+    },
+    {
+      permission: PERMISSIONS.DASHBOARD_GOALS,
+      value: "goal",
+      label: "Goal",
+    },
+  ] as const;
+
+  const recordTypeOptions = RECORD_TYPE_PERMISSION_MAP.filter(
+    ({ permission }) => availablePermissionCodes.has(permission),
+  );
 
   return (
     <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-4 shadow-sm">
@@ -106,8 +131,10 @@ const WorkflowFilters: React.FC<WorkflowFilterProps> = ({
               <option value={""}>
                 {t("common.allStatuses", "All Statuses")}
               </option>
-              <option>{t("common.active", "Active")}</option>
-              <option>{t("common.inactive", "Inactive")}</option>
+              <option value={"active"}>{t("common.active", "Active")}</option>
+              <option value="inactive">
+                {t("common.inactive", "Inactive")}
+              </option>
             </select>
           </div>
 
@@ -129,8 +156,10 @@ const WorkflowFilters: React.FC<WorkflowFilterProps> = ({
               <option value={""}>
                 {t("workflows.recordTypeAllDesc", "All Records")}
               </option>
-              {sourceOptions?.map((source) => (
-                <option value={source.value}>{source.label}</option>
+              {recordTypeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
               ))}
             </select>
           </div>

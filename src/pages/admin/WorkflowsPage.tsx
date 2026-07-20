@@ -80,10 +80,6 @@ export const WorkflowsPage: React.FC = () => {
     Record<string, string>
   >({});
 
-  const isEPM940 =
-    window.APP_CONFIG?.CLIENT === "EPM940" ||
-    import.meta.env.VITE_CLIENT === "EPM940";
-
   const defaultFilter: WorkflowFilter = {
     page: 1,
     limit: 20,
@@ -426,15 +422,14 @@ export const WorkflowsPage: React.FC = () => {
           </div>
         )}
       </div>
+
       {/* SEARCH AND FILTER */}
-      {isEPM940 && (
-        <WorkflowFilters
-          filter={filter}
-          onFilterChange={onFilterChange}
-          onClearFilters={onClearFilters}
-          hasActiveFilters={hasActiveFilters}
-        />
-      )}
+      <WorkflowFilters
+        filter={filter}
+        onFilterChange={onFilterChange}
+        onClearFilters={onClearFilters}
+        hasActiveFilters={hasActiveFilters}
+      />
 
       {/* Workflows Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
