@@ -23,7 +23,7 @@ const WorkflowFilters: React.FC<WorkflowFilterProps> = ({
   onClearFilters,
   hasActiveFilters,
 }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [showFilters, setShowFilters] = useState(false);
 
   const { data: usersData } = useQuery({
