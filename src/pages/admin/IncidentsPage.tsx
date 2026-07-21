@@ -356,6 +356,9 @@ export const IncidentsPage: React.FC = () => {
       start_date: searchParams.get("start_date") || undefined,
       end_date: searchParams.get("end_date") || undefined,
       source: searchParams.get("source") || undefined,
+      reporter_phone: searchParams.get("reporter_phone") || undefined,
+      reporter_phone_search:
+        searchParams.get("reporter_phone_search") || undefined,
     };
   }, [searchParams, uniqueStates]);
 
@@ -484,7 +487,9 @@ export const IncidentsPage: React.FC = () => {
     filter.priority !== undefined ||
     !!filter.start_date ||
     !!filter.end_date ||
-    filter.source !== undefined
+    filter.source !== undefined ||
+    !!filter.reporter_phone ||
+    !!filter.reporter_phone_search
   );
 
   const getLookupValue = (incident: Incident, categoryCode: string) => {
