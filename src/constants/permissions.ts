@@ -70,6 +70,9 @@ export const PERMISSIONS = {
   INCIDENTS_EDIT_CLOSED: "incidents:edit-closed",
   INCIDENTS_REQUEST_INFO: "incidents:request-info",
 
+  // Notification permissions
+  NOTIFICATIONS_READ: "notifications:read",
+
   // Request permissions
   REQUESTS_VIEW: "requests:view",
   REQUESTS_VIEW_ALL: "requests:view_all",

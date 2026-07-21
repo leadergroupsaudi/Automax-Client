@@ -3103,7 +3103,10 @@ export const UsersPage: React.FC = () => {
                   </p>
                   <p className="text-sm text-[hsl(var(--foreground))]">
                     {viewingUser.phone ? (
-                      <CallablePhone number={viewingUser.phone} className="text-sm" />
+                      <CallablePhone
+                        number={viewingUser.phone}
+                        className="text-sm"
+                      />
                     ) : (
                       t("users.notProvided")
                     )}

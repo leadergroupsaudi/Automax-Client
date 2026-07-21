@@ -131,11 +131,12 @@ export const CintrixCtiHost: React.FC = () => {
       if (bootingRef.current) return;
       bootingRef.current = true;
       try {
-        const { data } = await apiClient.get<WidgetTokenResponse>(
-          "/cti/widget-token",
-        );
+        const { data } =
+          await apiClient.get<WidgetTokenResponse>("/cti/widget-token");
         if (cancelled || !containerRef.current) return;
-        await loadScript(`${data.cintrix_url.replace(/\/$/, "")}/cti-widget.js`);
+        await loadScript(
+          `${data.cintrix_url.replace(/\/$/, "")}/cti-widget.js`,
+        );
         if (cancelled || !containerRef.current) return;
         if (!window.CintrixCTI) {
           // Script "loaded" but never defined the global (poisoned cache,
@@ -195,13 +196,21 @@ export const CintrixCtiHost: React.FC = () => {
   // its dialpad pre-filled.
   useEffect(() => {
     const onInitiateCall = (e: Event) => {
-      const number = (e as CustomEvent<{ number?: string }>).detail?.number?.trim();
+      const number = (
+        e as CustomEvent<{ number?: string }>
+      ).detail?.number?.trim();
       if (!number) return;
-      window.postMessage({ type: "cintrix:dial", number }, window.location.origin);
+      window.postMessage(
+        { type: "cintrix:dial", number },
+        window.location.origin,
+      );
     };
     window.addEventListener("initiate-call", onInitiateCall as EventListener);
     return () =>
-      window.removeEventListener("initiate-call", onInitiateCall as EventListener);
+      window.removeEventListener(
+        "initiate-call",
+        onInitiateCall as EventListener,
+      );
   }, []);
 
   // Bridge widget events → Automax behaviors (screen-pop parity).

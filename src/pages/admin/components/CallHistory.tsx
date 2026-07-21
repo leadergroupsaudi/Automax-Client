@@ -314,7 +314,8 @@ const CallHistoryItem: React.FC<{
           )}
           <button
             onClick={() => {
-              const number = call.other_party_extension || call.other_party_phone;
+              const number =
+                call.other_party_extension || call.other_party_phone;
               if (number) {
                 window.dispatchEvent(
                   new CustomEvent("initiate-call", {
