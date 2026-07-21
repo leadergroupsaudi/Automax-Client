@@ -69,6 +69,10 @@ export const PERMISSIONS = {
   INCIDENTS_MERGE: "incidents:merge",
   INCIDENTS_EDIT_CLOSED: "incidents:edit-closed",
   INCIDENTS_REQUEST_INFO: "incidents:request-info",
+  INCIDENTS_FILTER_REPORTER_PHONE: "incidents:filter_reporter_phone",
+
+  // Notification permissions
+  NOTIFICATIONS_READ: "notifications:read",
 
   // Request permissions
   REQUESTS_VIEW: "requests:view",

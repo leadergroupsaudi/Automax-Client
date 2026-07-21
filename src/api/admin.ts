@@ -1340,7 +1340,9 @@ export const incidentApi = {
     if (filter.end_date) params.append("end_date", filter.end_date);
     if (filter.transition_id)
       params.append("transition_id", filter.transition_id);
-    console.log(filter);
+    if (filter.reporter_phone_search) {
+      params.append("reporter_phone_search", filter.reporter_phone_search);
+    }
     const response = await apiClient.get<PaginatedResponse<Incident>>(
       `/incidents?${params.toString()}`,
     );
@@ -1644,6 +1646,31 @@ export const incidentApi = {
       {
         responseType: "blob",
       },
+    );
+    return response.data;
+  },
+
+  // Full SMS/Email communication history for this incident's audit trail.
+  getCommunications: async (
+    incidentId: string,
+    filter: {
+      page?: number;
+      limit?: number;
+      channel?: "sms" | "email";
+      start_date?: string;
+      end_date?: string;
+    } = {},
+  ): Promise<PaginatedResponse<Email>> => {
+    const params = new URLSearchParams();
+    params.append("incident_id", incidentId);
+    if (filter.page) params.append("page", String(filter.page));
+    if (filter.limit) params.append("limit", String(filter.limit));
+    if (filter.channel) params.append("channel", filter.channel);
+    if (filter.start_date) params.append("start_date", filter.start_date);
+    if (filter.end_date) params.append("end_date", filter.end_date);
+
+    const response = await apiClient.get<PaginatedResponse<Email>>(
+      `/notifications?${params.toString()}`,
     );
     return response.data;
   },
