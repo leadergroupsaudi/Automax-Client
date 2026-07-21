@@ -1691,11 +1691,12 @@ export const incidentApi = {
   },
 
   getIncidentStatsV2: async (
-    params = {},
+    params: Record<string, unknown> = {},
+    recordType: "incident" | "request" | "complaint" | "query" = "incident",
   ): Promise<ApiResponse<IncidentStats>> => {
     try {
       const response = await apiClient.get("/incidents/stats/v2", {
-        params: { ...params, record_type: "incident" },
+        params: { ...params, record_type: recordType },
       });
       if (response.data && response.data.success) {
         return { success: true, data: response.data.data };
@@ -1794,6 +1795,7 @@ export const complaintApi = {
     if (filter.limit) params.append("limit", String(filter.limit));
     if (filter.search) params.append("search", filter.search);
     if (filter.workflow_id) params.append("workflow_id", filter.workflow_id);
+    if (filter.my_record) params.append("my_record", filter.my_record);
     if (filter.current_state_id)
       params.append("current_state_id", filter.current_state_id);
     filter.classification_ids?.forEach((id) =>
@@ -1995,6 +1997,7 @@ export const queryApi = {
     if (filter.limit) params.append("limit", String(filter.limit));
     if (filter.search) params.append("search", filter.search);
     if (filter.workflow_id) params.append("workflow_id", filter.workflow_id);
+    if (filter.my_record) params.append("my_record", filter.my_record);
     if (filter.current_state_id)
       params.append("current_state_id", filter.current_state_id);
     filter.classification_ids?.forEach((id) =>

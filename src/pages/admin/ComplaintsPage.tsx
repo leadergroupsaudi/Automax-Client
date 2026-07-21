@@ -24,12 +24,12 @@ import { Button } from "../../components/ui";
 import { MultiTreeSelect } from "../../components/ui/MultiTreeSelect";
 import CallablePhone from "../../components/common/CallablePhone";
 import {
-  complaintApi,
   workflowApi,
   userApi,
   departmentApi,
   classificationApi,
   locationApi,
+  incidentApi,
 } from "../../api/admin";
 import type {
   Incident,
@@ -109,8 +109,6 @@ export const ComplaintsPage: React.FC<ComplaintsPageProps> = ({ listType }) => {
 
   const canCreateComplaint =
     isSuperAdmin || hasPermission(PERMISSIONS.COMPLAINTS_CREATE);
-  const canTransitionComplaint =
-    isSuperAdmin || hasPermission(PERMISSIONS.COMPLAINTS_TRANSITION);
   const canViewAllComplaints =
     isSuperAdmin || hasPermission(PERMISSIONS.COMPLAINTS_VIEW_ALL);
 
@@ -132,22 +130,19 @@ export const ComplaintsPage: React.FC<ComplaintsPageProps> = ({ listType }) => {
         : t("complaints.subtitle");
 
   // Redirect if user doesn't have view_all permission AND no status filter is applied
-  useEffect(() => {
-    if (!canViewAllComplaints && !hasUrlFilter && !isScopedList) {
-      if (canTransitionComplaint) {
-        navigate("/complaints/my-assigned", { replace: true });
-      } else if (canCreateComplaint) {
-        navigate("/complaints/my-created", { replace: true });
-      }
-    }
-  }, [
-    canViewAllComplaints,
-    canTransitionComplaint,
-    canCreateComplaint,
-    hasUrlFilter,
-    isScopedList,
-    navigate,
-  ]);
+  // useEffect(() => {
+  //   if (!canViewAllComplaints && !hasUrlFilter && !isScopedList) {
+  //     if (canCreateComplaint) {
+  //       navigate("/complaints/my-created", { replace: true });
+  //     }
+  //   }
+  // }, [
+  //   canViewAllComplaints,
+  //   canCreateComplaint,
+  //   hasUrlFilter,
+  //   isScopedList,
+  //   navigate,
+  // ]);
 
   useEffect(() => {
     setFilter({
@@ -266,8 +261,15 @@ export const ComplaintsPage: React.FC<ComplaintsPageProps> = ({ listType }) => {
     refetch,
     isFetching,
   } = useQuery({
-    queryKey: ["complaints", filter],
-    queryFn: () => complaintApi.list(filter),
+    queryKey: [
+      "complaints",
+      { ...filter, ...(canViewAllComplaints ? {} : { my_record: user?.id }) },
+    ],
+    queryFn: () =>
+      incidentApi.list({
+        ...filter,
+        ...(canViewAllComplaints ? {} : { my_record: user?.id }),
+      }),
     placeholderData: keepPreviousData,
   });
 
