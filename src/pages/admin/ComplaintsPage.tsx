@@ -24,7 +24,6 @@ import { Button } from "../../components/ui";
 import { MultiTreeSelect } from "../../components/ui/MultiTreeSelect";
 import CallablePhone from "../../components/common/CallablePhone";
 import {
-  complaintApi,
   workflowApi,
   userApi,
   departmentApi,
