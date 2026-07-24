@@ -359,6 +359,7 @@ export const IncidentsPage: React.FC = () => {
       reporter_phone: searchParams.get("reporter_phone") || undefined,
       reporter_phone_search:
         searchParams.get("reporter_phone_search") || undefined,
+      momra_ref: searchParams.get("momra_ref") || undefined,
     };
   }, [searchParams, uniqueStates]);
 
@@ -489,7 +490,8 @@ export const IncidentsPage: React.FC = () => {
     !!filter.end_date ||
     filter.source !== undefined ||
     !!filter.reporter_phone ||
-    !!filter.reporter_phone_search
+    !!filter.reporter_phone_search ||
+    !!filter.momra_ref
   );
 
   const getLookupValue = (incident: Incident, categoryCode: string) => {

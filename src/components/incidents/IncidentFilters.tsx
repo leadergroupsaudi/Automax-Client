@@ -93,6 +93,7 @@ export const IncidentFilters: React.FC<IncidentFiltersProps> = ({
   const [reporterPhoneInput, setReporterPhoneInput] = useState(
     filter.reporter_phone_search || "",
   );
+  const [momraRefNum, setMomraRefNum] = useState(filter.momra_ref || "");
   const columnConfigRef = useRef<HTMLDivElement>(null);
   const { hasPermission, isSuperAdmin } = usePermissions();
 
@@ -288,7 +289,28 @@ export const IncidentFilters: React.FC<IncidentFiltersProps> = ({
     return () => window.clearTimeout(timeoutId);
   }, [reporterPhoneInput, filter.reporter_phone_search, onFilterChange]);
 
+  useEffect(() => {
+    setMomraRefNum(filter.momra_ref || "");
+  }, [filter.momra_ref]);
+
+  useEffect(() => {
+    const currentValue = (filter.momra_ref || "").trim();
+    const nextValue = momraRefNum.trim();
+
+    if (currentValue === nextValue) return;
+
+    const timeoutId = window.setTimeout(() => {
+      onFilterChange("momra_ref", nextValue || undefined);
+    }, 400);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [momraRefNum, filter.momra_ref, onFilterChange]);
+
   const visibleColumnCount = columns?.filter((c) => c.visible).length ?? 0;
+
+  const isEPM940 =
+    window.APP_CONFIG?.CLIENT === "EPM940" ||
+    import.meta.env.VITE_CLIENT === "EPM940";
 
   return (
     <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-4 shadow-sm">
@@ -663,6 +685,22 @@ export const IncidentFilters: React.FC<IncidentFiltersProps> = ({
                   "Phone number",
                 )}
                 inputMode="tel"
+                className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+              />
+            </div>
+          ) : null}
+          {isEPM940 ? (
+            <div>
+              <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">
+                {t("incidents.momraRefNumLabel", "MOMRA Reference Number")}
+              </label>
+              <Input
+                value={momraRefNum}
+                onChange={(e) => setMomraRefNum(e.target.value)}
+                placeholder={t(
+                  "incidents.momraRefNumPlaceholder",
+                  "Enter MOMRA reference number",
+                )}
                 className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
               />
             </div>
