@@ -56,15 +56,23 @@ import {
   useKpiTargets,
   useUploadKpiAttachment,
   useDownloadKpiEvidence,
+  useDeleteKpiEvidence,
 } from "../../../hooks/useKpi";
 import { usePermissions } from "../../../hooks/usePermissions";
 import { useAuthStore } from "../../../stores/authStore";
 import { Button } from "../../../components/ui/Button";
-import { Modal } from "../../../components/ui/Modal";
+import {
+  Modal,
+  ModalHeader,
+  ModalTitle,
+  ModalDescription,
+  ModalFooter,
+} from "../../../components/ui/Modal";
 import { Input, Select, Textarea } from "../../../components/ui/Input";
 import { AddEntryModal } from "../../../components/kpi/AddEntryModal";
 import { ViewEntriesModal } from "../../../components/kpi/ViewEntriesModal";
 import { CollaboratorsTab } from "../../../components/kpi/CollaboratorsTab";
+import { KpiEvidenceUploadModal } from "../../../components/kpi/KpiEvidenceUploadModal";
 import type {
   KpiCheckInStatus,
   KpiEvidenceType,
@@ -271,7 +279,10 @@ export const KpiDictionaryDetailPage: React.FC = () => {
   const uploadAttachment = useUploadKpiAttachment(kpiType, kpiId);
   const createEvidence = useCreateKpiEvidence(kpiType, kpiId);
   const downloadEvidence = useDownloadKpiEvidence();
+  const deleteEvidence = useDeleteKpiEvidence(kpiType, kpiId);
   const deleteMetric = useDeleteKpiMetric(kpiType, kpiId);
+  const [showEvidenceUpload, setShowEvidenceUpload] = useState(false);
+  const [evidenceToDelete, setEvidenceToDelete] = useState<string | null>(null);
 
   const [checkInStatus, setCheckInStatus] =
     useState<KpiCheckInStatus>("on_track");
@@ -1602,10 +1613,17 @@ export const KpiDictionaryDetailPage: React.FC = () => {
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
               Evidence Summaries ({(evidenceList ?? []).length})
             </h2>
-            <p className="text-xs text-slate-400 dark:text-slate-500">
-              Evidence is attached to Entries. Click a row to view the related
-              Entry.
-            </p>
+            <div className="flex items-center gap-3">
+              {canUpdateKpi() && (
+                <Button
+                  size="sm"
+                  leftIcon={<Plus className="w-4 h-4" />}
+                  onClick={() => setShowEvidenceUpload(true)}
+                >
+                  Add Evidence
+                </Button>
+              )}
+            </div>
           </div>
 
           {(evidenceList ?? []).length > 0 ? (
@@ -1682,9 +1700,23 @@ export const KpiDictionaryDetailPage: React.FC = () => {
                         · {formatDate(e.created_at)}
                       </p>
                     </div>
-                    {e.metric && (
-                      <ExternalLink className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0 mt-0.5" />
-                    )}
+                    <div className="flex items-center gap-1 shrink-0 mt-0.5">
+                      {canUpdateKpi() && (
+                        <button
+                          onClick={(ev) => {
+                            ev.stopPropagation();
+                            setEvidenceToDelete(e.id);
+                          }}
+                          className="p-1 text-slate-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400 transition-colors"
+                          title="Delete evidence"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                      {e.metric && (
+                        <ExternalLink className="w-4 h-4 text-slate-300 dark:text-slate-600" />
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1699,6 +1731,47 @@ export const KpiDictionaryDetailPage: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* ── Evidence Delete Confirmation ─────────── */}
+      <Modal
+        isOpen={!!evidenceToDelete}
+        onClose={() => setEvidenceToDelete(null)}
+      >
+        <ModalHeader>
+          <ModalTitle>Delete Evidence</ModalTitle>
+          <ModalDescription>
+            Are you sure you want to delete this evidence? This action cannot be
+            undone.
+          </ModalDescription>
+        </ModalHeader>
+        <ModalFooter>
+          <Button variant="outline" onClick={() => setEvidenceToDelete(null)}>
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            leftIcon={<Trash2 className="w-4 h-4" />}
+            isLoading={deleteEvidence.isPending}
+            onClick={async () => {
+              if (evidenceToDelete) {
+                await deleteEvidence.mutateAsync(evidenceToDelete);
+                setEvidenceToDelete(null);
+              }
+            }}
+          >
+            Delete
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* ── Evidence Upload Modal ─────────────────── */}
+      <KpiEvidenceUploadModal
+        kpiType={kpiType}
+        kpiId={kpiId}
+        isOpen={showEvidenceUpload}
+        onClose={() => setShowEvidenceUpload(false)}
+        metrics={metrics ?? []}
+      />
 
       {/* ── Collaborators Tab ─────────────────────── */}
       {activeTab === "collaborators" && (
