@@ -110,7 +110,9 @@ export const ComplaintsPage: React.FC<ComplaintsPageProps> = ({ listType }) => {
   const canCreateComplaint =
     isSuperAdmin || hasPermission(PERMISSIONS.COMPLAINTS_CREATE);
   const canViewAllComplaints =
-    isSuperAdmin || hasPermission(PERMISSIONS.COMPLAINTS_VIEW_ALL);
+    isSuperAdmin ||
+    hasPermission(PERMISSIONS.COMPLAINTS_VIEW_ALL) ||
+    hasPermission(PERMISSIONS.INCIDENTS_VIEW_DEPARTMENT_ONLY);
 
   // Get status from URL - users with view permission can access if status filter is applied
   const urlStatusParam = searchParams.get("status");

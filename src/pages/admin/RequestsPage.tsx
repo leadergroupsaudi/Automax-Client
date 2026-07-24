@@ -103,7 +103,9 @@ export const RequestsPage: React.FC = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const canViewAllRequests =
-    isSuperAdmin || hasPermission(PERMISSIONS.REQUESTS_VIEW_ALL);
+    isSuperAdmin ||
+    hasPermission(PERMISSIONS.REQUESTS_VIEW_ALL) ||
+    hasPermission(PERMISSIONS.INCIDENTS_VIEW_DEPARTMENT_ONLY);
   const canCreateRequest =
     isSuperAdmin || hasPermission(PERMISSIONS.REQUESTS_CREATE);
 
