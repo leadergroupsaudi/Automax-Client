@@ -39,9 +39,12 @@ import { format } from "date-fns";
 import { PERMISSIONS } from "@/constants/permissions";
 import usePermissions from "@/hooks/usePermissions";
 import { COUNTRY_CODES } from "@/constants/template";
+import { AppPagination } from "@/components/ui/AppPagination";
 
 type Category = "inbox" | "sent" | "draft" | "trash";
 type ComposeChannel = "email" | "sms";
+
+const PAGE_LIMIT = 50;
 
 export const CommunicationsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -113,7 +116,7 @@ export const CommunicationsPage: React.FC = () => {
     queryFn: () =>
       notificationTrackApi.list({
         page,
-        limit: 100,
+        limit: PAGE_LIMIT,
         category: appliedFilters.category,
         channel: channel,
         status: appliedFilters.status,
@@ -161,6 +164,8 @@ export const CommunicationsPage: React.FC = () => {
   });
 
   const notifications = notificationData?.data || [];
+  const totalPages = notificationData?.total_pages || 0;
+  const totalItems = notificationData?.total_items || 0;
 
   // Helpers
   const getSender = (email: Email) => {
@@ -714,10 +719,15 @@ export const CommunicationsPage: React.FC = () => {
                     setFilters((prev) => ({
                       ...prev,
                       startDate: val,
+                      endDate:
+                        val && prev.endDate && val > prev.endDate
+                          ? undefined
+                          : prev.endDate,
                     }));
                   }}
                   value={filters.startDate}
                   format={DateFormats.DATE}
+                  disabledDate={(date: any) => date > new Date()}
                 />
               </FieldWrapper>
               <FieldWrapper label="End Date">
@@ -731,6 +741,16 @@ export const CommunicationsPage: React.FC = () => {
                   }}
                   value={filters.endDate}
                   format={DateFormats.DATE}
+                  disabledDate={(date: any) => {
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    tomorrow.setHours(23, 59, 59, 999);
+                    if (!filters.startDate) {
+                      return date > tomorrow;
+                    }
+
+                    return date < filters.startDate || date > tomorrow;
+                  }}
                 />
               </FieldWrapper>
               <FieldWrapper label="Recipients">
@@ -909,6 +929,23 @@ export const CommunicationsPage: React.FC = () => {
             </div>
           )}
         </div>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between pt-4 border-t border-[hsl(var(--border))] p-2">
+            <p className="text-sm text-muted-foreground">
+              Showing {(page - 1) * PAGE_LIMIT + 1}–
+              {Math.min(page * PAGE_LIMIT, totalItems)} of{" "}
+              <span className="font-medium text-foreground">
+                {totalItems}
+              </span>{" "}
+            </p>
+
+            <AppPagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={(newPage) => setPage(newPage)}
+            />
+          </div>
+        )}
       </div>
 
       <div
@@ -1010,14 +1047,22 @@ export const CommunicationsPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                {selectedEmail.template_code ? (
-                  <div className="flex items-center gap-2 mt-3 pt-1 border-t">
-                    <Settings className="w-4 h-4 text-primary" />
-                    <span className="text-sm ">
-                      {selectedEmail.template_code}
+                <div className="mt-3 pt-2 border-t space-y-2">
+                  {selectedEmail.template_code ? (
+                    <div className="flex items-center gap-2 ">
+                      <Settings className="w-4 h-4 mx-0.5 text-primary " />
+                      <span className="text-sm ">
+                        {selectedEmail.template_code}
+                      </span>
+                    </div>
+                  ) : null}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-primary py-0.5 px-1 rounded-md bg-primary/5">
+                      ID
                     </span>
+                    <span className="text-sm">{selectedEmail?.id}</span>
                   </div>
-                ) : null}
+                </div>
               </div>
             </div>
 
