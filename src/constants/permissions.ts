@@ -60,6 +60,7 @@ export const PERMISSIONS = {
   // Incident permissions
   INCIDENTS_VIEW: "incidents:view",
   INCIDENTS_VIEW_ALL: "incidents:view_all",
+  INCIDENTS_VIEW_DEPARTMENT_ONLY: "incidents:view_department_only",
   INCIDENTS_CREATE: "incidents:create",
   INCIDENTS_UPDATE: "incidents:update",
   INCIDENTS_DELETE: "incidents:delete",

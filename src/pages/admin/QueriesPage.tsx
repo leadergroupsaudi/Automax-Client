@@ -110,7 +110,9 @@ export const QueriesPage: React.FC<QueriesPageProps> = ({ listType }) => {
   const canCreateQuery =
     isSuperAdmin || hasPermission(PERMISSIONS.QUERIES_CREATE);
   const canViewAllQueries =
-    isSuperAdmin || hasPermission(PERMISSIONS.QUERIES_VIEW_ALL);
+    isSuperAdmin ||
+    hasPermission(PERMISSIONS.QUERIES_VIEW_ALL) ||
+    hasPermission(PERMISSIONS.INCIDENTS_VIEW_DEPARTMENT_ONLY);
 
   // Get status from URL - users with view permission can access if status filter is applied
   const urlStatusParam = searchParams.get("status");
