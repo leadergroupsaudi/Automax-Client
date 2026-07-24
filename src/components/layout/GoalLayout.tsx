@@ -135,7 +135,7 @@ export const GoalLayout: React.FC = () => {
       </button>
 
       {/* Navigation */}
-      <nav className="flex-1 py-6 px-3 overflow-y-auto">
+      <nav className="flex-1 py-6 px-3">
         {!collapsed && (
           <p className="px-3 mb-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
             {t("goals.goalManagement")}
@@ -653,7 +653,7 @@ export const GoalLayout: React.FC = () => {
     <div className="flex h-screen bg-background">
       {/* Desktop Sidebar */}
       <aside
-        className={`${collapsed ? "w-[72px]" : "w-[264px]"} bg-sidebar transition-all duration-300 flex-col hidden lg:flex relative`}
+        className={`${collapsed ? "w-[72px]" : "w-[264px]"} bg-sidebar transition-all duration-300 flex-col hidden lg:flex relative overflow-y-auto`}
       >
         <SidebarContent />
       </aside>
@@ -668,7 +668,7 @@ export const GoalLayout: React.FC = () => {
 
       {/* Mobile Sidebar */}
       <aside
-        className={`fixed inset-y-0 start-0 w-[264px] bg-slate-900 z-50 transform transition-transform duration-300 lg:hidden ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed inset-y-0 start-0 w-[264px] bg-slate-900 z-50 transform transition-transform duration-300 lg:hidden overflow-y-auto ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         <button
           onClick={() => setMobileMenuOpen(false)}

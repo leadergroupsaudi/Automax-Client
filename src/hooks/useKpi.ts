@@ -1189,6 +1189,9 @@ export const useCreateKpiMetric = (type: string, id: string) => {
       qc.invalidateQueries({
         queryKey: ["kpi", "engagement", type, id, "metrics"],
       });
+      qc.invalidateQueries({
+        queryKey: ["kpi", "engagement", type, id, "activity"],
+      });
       toast.success("Metric added");
     },
     onError: (err) => toast.error(getApiError(err)),
@@ -1217,6 +1220,9 @@ export const useUpdateKpiMetric = (type: string, id: string) => {
       qc.invalidateQueries({
         queryKey: ["kpi", "engagement", type, id, "metrics"],
       });
+      qc.invalidateQueries({
+        queryKey: ["kpi", "engagement", type, id, "activity"],
+      });
       toast.success("Metric updated");
     },
     onError: (err) => toast.error(getApiError(err)),
@@ -1232,6 +1238,9 @@ export const useUpdateKpiMetricValue = (type: string, id: string) => {
       qc.invalidateQueries({
         queryKey: ["kpi", "engagement", type, id, "metrics"],
       });
+      qc.invalidateQueries({
+        queryKey: ["kpi", "engagement", type, id, "activity"],
+      });
       toast.success("Value updated");
     },
     onError: (err) => toast.error(getApiError(err)),
@@ -1245,6 +1254,9 @@ export const useDeleteKpiMetric = (type: string, id: string) => {
     onSuccess: () => {
       qc.invalidateQueries({
         queryKey: ["kpi", "engagement", type, id, "metrics"],
+      });
+      qc.invalidateQueries({
+        queryKey: ["kpi", "engagement", type, id, "activity"],
       });
       toast.success("Metric deleted");
     },
@@ -1273,6 +1285,9 @@ export const useCreateKpiEvidence = (type: string, id: string) => {
       qc.invalidateQueries({
         queryKey: ["kpi", "engagement", type, id, "evidence"],
       });
+      qc.invalidateQueries({
+        queryKey: ["kpi", "engagement", type, id, "activity"],
+      });
       toast.success("Evidence added");
     },
     onError: (err) => toast.error(getApiError(err)),
@@ -1287,6 +1302,9 @@ export const useDeleteKpiEvidence = (type: string, id: string) => {
     onSuccess: () => {
       qc.invalidateQueries({
         queryKey: ["kpi", "engagement", type, id, "evidence"],
+      });
+      qc.invalidateQueries({
+        queryKey: ["kpi", "engagement", type, id, "activity"],
       });
       toast.success("Evidence deleted");
     },
@@ -1328,6 +1346,9 @@ export const useAddKpiCollaborator = (type: string, id: string) => {
       qc.invalidateQueries({
         queryKey: ["kpi", "engagement", type, id, "collaborators"],
       });
+      qc.invalidateQueries({
+        queryKey: ["kpi", "engagement", type, id, "activity"],
+      });
       toast.success("Collaborator added");
     },
     onError: (err) => toast.error(getApiError(err)),
@@ -1342,6 +1363,9 @@ export const useRemoveKpiCollaborator = (type: string, id: string) => {
     onSuccess: () => {
       qc.invalidateQueries({
         queryKey: ["kpi", "engagement", type, id, "collaborators"],
+      });
+      qc.invalidateQueries({
+        queryKey: ["kpi", "engagement", type, id, "activity"],
       });
       toast.success("Collaborator removed");
     },
@@ -1372,6 +1396,9 @@ export const useCreateKpiCheckIn = (type: string, id: string) => {
       qc.invalidateQueries({
         queryKey: ["kpi", "engagement", type, id, "check-ins"],
       });
+      qc.invalidateQueries({
+        queryKey: ["kpi", "engagement", type, id, "activity"],
+      });
       toast.success("Check-in added");
     },
     onError: (err) => toast.error(getApiError(err)),
@@ -1386,6 +1413,9 @@ export const useDeleteKpiCheckIn = (type: string, id: string) => {
     onSuccess: () => {
       qc.invalidateQueries({
         queryKey: ["kpi", "engagement", type, id, "check-ins"],
+      });
+      qc.invalidateQueries({
+        queryKey: ["kpi", "engagement", type, id, "activity"],
       });
       toast.success("Check-in deleted");
     },
@@ -1416,6 +1446,9 @@ export const useAddKpiComment = (type: string, id: string) => {
       qc.invalidateQueries({
         queryKey: ["kpi", "engagement", type, id, "comments"],
       });
+      qc.invalidateQueries({
+        queryKey: ["kpi", "engagement", type, id, "activity"],
+      });
     },
     onError: (err) => toast.error(getApiError(err)),
   });
@@ -1429,6 +1462,9 @@ export const useDeleteKpiComment = (type: string, id: string) => {
     onSuccess: () => {
       qc.invalidateQueries({
         queryKey: ["kpi", "engagement", type, id, "comments"],
+      });
+      qc.invalidateQueries({
+        queryKey: ["kpi", "engagement", type, id, "activity"],
       });
       toast.success("Comment deleted");
     },
@@ -1530,6 +1566,9 @@ export const useCreateKpiCollaboratorAssignment = (
       qc.invalidateQueries({
         queryKey: ["kpi", "collaborator-assignments", type, id],
       });
+      qc.invalidateQueries({
+        queryKey: ["kpi", "engagement", type, id, "activity"],
+      });
       toast.success("Collaborator assigned");
     },
     onError: (err) => toast.error(getApiError(err)),
@@ -1553,6 +1592,9 @@ export const useUpdateKpiCollaboratorAssignment = (
       qc.invalidateQueries({
         queryKey: ["kpi", "collaborator-assignments", type, id],
       });
+      qc.invalidateQueries({
+        queryKey: ["kpi", "engagement", type, id, "activity"],
+      });
       toast.success("Collaborator assignment updated");
     },
     onError: (err) => toast.error(getApiError(err)),
@@ -1570,6 +1612,9 @@ export const useDeleteKpiCollaboratorAssignment = (
     onSuccess: () => {
       qc.invalidateQueries({
         queryKey: ["kpi", "collaborator-assignments", type, id],
+      });
+      qc.invalidateQueries({
+        queryKey: ["kpi", "engagement", type, id, "activity"],
       });
       toast.success("Collaborator assignment removed");
     },
