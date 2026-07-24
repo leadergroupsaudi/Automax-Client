@@ -77,7 +77,9 @@ export const CommunicationsPage: React.FC = () => {
     isPermanent: false,
   });
 
-  const [channel, setChannel] = useState<"" | "email" | "sms">("");
+  const [channel, setChannel] = useState<"email,sms" | "email" | "sms">(
+    "email,sms",
+  );
   const [page, setPage] = useState<number>(1);
 
   const [filters, setFilters] = useState({
@@ -624,13 +626,13 @@ export const CommunicationsPage: React.FC = () => {
         <Tabs
           value={channel}
           onValueChange={(value) => {
-            setChannel(value as "" | "email" | "sms");
+            setChannel(value as "email,sms" | "email" | "sms");
             setPage(1);
           }}
           className="w-full p-2"
         >
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="">All</TabsTrigger>
+            <TabsTrigger value="email,sms">All</TabsTrigger>
             <TabsTrigger value="email">Email</TabsTrigger>
             <TabsTrigger value="sms">SMS</TabsTrigger>
           </TabsList>
