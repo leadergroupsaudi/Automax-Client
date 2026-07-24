@@ -143,7 +143,9 @@ export const IncidentsPage: React.FC = () => {
   } | null>(null);
 
   const canViewAllIncidents =
-    isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_VIEW_ALL);
+    isSuperAdmin ||
+    hasPermission(PERMISSIONS.INCIDENTS_VIEW_ALL) ||
+    hasPermission(PERMISSIONS.INCIDENTS_VIEW_DEPARTMENT_ONLY);
   const canTransitionIncident =
     isSuperAdmin || hasPermission(PERMISSIONS.INCIDENTS_TRANSITION);
   const canCreateIncident =

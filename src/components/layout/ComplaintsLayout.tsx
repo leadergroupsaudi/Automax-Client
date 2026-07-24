@@ -65,7 +65,9 @@ export const ComplaintsLayout: React.FC = () => {
   const canViewComplaints =
     isSuperAdmin || hasPermission(PERMISSIONS.COMPLAINTS_VIEW);
   const canViewAllComplaints =
-    isSuperAdmin || hasPermission(PERMISSIONS.COMPLAINTS_VIEW_ALL);
+    isSuperAdmin ||
+    hasPermission(PERMISSIONS.COMPLAINTS_VIEW_ALL) ||
+    hasPermission(PERMISSIONS.INCIDENTS_VIEW_DEPARTMENT_ONLY);
   const canCreateComplaint =
     isSuperAdmin || hasPermission(PERMISSIONS.COMPLAINTS_CREATE);
   const canTransitionComplaint =

@@ -13,6 +13,7 @@ export const PERMISSIONS = {
   USERS_CREATE: "users:create",
   USERS_UPDATE: "users:update",
   USERS_DELETE: "users:delete",
+  USER_RESET_PASSWORD: "users:reset_password",
 
   // Role permissions
   ROLES_VIEW: "roles:view",
@@ -59,6 +60,7 @@ export const PERMISSIONS = {
   // Incident permissions
   INCIDENTS_VIEW: "incidents:view",
   INCIDENTS_VIEW_ALL: "incidents:view_all",
+  INCIDENTS_VIEW_DEPARTMENT_ONLY: "incidents:view_department_only",
   INCIDENTS_CREATE: "incidents:create",
   INCIDENTS_UPDATE: "incidents:update",
   INCIDENTS_DELETE: "incidents:delete",
@@ -187,6 +189,10 @@ export const PERMISSIONS = {
 
   // Extension permissions
   EXTENSIONS_ASSIGN: "extensions:assign",
+
+  // Communication Tracking - CCM
+  COMMUNICATION_TRACK_VIEW: "communication-tracking:view",
+  COMMUNICATION_TRACK_UPDATE: "communication-tracking:update",
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

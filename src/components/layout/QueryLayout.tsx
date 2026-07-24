@@ -64,7 +64,9 @@ export const QueryLayout: React.FC = () => {
   const canViewQueries =
     isSuperAdmin || hasPermission(PERMISSIONS.QUERIES_VIEW);
   const canViewAllQueries =
-    isSuperAdmin || hasPermission(PERMISSIONS.QUERIES_VIEW_ALL);
+    isSuperAdmin ||
+    hasPermission(PERMISSIONS.QUERIES_VIEW_ALL) ||
+    hasPermission(PERMISSIONS.INCIDENTS_VIEW_DEPARTMENT_ONLY);
   const canCreateQuery =
     isSuperAdmin || hasPermission(PERMISSIONS.QUERIES_CREATE);
   const canTransitionQuery =
