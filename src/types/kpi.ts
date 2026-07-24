@@ -80,7 +80,9 @@ export interface Initiative {
   objective_id?: string;
   objective?: OperationalObjective;
   pillar_id?: string;
+  pillar?: Pillar;
   enabler_id?: string;
+  enabler?: Enabler;
   owner_id?: string;
   owner?: DepartmentBrief;
   status: string;
