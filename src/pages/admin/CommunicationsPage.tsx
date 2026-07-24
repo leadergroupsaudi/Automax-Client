@@ -38,6 +38,7 @@ import { Select } from "@/components/ui/SelectInput";
 import { format } from "date-fns";
 import { PERMISSIONS } from "@/constants/permissions";
 import usePermissions from "@/hooks/usePermissions";
+import { COUNTRY_CODES } from "@/constants/template";
 
 type Category = "inbox" | "sent" | "draft" | "trash";
 type ComposeChannel = "email" | "sms";
@@ -77,7 +78,9 @@ export const CommunicationsPage: React.FC = () => {
     isPermanent: false,
   });
 
-  const [channel, setChannel] = useState<"" | "email" | "sms">("");
+  const [channel, setChannel] = useState<"email,sms" | "email" | "sms">(
+    "email,sms",
+  );
   const [page, setPage] = useState<number>(1);
 
   const [filters, setFilters] = useState({
@@ -89,6 +92,7 @@ export const CommunicationsPage: React.FC = () => {
   });
 
   const [appliedFilters, setAppliedFilters] = useState(filters);
+  const [apiError, setApiError] = useState<any>();
 
   const canUpdate = hasPermission(PERMISSIONS.COMMUNICATION_TRACK_UPDATE);
 
@@ -223,6 +227,7 @@ export const CommunicationsPage: React.FC = () => {
   const closeCompose = () => {
     setIsComposeOpen(false);
     resetCompose();
+    setApiError(null);
   };
 
   const sendEmailMutation = useMutation({
@@ -238,8 +243,11 @@ export const CommunicationsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
       closeCompose();
     },
-    onError: (error) => {
-      console.error("Failed to send email:", error);
+    onError: (error: any) => {
+      setApiError({
+        title: "Failed to send Email",
+        message: error.response?.data?.message || error?.response?.data?.error,
+      });
     },
   });
 
@@ -249,8 +257,11 @@ export const CommunicationsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
       closeCompose();
     },
-    onError: (error) => {
-      console.error("Failed to send SMS:", error);
+    onError: (error: any) => {
+      setApiError({
+        title: "Failed to send SMS",
+        message: error.response?.data?.message || error?.response?.data?.error,
+      });
     },
   });
 
@@ -423,10 +434,15 @@ export const CommunicationsPage: React.FC = () => {
     setIsNewEmail(false);
 
     if (isSms) {
-      const countryMatch = recipient.match(/^(\+\d{1,4})(.*)$/);
-      if (countryMatch) {
-        setSmsCountryCode(countryMatch[1]);
-        setSmsPhoneNumber(countryMatch[2].replace(/\D/g, ""));
+      const matchedCode = COUNTRY_CODES.find((code) =>
+        recipient.startsWith(code),
+      );
+
+      if (matchedCode) {
+        setSmsCountryCode(matchedCode);
+        setSmsPhoneNumber(
+          recipient.slice(matchedCode.length).replace(/\D/g, ""),
+        );
       } else {
         setSmsPhoneNumber(recipient.replace(/\D/g, ""));
       }
@@ -624,13 +640,13 @@ export const CommunicationsPage: React.FC = () => {
         <Tabs
           value={channel}
           onValueChange={(value) => {
-            setChannel(value as "" | "email" | "sms");
+            setChannel(value as "email,sms" | "email" | "sms");
             setPage(1);
           }}
           className="w-full p-2"
         >
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="">All</TabsTrigger>
+            <TabsTrigger value="email,sms">All</TabsTrigger>
             <TabsTrigger value="email">Email</TabsTrigger>
             <TabsTrigger value="sms">SMS</TabsTrigger>
           </TabsList>
@@ -1383,6 +1399,20 @@ export const CommunicationsPage: React.FC = () => {
                     </div>
                   </>
                 )}
+                {apiError ? (
+                  <div className="mb-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
+                    <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-red-800">
+                        {apiError?.title}
+                      </h4>
+                      <p className="mt-1 text-sm text-red-700">
+                        {apiError?.message}
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
               </div>
               <div className="px-6 py-4 border-t border-border flex justify-between gap-3">
                 {composeChannel === "email" ? (
