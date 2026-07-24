@@ -34,7 +34,7 @@ import { DateFormats } from "@/constants/dateFormat";
 import { cn } from "@/lib/utils";
 import { Input } from "@/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/ui/tabs";
-import Select from "@/components/ui/SelectInput";
+import { Select } from "@/components/ui/SelectInput";
 import { format } from "date-fns";
 import { PERMISSIONS } from "@/constants/permissions";
 import usePermissions from "@/hooks/usePermissions";
