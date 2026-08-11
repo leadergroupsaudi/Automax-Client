@@ -8,8 +8,6 @@ import {
   workflowApi,
   userApi,
   departmentApi,
-  classificationApi,
-  locationApi,
   incidentApi,
   lookupApi,
 } from "../../api/admin";
