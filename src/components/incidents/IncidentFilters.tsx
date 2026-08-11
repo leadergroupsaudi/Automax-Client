@@ -184,22 +184,6 @@ export const IncidentFilters: React.FC<IncidentFiltersProps> = ({
     queryFn: () => departmentApi.getTree(),
   });
 
-  const isVDCOP =
-    window.APP_CONFIG?.CLIENT === "VD2" ||
-    import.meta.env.VITE_CLIENT === "VD2";
-
-  const { data: rawClassificationsData } = useQuery({
-    queryKey: ["admin", "classifications", "tree"],
-    queryFn: () => classificationApi.getTree(),
-    enabled: !isVDCOP,
-  });
-
-  const { data: rawLocationsData } = useQuery({
-    queryKey: ["admin", "locations", "tree"],
-    queryFn: () => locationApi.getTree(),
-    enabled: !isVDCOP,
-  });
-
   const buildTree = (data: any) => {
     if (!data || !Array.isArray(data)) return [];
     const map = new Map();
@@ -239,18 +223,12 @@ export const IncidentFilters: React.FC<IncidentFiltersProps> = ({
   };
 
   const classificationsData = useMemo(() => {
-    if (isVDCOP) {
-      return { success: true, data: buildTree(user?.classifications) };
-    }
-    return rawClassificationsData;
-  }, [isVDCOP, user?.classifications, rawClassificationsData]);
+    return { success: true, data: buildTree(user?.classifications) };
+  }, [user?.classifications]);
 
   const locationsData = useMemo(() => {
-    if (isVDCOP) {
-      return { success: true, data: buildTree(user?.locations) };
-    }
-    return rawLocationsData;
-  }, [isVDCOP, user?.locations, rawLocationsData]);
+    return { success: true, data: buildTree(user?.locations) };
+  }, [user?.locations]);
 
   const { data: sourceData } = useQuery({
     queryKey: ["lookups", "categories"],
