@@ -29,7 +29,7 @@ import {
   ModalBody,
   ModalFooter,
 } from "../../components/ui";
-import { momraApi } from "../../api/momra";
+import { momraApi, MOMRA_DEFAULT_REQUEST_ID } from "../../api/momra";
 import type {
   MOMRAStatusMapping,
   MOMRAStatusMappingRequest,
@@ -73,6 +73,7 @@ interface SyncCardProps {
   onSync: () => void;
   isPending: boolean;
   summary?: string;
+  children?: React.ReactNode;
 }
 
 const SyncCard: React.FC<SyncCardProps> = ({
@@ -82,6 +83,7 @@ const SyncCard: React.FC<SyncCardProps> = ({
   onSync,
   isPending,
   summary,
+  children,
 }) => (
   <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-4 flex flex-col gap-3">
     <div className="flex items-center gap-3">
@@ -97,6 +99,7 @@ const SyncCard: React.FC<SyncCardProps> = ({
         </p>
       </div>
     </div>
+    {children}
     {summary && (
       <p className="text-xs text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))]/50 rounded-lg px-3 py-2 font-mono">
         {summary}
@@ -194,15 +197,34 @@ export const MOMRAIntegrationPage: React.FC = () => {
     momraApi.syncClassifications,
     "Classification",
   );
+  // Per-card requestid sent to CRM940 GetExternalEntities /
+  // GetExternalEntitiesClassifications; blank falls back to the default.
+  const [eeRequestId, setEeRequestId] = useState(MOMRA_DEFAULT_REQUEST_ID);
+  const [eeClassificationRequestId, setEeClassificationRequestId] = useState(
+    MOMRA_DEFAULT_REQUEST_ID,
+  );
+  const effectiveEeRequestId = eeRequestId.trim() || MOMRA_DEFAULT_REQUEST_ID;
+  const effectiveEeClassificationRequestId =
+    eeClassificationRequestId.trim() || MOMRA_DEFAULT_REQUEST_ID;
   const eeSync = useSyncMutation(
-    momraApi.syncExternalEntities,
+    () => momraApi.syncExternalEntities(effectiveEeRequestId),
     "External entity",
   );
   const eeClassificationSync = useSyncMutation(
-    momraApi.syncExternalEntityClassifications,
+    () =>
+      momraApi.syncExternalEntityClassifications(
+        effectiveEeClassificationRequestId,
+      ),
     "External entity classification",
   );
-  const syncAll = useSyncMutation(momraApi.syncAll, "Full");
+  const syncAll = useSyncMutation(
+    () =>
+      momraApi.syncAll(
+        effectiveEeRequestId,
+        effectiveEeClassificationRequestId,
+      ),
+    "Full",
+  );
 
   const summarize = (data: unknown): string | undefined => {
     if (!data) return undefined;
@@ -341,7 +363,14 @@ export const MOMRAIntegrationPage: React.FC = () => {
           onSync={() => eeSync.mutate()}
           isPending={eeSync.isPending}
           summary={summarize(eeSync.data?.data.data)}
-        />
+        >
+          <Input
+            label="Request ID"
+            value={eeRequestId}
+            onChange={(e) => setEeRequestId(e.target.value)}
+            placeholder={MOMRA_DEFAULT_REQUEST_ID}
+          />
+        </SyncCard>
         <SyncCard
           icon={
             <Link2 className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
@@ -351,7 +380,14 @@ export const MOMRAIntegrationPage: React.FC = () => {
           onSync={() => eeClassificationSync.mutate()}
           isPending={eeClassificationSync.isPending}
           summary={summarize(eeClassificationSync.data?.data.data)}
-        />
+        >
+          <Input
+            label="Request ID"
+            value={eeClassificationRequestId}
+            onChange={(e) => setEeClassificationRequestId(e.target.value)}
+            placeholder={MOMRA_DEFAULT_REQUEST_ID}
+          />
+        </SyncCard>
       </div>
       <Button
         variant="secondary"

@@ -50,6 +50,11 @@ export interface MOMRASyncAllResult {
   external_entity_classifications: EEClassificationSyncResult;
 }
 
+// CRM940 requestid sent by default by GetExternalEntities and
+// GetExternalEntitiesClassifications (matches the client's sample calls;
+// backend uses the same default).
+export const MOMRA_DEFAULT_REQUEST_ID = "12323";
+
 export interface MOMRAStatusSyncLogsResponse {
   logs: IntegrationExecutionLog[];
   total: number;
@@ -63,16 +68,25 @@ export const momraApi = {
     apiClient.post<ApiResponse<ClassificationSyncResult>>(
       "/admin/momra/sync/classifications",
     ),
-  syncExternalEntities: () =>
+  syncExternalEntities: (requestId = MOMRA_DEFAULT_REQUEST_ID) =>
     apiClient.post<ApiResponse<ExternalEntitySyncResult>>(
       "/admin/momra/sync/external-entities",
+      { request_id: requestId },
     ),
-  syncExternalEntityClassifications: () =>
+  syncExternalEntityClassifications: (requestId = MOMRA_DEFAULT_REQUEST_ID) =>
     apiClient.post<ApiResponse<EEClassificationSyncResult>>(
       "/admin/momra/sync/external-entity-classifications",
+      { request_id: requestId },
     ),
-  syncAll: () =>
-    apiClient.post<ApiResponse<MOMRASyncAllResult>>("/admin/momra/sync/all"),
+  // Each step has its own requestid (the per-card Request ID fields).
+  syncAll: (
+    externalEntitiesRequestId = MOMRA_DEFAULT_REQUEST_ID,
+    eeClassificationsRequestId = MOMRA_DEFAULT_REQUEST_ID,
+  ) =>
+    apiClient.post<ApiResponse<MOMRASyncAllResult>>("/admin/momra/sync/all", {
+      external_entities_request_id: externalEntitiesRequestId,
+      external_entity_classifications_request_id: eeClassificationsRequestId,
+    }),
 
   // Status mapping CRUD (Story A)
   listStatusMappings: (workflowId: string) =>
