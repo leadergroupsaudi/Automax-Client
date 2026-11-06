@@ -532,222 +532,229 @@ export const KpiBenchmarkPage: React.FC = () => {
       </div>
 
       {/* Create / Edit Modal */}
-      <Modal isOpen={showForm} onClose={closeForm} size="lg">
-        <div className="p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+      <Modal isOpen={showForm} onClose={closeForm} size="3xl">
+        <div className="p-6 flex flex-col max-h-[85vh]">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white shrink-0">
             {editingBenchmark
               ? t("kpi.benchmarks.editBenchmark")
               : t("kpi.benchmarks.addBenchmark")}
           </h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                {t("kpi.targets.form.kpiCode")}
-                <span className="text-red-500 ms-0.5">*</span>
-              </label>
-              <select
-                value={formData.kpi_code}
-                onChange={(e) => {
-                  const sel = cardOptions.find(
-                    (c) => c.code === e.target.value,
-                  );
-                  setFormData({
-                    ...formData,
-                    kpi_code: e.target.value,
-                    kpi_type: (sel?.type as any) ?? formData.kpi_type,
-                  });
-                }}
-                className={`w-full px-3 py-2 text-sm rounded-lg border ${errBorder("kpi_code")} bg-white dark:bg-slate-800 text-slate-900 dark:text-white`}
-              >
-                <option value="">-- {t("kpi.targets.form.kpiCode")} --</option>
-                {cardOptions.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.label}
+          <div className="overflow-y-auto flex-1 mt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {t("kpi.targets.form.kpiCode")}
+                  <span className="text-red-500 ms-0.5">*</span>
+                </label>
+                <select
+                  value={formData.kpi_code}
+                  onChange={(e) => {
+                    const sel = cardOptions.find(
+                      (c) => c.code === e.target.value,
+                    );
+                    setFormData({
+                      ...formData,
+                      kpi_code: e.target.value,
+                      kpi_type: (sel?.type as any) ?? formData.kpi_type,
+                    });
+                  }}
+                  className={`w-full px-3 py-2 text-sm rounded-lg border ${errBorder("kpi_code")} bg-white dark:bg-slate-800 text-slate-900 dark:text-white`}
+                >
+                  <option value="">
+                    -- {t("kpi.targets.form.kpiCode")} --
                   </option>
-                ))}
-              </select>
-              {showError("kpi_code")}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                {t("kpi.targets.form.kpiType")}
-                <span className="text-red-500 ms-0.5">*</span>
-              </label>
-              <select
-                value={formData.kpi_type}
-                onChange={(e) =>
-                  setFormData({ ...formData, kpi_type: e.target.value as any })
-                }
-                className={`w-full px-3 py-2 text-sm rounded-lg border ${errBorder("kpi_type")} bg-white dark:bg-slate-800 text-slate-900 dark:text-white`}
-              >
-                <option value="strategic">
-                  {t("kpi.dictionary.strategic")}
-                </option>
-                <option value="operational">
-                  {t("kpi.dictionary.operational")}
-                </option>
-                <option value="award">{t("kpi.dictionary.award")}</option>
-              </select>
-              {showError("kpi_type")}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                {t("kpi.targets.table.year")}
-                <span className="text-red-500 ms-0.5">*</span>
-              </label>
-              <input
-                type="number"
-                value={formData.year}
-                onChange={(e) =>
-                  setFormData({ ...formData, year: Number(e.target.value) })
-                }
-                min={2020}
-                max={2040}
-                className={`w-full px-3 py-2 text-sm rounded-lg border ${errBorder("year")} bg-white dark:bg-slate-800 text-slate-900 dark:text-white`}
-              />
-              {showError("year")}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                {t("kpi.segmentation.zone")}
-              </label>
-              <input
-                value={formData.zone || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, zone: e.target.value })
-                }
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                placeholder={t("kpi.segmentation.zonePlaceholder")}
-              />
-            </div>
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                {t("kpi.benchmarks.entity")}
-                <span className="text-red-500 ms-0.5">*</span>
-              </label>
-              <input
-                value={formData.benchmark_entity}
-                onChange={(e) =>
-                  setFormData({ ...formData, benchmark_entity: e.target.value })
-                }
-                className={`w-full px-3 py-2 text-sm rounded-lg border ${errBorder("benchmark_entity")} bg-white dark:bg-slate-800 text-slate-900 dark:text-white`}
-                maxLength={255}
-                placeholder={t("kpi.benchmarks.entityPlaceholder")}
-              />
-              {showError("benchmark_entity")}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                {t("kpi.benchmarks.internal")}
-                {autoFetching && (
-                  <Loader2 className="inline w-3 h-3 ms-1 animate-spin" />
-                )}
-              </label>
-              <input
-                type="number"
-                value={formData.internal_achievement || 0}
-                readOnly
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white cursor-not-allowed"
-              />
-              {noActualData && (
-                <p className="mt-1 text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                  <Info className="w-3 h-3" />
-                  {t(
-                    "kpi.benchmarks.noActualData",
-                    "No actual data available for the selected KPI and year",
+                  {cardOptions.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+                {showError("kpi_code")}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {t("kpi.targets.form.kpiType")}
+                  <span className="text-red-500 ms-0.5">*</span>
+                </label>
+                <select
+                  value={formData.kpi_type}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      kpi_type: e.target.value as any,
+                    })
+                  }
+                  className={`w-full px-3 py-2 text-sm rounded-lg border ${errBorder("kpi_type")} bg-white dark:bg-slate-800 text-slate-900 dark:text-white`}
+                >
+                  <option value="strategic">
+                    {t("kpi.dictionary.strategic")}
+                  </option>
+                  <option value="operational">
+                    {t("kpi.dictionary.operational")}
+                  </option>
+                  <option value="award">{t("kpi.dictionary.award")}</option>
+                </select>
+                {showError("kpi_type")}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {t("kpi.targets.table.year")}
+                  <span className="text-red-500 ms-0.5">*</span>
+                </label>
+                <input
+                  type="number"
+                  value={formData.year}
+                  onChange={(e) =>
+                    setFormData({ ...formData, year: Number(e.target.value) })
+                  }
+                  min={2020}
+                  max={2040}
+                  className={`w-full px-3 py-2 text-sm rounded-lg border ${errBorder("year")} bg-white dark:bg-slate-800 text-slate-900 dark:text-white`}
+                />
+                {showError("year")}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {t("kpi.segmentation.zone")}
+                </label>
+                <input
+                  value={formData.zone || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, zone: e.target.value })
+                  }
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                  placeholder={t("kpi.segmentation.zonePlaceholder")}
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {t("kpi.benchmarks.entity")}
+                  <span className="text-red-500 ms-0.5">*</span>
+                </label>
+                <input
+                  value={formData.benchmark_entity}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      benchmark_entity: e.target.value,
+                    })
+                  }
+                  className={`w-full px-3 py-2 text-sm rounded-lg border ${errBorder("benchmark_entity")} bg-white dark:bg-slate-800 text-slate-900 dark:text-white`}
+                  maxLength={255}
+                  placeholder={t("kpi.benchmarks.entityPlaceholder")}
+                />
+                {showError("benchmark_entity")}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {t("kpi.benchmarks.internal")}
+                  {autoFetching && (
+                    <Loader2 className="inline w-3 h-3 ms-1 animate-spin" />
                   )}
-                </p>
-              )}
-              {fetchFailed && (
-                <p className="mt-1 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" />
-                  {t(
-                    "kpi.benchmarks.fetchFailed",
-                    "Failed to fetch achievement data. Please try again.",
-                  )}
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                {t("kpi.benchmarks.benchmark")}
-              </label>
-              <input
-                type="number"
-                value={formData.benchmark_achievement || 0}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    benchmark_achievement: Number(e.target.value),
-                  })
-                }
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-              />
-            </div>
-            {MUNICIPALITY_KEYS.map((k) => {
-              const invalid = !isValidPercent(municipalities[k]);
-              const defaultLabel = defaultMunicipalityName(k, t);
-              return (
-                <div key={k} className="col-span-2 grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      {defaultLabel} — {t("kpi.benchmarks.nameLabel", "Name")}
-                    </label>
-                    <input
-                      type="text"
-                      maxLength={100}
-                      value={labels[k]}
-                      onChange={(e) =>
-                        setLabels({ ...labels, [k]: e.target.value })
-                      }
-                      placeholder={defaultLabel}
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      {defaultLabel} —{" "}
-                      {t("kpi.benchmarks.valueLabel", "Achievement (%)")}
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={100}
-                      step={0.1}
-                      value={municipalities[k]}
-                      onChange={(e) =>
-                        setMunicipalities({
-                          ...municipalities,
-                          [k]: e.target.value,
-                        })
-                      }
-                      aria-invalid={invalid}
-                      className={`w-full px-3 py-2 text-sm rounded-lg border bg-white dark:bg-slate-800 text-slate-900 dark:text-white ${invalid ? "border-red-500" : "border-slate-300 dark:border-slate-600"}`}
-                    />
-                    {invalid && (
-                      <p className="mt-1 text-xs text-red-600 dark:text-red-400">
-                        {t("kpi.benchmarks.percentRangeError")}
-                      </p>
+                </label>
+                <input
+                  type="number"
+                  value={formData.internal_achievement || 0}
+                  readOnly
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white cursor-not-allowed"
+                />
+                {noActualData && (
+                  <p className="mt-1 text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                    <Info className="w-3 h-3" />
+                    {t(
+                      "kpi.benchmarks.noActualData",
+                      "No actual data available for the selected KPI and year",
                     )}
+                  </p>
+                )}
+                {fetchFailed && (
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {t(
+                      "kpi.benchmarks.fetchFailed",
+                      "Failed to fetch achievement data. Please try again.",
+                    )}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {t("kpi.benchmarks.benchmark")}
+                </label>
+                <input
+                  type="number"
+                  value={formData.benchmark_achievement || 0}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      benchmark_achievement: Number(e.target.value),
+                    })
+                  }
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                />
+              </div>
+              {MUNICIPALITY_KEYS.map((k) => {
+                const invalid = !isValidPercent(municipalities[k]);
+                const defaultLabel = defaultMunicipalityName(k, t);
+                return (
+                  <div key={k} className="col-span-2 flex items-start gap-3">
+                    <span className="w-28 shrink-0 text-sm font-medium text-slate-700 dark:text-slate-300 pt-2">
+                      {defaultLabel}
+                    </span>
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        maxLength={100}
+                        value={labels[k]}
+                        onChange={(e) =>
+                          setLabels({ ...labels, [k]: e.target.value })
+                        }
+                        placeholder={t("kpi.benchmarks.nameLabel", "Name")}
+                        className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400"
+                      />
+                    </div>
+                    <div className="w-36 shrink-0">
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        step={0.1}
+                        value={municipalities[k]}
+                        onChange={(e) =>
+                          setMunicipalities({
+                            ...municipalities,
+                            [k]: e.target.value,
+                          })
+                        }
+                        placeholder="%"
+                        aria-invalid={invalid}
+                        className={`w-full px-3 py-2 text-sm rounded-lg border bg-white dark:bg-slate-800 text-slate-900 dark:text-white ${invalid ? "border-red-500" : "border-slate-300 dark:border-slate-600"}`}
+                      />
+                      {invalid && (
+                        <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                          {t("kpi.benchmarks.percentRangeError")}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                {t("kpi.benchmarks.notes")}
-              </label>
-              <textarea
-                value={formData.notes || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, notes: e.target.value })
-                }
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                rows={2}
-              />
+                );
+              })}
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {t("kpi.benchmarks.notes")}
+                </label>
+                <textarea
+                  value={formData.notes || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, notes: e.target.value })
+                  }
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                  rows={2}
+                />
+              </div>
             </div>
           </div>
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex justify-end gap-3 pt-4 shrink-0 border-t border-slate-200 dark:border-slate-700/60 mt-4">
             <Button variant="outline" onClick={closeForm}>
               {t("common.cancel")}
             </Button>
