@@ -345,6 +345,11 @@ const KpiMasterDataPage = lazy(() =>
     default: m.KpiMasterDataPage,
   })),
 );
+const KpiMasterDataImportPage = lazy(() =>
+  import("./pages/admin/kpi/KpiMasterDataImportPage").then((m) => ({
+    default: m.KpiMasterDataImportPage,
+  })),
+);
 const AwardCriterionDetailPage = lazy(() =>
   import("./pages/admin/kpi/AwardCriterionDetailPage").then((m) => ({
     default: m.AwardCriterionDetailPage,
@@ -368,6 +373,16 @@ const ProcessDetailPage = lazy(() =>
 const KpiDictionaryImportPage = lazy(() =>
   import("./pages/admin/kpi/KpiDictionaryImportPage").then((m) => ({
     default: m.KpiDictionaryImportPage,
+  })),
+);
+const KpiMetricsImportPage = lazy(() =>
+  import("./pages/admin/kpi/KpiMetricsImportPage").then((m) => ({
+    default: m.KpiMetricsImportPage,
+  })),
+);
+const KpiTargetsImportPage = lazy(() =>
+  import("./pages/admin/kpi/KpiTargetsImportPage").then((m) => ({
+    default: m.KpiTargetsImportPage,
   })),
 );
 const KpiDictionaryPage = lazy(() =>
@@ -1219,6 +1234,10 @@ function App() {
                           path="/goals/kpi/dictionary/import"
                           element={<KpiDictionaryImportPage />}
                         />
+                        <Route
+                          path="/goals/kpi/metrics/import"
+                          element={<KpiMetricsImportPage />}
+                        />
                       </Route>
 
                       <Route
@@ -1252,6 +1271,10 @@ function App() {
                         <Route
                           path="/goals/kpi/master-data"
                           element={<KpiMasterDataPage />}
+                        />
+                        <Route
+                          path="/goals/kpi/master-data/import"
+                          element={<KpiMasterDataImportPage />}
                         />
                         <Route
                           path="/goals/kpi/master-data/award-criteria/:id"
@@ -1302,6 +1325,19 @@ function App() {
                         <Route
                           path="/goals/kpi/targets"
                           element={<KpiTargetsPage />}
+                        />
+                      </Route>
+
+                      <Route
+                        element={
+                          <PermissionRoute
+                            requiredPermissions={[PERMISSIONS.TARGETS_SET]}
+                          />
+                        }
+                      >
+                        <Route
+                          path="/goals/kpi/targets/import"
+                          element={<KpiTargetsImportPage />}
                         />
                       </Route>
 
