@@ -131,8 +131,24 @@ export const eoRecordApi = {
     return res.data;
   },
 
-  getChildren: async (id: string): Promise<ApiResponse<EoRecord[]>> => {
-    const res = await apiClient.get(`/eo-records/${id}/children`);
+  /**
+   * The record's direct children — PAGINATED, like every other EO list.
+   *
+   * The handler routes this through its shared `list` (Children in
+   * eo_record_handler.go), so it clamps page and limit and answers with the
+   * register's envelope; the default limit is 20. It was typed here as
+   * ApiResponse<EoRecord[]>, which parsed (the envelope has a `data` array)
+   * but hid both the limit and the true total from every caller.
+   */
+  getChildren: async (
+    id: string,
+    filter: Pick<EoRecordFilter, "page" | "limit"> = {},
+  ): Promise<EoRecordListResponse> => {
+    const params = buildEoFilterParams(filter);
+    const query = params.toString();
+    const res = await apiClient.get(
+      `/eo-records/${id}/children${query ? `?${query}` : ""}`,
+    );
     return res.data;
   },
 

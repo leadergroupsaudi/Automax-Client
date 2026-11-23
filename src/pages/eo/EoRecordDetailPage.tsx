@@ -1,7 +1,14 @@
 import React, { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, AlertCircle, GitBranch, Pencil } from "lucide-react";
+import {
+  ArrowLeft,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  GitBranch,
+  Pencil,
+} from "lucide-react";
 import {
   useEoRecord,
   useEoRecordTypes,
@@ -27,6 +34,7 @@ export const EoRecordDetailPage: React.FC = () => {
 
   const [tab, setTab] = useState<TabKey>("details");
   const [showTransitions, setShowTransitions] = useState(false);
+  const [childrenPage, setChildrenPage] = useState(1);
 
   const recordQuery = useEoRecord(id ?? "");
   const record = recordQuery.data?.data;
@@ -44,7 +52,7 @@ export const EoRecordDetailPage: React.FC = () => {
 
   const { fields } = useEoEffectiveFields(record?.record_type_id);
   const transitionsQuery = useEoTransitions(id ?? "");
-  const childrenQuery = useEoChildren(id ?? "");
+  const childrenQuery = useEoChildren(id ?? "", childrenPage);
 
   const workflowIds = useMemo(
     () =>
@@ -58,7 +66,20 @@ export const EoRecordDetailPage: React.FC = () => {
   const stateMap = useEoStateMap(workflowIds);
 
   const transitions = transitionsQuery.data?.data ?? [];
+
+  /**
+   * The children tab is PAGINATED, server-side, twenty rows at a time.
+   *
+   * `childrenTotal` is the server's `total_items` and is the only number
+   * worth printing: `children.length` is the size of the page on screen, so
+   * a Directive with thirty Tasks used to show twenty and assert "20". When
+   * the envelope does not carry a total — an older server, or a shape that
+   * changes under us — the badge is omitted rather than guessed, because an
+   * unverifiable count is worse than none.
+   */
   const children = childrenQuery.data?.data ?? [];
+  const childrenTotal = childrenQuery.data?.total_items;
+  const childrenPages = Math.max(1, childrenQuery.data?.total_pages ?? 1);
 
   // One field space across the columns and the `values` bag.
   const values = useMemo(
@@ -214,9 +235,9 @@ export const EoRecordDetailPage: React.FC = () => {
             className={tabClass("children")}
           >
             {t("eo.detail.tabs.children", "Children")}
-            {children.length > 0 && (
+            {typeof childrenTotal === "number" && childrenTotal > 0 && (
               <span className="ms-2 inline-flex items-center px-1.5 rounded-full bg-slate-500/10 text-xs tabular-nums">
-                {children.length}
+                {childrenTotal}
               </span>
             )}
           </button>
@@ -333,6 +354,41 @@ export const EoRecordDetailPage: React.FC = () => {
                     })}
                   </tbody>
                 </table>
+                {childrenPages > 1 && (
+                  <div className="flex items-center justify-between gap-3 px-1 pt-4">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      {t("eo.detail.childrenPageOf", {
+                        current: childrenPage,
+                        total: childrenPages,
+                        defaultValue: "Page {{current}} of {{total}}",
+                      })}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setChildrenPage((p) => Math.max(1, p - 1))
+                        }
+                        disabled={childrenPage <= 1}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <ChevronLeft className="w-4 h-4 rtl:-rotate-180" />
+                        {t("common.previous", "Previous")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setChildrenPage((p) => Math.min(childrenPages, p + 1))
+                        }
+                        disabled={childrenPage >= childrenPages}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {t("common.next", "Next")}
+                        <ChevronRight className="w-4 h-4 rtl:-rotate-180" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

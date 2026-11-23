@@ -51,7 +51,9 @@ export const eoKeys = {
   details: () => [...eoKeys.all, "detail"] as const,
   detail: (id: string) => [...eoKeys.details(), id] as const,
   transitions: (id: string) => [...eoKeys.all, "transitions", id] as const,
-  children: (id: string) => [...eoKeys.all, "children", id] as const,
+  childrenOf: (id: string) => [...eoKeys.all, "children", id] as const,
+  children: (id: string, page: number) =>
+    [...eoKeys.childrenOf(id), page] as const,
   documenta: () => [...eoKeys.all, "documenta-status"] as const,
 };
 
@@ -246,11 +248,28 @@ export function useEoTransitions(id: string) {
   });
 }
 
-export function useEoChildren(id: string) {
+/**
+ * The direct children of one record — a PAGINATED list, not an array.
+ *
+ * GET /eo-records/:id/children is routed through the handler's shared `list`
+ * (eo_record_handler.go Children), so it clamps page and limit and answers
+ * with the same {data, page, limit, total_items, total_pages} envelope the
+ * register does. The default limit is 20. This hook was written as though the
+ * route returned every child, so a Directive with thirty Tasks showed twenty
+ * of them under a badge that said "20" — a count the page could not
+ * substantiate and a truncation nothing announced.
+ *
+ * keepPreviousData so paging the tab does not blank the table between pages.
+ */
+export const EO_CHILDREN_PAGE_SIZE = 20;
+
+export function useEoChildren(id: string, page = 1) {
   return useQuery({
-    queryKey: eoKeys.children(id),
-    queryFn: () => eoRecordApi.getChildren(id),
+    queryKey: eoKeys.children(id, page),
+    queryFn: () =>
+      eoRecordApi.getChildren(id, { page, limit: EO_CHILDREN_PAGE_SIZE }),
     enabled: !!id,
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -297,8 +316,9 @@ export function useExecuteEoTransition() {
       queryClient.invalidateQueries({
         queryKey: eoKeys.transitions(variables.id),
       });
+      // Every page of the children tab, not just the one on screen.
       queryClient.invalidateQueries({
-        queryKey: eoKeys.children(variables.id),
+        queryKey: eoKeys.childrenOf(variables.id),
       });
     },
     // NO onError toast. A transition refusal is usually

@@ -155,7 +155,6 @@ export interface EoRecordFilter {
   sort_dir?: "asc" | "desc";
 }
 
-/** The EO list envelope. Note total_items/total_pages, not `total`. */
 /**
  * The body POST /eo-records/search binds. It is models.EORecordFilter's JSON
  * side, where the array-valued filters are plain arrays rather than the
@@ -171,6 +170,13 @@ export interface EoRecordSearchBody {
   sort_dir?: "asc" | "desc";
 }
 
+/**
+ * The EO list envelope. Note total_items/total_pages, not `total`.
+ *
+ * Every EO list route answers with this — the register, my-assigned, search
+ * AND the children of a record, which the handler serves through the same
+ * `list` helper with a default limit of 20.
+ */
 export interface EoRecordListResponse {
   success: boolean;
   data: EoRecord[];

@@ -6136,7 +6136,8 @@
       "tabs": {
         "details": "التفاصيل",
         "children": "السجلات الفرعية"
-      }
+      },
+      "childrenPageOf": "صفحة {{current}} من {{total}}"
     },
     "transition": {
       "title": "نقل السجل",
