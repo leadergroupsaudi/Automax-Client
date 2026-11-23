@@ -103,6 +103,7 @@ const ClassificationsPage = lazy(() =>
   })),
 );
 const CategoriesPage = lazy(() => import("./pages/admin/CategoriesPage"));
+const TicketTypePage = lazy(() => import("./pages/admin/TicketTypePage"));
 const ErrorLogsPage = lazy(() =>
   import("./pages/admin/ErrorLogsPage").then((m) => ({
     default: m.ErrorLogsPage,
@@ -713,6 +714,10 @@ function App() {
                           element={<CategoriesPage />}
                         />
                       </Route>
+                      <Route
+                        path="/admin/ticket-types"
+                        element={<TicketTypePage />}
+                      />
                       {/* Action logs - requires action-logs:view permission */}
                       <Route
                         element={

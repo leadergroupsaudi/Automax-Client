@@ -35,6 +35,7 @@ import {
   Webhook,
   BellRing,
   Globe2,
+  Ticket,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/authStore";
 import usePermissions from "@/hooks/usePermissions";
@@ -119,6 +120,11 @@ const sidebarSectionsConfig: SidebarSection[] = [
         labelKey: "admin.categories",
         path: "/admin/categories",
         permission: "categories:view",
+      },
+      {
+        icon: Ticket,
+        labelKey: "admin.ticketTypes",
+        path: "/admin/ticket-types",
       },
     ],
   },

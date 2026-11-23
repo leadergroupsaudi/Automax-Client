@@ -1340,6 +1340,7 @@
     "locations": "المواقع",
     "classifications": "التصنيفات",
     "categories": "الفئات",
+    "ticketTypes": "أنواع التذاكر",
     "workflows": "سير العمل",
     "workflowDesigner": "مصمم سير العمل",
     "errorLog": "سجل الأخطاء",

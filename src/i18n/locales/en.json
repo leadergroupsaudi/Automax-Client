@@ -1342,6 +1342,7 @@
     "locations": "Locations",
     "classifications": "Classifications",
     "categories": "Categories",
+    "ticketTypes": "Ticket Types",
     "workflows": "Workflows",
     "workflowDesigner": "Workflow Designer",
     "errorLog": "Error Log",
