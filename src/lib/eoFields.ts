@@ -239,3 +239,40 @@ export function registerColumnFields(
     .filter((f) => !skip.has(f.key) && f.kind !== "file")
     .slice(0, max);
 }
+
+/**
+ * The subject of a record in the reader's language.
+ *
+ * A record has `subject_en` and `subject_ar` but NO bare `subject` column, and
+ * useLocalizedField's last resort is that bare key — so on an English UI it
+ * would return "" for every record. The localize function is still passed in
+ * (it is what picks `subject_ar` for an Arabic reader); the explicit chain
+ * after it is the fallback the hook cannot provide, so a record with only one
+ * of the two subjects shows that one rather than a blank.
+ */
+export function eoRecordSubject(
+  record: Pick<EoRecord, "subject_en" | "subject_ar">,
+  // eslint-disable-next-line no-unused-vars
+  localize: (rec: Record<string, unknown>, field: string) => string,
+): string {
+  return (
+    localize(record as unknown as Record<string, unknown>, "subject") ||
+    record.subject_en ||
+    record.subject_ar ||
+    ""
+  );
+}
+
+/**
+ * `reference — subject`: the only way an office user identifies a record. The
+ * em dash is dropped when either half is missing so a record awaiting its
+ * reference does not read as "— subject".
+ */
+export function eoRecordLabel(
+  record: Pick<EoRecord, "reference" | "subject_en" | "subject_ar">,
+  // eslint-disable-next-line no-unused-vars
+  localize: (rec: Record<string, unknown>, field: string) => string,
+): string {
+  const subject = eoRecordSubject(record, localize);
+  return [record.reference, subject].filter(Boolean).join(" — ");
+}

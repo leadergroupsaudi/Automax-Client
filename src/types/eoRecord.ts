@@ -60,6 +60,13 @@ export interface EoDropdownOption {
 
 export interface EoFieldConfig {
   options?: EoDropdownOption[];
+  /**
+   * `link` fields only: the `key` of the record type the link must point at,
+   * e.g. "eo_execution_plan_stage". Verified against the live seed — four of
+   * the pilot's link definitions carry it and the Directive's `origin_record`
+   * does NOT, which means "any record type" rather than "misconfigured".
+   */
+  target_type_key?: string;
   [k: string]: unknown;
 }
 
@@ -149,6 +156,21 @@ export interface EoRecordFilter {
 }
 
 /** The EO list envelope. Note total_items/total_pages, not `total`. */
+/**
+ * The body POST /eo-records/search binds. It is models.EORecordFilter's JSON
+ * side, where the array-valued filters are plain arrays rather than the
+ * repeated query params the GET form needs.
+ */
+export interface EoRecordSearchBody {
+  search?: string;
+  record_type_id?: string[];
+  state_id?: string[];
+  page?: number;
+  limit?: number;
+  sort_by?: string;
+  sort_dir?: "asc" | "desc";
+}
+
 export interface EoRecordListResponse {
   success: boolean;
   data: EoRecord[];

@@ -6072,7 +6072,17 @@
       "selectOrgUnits": "Select organisational units",
       "selectExternalBody": "Select an external body",
       "filePlaceholder": "Documenta file id",
-      "linkPlaceholder": "Related record id"
+      "linkPlaceholder": "Select a record",
+      "linkSearchPlaceholder": "Search by reference or subject…",
+      "linkSearching": "Searching…",
+      "linkNoResults": "No matching records",
+      "linkSearchFailed": "Could not search records",
+      "linkResolving": "Loading linked record…",
+      "linkUnresolved": "Linked record (not accessible)",
+      "linkClear": "Clear the linked record",
+      "linkNoReference": "(no reference)",
+      "linkScopedTo": "Showing {{type}} records only",
+      "linkMore": "Showing {{shown}} of {{total}} — refine the search"
     },
     "create": {
       "title": "New {{type}}",

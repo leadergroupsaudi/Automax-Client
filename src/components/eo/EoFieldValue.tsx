@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Check, Minus } from "lucide-react";
 import { userApi, departmentApi } from "../../api/admin";
 import { useLocalizedField } from "../../hooks/useLocalizedField";
+import { useEoRecord } from "../../hooks/useEoRecords";
+import { eoRecordLabel } from "../../lib/eoFields";
 import type { EoFieldDefinition } from "../../types/eoRecord";
 import type { Department, User } from "../../types";
 
@@ -73,6 +75,16 @@ export const EoFieldValue: React.FC<EoFieldValueProps> = ({
     enabled: needsDepartments && !!value,
     staleTime: 5 * 60 * 1000,
   });
+
+  /**
+   * A `link` field stores a record id. Printing it raw gives the reader a UUID,
+   * which is the whole reason the picker exists — so resolve it to
+   * `reference — subject` through the same eoKeys.detail cache the detail page
+   * fills. Disabled for every other kind, so no extra request is made.
+   */
+  const linkId =
+    field.kind === "link" && typeof value === "string" ? value : "";
+  const linkQuery = useEoRecord(linkId);
 
   const userById = useMemo(() => {
     const map = new Map<string, User>();
@@ -190,6 +202,19 @@ export const EoFieldValue: React.FC<EoFieldValueProps> = ({
           {(Array.isArray(value) ? value : [value]).map(resolveDept).join(", ")}
         </span>
       );
+
+    case "link": {
+      const rec = linkQuery.data?.data;
+      if (!rec)
+        return (
+          <span className={`${textClass} text-[hsl(var(--muted-foreground))]`}>
+            {linkQuery.isLoading
+              ? t("eo.form.linkResolving", "Loading linked record…")
+              : t("eo.form.linkUnresolved", "Linked record (not accessible)")}
+          </span>
+        );
+      return <span className={textClass}>{eoRecordLabel(rec, localize)}</span>;
+    }
 
     case "multi_file":
       return (

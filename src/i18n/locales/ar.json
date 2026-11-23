@@ -6077,7 +6077,17 @@
       "selectOrgUnits": "اختر وحدات تنظيمية",
       "selectExternalBody": "اختر جهة خارجية",
       "filePlaceholder": "معرّف ملف Documenta",
-      "linkPlaceholder": "معرّف السجل المرتبط"
+      "linkPlaceholder": "اختر سجلاً",
+      "linkSearchPlaceholder": "ابحث بالرقم المرجعي أو الموضوع…",
+      "linkSearching": "جارٍ البحث…",
+      "linkNoResults": "لا توجد سجلات مطابقة",
+      "linkSearchFailed": "تعذر البحث في السجلات",
+      "linkResolving": "جارٍ تحميل السجل المرتبط…",
+      "linkUnresolved": "سجل مرتبط (غير متاح)",
+      "linkClear": "إزالة السجل المرتبط",
+      "linkNoReference": "(بدون رقم مرجعي)",
+      "linkScopedTo": "تُعرض سجلات {{type}} فقط",
+      "linkMore": "تُعرض {{shown}} من {{total}} — حدّد البحث أكثر"
     },
     "create": {
       "title": "{{type}} جديد",

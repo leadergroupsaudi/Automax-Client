@@ -4,6 +4,7 @@ import {
   useQueries,
   useMutation,
   useQueryClient,
+  keepPreviousData,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { eoRecordApi, eoRecordTypeApi, eoWorkflowApi } from "../api/eoRecords";
@@ -11,6 +12,7 @@ import { resolveEffectiveFields } from "../lib/eoFields";
 import type {
   EoFieldDefinition,
   EoRecordFilter,
+  EoRecordSearchBody,
   EoRecordCreateRequest,
   EoRecordUpdateRequest,
   EoRecordType,
@@ -31,6 +33,8 @@ export const eoKeys = {
     [...eoKeys.all, "workflow-states", workflowId] as const,
   lists: () => [...eoKeys.all, "list"] as const,
   list: (filter: EoRecordFilter) => [...eoKeys.lists(), filter] as const,
+  search: (body: EoRecordSearchBody) =>
+    [...eoKeys.all, "search", body] as const,
   myAssigned: (filter: EoRecordFilter) =>
     [...eoKeys.all, "my-assigned", filter] as const,
   details: () => [...eoKeys.all, "detail"] as const,
@@ -167,6 +171,25 @@ export function useEoRecords(filter: EoRecordFilter = {}) {
   return useQuery({
     queryKey: eoKeys.list(filter),
     queryFn: () => eoRecordApi.list(filter),
+  });
+}
+
+/**
+ * POST /eo-records/search — the only list route that binds a BODY, which is
+ * what lets the record picker send `record_type_id` as the []string the
+ * handler's filter actually declares (the GET form needs repeated params).
+ *
+ * `enabled` is how the picker avoids querying the whole register until its
+ * dropdown is opened, and keepPreviousData stops the result list blanking
+ * between keystrokes while the debounced term catches up.
+ */
+export function useEoRecordSearch(body: EoRecordSearchBody, enabled = true) {
+  return useQuery({
+    queryKey: eoKeys.search(body),
+    queryFn: () =>
+      eoRecordApi.search(body as unknown as Record<string, unknown>),
+    enabled,
+    placeholderData: keepPreviousData,
   });
 }
 

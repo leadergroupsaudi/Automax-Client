@@ -5,6 +5,7 @@ import { Select } from "../ui/SelectInput";
 import { MultiSelect } from "../ui/MultiSelect";
 import { TreeSelect } from "../ui/TreeSelect";
 import { MultiTreeSelect } from "../ui/MultiTreeSelect";
+import { EoRecordPicker } from "./EoRecordPicker";
 import { userApi, departmentApi } from "../../api/admin";
 import { useLocalizedField } from "../../hooks/useLocalizedField";
 import { isReadOnlyField } from "../../lib/eoFields";
@@ -77,10 +78,10 @@ const flattenDepartments = (depts: Department[]): Department[] =>
 /**
  * Renders ONE server-defined EO field as an input, switching on `field.kind`.
  *
- * 19 kinds exist across the pilot's 127 field definitions. Four of them
- * (auto_number, workflow_state, link, user_date) are engine-filled and render
- * as a disabled note rather than a control — `link` has no picker yet, which
- * is the one knowing gap in this prototype.
+ * 19 kinds exist across the pilot's 127 field definitions. The engine-filled
+ * ones (auto_number, workflow_state, and anything of `auto`/`derived`
+ * provenance) render as a disabled note rather than a control. `link` is a
+ * record picker — see EoRecordPicker.
  */
 export const EoFieldInput: React.FC<EoFieldInputProps> = ({
   field,
@@ -460,17 +461,18 @@ export const EoFieldInput: React.FC<EoFieldInputProps> = ({
       );
 
     case "link":
-      // A record picker across 11 types is out of scope for this prototype;
-      // the id round-trips so an existing link is not destroyed on edit.
+      // The target record type comes from config.target_type_key. It is absent
+      // on the pilot's Directive.origin_record, whose config is `{}` — that is
+      // "any type", not a misconfiguration, so the picker searches the whole
+      // register and names each hit's type.
       return wrap(
-        <input
+        <EoRecordPicker
           id={`eo-field-${field.key}`}
-          type="text"
+          value={value}
+          onChange={set}
+          targetTypeKey={field.config?.target_type_key}
+          invalid={!!error}
           disabled={disabled}
-          value={asString(value)}
-          onChange={(e) => set(e.target.value)}
-          placeholder={t("eo.form.linkPlaceholder", "Related record id")}
-          className={cls}
         />,
       );
 
