@@ -335,9 +335,9 @@ one 503s), serving attacker payloads with the real route's headers.
    (`draft_file`, `study_report`), `eo_objection` (`proof`) and
    `eo_incoming_correspondence` (`attachments`) are uncreatable — with
    Documenta on *or* off, and whether the frontend stages files or not. **This
-   is the single most important finding of the task.** It needs a backend
-   answer: a draft/`pending` record, a multipart create, or relaxing those
-   four definitions to `at_state`.
+   was the single most important finding of the task — and the backend has
+   since answered it; see §9.6. It is RESOLVED, and left here because it is
+   the reason the backend change exists.**
 2. **Downloads lose their real filename.** The record stores only the id, and
    the server's `Content-Disposition` is not readable by the browser: the API
    is cross-origin and `cmd/server/main.go`'s CORS block sets `AllowHeaders`
@@ -458,14 +458,23 @@ either)* land exactly this: `eoFileFieldsRelaxedUntilDocumenta` relaxes all
 six — `eo_incoming_correspondence.attachments`, `eo_draft_decision_study`'s
 `draft_file` and `study_report`, `eo_objection.proof`, and the two at-closure
 `evidence` fields — to `never` while `EO_DOCUMENTA_ENABLED=false`, and logs
-them on every boot as an obligation to re-tighten. **The contradiction is
-resolved in code, and no UI change is needed.**
+them on every boot as an obligation to re-tighten. **The contradiction is resolved, and no UI change is needed.**
 
-It is not yet resolved in *this* deployment: queried live, the four `always`
-fields still read `always`, because the running server predates those
-commits. It will clear on the next boot. §8.1 is left as written with this
-note, rather than deleted, because it is the reason the backend change
-exists.
+It was still outstanding in the running deployment when I first checked — the
+server predated those commits and the four `always` fields still read
+`always`. It restarted during this round, and a live re-query of all ten
+`file`/`multi_file` definitions across the eight types that declare them now
+returns `never` for every one, `eo_incoming_correspondence.attachments`
+included. So the create form can now be submitted for every type, and §8.1 is
+marked resolved rather than deleted, because it is the reason the backend
+change exists.
+
+One consequence worth naming for whoever re-tightens: the day
+`EO_DOCUMENTA_ENABLED=true` and those modes go back to `always`, the create
+form will again be unable to satisfy them, because this control cannot upload
+before the record exists. The backend's boot log reports the fields as an
+obligation; the ordering problem behind §2 is what has to be answered at the
+same time.
 
 ### 9.7 Verification of round 1
 
@@ -473,11 +482,14 @@ New screenshots in the same folder, from `…/scratchpad/d1r1.mjs`:
 
 | shot | what it shows |
 |---|---|
-| `15-gateway-503-not-latched.png` | upload intercepted with a proxy-style `503 text/html`: **no** "storage is not set up" notice, the dropzone still offered, the file listed with the ordinary upload-failed message |
+| `15-gateway-503-not-latched.png` | upload intercepted with a proxy-style `503 text/html`: **no** "storage is not set up" notice, the dropzone still offered, and the row reads the ordinary "The file could not be uploaded" rather than "Not attached" |
 | `16-real-503-picker-still-offered.png` | the **live** Automax 503: the notice *and* a working dropzone, side by side |
 | `17-retry-clears-the-notice.png` | the retry (intercepted 201) from that same field: notice gone, file attached — the latch is gone |
 | `18-download-refusal-message.png` | Download clicked against the **live** backend: the toast now reads "Documenta is not configured for the Executive Office (EO_DOCUMENTA_ENABLED=false), so files cannot be read from EO records." — the server's own sentence, not "Could not open that file" |
-| `19-read-refusal-taught-the-form.png` | after that refusal, an in-app navigation to the edit form shows the notice: a refused read now teaches the shared flag |
+| `19-read-refusal-taught-the-form.png` | after that refusal, an **in-app** navigation to the edit form shows the notice: a refused read now teaches the shared flag. (It must be in-app — `page.goto` reloads the SPA and wipes the query cache the flag lives in, which is what made the first attempt at this check read false.) |
 
 Preview's live refusal carries the same sentence and opens **0** frames.
 Shots `01`–`14` re-run unchanged. `EO-DIR-2026-005` reset to `attachments: ""`.
+
+All five were re-run against the **committed** tree (`df9a3e7`) after the
+backend came back up, not against a working copy.
