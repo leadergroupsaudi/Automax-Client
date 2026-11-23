@@ -146,6 +146,35 @@ export const eoRecordApi = {
 };
 
 /**
+ * Puts a readable body back on a rejected BLOB request.
+ *
+ * `responseType: "blob"` applies to the error response too, so a refused
+ * download or preview arrives with `response.data` as a Blob and every
+ * message extractor reads `undefined` off it — which is how the 503 naming
+ * EO_DOCUMENTA_ENABLED=false was being thrown away and replaced with
+ * "Could not open that file". Reading the Blob is asynchronous, so it cannot
+ * be done in the synchronous extractor; it is done here, at the only place
+ * that knows the response was requested as a Blob.
+ *
+ * This is the api layer's one try/catch, and it does not swallow anything:
+ * the SAME rejection is re-thrown, with a parsed body where there was one.
+ * A non-JSON body (a proxy's HTML error page) is left as it was, so it
+ * cannot be mistaken for Automax speaking — see eoDocumentaDisabledMessage.
+ */
+const withDecodedBlobError = async (error: unknown): Promise<unknown> => {
+  const res = (error as { response?: { data?: unknown } })?.response;
+  if (res && res.data instanceof Blob) {
+    try {
+      const text = await res.data.text();
+      if (text.trim()) res.data = JSON.parse(text);
+    } catch {
+      // Not JSON. Leave the Blob in place rather than inventing a message.
+    }
+  }
+  return error;
+};
+
+/**
  * The three file routes of §7.12. They are the ONLY way a client obtains a
  * Documenta file id, which is what a `file` / `multi_file` field stores, and
  * the only way one is read back — the reads stream the bytes through Automax
@@ -190,23 +219,32 @@ export const eoFileApi = {
     recordId: string,
     fileId: string,
   ): Promise<{ blob: Blob; fileName?: string }> => {
-    const res = await apiClient.get(`/eo-records/${recordId}/files/${fileId}`, {
-      responseType: "blob",
-    });
-    const disposition = String(res.headers?.["content-disposition"] ?? "");
-    const match = disposition.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
-    return {
-      blob: res.data as Blob,
-      fileName: match ? decodeURIComponent(match[1]) : undefined,
-    };
+    try {
+      const res = await apiClient.get(
+        `/eo-records/${recordId}/files/${fileId}`,
+        { responseType: "blob" },
+      );
+      const disposition = String(res.headers?.["content-disposition"] ?? "");
+      const match = disposition.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
+      return {
+        blob: res.data as Blob,
+        fileName: match ? decodeURIComponent(match[1]) : undefined,
+      };
+    } catch (error) {
+      throw await withDecodedBlobError(error);
+    }
   },
 
   /** The same bytes served inline, for opening in a viewer tab. */
   preview: async (recordId: string, fileId: string): Promise<Blob> => {
-    const res = await apiClient.get(
-      `/eo-records/${recordId}/files/${fileId}/preview`,
-      { responseType: "blob" },
-    );
-    return res.data as Blob;
+    try {
+      const res = await apiClient.get(
+        `/eo-records/${recordId}/files/${fileId}/preview`,
+        { responseType: "blob" },
+      );
+      return res.data as Blob;
+    } catch (error) {
+      throw await withDecodedBlobError(error);
+    }
   },
 };

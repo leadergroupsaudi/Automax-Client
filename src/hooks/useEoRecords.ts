@@ -15,8 +15,8 @@ import {
   eoWorkflowApi,
 } from "../api/eoRecords";
 import {
+  eoDocumentaDisabledMessage,
   eoErrorMessage,
-  eoErrorStatus,
   resolveEffectiveFields,
 } from "../lib/eoFields";
 import type {
@@ -347,10 +347,13 @@ export function useUploadEoRecordFile() {
       });
     },
     onError: (error: unknown) => {
-      if (eoErrorStatus(error) === 503) {
+      // The PAYLOAD decides, not the status: a proxy's bare 503 is a network
+      // failure of this one upload, not a statement about the deployment.
+      const disabled = eoDocumentaDisabledMessage(error);
+      if (disabled) {
         queryClient.setQueryData<EoDocumentaStatus>(eoKeys.documenta(), {
           available: false,
-          message: eoErrorMessage(error),
+          message: disabled,
         });
       }
     },
@@ -428,8 +431,25 @@ export interface EoFilePreviewState {
  */
 export function useEoFileActions(recordId?: string) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [preview, setPreview] = useState<EoFilePreviewState | null>(null);
+
+  /**
+   * A READ refused for the same deployment reason teaches the shared flag
+   * too. Without this, "one field's 503 teaches the rest of the form" was
+   * true of uploads only, and a form went on offering a dropzone while every
+   * download was being refused for exactly the reason the dropzone hides.
+   */
+  const noteDocumentaRefusal = (error: unknown) => {
+    const disabled = eoDocumentaDisabledMessage(error);
+    if (disabled) {
+      queryClient.setQueryData<EoDocumentaStatus>(eoKeys.documenta(), {
+        available: false,
+        message: disabled,
+      });
+    }
+  };
 
   /** Hands a blob to the browser as a saved file. Never renders it. */
   const saveBlob = (blob: Blob, fileName: string) => {
@@ -456,6 +476,7 @@ export function useEoFileActions(recordId?: string) {
         fileName || served || t("eo.file.defaultName", "attachment"),
       );
     } catch (error: unknown) {
+      noteDocumentaRefusal(error);
       toast.error(
         eoErrorMessage(
           error,
@@ -497,6 +518,7 @@ export function useEoFileActions(recordId?: string) {
         return { url: URL.createObjectURL(blob), name, type };
       });
     } catch (error: unknown) {
+      noteDocumentaRefusal(error);
       toast.error(
         eoErrorMessage(
           error,

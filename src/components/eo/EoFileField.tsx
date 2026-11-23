@@ -20,8 +20,8 @@ import {
 } from "../../hooks/useEoRecords";
 import type { EoFilePreviewState } from "../../hooks/useEoRecords";
 import {
+  eoDocumentaDisabledMessage,
   eoErrorMessage,
-  eoErrorStatus,
   toFileIdList,
 } from "../../lib/eoFields";
 
@@ -211,8 +211,6 @@ interface EoFileLinksProps {
   /** The record the files are filed on. Without it nothing can be opened. */
   recordId?: string;
   ids: string[];
-  /** Names known from this session's uploads; a loaded record has none. */
-  names?: Record<string, string>;
 }
 
 /**
@@ -223,11 +221,7 @@ interface EoFileLinksProps {
  * hence "Attachment 1" plus the id's first characters, which is still an
  * identity a reader can match against Documenta.
  */
-export const EoFileLinks: React.FC<EoFileLinksProps> = ({
-  recordId,
-  ids,
-  names,
-}) => {
+export const EoFileLinks: React.FC<EoFileLinksProps> = ({ recordId, ids }) => {
   const { t } = useTranslation();
   const { download, openPreview, closePreview, preview, busyId } =
     useEoFileActions(recordId);
@@ -249,16 +243,13 @@ export const EoFileLinks: React.FC<EoFileLinksProps> = ({
       {ids.map((fileId, index) => (
         <EoFileRow
           key={fileId}
-          name={
-            names?.[fileId] ??
-            t("eo.file.numbered", "Attachment {{n}}", { n: index + 1 })
-          }
+          name={t("eo.file.numbered", "Attachment {{n}}", { n: index + 1 })}
           detail={fileId.slice(0, 8)}
           busy={busyId === fileId}
         >
           <button
             type="button"
-            onClick={() => openPreview(fileId, names?.[fileId])}
+            onClick={() => openPreview(fileId)}
             disabled={busyId === fileId}
             title={t("eo.file.preview", "Preview")}
             aria-label={t("eo.file.preview", "Preview")}
@@ -268,7 +259,7 @@ export const EoFileLinks: React.FC<EoFileLinksProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => download(fileId, names?.[fileId])}
+            onClick={() => download(fileId)}
             disabled={busyId === fileId}
             title={t("eo.file.download", "Download")}
             aria-label={t("eo.file.download", "Download")}
@@ -426,16 +417,18 @@ export const EoFileField: React.FC<EoFileFieldProps> = ({
             name: file.name,
             // Verbatim, because the 409 names the record and the 502 names
             // the id Documenta returned — paraphrasing either would cost the
-            // operator the only handle they have. The 503 is the exception:
-            // the notice above the list already carries that sentence, and
-            // repeating it under every file turns one fact into a wall.
-            message:
-              eoErrorStatus(error) === 503
-                ? t("eo.file.notAttached", "Not attached")
-                : eoErrorMessage(
-                    error,
-                    t("eo.file.uploadFailed", "The file could not be uploaded"),
-                  ),
+            // operator the only handle they have. The DEPLOYMENT refusal is
+            // the one exception: the notice above the list already carries
+            // that sentence, and repeating it under every file turns one
+            // fact into a wall. A bare 503 from a proxy is NOT that refusal
+            // and gets the ordinary treatment, because nothing above the
+            // list is explaining it.
+            message: eoDocumentaDisabledMessage(error)
+              ? t("eo.file.notAttached", "Not attached")
+              : eoErrorMessage(
+                  error,
+                  t("eo.file.uploadFailed", "The file could not be uploaded"),
+                ),
           },
         ]);
       } finally {
@@ -462,37 +455,50 @@ export const EoFileField: React.FC<EoFileFieldProps> = ({
             )}
           </p>
         </div>
-      ) : !documenta.available ? (
-        <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl border border-amber-300 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10">
-          <TriangleAlert className="w-4 h-4 mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
-          <div className="text-start min-w-0">
-            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
-              {t(
-                "eo.file.storageOff",
-                "Document storage is not set up for the Executive Office, so files cannot be attached yet.",
-              )}
-            </p>
-            {documenta.message && (
-              <p className="mt-1 text-xs text-amber-700/90 dark:text-amber-400/90 break-words">
-                {documenta.message}
-              </p>
-            )}
-          </div>
-        </div>
       ) : (
-        <AttachmentDropzone
-          policy={{
-            allowedHint: "",
-            limitsHint: multiple
-              ? t("eo.file.hintMulti", "Each file is filed on this record.")
-              : t("eo.file.hintSingle", "One file is filed on this record."),
-          }}
-          multiple={multiple}
-          disabled={disabled || busy}
-          hasError={invalid}
-          busyText={busy ? t("eo.file.uploading", "Uploading…") : undefined}
-          onFiles={handleFiles}
-        />
+        <>
+          {/*
+            The notice sits ABOVE the dropzone rather than replacing it. The
+            flag is only ever cleared by a SUCCESSFUL upload, so a field that
+            hides its picker while the flag is set can never clear it: one
+            refusal would disable attachments for the rest of the page's life.
+            Leaving the picker means a retry is always one click away, and a
+            deployment that really is misconfigured simply refuses again.
+          */}
+          {!documenta.available && (
+            <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl border border-amber-300 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10">
+              <TriangleAlert className="w-4 h-4 mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+              <div className="text-start min-w-0">
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                  {t(
+                    "eo.file.storageOff",
+                    "Document storage is not set up for the Executive Office, so files cannot be attached yet.",
+                  )}
+                </p>
+                {documenta.message && (
+                  <p className="mt-1 text-xs text-amber-700/90 dark:text-amber-400/90 break-words">
+                    {documenta.message}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+          <AttachmentDropzone
+            policy={{
+              allowedHint: "",
+              limitsHint: documenta.available
+                ? multiple
+                  ? t("eo.file.hintMulti", "Each file is filed on this record.")
+                  : t("eo.file.hintSingle", "One file is filed on this record.")
+                : t("eo.file.retryHint", "Try again if this has been fixed."),
+            }}
+            multiple={multiple}
+            disabled={disabled || busy}
+            hasError={invalid}
+            busyText={busy ? t("eo.file.uploading", "Uploading…") : undefined}
+            onFiles={handleFiles}
+          />
+        </>
       )}
 
       {uploading.map((u) => (

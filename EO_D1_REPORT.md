@@ -115,8 +115,14 @@ the earlier run).
 401 — and `src/api/client.ts`'s global interceptor turns a 401 into a logout.
 `useEoFileActions` fetches through `apiClient` as a Blob and hands it to the
 browser from an object URL, the shape `documentApi.download` already uses.
-Preview opens its tab **synchronously** inside the click, before the bytes are
-in flight, or the popup blocker eats it.
+**Preview does not open a window** — see §7: it renders into a sandboxed
+frame, because re-hosting the bytes on this origin is exactly what made the
+first version exploitable.
+
+Fetching as a Blob also means a REFUSED read arrives with `response.data` as
+a Blob, so every message extractor read `undefined` off it and the server's
+sentence was replaced by "Could not open that file". `eoFileApi` now decodes
+that body before re-throwing the same rejection (§9.2).
 
 ---
 
@@ -165,10 +171,11 @@ task; it was left unstaged and unchanged.
   takes `invalid` (a boolean for the red ring) rather than `error`, because
   `EoFieldInput`'s wrapper already prints the message — the same contract
   `EoRecordPicker` uses.
-- **Server messages verbatim.** The 409 names the record and the 502 names the
-  id Documenta returned; paraphrasing either would cost the operator the only
-  handle they have. Client-side messages (empty file, "save first") go through
-  `t()`.
+- **Server messages verbatim**, on uploads *and* on reads. (Reads did not
+  manage it until round 1 — the Blob body swallowed them; §9.2.) The 409
+  names the record and the 502 names the id Documenta returned; paraphrasing
+  either would cost the operator the only handle they have. Client-side
+  messages (empty file, "save first") go through `t()`.
 - **Field labels** still come from the API via `useLocalizedField()`. No
   invented Arabic for EO field labels; the 18 new chrome strings are normal
   en/ar keys in both bundles.
@@ -360,3 +367,117 @@ one 503s), serving attacker payloads with the real route's headers.
    after another so a mid-batch refusal stops the rest from piling up. With
    large files over a slow link this will feel slow; parallelising is easy but
    makes the failure story worse, so it was not done.
+
+---
+
+## 9. Review round 1 — four fixes
+
+The reviewer's adversarial pass on §7 held: six payloads including a
+parameterised, case-varied `TEXT/HTML; Charset=UTF-8`, a response with **no**
+`Content-Type`, and an SVG using `onload=` rather than `<script>`. All
+refused, 0 dialogs, nothing written. It also confirmed `sandbox` is empty as
+rendered in the live DOM, not merely as written in JSX.
+
+Its sharpest observation is worth recording: **the allowlist is
+attacker-influenceable.** The mime the read routes serve is the uploader's own
+multipart `Content-Type`, echoed back — so HTML bytes declared `image/png`,
+`text/plain` or `application/pdf` *do* reach the renderer. They render inert,
+because the frame has an opaque origin. **The sandbox, not the allowlist, is
+the load-bearing control.** The allowlist is a second line that reduces what
+is attempted; it must never be treated as the first.
+
+### 9.1 The "Documenta is off" notice fired on any 503, and latched
+
+`useEoRecords.ts` keyed the shared flag on `eoErrorStatus(error) === 503`
+alone. A proxy's bare 503 — `text/html`, no Automax payload — made the field
+announce *"Document storage is not set up for the Executive Office"* with an
+empty detail line: an authoritative claim about the deployment that was
+false. And it could not recover: the flag's only writer that clears it is a
+successful upload, the cache entry is `staleTime/gcTime: Infinity`, and the
+field used to replace the dropzone with the notice — so the one action that
+clears the flag was the one action removed. A transient blip disabled
+attachments for the life of the page.
+
+Both halves fixed:
+
+- **The payload decides, not the status.** `eoDocumentaDisabledMessage()`
+  (`src/lib/eoFields.ts`) requires `utils.ErrorResponse`'s envelope —
+  `success: false` plus a non-empty `error`/`message` — before anything may
+  be said about the deployment. Anything else is the network between the
+  browser and Automax and is reported as a failure of that one file. The
+  per-file row follows the same rule: "Not attached" only when the notice
+  above it is explaining why.
+- **The picker always stays.** The notice now sits *above* the dropzone
+  rather than replacing it, with its hint changed to "Try again if this has
+  been fixed." A retry is always one click away, and a deployment that really
+  is misconfigured simply refuses again.
+
+### 9.2 Read refusals discarded the server's message
+
+`responseType: "blob"` applies to the error response too, so a refused
+download or preview arrived with `response.data` as a Blob and
+`eoErrorMessage` read `undefined` off it — the toast said only "Could not
+open that file" while §5 claimed messages were verbatim. `eoFileApi` now
+wraps both reads in the api layer's one try/catch, decodes the Blob body,
+and re-throws **the same rejection** with a parsed payload; a non-JSON body
+is left alone so a proxy's HTML page cannot be mistaken for Automax speaking.
+
+Related and also fixed: both reads now call `noteDocumentaRefusal()`, so a
+refused *read* teaches `eoKeys.documenta()` as an upload does. "One field's
+503 teaches the rest of the form" was upload-only, and a form went on
+offering a dropzone while every download was being refused for the reason
+the dropzone hides.
+
+### 9.3 `EoFileLinks.names` was wired to nothing
+
+Declared, read in three places, passed by no caller. **Removed.** There is no
+`GET /eo-records/:id/files`, so a page that did not perform the upload has no
+name to show; the honest rendering is "Attachment N" plus the id's first
+characters, and a prop that pretends otherwise is the "present and plausible,
+wired to nothing" shape this programme keeps finding. The missing listing
+route stays as §8.3.
+
+### 9.4 §3.3 described the removed design
+
+It still said preview "opens its tab synchronously inside the click… or the
+popup blocker eats it", which contradicted §7 in the one write-up that must
+not lie. Rewritten, with a pointer to §7 and to the Blob-body defect.
+
+### 9.5 Not fixed, by instruction
+
+The empty `multi_file` committing `[]`; `invalid` not reaching the
+non-dropzone states; the object-URL leak on unmount; unused `mime_type`;
+`bg-white` on the iframe; and the pre-existing XSS in `src/api/kpi.ts`, which
+is the same pattern on KPI evidence and is not this task's.
+
+### 9.6 The required-field dead end (§8.1) — re-checked
+
+Backend commits `c8f6dee` *(file fields are not required while Documenta is
+disabled)* and `f6fec7c` *(a closing transition cannot demand a file id
+either)* land exactly this: `eoFileFieldsRelaxedUntilDocumenta` relaxes all
+six — `eo_incoming_correspondence.attachments`, `eo_draft_decision_study`'s
+`draft_file` and `study_report`, `eo_objection.proof`, and the two at-closure
+`evidence` fields — to `never` while `EO_DOCUMENTA_ENABLED=false`, and logs
+them on every boot as an obligation to re-tighten. **The contradiction is
+resolved in code, and no UI change is needed.**
+
+It is not yet resolved in *this* deployment: queried live, the four `always`
+fields still read `always`, because the running server predates those
+commits. It will clear on the next boot. §8.1 is left as written with this
+note, rather than deleted, because it is the reason the backend change
+exists.
+
+### 9.7 Verification of round 1
+
+New screenshots in the same folder, from `…/scratchpad/d1r1.mjs`:
+
+| shot | what it shows |
+|---|---|
+| `15-gateway-503-not-latched.png` | upload intercepted with a proxy-style `503 text/html`: **no** "storage is not set up" notice, the dropzone still offered, the file listed with the ordinary upload-failed message |
+| `16-real-503-picker-still-offered.png` | the **live** Automax 503: the notice *and* a working dropzone, side by side |
+| `17-retry-clears-the-notice.png` | the retry (intercepted 201) from that same field: notice gone, file attached — the latch is gone |
+| `18-download-refusal-message.png` | Download clicked against the **live** backend: the toast now reads "Documenta is not configured for the Executive Office (EO_DOCUMENTA_ENABLED=false), so files cannot be read from EO records." — the server's own sentence, not "Could not open that file" |
+| `19-read-refusal-taught-the-form.png` | after that refusal, an in-app navigation to the edit form shows the notice: a refused read now teaches the shared flag |
+
+Preview's live refusal carries the same sentence and opens **0** frames.
+Shots `01`–`14` re-run unchanged. `EO-DIR-2026-005` reset to `attachments: ""`.

@@ -310,3 +310,34 @@ export function toFileIdList(value: unknown): string[] {
   if (typeof value === "string" && value.trim()) return [value.trim()];
   return [];
 }
+
+/**
+ * The EO file routes' DEPLOYMENT-level refusal — "this deployment has no
+ * Documenta" — as opposed to any other 503, returning the server's own
+ * sentence or null.
+ *
+ * Keying on the status alone was wrong, and visibly so: a gateway or proxy
+ * 503 (an HTML body, no Automax payload) made the field announce that
+ * document storage is not configured, which is an authoritative claim about
+ * the deployment that may simply be false. The discriminator is the payload:
+ * only `utils.ErrorResponse`'s envelope — `{success:false, error:"…"}` with a
+ * non-empty message — is Automax speaking. Anything else is the network
+ * between the browser and Automax, and is reported as a failure of that one
+ * file, not of the deployment.
+ */
+export function eoDocumentaDisabledMessage(error: unknown): string | null {
+  if (eoErrorStatus(error) !== 503) return null;
+  const data = (error as { response?: { data?: unknown } })?.response?.data;
+  if (!data || typeof data !== "object" || Array.isArray(data)) return null;
+  const body = data as {
+    success?: unknown;
+    error?: unknown;
+    message?: unknown;
+  };
+  if (body.success !== false) return null;
+  const text =
+    (typeof body.error === "string" && body.error.trim()) ||
+    (typeof body.message === "string" && body.message.trim()) ||
+    "";
+  return text || null;
+}

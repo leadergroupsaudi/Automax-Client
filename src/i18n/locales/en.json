@@ -6088,6 +6088,7 @@
       "storageOff": "Document storage is not set up for the Executive Office, so files cannot be attached yet.",
       "hintSingle": "One file is filed on this record.",
       "hintMulti": "Each file is filed on this record.",
+      "retryHint": "Try again if this has been fixed.",
       "uploading": "Uploading…",
       "uploadFailed": "The file could not be uploaded",
       "notAttached": "Not attached",
