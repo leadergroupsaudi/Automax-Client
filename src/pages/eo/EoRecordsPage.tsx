@@ -17,7 +17,6 @@ import {
 } from "../../hooks/useEoRecords";
 import { usePermissions } from "../../hooks/usePermissions";
 import { useLocalizedField } from "../../hooks/useLocalizedField";
-import { PERMISSIONS } from "../../constants/permissions";
 import { EoRecordFilters } from "../../components/eo/EoRecordFilters";
 import { EoStateBadge } from "../../components/eo/EoStateBadge";
 import { EoFieldValue } from "../../components/eo/EoFieldValue";
@@ -44,7 +43,7 @@ export const EoRecordsPage: React.FC = () => {
   const { t } = useTranslation();
   const { typeKey } = useParams<{ typeKey: string }>();
   const { pathname } = useLocation();
-  const { hasPermission, isSuperAdmin } = usePermissions();
+  const { canEoRecordType } = usePermissions();
   const localize = useLocalizedField();
 
   const isMyAssigned = pathname.endsWith("/my-assigned");
@@ -59,11 +58,40 @@ export const EoRecordsPage: React.FC = () => {
     [allTypes],
   );
 
+  /**
+   * The subset the caller may actually read. The catalogue is NOT filtered
+   * per caller, so `selectableTypes` lists registers this user holds no
+   * eo:<key>:view on — offering them in the type dropdown would invite a
+   * filter that can only ever return nothing.
+   */
+  const viewableTypes = useMemo(
+    () => selectableTypes.filter((rt) => canEoRecordType(rt.key, "view")),
+    [selectableTypes, canEoRecordType],
+  );
+
   const routeType = useMemo(
     () =>
       typeKey ? selectableTypes.find((rt) => rt.key === typeKey) : undefined,
     [selectableTypes, typeKey],
   );
+
+  /** The catalogue has answered, so `routeType` is now a fact and not a wait. */
+  const typesSettled = !typesQuery.isLoading;
+
+  /**
+   * A /eo/:typeKey deep link the caller cannot use — because the type is not
+   * theirs, or because there is no such concrete type at all.
+   *
+   * The server does not refuse either: the list route is FILTERED, not gated,
+   * so a register the caller holds no eo:<key>:view on comes back empty and
+   * the page would answer "No records yet" — a different, and false,
+   * statement. Said once here rather than left to the empty state.
+   */
+  const routeTypeForbidden =
+    !!typeKey &&
+    !isMyAssigned &&
+    typesSettled &&
+    (!routeType || !canEoRecordType(routeType.key, "view"));
 
   const [filters, setFilters] = useState<EoRecordFilter>({
     page: 1,
@@ -79,9 +107,30 @@ export const EoRecordsPage: React.FC = () => {
     [filters, routeType],
   );
 
-  const allQuery = useEoRecords(effectiveFilters);
-  const mineQuery = useEoMyAssigned(effectiveFilters);
-  const { data, isLoading, error } = isMyAssigned ? mineQuery : allQuery;
+  // ONE register query per page view. Both hooks must be CALLED (hooks are
+  // not conditional), but only the route's own is enabled: before this, every
+  // render of every register fired GET /eo-records AND GET
+  // /eo-records/my-assigned and threw one of the two answers away.
+  //
+  // A /eo/:typeKey route also waits for the catalogue. `record_type_id` is
+  // resolved from it, so firing before it lands asked for the WHOLE register
+  // and then asked again, pinned — two full queries for one page view, from
+  // the opposite end of the same mistake.
+  const allQuery = useEoRecords(effectiveFilters, {
+    enabled: !isMyAssigned && !routeTypeForbidden && (!typeKey || !!routeType),
+  });
+  const mineQuery = useEoMyAssigned(effectiveFilters, {
+    enabled: isMyAssigned,
+  });
+  const {
+    data,
+    isLoading: listLoading,
+    error,
+  } = isMyAssigned ? mineQuery : allQuery;
+  // A disabled query is not "loading", so the catalogue's own wait has to be
+  // counted here — otherwise the empty state flashes "No records yet" while
+  // the route's record type is still being resolved.
+  const isLoading = listLoading || (!!typeKey && !typesSettled);
 
   const records = data?.data ?? [];
   const total = data?.total_items ?? 0;
@@ -114,10 +163,10 @@ export const EoRecordsPage: React.FC = () => {
     [routeType, routeTypeFields],
   );
 
-  const canCreate =
-    isSuperAdmin ||
-    hasPermission(PERMISSIONS.EO_CREATE) ||
-    (!!routeType && hasPermission(`eo:${routeType.key}:create`));
+  // eo:create AND eo:<key>:create, which is what POST /eo-records asks for.
+  // The button only exists on a single-type register, so there is always a
+  // key to ask about.
+  const canCreate = canEoRecordType(routeType?.key, "create");
 
   const title = routeType
     ? localize(routeType as unknown as Record<string, unknown>, "name") ||
@@ -145,6 +194,29 @@ export const EoRecordsPage: React.FC = () => {
     rec.subject_en ||
     rec.subject_ar ||
     "-";
+
+  if (routeTypeForbidden) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div className="rounded-xl border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/20 p-6">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            <div>
+              <h3 className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                {t("eo.noTypeAccess", "This register is not available to you")}
+              </h3>
+              <p className="mt-1 text-sm text-amber-700 dark:text-amber-400">
+                {t(
+                  "eo.noTypeAccessHint",
+                  "You hold access to the Executive Office, but not to this record type. Ask an administrator to grant it.",
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -213,7 +285,7 @@ export const EoRecordsPage: React.FC = () => {
       <EoRecordFilters
         filters={filters}
         onChange={setFilters}
-        recordTypes={selectableTypes}
+        recordTypes={viewableTypes}
         showTypeFilter={!routeType}
       />
 

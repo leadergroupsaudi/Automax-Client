@@ -179,10 +179,24 @@ export function useEoStateMap(workflowIds: string[]) {
 // Record queries
 // ──────────────────────────────────────────────────
 
-export function useEoRecords(filter: EoRecordFilter = {}) {
+/**
+ * Options a caller may narrow a register query with. `enabled` exists because
+ * the register page must CALL both useEoRecords and useEoMyAssigned (hooks
+ * cannot be conditional) while only one of them is the route's own: without
+ * it, every register render fired two full list requests and discarded one.
+ */
+interface EoListQueryOptions {
+  enabled?: boolean;
+}
+
+export function useEoRecords(
+  filter: EoRecordFilter = {},
+  options: EoListQueryOptions = {},
+) {
   return useQuery({
     queryKey: eoKeys.list(filter),
     queryFn: () => eoRecordApi.list(filter),
+    enabled: options.enabled ?? true,
   });
 }
 
@@ -205,10 +219,14 @@ export function useEoRecordSearch(body: EoRecordSearchBody, enabled = true) {
   });
 }
 
-export function useEoMyAssigned(filter: EoRecordFilter = {}) {
+export function useEoMyAssigned(
+  filter: EoRecordFilter = {},
+  options: EoListQueryOptions = {},
+) {
   return useQuery({
     queryKey: eoKeys.myAssigned(filter),
     queryFn: () => eoRecordApi.myAssigned(filter),
+    enabled: options.enabled ?? true,
   });
 }
 

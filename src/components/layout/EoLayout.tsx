@@ -27,7 +27,6 @@ import { usePermissions } from "../../hooks/usePermissions";
 import { useLicense, useLicenseInfo } from "../../hooks/useLicense";
 import { useEoRecordTypes } from "../../hooks/useEoRecords";
 import { useLocalizedField } from "../../hooks/useLocalizedField";
-import { PERMISSIONS } from "../../constants/permissions";
 import ThemeToggle from "../common/ThemeToggle";
 import { NotificationBell } from "../common/NotificationBell";
 
@@ -51,7 +50,7 @@ export const EoLayout: React.FC = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const langRef = useRef<HTMLDivElement>(null);
-  const { hasPermission, isSuperAdmin } = usePermissions();
+  const { canEoRecordType, isSuperAdmin } = usePermissions();
   // AdminProtectedRoute does NOT bootstrap the licence store — only
   // ProtectedRoute does, and that wraps /dashboard, /profile and /settings
   // alone. A deep link straight to /eo would therefore reach the guard below
@@ -62,19 +61,34 @@ export const EoLayout: React.FC = () => {
   const localize = useLocalizedField();
 
   const typesQuery = useEoRecordTypes();
+
+  /**
+   * The registers this user can ACTUALLY READ, not the ones the catalogue
+   * lists.
+   *
+   * GET /admin/eo-record-types is NOT filtered per caller: it answers with
+   * every concrete type in the deployment. The register's rows are filtered
+   * (repository.applyEORecordTypePermissions), so a type the caller holds no
+   * eo:<key>:view on yields an empty list rather than a refusal — which, if
+   * it were linked here, would read as "this register is empty" instead of
+   * "this register is not yours". Deriving the nav from canEoRecordType is
+   * what keeps the two statements apart.
+   */
   const navTypes = useMemo(
     () =>
       (typesQuery.data?.data ?? [])
         .filter((rt) => !rt.is_abstract && rt.is_active)
-        .filter(
-          (rt) =>
-            isSuperAdmin ||
-            hasPermission(`eo:${rt.key}:view`) ||
-            hasPermission(PERMISSIONS.EO_VIEW),
-        )
+        .filter((rt) => canEoRecordType(rt.key, "view"))
         .sort((a, b) => a.name.localeCompare(b.name)),
-    [typesQuery.data, isSuperAdmin, hasPermission],
+    [typesQuery.data, canEoRecordType],
   );
+
+  /**
+   * Nothing to show, and the catalogue has answered. Distinguished from "still
+   * loading" so the sidebar does not accuse a legitimate user of holding no
+   * registers for the length of one request.
+   */
+  const noRegisters = !typesQuery.isLoading && navTypes.length === 0;
 
   const handleLanguageChange = async (langCode: string) => {
     if (langCode === currentLang) {
@@ -180,7 +194,7 @@ export const EoLayout: React.FC = () => {
           )}
         </div>
 
-        {navTypes.length > 0 && (
+        {(navTypes.length > 0 || noRegisters) && (
           <>
             {!collapsed && (
               <p className="px-3 mt-6 mb-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
@@ -196,6 +210,14 @@ export const EoLayout: React.FC = () => {
                   Briefcase,
                   true,
                 ),
+              )}
+              {noRegisters && !collapsed && (
+                <p className="px-3 py-2 text-xs text-slate-500 leading-relaxed">
+                  {t(
+                    "eo.nav.noRegisters",
+                    "No registers have been granted to you. Ask an administrator for access to a record type.",
+                  )}
+                </p>
               )}
             </div>
           </>

@@ -225,9 +225,29 @@ export const PERMISSIONS = {
   CALL_RECORDING_HISTORY: "call-recordings:history",
 
   // Executive Office (EO) record platform.
+  //
   // Per-type codes ("eo:eo_directive:create") are issued dynamically by the
-  // backend and are NOT enumerated here — build them at the call site as
-  // hasPermission(`eo:${type.key}:create`) || hasPermission(EO_CREATE).
+  // backend and are NOT enumerated here. DO NOT rebuild them at a call site:
+  // use usePermissions().canEoRecordType(typeKey, action) — the one place the
+  // algebra lives, and the one place to correct if the server's changes.
+  //
+  // THE ALGEBRA IS AND, NOT OR. The server narrows the module grant with the
+  // per-type one: every id-carrying EO route carries the module middleware
+  // AND the per-type middleware (backend eo_record_handler.go RegisterRoutes),
+  // and the register's LIST is filtered to the types whose view code the
+  // caller holds (repository.applyEORecordTypePermissions), so a caller
+  // holding no per-type code sees an EMPTY register rather than a refusal.
+  //
+  // An earlier revision of this comment prescribed
+  //   hasPermission(`eo:${type.key}:create`) || hasPermission(EO_CREATE)
+  // which inverted it. Every user who reaches /eo already holds eo:view
+  // (the route's PermissionRoute), so under OR the per-type disjunct could
+  // never change the answer: three guards written that way were dead.
+  //
+  // THERE IS NO eo:<type_key>:transition. §7.11 names three per-type actions —
+  // view, create, update — and the seed writes exactly those three. A
+  // transition is a WRITE to the record, so the server asks the module's
+  // eo:transition AND the type's UPDATE code for it.
   EO_VIEW: "eo:view",
   EO_CREATE: "eo:create",
   EO_UPDATE: "eo:update",
@@ -236,3 +256,32 @@ export const PERMISSIONS = {
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
+
+/** The per-type actions a caller can be gated on. See the EO block above. */
+export type EoTypeAction = "view" | "create" | "update" | "transition";
+
+/** The MODULE code each action demands, the first half of the AND. */
+export const EO_MODULE_CODE: Record<EoTypeAction, string> = {
+  view: PERMISSIONS.EO_VIEW,
+  create: PERMISSIONS.EO_CREATE,
+  update: PERMISSIONS.EO_UPDATE,
+  transition: PERMISSIONS.EO_TRANSITION,
+};
+
+/**
+ * The PER-TYPE suffix each action demands, the second half of the AND.
+ * `transition` maps to `update` because that is the code the server checks —
+ * eo:<key>:transition is a code no role has ever held.
+ */
+export const EO_TYPE_SUFFIX: Record<EoTypeAction, string> = {
+  view: "view",
+  create: "create",
+  update: "update",
+  transition: "update",
+};
+
+/** `eo:<type_key>:<view|create|update>` — the backend's EOTypePermissionCode. */
+export const eoTypePermissionCode = (
+  typeKey: string,
+  action: EoTypeAction,
+): string => `eo:${typeKey}:${EO_TYPE_SUFFIX[action]}`;

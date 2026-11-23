@@ -6042,7 +6042,8 @@
       "section": "Executive Office",
       "myAssigned": "My assigned",
       "allRecords": "All records",
-      "recordTypes": "Registers"
+      "recordTypes": "Registers",
+      "noRegisters": "No registers have been granted to you. Ask an administrator for access to a record type."
     },
     "table": {
       "reference": "Reference",
@@ -6147,6 +6148,8 @@
       "title": "Executive Office",
       "subtitle": "Correspondence & directives",
       "description": "Track directives, memos and executive records"
-    }
+    },
+    "noTypeAccess": "This register is not available to you",
+    "noTypeAccessHint": "You hold access to the Executive Office, but not to this record type. Ask an administrator to grant it."
   }
 }

@@ -12,7 +12,6 @@ import {
 } from "../../hooks/useEoRecords";
 import { usePermissions } from "../../hooks/usePermissions";
 import { useLocalizedField } from "../../hooks/useLocalizedField";
-import { PERMISSIONS } from "../../constants/permissions";
 import { EoFieldValue } from "../../components/eo/EoFieldValue";
 import { EoStateBadge } from "../../components/eo/EoStateBadge";
 import { EoTransitionModal } from "../../components/eo/EoTransitionModal";
@@ -23,7 +22,7 @@ type TabKey = "details" | "children";
 export const EoRecordDetailPage: React.FC = () => {
   const { t } = useTranslation();
   const { typeKey, id } = useParams<{ typeKey: string; id: string }>();
-  const { hasPermission, isSuperAdmin } = usePermissions();
+  const { canEoRecordType } = usePermissions();
   const localize = useLocalizedField();
 
   const [tab, setTab] = useState<TabKey>("details");
@@ -86,14 +85,11 @@ export const EoRecordDetailPage: React.FC = () => {
     [fields],
   );
 
-  const canUpdate =
-    isSuperAdmin ||
-    hasPermission(PERMISSIONS.EO_UPDATE) ||
-    (!!recordType && hasPermission(`eo:${recordType.key}:update`));
-  const canTransition =
-    isSuperAdmin ||
-    hasPermission(PERMISSIONS.EO_TRANSITION) ||
-    (!!recordType && hasPermission(`eo:${recordType.key}:transition`));
+  // PUT /eo-records/:id asks for eo:update AND eo:<key>:update.
+  const canUpdate = canEoRecordType(recordType?.key, "update");
+  // POST /eo-records/:id/transition asks for eo:transition AND the type's
+  // UPDATE code — a transition is a write. There is no eo:<key>:transition.
+  const canTransition = canEoRecordType(recordType?.key, "transition");
 
   const registerPath = typeKey ? `/eo/${typeKey}` : "/eo/records";
 

@@ -1,6 +1,11 @@
 import { useCallback } from "react";
 import { useAuthStore } from "../stores/authStore";
-import { PERMISSIONS } from "../constants/permissions";
+import {
+  EO_MODULE_CODE,
+  PERMISSIONS,
+  eoTypePermissionCode,
+} from "../constants/permissions";
+import type { EoTypeAction } from "../constants/permissions";
 
 export const usePermissions = () => {
   const { user } = useAuthStore();
@@ -47,6 +52,34 @@ export const usePermissions = () => {
       );
     },
     [user],
+  );
+
+  /**
+   * Executive Office, §7.11: may this caller run `action` on the record type
+   * `typeKey`?
+   *
+   * THE SERVER'S ALGEBRA, REPRODUCED EXACTLY — the module code AND the
+   * per-type code. See the EO block in constants/permissions.ts for why it is
+   * AND and not OR, and why `transition` asks the type's UPDATE code.
+   *
+   * A super admin passes, as they do in middleware.EOTypePermission and in
+   * repository.applyEORecordTypePermissions.
+   *
+   * An ABSENT typeKey is false for everybody but a super admin: a per-type
+   * check with no type has not made a decision, and answering true would be
+   * the OR bug in a different costume. Callers that legitimately have no type
+   * in hand (the all-types register's New button) must resolve one first.
+   */
+  const canEoRecordType = useCallback(
+    (typeKey: string | null | undefined, action: EoTypeAction): boolean => {
+      if (user?.is_super_admin) return true;
+      if (!typeKey) return false;
+      return (
+        hasPermission(EO_MODULE_CODE[action]) &&
+        hasPermission(eoTypePermissionCode(typeKey, action))
+      );
+    },
+    [user, hasPermission],
   );
 
   return {
@@ -193,6 +226,10 @@ export const usePermissions = () => {
     canManageKpiSegments: () => hasPermission(PERMISSIONS.SEGMENT_MANAGE),
     canManageCorrectiveActions: () =>
       hasPermission(PERMISSIONS.CORRECTIVE_ACTION_MANAGE),
+
+    // Executive Office — module code AND per-type code. Every EO gate goes
+    // through this one function; nothing rebuilds `eo:<key>:<action>` itself.
+    canEoRecordType,
   };
 };
 
