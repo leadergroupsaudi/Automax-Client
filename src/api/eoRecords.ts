@@ -191,6 +191,53 @@ const withDecodedBlobError = async (error: unknown): Promise<unknown> => {
 };
 
 /**
+ * The filename out of a Content-Disposition header, or undefined.
+ *
+ * RFC 6266 allows two spellings and a response may carry both:
+ * `filename="report.pdf"` (ASCII) and `filename*=UTF-8''report%20%D8%A3.pdf`
+ * (percent-encoded, any charset). `filename*` WINS when present — that is the
+ * rule, and it is the only one of the two that can carry an Arabic name,
+ * which this register will have plenty of.
+ *
+ * The result is reduced to a BASE NAME. The header is server data arriving at
+ * an `a.download`, and while browsers already refuse to write outside the
+ * download directory, a name carrying `/` or `\` is never what the server
+ * meant and stripping it costs one line.
+ */
+export const contentDispositionFileName = (
+  headers: unknown,
+): string | undefined => {
+  const raw = (headers as Record<string, unknown> | undefined)?.[
+    "content-disposition"
+  ];
+  const disposition = typeof raw === "string" ? raw : "";
+  if (!disposition) return undefined;
+
+  const decode = (value: string): string | undefined => {
+    let name = value.trim().replace(/^"|"$/g, "");
+    try {
+      name = decodeURIComponent(name);
+    } catch {
+      // Not percent-encoded, or not validly so. Use it as it arrived rather
+      // than discarding a name the server did send.
+    }
+    name = name.split(/[\\/]/).pop() ?? "";
+    return name.trim() || undefined;
+  };
+
+  // filename*=[charset]'[lang]'value — preferred, per RFC 6266 §4.3.
+  const extended = disposition.match(/filename\*\s*=\s*[^']*'[^']*'([^;]+)/i);
+  if (extended) {
+    const name = decode(extended[1]);
+    if (name) return name;
+  }
+
+  const plain = disposition.match(/filename\s*=\s*("([^"]*)"|[^;]+)/i);
+  if (plain) return decode(plain[2] ?? plain[1]);
+  return undefined;
+};
+
+/**
  * The three file routes of §7.12. They are the ONLY way a client obtains a
  * Documenta file id, which is what a `file` / `multi_file` field stores, and
  * the only way one is read back — the reads stream the bytes through Automax
@@ -223,13 +270,16 @@ export const eoFileApi = {
   /**
    * Raw bytes, Content-Disposition: attachment.
    *
-   * The record stores only the file id, so the server's filename is the only
-   * name a reader can be given — and it is readable here only when the
-   * browser is allowed to see the header. The API is cross-origin and the
-   * server does not list Content-Disposition in Access-Control-Expose-Headers
-   * (cmd/server/main.go CORS), so today this is usually undefined and the
-   * caller falls back to a generic name. Parsing it anyway costs nothing and
-   * starts working the day the header is exposed.
+   * The record stores only the file id, so the SERVER'S filename is the only
+   * real name a reader can be given — and the browser only lets this code see
+   * the header when the API lists Content-Disposition in
+   * Access-Control-Expose-Headers (the API is cross-origin). Until that
+   * landed, every download was saved as the generic fallback.
+   *
+   * Read defensively, because the header may be absent for three different
+   * reasons — not exposed, not set, or a same-origin deployment where it is
+   * there all along — and `undefined` is the right answer for all three: the
+   * caller falls back rather than inventing a name.
    */
   download: async (
     recordId: string,
@@ -240,25 +290,34 @@ export const eoFileApi = {
         `/eo-records/${recordId}/files/${fileId}`,
         { responseType: "blob" },
       );
-      const disposition = String(res.headers?.["content-disposition"] ?? "");
-      const match = disposition.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
       return {
         blob: res.data as Blob,
-        fileName: match ? decodeURIComponent(match[1]) : undefined,
+        fileName: contentDispositionFileName(res.headers),
       };
     } catch (error) {
       throw await withDecodedBlobError(error);
     }
   },
 
-  /** The same bytes served inline, for opening in a viewer tab. */
-  preview: async (recordId: string, fileId: string): Promise<Blob> => {
+  /**
+   * The same bytes served inline, for opening in a viewer tab. It carries the
+   * same header, and the preview pane titles itself with it — and falls back
+   * to SAVING the bytes for a type it will not render, where the name is the
+   * one the reader ends up with on disk.
+   */
+  preview: async (
+    recordId: string,
+    fileId: string,
+  ): Promise<{ blob: Blob; fileName?: string }> => {
     try {
       const res = await apiClient.get(
         `/eo-records/${recordId}/files/${fileId}/preview`,
         { responseType: "blob" },
       );
-      return res.data as Blob;
+      return {
+        blob: res.data as Blob,
+        fileName: contentDispositionFileName(res.headers),
+      };
     } catch (error) {
       throw await withDecodedBlobError(error);
     }

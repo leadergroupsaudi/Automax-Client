@@ -497,6 +497,20 @@ export function useEoFileActions(recordId?: string) {
     URL.revokeObjectURL(url);
   };
 
+  /**
+   * What to call a file on disk, most authoritative first.
+   *
+   * THE SERVER'S NAME WINS. `fileName` is whatever the caller happened to
+   * know — on a form, the name of the File object this browser uploaded a
+   * moment ago, and nothing at all for a file somebody else attached. The
+   * Content-Disposition name is what Documenta stores, so it is right for
+   * every reader and not just the uploader. The generic default is the last
+   * resort it was always meant to be, reached only when the header is
+   * genuinely absent AND the caller knew no name.
+   */
+  const savedAs = (served?: string, known?: string) =>
+    served || known || t("eo.file.defaultName", "attachment");
+
   const download = async (fileId: string, fileName?: string) => {
     if (!recordId) return;
     setBusyId(fileId);
@@ -505,10 +519,7 @@ export function useEoFileActions(recordId?: string) {
         recordId,
         fileId,
       );
-      saveBlob(
-        blob,
-        fileName || served || t("eo.file.defaultName", "attachment"),
-      );
+      saveBlob(blob, savedAs(served, fileName));
     } catch (error: unknown) {
       noteDocumentaRefusal(error);
       toast.error(
@@ -531,9 +542,12 @@ export function useEoFileActions(recordId?: string) {
   const openPreview = async (fileId: string, fileName?: string) => {
     if (!recordId) return;
     setBusyId(fileId);
-    const name = fileName || t("eo.file.defaultName", "attachment");
     try {
-      const blob = await eoFileApi.preview(recordId, fileId);
+      const { blob, fileName: served } = await eoFileApi.preview(
+        recordId,
+        fileId,
+      );
+      const name = savedAs(served, fileName);
       const type = baseMimeType(blob.type);
       if (!EO_PREVIEWABLE_TYPES.has(type)) {
         // Re-wrapped so the type cannot drive a renderer anywhere, including
