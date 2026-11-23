@@ -357,6 +357,27 @@ export function useUploadEoRecordFile() {
   });
 }
 
+/** Blob types a preview may RENDER. Everything else is handed over as bytes. */
+const EO_PREVIEWABLE_TYPES = new Set([
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "image/gif",
+  "image/webp",
+  "text/plain",
+]);
+
+/** "text/html; charset=utf-8" → "text/html"; anything unparseable → "". */
+const baseMimeType = (type: string | undefined): string =>
+  (type ?? "").split(";")[0].trim().toLowerCase();
+
+/** What a preview is currently showing, as an object URL the frame loads. */
+export interface EoFilePreviewState {
+  url: string;
+  name: string;
+  type: string;
+}
+
 /**
  * Download / preview for one record's files.
  *
@@ -365,10 +386,62 @@ export function useUploadEoRecordFile() {
  * the global interceptor turns a 401 into a logout. The bytes come back
  * through apiClient as a Blob and are handed to the browser from an object
  * URL — the same shape documentApi.download already uses for DMS files.
+ *
+ * ────────────────────────────────────────────────────────────────────────────
+ * WHY PREVIEW IS NOT A WINDOW, AND WHY THE SERVER'S CSP DOES NOT REACH IT
+ * ────────────────────────────────────────────────────────────────────────────
+ * This was stored XSS until it was caught in review, and the mistake is one
+ * any "preview a file" feature will make again, so it is written down here.
+ *
+ * The first version did `window.open("", "_blank")` and then set that
+ * window's location to `URL.createObjectURL(blob)`. A `blob:` URL inherits
+ * THE ORIGIN THAT CREATED IT — this application's. So an uploaded .html or
+ * .svg previewed that way ran as first-party script: the JWT in
+ * localStorage, the session, and every authenticated endpoint the viewer can
+ * reach. Any user who could attach a file to a record could attack any user
+ * who previewed it.
+ *
+ * Task B3 serves previews with `Content-Disposition: inline`,
+ * `X-Content-Type-Options: nosniff` and `Content-Security-Policy:
+ * default-src 'none'`, and those headers are correct. THEY ONLY APPLY WHEN
+ * THE BROWSER FETCHES THE SERVER'S URL. Fetching the bytes with XHR throws
+ * the response headers away; re-wrapping the body in a blob URL creates a
+ * NEW document with no CSP at all, on a more dangerous origin than the one
+ * the server put it on. The backend did the right thing and the frontend
+ * undid it. A preview that re-hosts bytes must re-create the protection the
+ * headers were providing, because it cannot inherit it.
+ *
+ * Two defences, both needed:
+ *
+ *  1. AN ALLOWLIST OF RENDERABLE TYPES, decided from the Blob's own `type`.
+ *     `text/html` and `image/svg+xml` are the live vectors and are not on
+ *     it; an empty or unrecognised type is not on it either. Anything off
+ *     the list is never rendered — it is re-wrapped as
+ *     `application/octet-stream` and saved, which cannot execute.
+ *  2. A SANDBOXED FRAME, never a window. The frame carries `sandbox` WITHOUT
+ *     `allow-same-origin`, so its document gets an opaque origin and a type
+ *     that somehow slipped the allowlist still cannot reach this origin, its
+ *     storage or its cookies. Navigating a window gives none of that.
+ *
+ * The download path is unaffected: `a.download` makes the browser save the
+ * bytes rather than render them.
  */
 export function useEoFileActions(recordId?: string) {
   const { t } = useTranslation();
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<EoFilePreviewState | null>(null);
+
+  /** Hands a blob to the browser as a saved file. Never renders it. */
+  const saveBlob = (blob: Blob, fileName: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
 
   const download = async (fileId: string, fileName?: string) => {
     if (!recordId) return;
@@ -378,14 +451,10 @@ export function useEoFileActions(recordId?: string) {
         recordId,
         fileId,
       );
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName || served || t("eo.file.defaultName", "attachment");
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      saveBlob(
+        blob,
+        fileName || served || t("eo.file.defaultName", "attachment"),
+      );
     } catch (error: unknown) {
       toast.error(
         eoErrorMessage(
@@ -398,19 +467,36 @@ export function useEoFileActions(recordId?: string) {
     }
   };
 
-  const preview = async (fileId: string) => {
+  const closePreview = () =>
+    setPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev.url);
+      return null;
+    });
+
+  const openPreview = async (fileId: string, fileName?: string) => {
     if (!recordId) return;
-    // The tab is opened synchronously, inside the click, or the popup blocker
-    // eats it while the bytes are still in flight.
-    const win = window.open("", "_blank");
     setBusyId(fileId);
+    const name = fileName || t("eo.file.defaultName", "attachment");
     try {
       const blob = await eoFileApi.preview(recordId, fileId);
-      const url = URL.createObjectURL(blob);
-      if (win) win.location.href = url;
-      else window.open(url, "_blank");
+      const type = baseMimeType(blob.type);
+      if (!EO_PREVIEWABLE_TYPES.has(type)) {
+        // Re-wrapped so the type cannot drive a renderer anywhere, including
+        // whatever the browser does with a dragged or re-opened download.
+        saveBlob(new Blob([blob], { type: "application/octet-stream" }), name);
+        toast.info(
+          t(
+            "eo.file.previewNotSupported",
+            "This kind of file cannot be previewed safely, so it was downloaded instead.",
+          ),
+        );
+        return;
+      }
+      setPreview((prev) => {
+        if (prev) URL.revokeObjectURL(prev.url);
+        return { url: URL.createObjectURL(blob), name, type };
+      });
     } catch (error: unknown) {
-      win?.close();
       toast.error(
         eoErrorMessage(
           error,
@@ -422,5 +508,5 @@ export function useEoFileActions(recordId?: string) {
     }
   };
 
-  return { download, preview, busyId };
+  return { download, openPreview, closePreview, preview, busyId };
 }

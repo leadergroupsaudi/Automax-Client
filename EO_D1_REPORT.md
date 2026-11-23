@@ -1,13 +1,17 @@
 # Task D1 — Files can be attached from the form
 
-Branch `rnd/temporal-workflows`. One commit: *feat(eo): upload control for file and multi_file fields*.
+Branch `rnd/temporal-workflows`. Two commits:
+*feat(eo): upload control for file and multi_file fields*, and
+*fix(eo): stored XSS in the attachment preview path* (§8 — found in review,
+not by me).
 
 **Status: DONE_WITH_CONCERNS.** The control is built, wired and driven in a
 real headless Chromium against the live backend on `:8080` and Vite on `:5173`.
 `npm run type-check` passes. `npm run lint` reports the same **2** pre-existing
 errors as before the change (`e2e/fixtures.ts:35`, `src/hooks/useSavedViews.ts:88`)
-and **0** in anything this task touched. The concerns in §7 are backend gaps,
-not loose frontend ends.
+and **0** in anything this task touched. The concerns in §8 are backend gaps,
+not loose frontend ends. §7 is a stored XSS that review found in the first
+commit and the second commit fixes.
 
 ---
 
@@ -64,7 +68,7 @@ The reasoning, in order of weight:
    after filling in a 26-field form and pressing Save.
 
 **The cost, stated:** a clerk who wants to attach a document to a new record
-saves once and then attaches. And see §7.1 — a `file` field whose
+saves once and then attaches. And see §8.1 — a `file` field whose
 `required_mode` is `always` cannot be created by *any* client, under either
 approach; that is a backend chicken-and-egg, not a consequence of this choice.
 
@@ -120,7 +124,8 @@ in flight, or the popup blocker eats it.
 
 ### New
 ```
-src/components/eo/EoFileField.tsx     the control + EoFileLinks (read-only view)
+src/components/eo/EoFileField.tsx     the control, EoFileLinks (read-only view)
+                                      and EoFilePreviewFrame (sandboxed, §7)
 ```
 
 ### Edited
@@ -130,6 +135,7 @@ src/types/eoRecord.ts              EoFileUploadResult, EoDocumentaStatus
 src/lib/eoFields.ts                eoErrorMessage / eoErrorStatus / toFileIdList
 src/hooks/useEoRecords.ts          eoKeys.documenta(), useEoDocumentaStatus(),
                                    useUploadEoRecordFile(), useEoFileActions()
+                                   (allowlist + preview state — §7)
 src/components/eo/EoFieldInput.tsx  file/multi_file → EoFileField; recordId +
                                     persistedValue props
 src/components/eo/EoFieldValue.tsx  file/multi_file → openable rows; recordId prop
@@ -222,6 +228,8 @@ A computed-style sweep of every node inside the field found no element whose
 `text-align` resolves to a *physical* direction against the document
 (everything is `start`, which Chromium reports as `right` under `dir="rtl"`).
 
+Shots `11`–`14` belong to §7 and were taken against the fixed code.
+
 **Proven live:** the create-form state, the dropzone, the 503 refusal and its
 message, the whole Arabic and dark path, the `PUT` that saves an id, and the
 detail page's rendering of a saved attachment.
@@ -236,7 +244,82 @@ the final pass and the record is as it was found.
 
 ---
 
-## 7. Concerns
+## 7. A stored XSS in the first version of the preview path
+
+**Found by an automated security review of commit `9bca709`, not by me, and
+confirmed against the file before it was fixed.** It is written up at length
+in `src/hooks/useEoRecords.ts` above `useEoFileActions`, because the next
+person who builds a file preview in this codebase will make the same mistake
+in the same way.
+
+### What the bug was
+
+The first version opened a tab and navigated it to the blob:
+
+```ts
+const win = window.open("", "_blank");
+const blob = await eoFileApi.preview(recordId, fileId);
+win.location.href = URL.createObjectURL(blob);
+```
+
+**A `blob:` URL inherits the origin that created it** — the application's. So
+an uploaded `.html` or `.svg`, previewed, ran as first-party script on
+`localhost:5173`: the JWT in `localStorage`, the session, and every
+authenticated endpoint the viewer can reach. Any user who can attach a file
+to a record could attack any user who previews it. Stored XSS, one click.
+
+### Why the backend's hardening did not reach it — the transferable part
+
+Task B3 serves previews with `Content-Disposition: inline`,
+`X-Content-Type-Options: nosniff` and `Content-Security-Policy: default-src
+'none'`, and a reviewer verified each by mutation. **Those headers only apply
+to the document the browser creates when it fetches the server's URL.** This
+client fetches the bytes over XHR (it has to: auth is a bearer token in a
+header, so the top-level window cannot be navigated to the route), throws the
+response headers away, and re-wraps the body in a blob URL. That makes a *new*
+document, with no CSP at all, on a *more* dangerous origin than the one the
+server chose. The backend did the right thing and the frontend undid it.
+
+The rule worth remembering: **a client that re-hosts bytes does not inherit
+the protection the response headers were giving them, and must re-create it.**
+
+### The fix, both halves
+
+1. **An allowlist of renderable types**, decided from the Blob's own `type`
+   (`useEoRecords.ts`, `EO_PREVIEWABLE_TYPES`): `application/pdf`,
+   `image/png`, `image/jpeg`, `image/gif`, `image/webp`, `text/plain`. An
+   empty or unrecognised type is not previewable. `text/html` and
+   `image/svg+xml` — the live vectors — are not on it. Anything off the list
+   is never rendered: it is re-wrapped as a `application/octet-stream` Blob
+   and saved, with a toast saying so.
+2. **A sandboxed frame, never a window.** `EoFilePreviewFrame` renders
+   `<iframe sandbox="" …>` — written with no value so every restriction
+   applies, and crucially **without `allow-same-origin`**, which gives the
+   document an opaque origin. A type that somehow slipped the allowlist still
+   cannot reach this origin, its storage or its cookies. The frame is
+   portalled to `<body>` for the reason `components/ui/Modal.tsx` documents,
+   and closes on Escape or a backdrop click.
+
+The download path is unchanged apart from sharing a `saveBlob` helper:
+`a.download` makes the browser save the bytes rather than render them.
+
+### Proved in the browser, not asserted
+
+Driver: `…/scratchpad/d1sec.mjs`. The preview route is intercepted (the live
+one 503s), serving attacker payloads with the real route's headers.
+
+| shot | payload | what happened |
+|---|---|---|
+| `11-xss-html-refused.png` | `text/html` containing `localStorage.setItem("XSS_PROOF", …)`, a write to `window.parent.localStorage`, and `alert("xss")` | **0 preview frames rendered**; a download fired instead; the toast reads "This kind of file cannot be previewed safely, so it was downloaded instead."; `localStorage.XSS_PROOF === null`, `XSS_PROOF_PARENT === null`; **0 dialogs** |
+| `12-xss-svg-refused.png` | `image/svg+xml` with an inline `<script>` and `alert("svg-xss")` | same: no frame, downloaded, nothing written, no dialog |
+| `13-png-preview-sandboxed.png` | `image/png` | preview **still works**: 1 frame, `sandbox=""`, a `blob:` src, the image visible. Reading into it from the app origin throws `SecurityError — Blocked a frame with origin "http://localhost:5173" from accessing a cross-origin frame`, i.e. the opaque origin is real. Escape closes it (0 frames after) |
+| `14-text-preview-sandboxed.png` | `text/plain` containing `<script>alert(1)</script>` | renders as literal text inside the sandboxed frame; same `SecurityError` on access; no dialog |
+
+`FINAL dialogs: []` across all four.
+
+---
+
+## 8. Concerns
 
 1. **A `file` field with `required_mode: always` cannot be created by any
    client.** `services.validateRecordValues` (`eo_fields.go:206`) enforces

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import {
   Download,
@@ -17,6 +18,7 @@ import {
   useEoFileActions,
   useUploadEoRecordFile,
 } from "../../hooks/useEoRecords";
+import type { EoFilePreviewState } from "../../hooks/useEoRecords";
 import {
   eoErrorMessage,
   eoErrorStatus,
@@ -110,6 +112,98 @@ const iconButtonClasses =
   "p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--muted))] transition-colors disabled:opacity-40";
 
 // ════════════════════════════════════════════════════════════════════════════
+// The preview frame
+// ════════════════════════════════════════════════════════════════════════════
+
+interface EoFilePreviewFrameProps {
+  preview: EoFilePreviewState;
+  onClose: () => void;
+}
+
+/**
+ * Shows a previewable file INSIDE A SANDBOXED FRAME, never in a window.
+ *
+ * `sandbox` is written with no value on purpose: that applies every
+ * restriction, and the one that matters is the absence of
+ * `allow-same-origin`. A blob: URL inherits the origin that created it — this
+ * application's — so a document loaded from one in an ordinary window or
+ * frame is first-party script. With this attribute the frame's document gets
+ * an OPAQUE origin instead: no access to this origin, its localStorage (where
+ * the JWT lives), its cookies, or `window.parent`. The allowlist in
+ * useEoFileActions should mean nothing executable ever reaches here; this is
+ * the layer that holds when it does.
+ *
+ * Adding `allow-same-origin` — or going back to `window.open` — reintroduces
+ * stored XSS, and no amount of server-side CSP will catch it, because the
+ * server's headers are gone the moment the bytes are re-wrapped as a blob.
+ */
+export const EoFilePreviewFrame: React.FC<EoFilePreviewFrameProps> = ({
+  preview,
+  onClose,
+}) => {
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "unset";
+    };
+  }, [onClose]);
+
+  // Portalled to <body> for the reason components/ui/Modal.tsx gives: the
+  // page wrapper's stacking context otherwise leaves the layout's sidebar
+  // painted over the overlay, whatever z-index it carries.
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={preview.name}
+      className="fixed inset-0 z-[1001] flex flex-col bg-black/70 p-4 sm:p-8"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="flex flex-col flex-1 min-h-0 w-full max-w-5xl mx-auto rounded-xl overflow-hidden border border-[hsl(var(--border))] bg-[hsl(var(--background))] shadow-2xl"
+      >
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-[hsl(var(--border))]">
+          <Paperclip className="w-4 h-4 shrink-0 text-[hsl(var(--muted-foreground))]" />
+          <div className="min-w-0 flex-1 text-start">
+            <p className="text-sm font-medium text-[hsl(var(--foreground))] truncate">
+              {preview.name}
+            </p>
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">
+              {preview.type}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t("common.close", "Close")}
+            className={cn(iconButtonClasses, "hover:text-red-500")}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <iframe
+          data-testid="eo-file-preview-frame"
+          title={preview.name}
+          src={preview.url}
+          sandbox=""
+          referrerPolicy="no-referrer"
+          className="flex-1 w-full bg-white"
+        />
+      </div>
+    </div>,
+    document.body,
+  );
+};
+
+// ════════════════════════════════════════════════════════════════════════════
 // Read-only links (detail page, and any saved id)
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -135,7 +229,8 @@ export const EoFileLinks: React.FC<EoFileLinksProps> = ({
   names,
 }) => {
   const { t } = useTranslation();
-  const { download, preview, busyId } = useEoFileActions(recordId);
+  const { download, openPreview, closePreview, preview, busyId } =
+    useEoFileActions(recordId);
 
   if (ids.length === 0) return null;
 
@@ -163,7 +258,7 @@ export const EoFileLinks: React.FC<EoFileLinksProps> = ({
         >
           <button
             type="button"
-            onClick={() => preview(fileId)}
+            onClick={() => openPreview(fileId, names?.[fileId])}
             disabled={busyId === fileId}
             title={t("eo.file.preview", "Preview")}
             aria-label={t("eo.file.preview", "Preview")}
@@ -183,6 +278,9 @@ export const EoFileLinks: React.FC<EoFileLinksProps> = ({
           </button>
         </EoFileRow>
       ))}
+      {preview && (
+        <EoFilePreviewFrame preview={preview} onClose={closePreview} />
+      )}
     </div>
   );
 };
@@ -262,7 +360,8 @@ export const EoFileField: React.FC<EoFileFieldProps> = ({
   const { t } = useTranslation();
   const documenta = useEoDocumentaStatus();
   const uploadFile = useUploadEoRecordFile();
-  const { download, preview, busyId } = useEoFileActions(recordId);
+  const { download, openPreview, closePreview, preview, busyId } =
+    useEoFileActions(recordId);
 
   /** Names and sizes learnt from this session's 201s, keyed by file id. */
   const [meta, setMeta] = useState<Record<string, EoFileMeta>>({});
@@ -437,7 +536,7 @@ export const EoFileField: React.FC<EoFileFieldProps> = ({
               <>
                 <button
                   type="button"
-                  onClick={() => preview(fileId)}
+                  onClick={() => openPreview(fileId, known?.name)}
                   disabled={busyId === fileId}
                   title={t("eo.file.preview", "Preview")}
                   aria-label={t("eo.file.preview", "Preview")}
@@ -493,6 +592,10 @@ export const EoFileField: React.FC<EoFileFieldProps> = ({
           <Paperclip className="w-3 h-3" />
           {t("eo.file.none", "No file attached")}
         </p>
+      )}
+
+      {preview && (
+        <EoFilePreviewFrame preview={preview} onClose={closePreview} />
       )}
     </div>
   );

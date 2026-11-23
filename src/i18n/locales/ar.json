@@ -6106,6 +6106,7 @@
       "remove": "إزالة",
       "downloadFailed": "تعذر فتح هذا الملف",
       "previewFailed": "تعذر معاينة هذا الملف",
+      "previewNotSupported": "لا يمكن معاينة هذا النوع من الملفات بأمان، لذا تم تنزيله بدلًا من ذلك.",
       "defaultName": "مرفق"
     },
     "create": {

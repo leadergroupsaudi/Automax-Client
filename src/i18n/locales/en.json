@@ -6101,6 +6101,7 @@
       "remove": "Remove",
       "downloadFailed": "Could not open that file",
       "previewFailed": "Could not preview that file",
+      "previewNotSupported": "This kind of file cannot be previewed safely, so it was downloaded instead.",
       "defaultName": "attachment"
     },
     "create": {
