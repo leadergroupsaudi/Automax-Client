@@ -75,7 +75,7 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
             "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))]",
           !canSelect && !isSelected && "text-[hsl(var(--muted-foreground))]",
         )}
-        style={{ paddingLeft: `${level * 20 + 12}px` }}
+        style={{ paddingInlineStart: `${level * 20 + 12}px` }}
       >
         {/* Expand/Collapse icon */}
         {hasChildren ? (
@@ -90,7 +90,7 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
             {isExpanded ? (
               <ChevronDown className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
             ) : (
-              <ChevronRight className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+              <ChevronRight className="w-4 h-4 text-[hsl(var(--muted-foreground))] rtl:rotate-180" />
             )}
           </button>
         ) : (
@@ -302,7 +302,7 @@ export const TreeSelect: React.FC<TreeSelectProps> = ({
               : getLocalizedName(selectedNode)
             : resolvedPlaceholder}
         </span>
-        <div className="flex items-center gap-1 ml-2">
+        <div className="flex items-center gap-1 ms-2">
           {value && !disabled && (
             <button
               type="button"
