@@ -58,15 +58,30 @@ export const eoKeys = {
 };
 
 // ──────────────────────────────────────────────────
-// Catalogue queries (static per deploy)
+// Catalogue queries
 // ──────────────────────────────────────────────────
+
+/**
+ * How long the type catalogue and its field definitions are trusted.
+ *
+ * NOT Infinity, which is what this was. The point of the record-type designer
+ * is that an administrator adds a type, or a field, WITHOUT a restart — and
+ * under `staleTime: Infinity, gcTime: Infinity` the new type stayed invisible
+ * to every already-open tab until someone hard-reloaded it, which defeats the
+ * feature. A five-minute window keeps the catalogue off the hot path (every
+ * render inside it is still served from cache) while making "wait a moment,
+ * or revisit the page" enough to see the change — which is what an
+ * administrator will try first.
+ */
+const EO_CATALOGUE_STALE_MS = 5 * 60 * 1000;
+const EO_CATALOGUE_GC_MS = 30 * 60 * 1000;
 
 export function useEoRecordTypes() {
   return useQuery({
     queryKey: eoKeys.types(),
     queryFn: () => eoRecordTypeApi.list(),
-    staleTime: Infinity,
-    gcTime: Infinity,
+    staleTime: EO_CATALOGUE_STALE_MS,
+    gcTime: EO_CATALOGUE_GC_MS,
   });
 }
 
@@ -106,8 +121,10 @@ export function useEoEffectiveFields(typeId?: string) {
     queries: chainIds.map((id) => ({
       queryKey: eoKeys.typeFields(id),
       queryFn: () => eoRecordTypeApi.listFields(id),
-      staleTime: Infinity,
-      gcTime: Infinity,
+      // Same window as the catalogue, for the same reason: a field added in
+      // the designer must reach an open tab without a hard reload.
+      staleTime: EO_CATALOGUE_STALE_MS,
+      gcTime: EO_CATALOGUE_GC_MS,
     })),
   });
 
@@ -232,11 +249,23 @@ export function useEoMyAssigned(
   });
 }
 
-export function useEoRecord(id: string) {
+interface EoRecordQueryOptions {
+  /**
+   * Whether a refused read is worth retrying. The detail PAGE wants the
+   * default (a flaky network should not look like a missing record); a
+   * SPECULATIVE read does not — see the `link` resolution in EoFieldValue,
+   * where a 403 is the expected answer for a record the reader may not see
+   * and retrying it only multiplies the refusals.
+   */
+  retry?: boolean;
+}
+
+export function useEoRecord(id: string, options: EoRecordQueryOptions = {}) {
   return useQuery({
     queryKey: eoKeys.detail(id),
     queryFn: () => eoRecordApi.getById(id),
     enabled: !!id,
+    ...(options.retry === undefined ? {} : { retry: options.retry }),
   });
 }
 

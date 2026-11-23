@@ -235,8 +235,14 @@ export function registerColumnFields(
     "change_reason",
     "delay_reason",
   ]);
+  // Attachments are excluded by KIND as well as by key: `file` was filtered
+  // and `multi_file` was not, so a type that defines a multi_file field of
+  // its own (any key but "attachments") put a column of download buttons in
+  // the register — in a cell with no room for them and no record context.
   return fields
-    .filter((f) => !skip.has(f.key) && f.kind !== "file")
+    .filter(
+      (f) => !skip.has(f.key) && f.kind !== "file" && f.kind !== "multi_file",
+    )
     .slice(0, max);
 }
 

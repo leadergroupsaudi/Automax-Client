@@ -88,10 +88,16 @@ export const EoFieldValue: React.FC<EoFieldValueProps> = ({
    * which is the whole reason the picker exists — so resolve it to
    * `reference — subject` through the same eoKeys.detail cache the detail page
    * fills. Disabled for every other kind, so no extra request is made.
+   *
+   * `retry: false`, as the sibling useEoWorkflowStates sets, and for the same
+   * reason: a 403 or 404 here is an ANSWER, not a failure. A linked record
+   * the reader may not see is refused deterministically, and retrying it
+   * turns one expected refusal into several — per cell, on a register page
+   * where the cell is drawn once a row. There is nothing a retry can change.
    */
   const linkId =
     field.kind === "link" && typeof value === "string" ? value : "";
-  const linkQuery = useEoRecord(linkId);
+  const linkQuery = useEoRecord(linkId, { retry: false });
 
   const userById = useMemo(() => {
     const map = new Map<string, User>();
