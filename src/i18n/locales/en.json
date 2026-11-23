@@ -6071,7 +6071,6 @@
       "selectOrgUnit": "Select an organisational unit",
       "selectOrgUnits": "Select organisational units",
       "selectExternalBody": "Select an external body",
-      "filePlaceholder": "Documenta file id",
       "linkPlaceholder": "Select a record",
       "linkSearchPlaceholder": "Search by reference or subject…",
       "linkSearching": "Searching…",
@@ -6083,6 +6082,26 @@
       "linkNoReference": "(no reference)",
       "linkScopedTo": "Showing {{type}} records only",
       "linkMore": "Showing {{shown}} of {{total}} — refine the search"
+    },
+    "file": {
+      "saveFirst": "Save the record first — files can be attached from the record once it exists.",
+      "storageOff": "Document storage is not set up for the Executive Office, so files cannot be attached yet.",
+      "hintSingle": "One file is filed on this record.",
+      "hintMulti": "Each file is filed on this record.",
+      "uploading": "Uploading…",
+      "uploadFailed": "The file could not be uploaded",
+      "notAttached": "Not attached",
+      "empty": "This file is empty (0 bytes).",
+      "notSavedYet": "Uploaded — save the record to keep it",
+      "numbered": "Attachment {{n}}",
+      "attachedCount": "{{n}} file(s) attached",
+      "none": "No file attached",
+      "preview": "Preview",
+      "download": "Download",
+      "remove": "Remove",
+      "downloadFailed": "Could not open that file",
+      "previewFailed": "Could not preview that file",
+      "defaultName": "attachment"
     },
     "create": {
       "title": "New {{type}}",
@@ -6106,7 +6125,6 @@
       "notFoundHint": "It may have been removed, or you may not be allowed to see it.",
       "noFields": "This type defines no fields.",
       "noChildren": "This record has no children.",
-      "fileCount": "file(s)",
       "tabs": {
         "details": "Details",
         "children": "Children"

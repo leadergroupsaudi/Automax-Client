@@ -5,7 +5,8 @@ import { Check, Minus } from "lucide-react";
 import { userApi, departmentApi } from "../../api/admin";
 import { useLocalizedField } from "../../hooks/useLocalizedField";
 import { useEoRecord } from "../../hooks/useEoRecords";
-import { eoRecordLabel } from "../../lib/eoFields";
+import { eoRecordLabel, toFileIdList } from "../../lib/eoFields";
+import { EoFileLinks } from "./EoFileField";
 import type { EoFieldDefinition } from "../../types/eoRecord";
 import type { Department, User } from "../../types";
 
@@ -14,6 +15,11 @@ interface EoFieldValueProps {
   value: unknown;
   /** Compact rendering for table cells — no wrapping, truncated. */
   compact?: boolean;
+  /**
+   * The record this value belongs to. `file` / `multi_file` need it to offer
+   * a download: the read routes are scoped to the record that holds the id.
+   */
+  recordId?: string;
 }
 
 const flattenDepartments = (depts: Department[]): Department[] =>
@@ -52,6 +58,7 @@ export const EoFieldValue: React.FC<EoFieldValueProps> = ({
   field,
   value,
   compact = false,
+  recordId,
 }) => {
   const { t } = useTranslation();
   const localize = useLocalizedField();
@@ -216,12 +223,16 @@ export const EoFieldValue: React.FC<EoFieldValueProps> = ({
       return <span className={textClass}>{eoRecordLabel(rec, localize)}</span>;
     }
 
+    // Attachments are Documenta file ids. Printing one is printing a UUID at
+    // a reader, so the detail page offers the file itself; a register cell
+    // (compact, and with no record id) stays a count.
+    case "file":
     case "multi_file":
       return (
-        <span className={textClass}>
-          {(Array.isArray(value) ? value : [value]).length}{" "}
-          {t("eo.detail.fileCount", "file(s)")}
-        </span>
+        <EoFileLinks
+          recordId={compact ? undefined : recordId}
+          ids={toFileIdList(value)}
+        />
       );
 
     default:

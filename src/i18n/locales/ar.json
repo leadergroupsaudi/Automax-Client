@@ -6076,7 +6076,6 @@
       "selectOrgUnit": "اختر وحدة تنظيمية",
       "selectOrgUnits": "اختر وحدات تنظيمية",
       "selectExternalBody": "اختر جهة خارجية",
-      "filePlaceholder": "معرّف ملف Documenta",
       "linkPlaceholder": "اختر سجلاً",
       "linkSearchPlaceholder": "ابحث بالرقم المرجعي أو الموضوع…",
       "linkSearching": "جارٍ البحث…",
@@ -6088,6 +6087,26 @@
       "linkNoReference": "(بدون رقم مرجعي)",
       "linkScopedTo": "تُعرض سجلات {{type}} فقط",
       "linkMore": "تُعرض {{shown}} من {{total}} — حدّد البحث أكثر"
+    },
+    "file": {
+      "saveFirst": "احفظ السجل أولًا — يمكن إرفاق الملفات بالسجل بعد إنشائه.",
+      "storageOff": "لم يتم إعداد تخزين المستندات للمكتب التنفيذي، لذا لا يمكن إرفاق الملفات حاليًا.",
+      "hintSingle": "يُحفظ ملف واحد على هذا السجل.",
+      "hintMulti": "يُحفظ كل ملف على هذا السجل.",
+      "uploading": "جارٍ الرفع…",
+      "uploadFailed": "تعذر رفع الملف",
+      "notAttached": "لم يُرفق",
+      "empty": "هذا الملف فارغ (0 بايت).",
+      "notSavedYet": "تم الرفع — احفظ السجل للاحتفاظ به",
+      "numbered": "مرفق {{n}}",
+      "attachedCount": "{{n}} ملف مرفق",
+      "none": "لا يوجد ملف مرفق",
+      "preview": "معاينة",
+      "download": "تنزيل",
+      "remove": "إزالة",
+      "downloadFailed": "تعذر فتح هذا الملف",
+      "previewFailed": "تعذر معاينة هذا الملف",
+      "defaultName": "مرفق"
     },
     "create": {
       "title": "{{type}} جديد",
@@ -6111,7 +6130,6 @@
       "notFoundHint": "ربما تم حذفه أو لا تملك صلاحية الاطلاع عليه.",
       "noFields": "لا يعرّف هذا النوع أي حقول.",
       "noChildren": "لا توجد سجلات فرعية.",
-      "fileCount": "ملف/ملفات",
       "tabs": {
         "details": "التفاصيل",
         "children": "السجلات الفرعية"

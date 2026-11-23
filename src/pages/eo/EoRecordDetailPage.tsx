@@ -243,7 +243,11 @@ export const EoRecordDetailPage: React.FC = () => {
                     ) || field.key}
                   </dt>
                   <dd>
-                    <EoFieldValue field={field} value={values[field.key]} />
+                    <EoFieldValue
+                      field={field}
+                      value={values[field.key]}
+                      recordId={record.id}
+                    />
                   </dd>
                 </div>
               ))}

@@ -208,3 +208,29 @@ export interface EoTransitionRequest {
 export type EoAvailableTransition = WorkflowTransition;
 
 export type EoWorkflowState = WorkflowState;
+
+/**
+ * 201 from POST /eo-records/:id/files. `documenta_file_id` is the value a
+ * `file` / `multi_file` field stores; the other three are known only to the
+ * client that performed the upload, because nothing in Automax persists them
+ * (the record holds the bare id and there is no list-files route).
+ */
+export interface EoFileUploadResult {
+  documenta_file_id: string;
+  file_name: string;
+  file_size: number;
+  mime_type: string;
+}
+
+/**
+ * Whether this deployment can store EO documents at all.
+ *
+ * There is no endpoint that answers it: the upload route refuses with 503
+ * naming EO_DOCUMENTA_ENABLED=false, and that refusal is the only signal
+ * there is. It is cached so one field's 503 teaches every other field.
+ */
+export interface EoDocumentaStatus {
+  available: boolean;
+  /** The server's own words, shown verbatim — it names the setting. */
+  message?: string;
+}

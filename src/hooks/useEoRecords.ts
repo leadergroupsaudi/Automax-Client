@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   useQuery,
   useQueries,
@@ -7,9 +8,19 @@ import {
   keepPreviousData,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { eoRecordApi, eoRecordTypeApi, eoWorkflowApi } from "../api/eoRecords";
-import { resolveEffectiveFields } from "../lib/eoFields";
+import {
+  eoFileApi,
+  eoRecordApi,
+  eoRecordTypeApi,
+  eoWorkflowApi,
+} from "../api/eoRecords";
+import {
+  eoErrorMessage,
+  eoErrorStatus,
+  resolveEffectiveFields,
+} from "../lib/eoFields";
 import type {
+  EoDocumentaStatus,
   EoFieldDefinition,
   EoRecordFilter,
   EoRecordSearchBody,
@@ -41,6 +52,7 @@ export const eoKeys = {
   detail: (id: string) => [...eoKeys.details(), id] as const,
   transitions: (id: string) => [...eoKeys.all, "transitions", id] as const,
   children: (id: string) => [...eoKeys.all, "children", id] as const,
+  documenta: () => [...eoKeys.all, "documenta-status"] as const,
 };
 
 // ──────────────────────────────────────────────────
@@ -281,4 +293,134 @@ export function useExecuteEoTransition() {
       );
     },
   });
+}
+
+// ──────────────────────────────────────────────────
+// Attachments (§7.12)
+// ──────────────────────────────────────────────────
+
+/** Nothing has told us otherwise yet. */
+const EO_DOCUMENTA_ASSUMED: EoDocumentaStatus = { available: true };
+
+/**
+ * Whether EO documents can be stored in this deployment.
+ *
+ * There is no endpoint that answers this. The upload route refuses with a 503
+ * naming EO_DOCUMENTA_ENABLED=false, and that refusal is the only signal there
+ * is — so it is written into the query cache and every file field reads it
+ * from there. One field's 503 therefore teaches the rest of the form, instead
+ * of each one having to fail on its own before it can say so.
+ *
+ * `enabled: false` with a queryFn that is never called is deliberate: the
+ * query exists purely as a SUBSCRIPTION to a cache entry the mutation below
+ * writes.
+ */
+export function useEoDocumentaStatus(): EoDocumentaStatus {
+  const { data } = useQuery<EoDocumentaStatus>({
+    queryKey: eoKeys.documenta(),
+    queryFn: async () => EO_DOCUMENTA_ASSUMED,
+    enabled: false,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
+  return data ?? EO_DOCUMENTA_ASSUMED;
+}
+
+/**
+ * POST /eo-records/:id/files — the only way to obtain a Documenta file id.
+ *
+ * No toast and no onError beyond the status flag: the refusals are per-field
+ * facts (503 the deployment, 409 this record's missing folder, 502 an
+ * unusable id from Documenta) and belong under the control the user just
+ * used, in the server's own words. The record's caches are NOT invalidated,
+ * because an upload changes nothing about the record until the form is saved
+ * with the returned id.
+ */
+export function useUploadEoRecordFile() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ recordId, file }: { recordId: string; file: File }) =>
+      eoFileApi.upload(recordId, file),
+    onSuccess: () => {
+      queryClient.setQueryData<EoDocumentaStatus>(eoKeys.documenta(), {
+        available: true,
+      });
+    },
+    onError: (error: unknown) => {
+      if (eoErrorStatus(error) === 503) {
+        queryClient.setQueryData<EoDocumentaStatus>(eoKeys.documenta(), {
+          available: false,
+          message: eoErrorMessage(error),
+        });
+      }
+    },
+  });
+}
+
+/**
+ * Download / preview for one record's files.
+ *
+ * Both routes are authenticated and stream the bytes through Automax, so a
+ * bare <a href> cannot be used: without the Bearer header it would 401, and
+ * the global interceptor turns a 401 into a logout. The bytes come back
+ * through apiClient as a Blob and are handed to the browser from an object
+ * URL — the same shape documentApi.download already uses for DMS files.
+ */
+export function useEoFileActions(recordId?: string) {
+  const { t } = useTranslation();
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const download = async (fileId: string, fileName?: string) => {
+    if (!recordId) return;
+    setBusyId(fileId);
+    try {
+      const { blob, fileName: served } = await eoFileApi.download(
+        recordId,
+        fileId,
+      );
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName || served || t("eo.file.defaultName", "attachment");
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (error: unknown) {
+      toast.error(
+        eoErrorMessage(
+          error,
+          t("eo.file.downloadFailed", "Could not open that file"),
+        ),
+      );
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const preview = async (fileId: string) => {
+    if (!recordId) return;
+    // The tab is opened synchronously, inside the click, or the popup blocker
+    // eats it while the bytes are still in flight.
+    const win = window.open("", "_blank");
+    setBusyId(fileId);
+    try {
+      const blob = await eoFileApi.preview(recordId, fileId);
+      const url = URL.createObjectURL(blob);
+      if (win) win.location.href = url;
+      else window.open(url, "_blank");
+    } catch (error: unknown) {
+      win?.close();
+      toast.error(
+        eoErrorMessage(
+          error,
+          t("eo.file.previewFailed", "Could not preview that file"),
+        ),
+      );
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  return { download, preview, busyId };
 }

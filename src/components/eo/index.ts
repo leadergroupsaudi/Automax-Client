@@ -5,3 +5,4 @@ export { EoRecordFilters } from "./EoRecordFilters";
 export { EoRecordForm } from "./EoRecordForm";
 export { EoTransitionModal } from "./EoTransitionModal";
 export { EoRecordPicker } from "./EoRecordPicker";
+export { EoFileField, EoFileLinks } from "./EoFileField";

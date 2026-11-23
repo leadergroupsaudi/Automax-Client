@@ -8,6 +8,7 @@ import { useEoEffectiveFields } from "../../hooks/useEoRecords";
 import { useLocalizedField } from "../../hooks/useLocalizedField";
 import {
   buildValuesPayload,
+  flattenRecordValues,
   isEmptyValue,
   seedFormValues,
   writableFields,
@@ -31,7 +32,14 @@ interface EoRecordFormProps {
 }
 
 /** Kinds that deserve the full row width. */
-const WIDE_KINDS = new Set(["long_text", "multi_org_unit", "multi_select"]);
+const WIDE_KINDS = new Set([
+  "long_text",
+  "multi_org_unit",
+  "multi_select",
+  // A dropzone plus a list of attachments does not fit a half-width cell.
+  "file",
+  "multi_file",
+]);
 
 /**
  * The dynamic EO form. Every control is generated from the record type's
@@ -77,6 +85,17 @@ export const EoRecordForm: React.FC<EoRecordFormProps> = ({
   }
 
   const editable = useMemo(() => writableFields(fields), [fields]);
+
+  /**
+   * What the server currently stores, as opposed to what the form holds. Only
+   * the attachment control needs it: a file id that is in the form but not yet
+   * in the record cannot be downloaded, because the read routes answer from
+   * the record's stored values.
+   */
+  const persisted = useMemo(
+    () => (record ? flattenRecordValues(record) : {}),
+    [record],
+  );
 
   const handleChange = (key: string, value: unknown) => {
     setForm((prev) => ({ ...(prev ?? {}), [key]: value }));
@@ -192,6 +211,8 @@ export const EoRecordForm: React.FC<EoRecordFormProps> = ({
                 onChange={handleChange}
                 error={errors[field.key]}
                 disabled={isSubmitting}
+                recordId={record?.id}
+                persistedValue={persisted[field.key]}
               />
             </div>
           ))}

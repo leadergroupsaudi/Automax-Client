@@ -6,9 +6,10 @@ import { MultiSelect } from "../ui/MultiSelect";
 import { TreeSelect } from "../ui/TreeSelect";
 import { MultiTreeSelect } from "../ui/MultiTreeSelect";
 import { EoRecordPicker } from "./EoRecordPicker";
+import { EoFileField } from "./EoFileField";
 import { userApi, departmentApi } from "../../api/admin";
 import { useLocalizedField } from "../../hooks/useLocalizedField";
-import { isReadOnlyField } from "../../lib/eoFields";
+import { isReadOnlyField, toFileIdList } from "../../lib/eoFields";
 import type { EoFieldDefinition } from "../../types/eoRecord";
 import type { Department, User } from "../../types";
 import type { TreeSelectNode } from "../../utils/treeUtils";
@@ -21,6 +22,18 @@ interface EoFieldInputProps {
   onChange: (key: string, value: unknown) => void;
   error?: string;
   disabled?: boolean;
+  /**
+   * The record being edited, when there is one. `file` / `multi_file` need it:
+   * POST /eo-records/:id/files files into THAT record's Documenta folder, so
+   * on a create form there is nothing to upload against.
+   */
+  recordId?: string;
+  /**
+   * The value the SAVED record holds for this field. An attachment is only
+   * readable once the record stores its id, so the upload control uses this
+   * to decide which files already have a working download link.
+   */
+  persistedValue?: unknown;
 }
 
 /**
@@ -89,6 +102,8 @@ export const EoFieldInput: React.FC<EoFieldInputProps> = ({
   onChange,
   error,
   disabled = false,
+  recordId,
+  persistedValue,
 }) => {
   const { t } = useTranslation();
   const localize = useLocalizedField();
@@ -433,30 +448,19 @@ export const EoFieldInput: React.FC<EoFieldInputProps> = ({
 
     case "file":
     case "multi_file":
-      // Attachments are Documenta file ids. EO Documenta is disabled in the
-      // pilot deployment (EO_DOCUMENTA_ENABLED=false) and the transition
-      // executor checks ids for PRESENCE only, so the prototype accepts the
-      // ids rather than running an upload against a service that is off.
+      // Was a text box asking for a Documenta file id — a value no office
+      // user has ever held. EoFileField uploads the file and keeps the id to
+      // itself; see that file for the three contract facts behind its states.
       return wrap(
-        <input
+        <EoFileField
           id={`eo-field-${field.key}`}
-          type="text"
+          multiple={field.kind === "multi_file"}
+          value={value}
+          onChange={set}
+          recordId={recordId}
+          persistedIds={toFileIdList(persistedValue)}
+          invalid={!!error}
           disabled={disabled}
-          value={
-            Array.isArray(value)
-              ? (value as string[]).join(", ")
-              : asString(value)
-          }
-          onChange={(e) => {
-            const raw = e.target.value;
-            if (field.kind === "multi_file") {
-              set(raw.trim() ? raw.split(",").map((s) => s.trim()) : "");
-            } else {
-              set(raw);
-            }
-          }}
-          placeholder={t("eo.form.filePlaceholder", "Documenta file id")}
-          className={cls}
         />,
       );
 

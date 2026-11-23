@@ -4,6 +4,7 @@ import type {
   EoRecord,
   EoRecordType,
   EoFieldDefinition,
+  EoFileUploadResult,
   EoRecordFilter,
   EoRecordListResponse,
   EoRecordCreateRequest,
@@ -141,5 +142,71 @@ export const eoRecordApi = {
   ): Promise<ApiResponse<unknown>> => {
     const res = await apiClient.post(`/eo-records/${id}/links`, data);
     return res.data;
+  },
+};
+
+/**
+ * The three file routes of §7.12. They are the ONLY way a client obtains a
+ * Documenta file id, which is what a `file` / `multi_file` field stores, and
+ * the only way one is read back — the reads stream the bytes through Automax
+ * rather than redirecting, because the record id in the path is the gate.
+ *
+ * No try/catch here, per the api-layer convention: a 503 (EO Documenta
+ * disabled), 409 (the record has no Documenta folder), 403, 404 or 502
+ * propagates as an axios rejection and the caller decides what to show.
+ */
+export const eoFileApi = {
+  /**
+   * Multipart, field name `file` — the same name the KPI evidence upload uses
+   * and the name the handler reads. The record must already exist: the route
+   * files into THAT record's Documenta folder.
+   */
+  upload: async (
+    recordId: string,
+    file: File,
+  ): Promise<ApiResponse<EoFileUploadResult>> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await apiClient.post(
+      `/eo-records/${recordId}/files`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } },
+    );
+    return res.data;
+  },
+
+  /**
+   * Raw bytes, Content-Disposition: attachment.
+   *
+   * The record stores only the file id, so the server's filename is the only
+   * name a reader can be given — and it is readable here only when the
+   * browser is allowed to see the header. The API is cross-origin and the
+   * server does not list Content-Disposition in Access-Control-Expose-Headers
+   * (cmd/server/main.go CORS), so today this is usually undefined and the
+   * caller falls back to a generic name. Parsing it anyway costs nothing and
+   * starts working the day the header is exposed.
+   */
+  download: async (
+    recordId: string,
+    fileId: string,
+  ): Promise<{ blob: Blob; fileName?: string }> => {
+    const res = await apiClient.get(`/eo-records/${recordId}/files/${fileId}`, {
+      responseType: "blob",
+    });
+    const disposition = String(res.headers?.["content-disposition"] ?? "");
+    const match = disposition.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
+    return {
+      blob: res.data as Blob,
+      fileName: match ? decodeURIComponent(match[1]) : undefined,
+    };
+  },
+
+  /** The same bytes served inline, for opening in a viewer tab. */
+  preview: async (recordId: string, fileId: string): Promise<Blob> => {
+    const res = await apiClient.get(
+      `/eo-records/${recordId}/files/${fileId}/preview`,
+      { responseType: "blob" },
+    );
+    return res.data as Blob;
   },
 };

@@ -276,3 +276,37 @@ export function eoRecordLabel(
   const subject = eoRecordSubject(record, localize);
   return [record.reference, subject].filter(Boolean).join(" — ");
 }
+
+/**
+ * The server's own words out of an axios rejection.
+ *
+ * EO refuses with `{success:false, error:"…"}` (utils.ErrorResponse) and
+ * validates with `{success:false, errors:{…}}`. Both are English-only by
+ * backend design and are shown verbatim — the 503 and 409 refusals in
+ * particular name the setting and the record, which is the whole value of
+ * them.
+ */
+export function eoErrorMessage(error: unknown, fallback = ""): string {
+  const data = (
+    error as {
+      response?: { data?: { error?: string; message?: string } };
+    }
+  )?.response?.data;
+  return data?.error || data?.message || fallback;
+}
+
+/** The HTTP status of an axios rejection, or 0 when there is none. */
+export function eoErrorStatus(error: unknown): number {
+  return (error as { response?: { status?: number } })?.response?.status ?? 0;
+}
+
+/**
+ * A `file` field stores one id, a `multi_file` field an array of them. Both
+ * arrive as "" when empty (see buildValuesPayload), so normalising once here
+ * keeps every caller from re-deciding what an empty attachment looks like.
+ */
+export function toFileIdList(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map(String).filter(Boolean);
+  if (typeof value === "string" && value.trim()) return [value.trim()];
+  return [];
+}
