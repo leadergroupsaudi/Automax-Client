@@ -6142,7 +6142,13 @@
       "noTransitions": "No transitions are available from this state.",
       "processing": "Processing…",
       "submit": "Confirm",
-      "success": "Record moved"
+      "success": "Record moved",
+      "fieldsHeading": "This step needs the following",
+      "fieldRequired": "This value is required for this transition.",
+      "blockedByFields": "The record cannot move until these values are set:",
+      "blockedByFieldsHint": "This step cannot accept them. Set them on the record first, then move it.",
+      "goToEdit": "Open the edit form",
+      "failed": "The record could not be moved. Please try again."
     },
     "dashboard": {
       "title": "Executive Office",

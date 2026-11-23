@@ -344,6 +344,12 @@ export const EoRecordDetailPage: React.FC = () => {
           recordId={record.id}
           recordName={`${record.reference} — ${subject}`}
           transitions={transitions}
+          fields={fields}
+          editPath={
+            canUpdate && typeKey
+              ? `/eo/${typeKey}/${record.id}/edit`
+              : undefined
+          }
           isOpen={showTransitions}
           onClose={() => setShowTransitions(false)}
         />

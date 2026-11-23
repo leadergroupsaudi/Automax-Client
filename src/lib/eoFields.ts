@@ -295,6 +295,53 @@ export function eoErrorMessage(error: unknown, fallback = ""): string {
   return data?.error || data?.message || fallback;
 }
 
+/**
+ * The PER-FIELD half of an EO refusal: `{success:false, errors:{key: msg}}`
+ * (handlers.eoFieldErrors), as a plain Record, or `{}` when the rejection
+ * carries no field map.
+ *
+ * This is the part that tells someone what to fix. Reading only `message` /
+ * `error` was how a transition refused for one missing field became "Failed
+ * to execute transition": `eoFieldErrors` writes NO message beside the map,
+ * so every extractor that looked for one found nothing and fell through to a
+ * generic sentence while the server's actual answer sat one key away.
+ *
+ * Values are coerced to strings because the map is JSON the server built and
+ * a non-string value must still be printable rather than "[object Object]".
+ */
+export function eoFieldErrorMap(error: unknown): Record<string, string> {
+  const errors = (error as { response?: { data?: { errors?: unknown } } })
+    ?.response?.data?.errors;
+  if (!errors || typeof errors !== "object" || Array.isArray(errors)) return {};
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(
+    errors as Record<string, unknown>,
+  )) {
+    if (value === null || value === undefined) continue;
+    out[key] = typeof value === "string" ? value : JSON.stringify(value);
+  }
+  return out;
+}
+
+/**
+ * One readable sentence for an EO refusal, field map included.
+ *
+ * Prefers the server's own `error` / `message` when it wrote one — the
+ * backend is adding a human-readable `error` ALONGSIDE `errors` for exactly
+ * this — and otherwise joins the field map, which is all a validation
+ * refusal carries today. The fallback is reached only when the rejection says
+ * nothing at all (a network failure).
+ */
+export function eoRefusalMessage(error: unknown, fallback = ""): string {
+  const direct = eoErrorMessage(error);
+  if (direct) return direct;
+  const fields = Object.entries(eoFieldErrorMap(error));
+  if (fields.length > 0) {
+    return fields.map(([key, message]) => `${key}: ${message}`).join("; ");
+  }
+  return fallback;
+}
+
 /** The HTTP status of an axios rejection, or 0 when there is none. */
 export function eoErrorStatus(error: unknown): number {
   return (error as { response?: { status?: number } })?.response?.status ?? 0;

@@ -301,15 +301,11 @@ export function useExecuteEoTransition() {
         queryKey: eoKeys.children(variables.id),
       });
     },
-    onError: (error: {
-      response?: { data?: { message?: string; error?: string } };
-    }) => {
-      toast.error(
-        error?.response?.data?.message ||
-          error?.response?.data?.error ||
-          "Failed to execute transition",
-      );
-    },
+    // NO onError toast. A transition refusal is usually
+    // `{success:false, errors:{field_key: message}}` with no message beside
+    // it, and the modal maps that map onto its own controls — a toast here
+    // would either say "Failed to execute transition" over the top of the
+    // real answer, or duplicate it. The modal's onError owns the wording.
   });
 }
 
