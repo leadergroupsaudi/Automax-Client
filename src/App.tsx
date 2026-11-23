@@ -28,6 +28,7 @@ import {
   CallCentreLayout,
   ReportsLayout,
   GoalLayout,
+  EoLayout,
 } from "./components/layout";
 import { PERMISSIONS } from "./constants/permissions";
 import { SettingsProvider } from "./contexts/SettingsContext";
@@ -320,6 +321,28 @@ const CommunicationsPage = lazy(() =>
 );
 const GoalsPage = lazy(() =>
   import("./pages/admin/GoalsPage").then((m) => ({ default: m.GoalsPage })),
+);
+
+// Executive Office (EO) record platform
+const EoRecordsPage = lazy(() =>
+  import("./pages/eo/EoRecordsPage").then((m) => ({
+    default: m.EoRecordsPage,
+  })),
+);
+const EoRecordDetailPage = lazy(() =>
+  import("./pages/eo/EoRecordDetailPage").then((m) => ({
+    default: m.EoRecordDetailPage,
+  })),
+);
+const EoRecordCreatePage = lazy(() =>
+  import("./pages/eo/EoRecordCreatePage").then((m) => ({
+    default: m.EoRecordCreatePage,
+  })),
+);
+const EoRecordEditPage = lazy(() =>
+  import("./pages/eo/EoRecordEditPage").then((m) => ({
+    default: m.EoRecordEditPage,
+  })),
 );
 const GoalDetailPage = lazy(() => import("./pages/admin/GoalDetailPage"));
 const GoalCreatePage = lazy(() =>
@@ -1593,6 +1616,51 @@ function App() {
                         <Route
                           path="/goals/kpi/segmentation"
                           element={<KpiSegmentationPage />}
+                        />
+                      </Route>
+                    </Route>
+                  </Route>
+
+                  {/* Executive Office routes - dedicated layout.
+                      Nested ProtectedRoute -> AdminProtectedRoute -> EoLayout:
+                      ProtectedRoute is what bootstraps the licence store, and
+                      EoLayout carries the eo_platform licence guard, since no
+                      licence-aware route component exists. Static segments are
+                      ordered before :typeKey so /eo/my-assigned is not matched
+                      as a record type. */}
+                  <Route element={<AdminProtectedRoute />}>
+                    <Route element={<EoLayout />}>
+                      <Route
+                        element={
+                          <PermissionRoute
+                            requiredPermissions={[PERMISSIONS.EO_VIEW]}
+                          />
+                        }
+                      >
+                        <Route
+                          path="/eo"
+                          element={<Navigate to="/eo/records" replace />}
+                        />
+                        <Route
+                          path="/eo/my-assigned"
+                          element={<EoRecordsPage />}
+                        />
+                        <Route path="/eo/records" element={<EoRecordsPage />} />
+                        <Route
+                          path="/eo/:typeKey"
+                          element={<EoRecordsPage />}
+                        />
+                        <Route
+                          path="/eo/:typeKey/new"
+                          element={<EoRecordCreatePage />}
+                        />
+                        <Route
+                          path="/eo/:typeKey/:id"
+                          element={<EoRecordDetailPage />}
+                        />
+                        <Route
+                          path="/eo/:typeKey/:id/edit"
+                          element={<EoRecordEditPage />}
                         />
                       </Route>
                     </Route>

@@ -26,6 +26,7 @@ import {
   Layers,
   Target,
   Radio,
+  Briefcase,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 
@@ -255,6 +256,22 @@ export const DashboardPage: React.FC = () => {
       shadowColor: "shadow-sky-500/20",
       permissions: [PERMISSIONS.DASHBOARD_GOALS],
       licenseFeature: "goals",
+    },
+    {
+      title: t("eo.dashboard.title", "Executive Office"),
+      subtitle: t("eo.dashboard.subtitle", "Correspondence & directives"),
+      description: t(
+        "eo.dashboard.description",
+        "Track directives, memos and executive records",
+      ),
+      href: "/eo",
+      icon: Briefcase,
+      gradient: "from-[#6366F1] to-[#4338CA]",
+      shadowColor: "shadow-indigo-500/20",
+      // The backend issues no `dashboard:eo` permission (checked against
+      // internal/database/postgres.go), so the card is gated on eo:view.
+      permissions: [PERMISSIONS.EO_VIEW],
+      licenseFeature: "eo_platform",
     },
   ];
 

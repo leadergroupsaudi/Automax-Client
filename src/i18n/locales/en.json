@@ -6027,5 +6027,96 @@
     "uploading": "Uploading...",
     "uploaded": "Uploaded",
     "uploadFailed": "Upload failed. Please try again."
+  },
+  "eo": {
+    "title": "Executive Office register",
+    "subtitle": "Directives, correspondence and executive records",
+    "myAssignedTitle": "My assigned records",
+    "newRecord": "New record",
+    "empty": "No records yet",
+    "emptyHint": "Adjust the filters, or create the first record.",
+    "failedToLoad": "Could not load the register",
+    "unexpectedError": "An unexpected error occurred",
+    "pageOf": "Page {{current}} of {{total}}",
+    "nav": {
+      "section": "Executive Office",
+      "myAssigned": "My assigned",
+      "allRecords": "All records",
+      "recordTypes": "Registers"
+    },
+    "table": {
+      "reference": "Reference",
+      "subject": "Subject",
+      "type": "Type",
+      "state": "State",
+      "priority": "Priority",
+      "dueDate": "Due date",
+      "unknownState": "—"
+    },
+    "priority": {
+      "normal": "Normal",
+      "high": "High",
+      "urgent": "Urgent"
+    },
+    "filters": {
+      "recordType": "Type",
+      "allTypes": "All types",
+      "allPriorities": "All priorities",
+      "searchPlaceholder": "Reference or subject…"
+    },
+    "form": {
+      "systemManaged": "Set automatically by the system",
+      "selectPlaceholder": "Select…",
+      "selectUser": "Select a user",
+      "selectOrgUnit": "Select an organisational unit",
+      "selectOrgUnits": "Select organisational units",
+      "selectExternalBody": "Select an external body",
+      "filePlaceholder": "Documenta file id",
+      "linkPlaceholder": "Related record id"
+    },
+    "create": {
+      "title": "New {{type}}",
+      "subtitle": "Fields are defined by the record type and may be required at later stages too.",
+      "submit": "Create record",
+      "success": "Record created",
+      "fixErrors": "Fix the highlighted fields and try again",
+      "unknownType": "That record type does not exist.",
+      "errors": {
+        "required": "{{field}} is required"
+      }
+    },
+    "edit": {
+      "title": "Edit record",
+      "submit": "Save changes",
+      "success": "Record updated"
+    },
+    "detail": {
+      "move": "Move",
+      "notFound": "Record not found",
+      "notFoundHint": "It may have been removed, or you may not be allowed to see it.",
+      "noFields": "This type defines no fields.",
+      "noChildren": "This record has no children.",
+      "fileCount": "file(s)",
+      "tabs": {
+        "details": "Details",
+        "children": "Children"
+      }
+    },
+    "transition": {
+      "title": "Move record",
+      "chooseLabel": "Transition",
+      "commentLabel": "Comment",
+      "commentOptional": "(optional)",
+      "commentPlaceholder": "Why is the record moving?",
+      "noTransitions": "No transitions are available from this state.",
+      "processing": "Processing…",
+      "submit": "Confirm",
+      "success": "Record moved"
+    },
+    "dashboard": {
+      "title": "Executive Office",
+      "subtitle": "Correspondence & directives",
+      "description": "Track directives, memos and executive records"
+    }
   }
 }

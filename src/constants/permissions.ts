@@ -223,6 +223,16 @@ export const PERMISSIONS = {
 
   VIEW_ALL_CALL_LOGS: "call-logs:view_all",
   CALL_RECORDING_HISTORY: "call-recordings:history",
+
+  // Executive Office (EO) record platform.
+  // Per-type codes ("eo:eo_directive:create") are issued dynamically by the
+  // backend and are NOT enumerated here — build them at the call site as
+  // hasPermission(`eo:${type.key}:create`) || hasPermission(EO_CREATE).
+  EO_VIEW: "eo:view",
+  EO_CREATE: "eo:create",
+  EO_UPDATE: "eo:update",
+  EO_TRANSITION: "eo:transition",
+  EO_TYPES_MANAGE: "eo:types:manage",
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

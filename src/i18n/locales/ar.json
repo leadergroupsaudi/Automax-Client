@@ -4511,7 +4511,7 @@
       "operationalObjectives": "الأهداف الرئيسية",
       "processes": "الأهداف التشغيلية",
       "initiatives": "المبادرات",
-      "domains":  "معيار الجائزة", 
+      "domains": "معيار الجائزة",
       "awardCriteria": "معايير الجوائز",
       "awardKpiMeasures": "مؤشرات وقياسات الجائزة",
       "awardSubCriteria": "المعايير الفرعية للجوائز",
@@ -6032,5 +6032,96 @@
     "uploading": "جارٍ الرفع...",
     "uploaded": "تم الرفع",
     "uploadFailed": "فشل الرفع. يرجى المحاولة مرة أخرى."
+  },
+  "eo": {
+    "title": "سجل المكتب التنفيذي",
+    "subtitle": "التوجيهات والمراسلات والسجلات التنفيذية",
+    "myAssignedTitle": "السجلات المسندة إليّ",
+    "newRecord": "سجل جديد",
+    "empty": "لا توجد سجلات بعد",
+    "emptyHint": "عدّل عوامل التصفية أو أنشئ أول سجل.",
+    "failedToLoad": "تعذّر تحميل السجل",
+    "unexpectedError": "حدث خطأ غير متوقع",
+    "pageOf": "صفحة {{current}} من {{total}}",
+    "nav": {
+      "section": "المكتب التنفيذي",
+      "myAssigned": "المسندة إليّ",
+      "allRecords": "كل السجلات",
+      "recordTypes": "السجلات"
+    },
+    "table": {
+      "reference": "المرجع",
+      "subject": "الموضوع",
+      "type": "النوع",
+      "state": "الحالة",
+      "priority": "الأولوية",
+      "dueDate": "تاريخ الاستحقاق",
+      "unknownState": "—"
+    },
+    "priority": {
+      "normal": "عادية",
+      "high": "عالية",
+      "urgent": "عاجلة"
+    },
+    "filters": {
+      "recordType": "النوع",
+      "allTypes": "كل الأنواع",
+      "allPriorities": "كل الأولويات",
+      "searchPlaceholder": "المرجع أو الموضوع…"
+    },
+    "form": {
+      "systemManaged": "يُحدَّد تلقائيًا من النظام",
+      "selectPlaceholder": "اختر…",
+      "selectUser": "اختر مستخدمًا",
+      "selectOrgUnit": "اختر وحدة تنظيمية",
+      "selectOrgUnits": "اختر وحدات تنظيمية",
+      "selectExternalBody": "اختر جهة خارجية",
+      "filePlaceholder": "معرّف ملف Documenta",
+      "linkPlaceholder": "معرّف السجل المرتبط"
+    },
+    "create": {
+      "title": "{{type}} جديد",
+      "subtitle": "تُعرَّف الحقول حسب نوع السجل وقد تصبح إلزامية في مراحل لاحقة.",
+      "submit": "إنشاء السجل",
+      "success": "تم إنشاء السجل",
+      "fixErrors": "صحّح الحقول المحددة ثم أعد المحاولة",
+      "unknownType": "نوع السجل هذا غير موجود.",
+      "errors": {
+        "required": "{{field}} مطلوب"
+      }
+    },
+    "edit": {
+      "title": "تعديل السجل",
+      "submit": "حفظ التغييرات",
+      "success": "تم تحديث السجل"
+    },
+    "detail": {
+      "move": "نقل",
+      "notFound": "السجل غير موجود",
+      "notFoundHint": "ربما تم حذفه أو لا تملك صلاحية الاطلاع عليه.",
+      "noFields": "لا يعرّف هذا النوع أي حقول.",
+      "noChildren": "لا توجد سجلات فرعية.",
+      "fileCount": "ملف/ملفات",
+      "tabs": {
+        "details": "التفاصيل",
+        "children": "السجلات الفرعية"
+      }
+    },
+    "transition": {
+      "title": "نقل السجل",
+      "chooseLabel": "الإجراء",
+      "commentLabel": "ملاحظة",
+      "commentOptional": "(اختياري)",
+      "commentPlaceholder": "ما سبب نقل السجل؟",
+      "noTransitions": "لا توجد إجراءات متاحة من هذه الحالة.",
+      "processing": "جارٍ التنفيذ…",
+      "submit": "تأكيد",
+      "success": "تم نقل السجل"
+    },
+    "dashboard": {
+      "title": "المكتب التنفيذي",
+      "subtitle": "المراسلات والتوجيهات",
+      "description": "تتبّع التوجيهات والمذكرات والسجلات التنفيذية"
+    }
   }
 }
