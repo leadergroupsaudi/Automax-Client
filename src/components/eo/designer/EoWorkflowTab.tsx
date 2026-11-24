@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { AlertCircle, ExternalLink, Loader2, Lock } from "lucide-react";
+import { AlertCircle, ExternalLink, Info, Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { WorkflowCanvas } from "../../workflow/WorkflowCanvas";
 import { PERMISSIONS } from "../../../constants/permissions";
@@ -61,14 +61,30 @@ const requestWithWorkflow = (
  * state of the OLD workflow, so after the change no transition runs from it
  * and no API route puts it back.
  *
- * WHY THE CONTROL IS ENABLED ONLY ON A COUNT THAT CAN BE TRUSTED. The server
- * refuses the repoint while the type or ANY TYPE BENEATH IT holds records,
- * counted as an administrator over everything. This screen's count is the
- * caller's own register view: it is narrowed for anyone who is not a super
- * admin, and partial while its queries are still landing. "0" from either is
- * "cannot confirm empty", not "empty" — so the control opens only on a
- * settled, un-narrowed, readable zero. The server still decides; this only
- * stops the tab from inviting an edit it cannot know is allowed.
+ * WHAT CLOSES THE GATE, AND WHY SO LITTLE DOES. The server is the authority
+ * and already enforces this: ValidateTypeEdit
+ * (internal/models/eo_record_type.go) refuses a `workflow_id` change while
+ * the subtree holds records, counted as an administrator over everything, and
+ * answers with a sentence EoRefusalBanner renders verbatim.
+ *
+ * So the gate closes on only two things, and BOTH are facts rather than
+ * doubts: the counts have not settled yet (`pending` — transient, and a
+ * part-landed sum reads 0 when it is not), or a count this caller CAN see is
+ * already above zero (`records`). The client count only ever UNDERSTATES —
+ * `applyEORecordVisibility` narrows it for anyone but a super admin — so a
+ * non-zero reading is true for everybody, and the records lock is genuine for
+ * everybody.
+ *
+ * EVERY OTHER DOUBT IS A CAUTION, NOT A LOCK. "I cannot confirm this is
+ * empty" is not "this has records". Treating it as one shut the gate
+ * PERMANENTLY for every holder of `eo:types:manage` who is not a super admin
+ * — the `EO Administrator` persona this tab exists for — so a type they
+ * created seconds ago, with no records at all, could never be given a
+ * lifecycle, and `at_state` requiredness and `is_locked_after_state_id` stayed
+ * unreachable on every type they create. A client gate that is permanently
+ * stricter than the server buys nothing and costs the persona the feature.
+ * The caution says the count cannot be trusted and that the server decides;
+ * the save is allowed to go and be refused.
  */
 export const EoWorkflowTab: React.FC<{
   recordType: EoRecordTypeDetail;
@@ -76,7 +92,9 @@ export const EoWorkflowTab: React.FC<{
 }> = ({ recordType, types }) => {
   const { t } = useTranslation();
   const { hasPermission } = usePermissions();
-  const canManage = hasPermission(PERMISSIONS.EO_TYPES_MANAGE);
+  // No `eo:types:manage` check here. PermissionRoute (App.tsx) gates the whole
+  // designer on it, so a check inside could never be false — "one that could
+  // never be false is not a guard", as that route's own comment puts it.
   const canOpenDesigner = hasPermission(PERMISSIONS.WORKFLOWS_VIEW);
 
   const { recordCount, isNarrowed, isUnreadable, isPending } =
@@ -107,54 +125,53 @@ export const EoWorkflowTab: React.FC<{
   // Follow the stored value after a save or when the type changes.
   useEffect(() => setChoice(currentId), [currentId, recordType.id]);
 
-  // The ONE place the gate is decided, and the reason it is closed.
-  type Lock =
-    | "permission"
-    | "pending"
-    | "unreadable"
-    | "narrowed"
-    | "records"
-    | "unknown"
-    | null;
-  const lock: Lock = !canManage
-    ? "permission"
-    : isPending
-      ? "pending"
+  // The ONE place the gate is decided, and the reason it is closed. Only a
+  // FACT closes it: counts still landing, or a count that is already non-zero.
+  type Lock = "pending" | "records" | null;
+  const lock: Lock = isPending
+    ? "pending"
+    : records !== undefined && records > 0
+      ? "records"
+      : null;
+
+  // The ONE place a count that cannot be trusted is reported. It never closes
+  // the gate; it says what the number is worth and who actually decides.
+  type Caution = "unreadable" | "unknown" | "narrowed" | null;
+  const caution: Caution =
+    lock !== null
+      ? null
       : isUnreadable
         ? "unreadable"
-        : isNarrowed
-          ? "narrowed"
-          : records === undefined
-            ? "unknown"
-            : records > 0
-              ? "records"
-              : null;
+        : records === undefined
+          ? "unknown"
+          : isNarrowed
+            ? "narrowed"
+            : null;
 
   const lockMessage: Record<Exclude<Lock, null>, string> = {
-    permission: t(
-      "eo.types.workflow.lockPermission",
-      "Associating a workflow needs the permission to manage record types.",
-    ),
     pending: t(
       "eo.types.workflow.lockPending",
       "Checking whether this record type holds records…",
-    ),
-    unreadable: t(
-      "eo.types.workflow.lockUnreadable",
-      "Some record counts could not be read, so this record type cannot be confirmed empty. Treat that as not empty.",
-    ),
-    narrowed: t(
-      "eo.types.workflow.lockNarrowed",
-      "Your count of records is taken from your own view of the registers and may be lower than what the server holds, so this record type cannot be confirmed empty from here. The server decides; a super administrator can confirm.",
-    ),
-    unknown: t(
-      "eo.types.workflow.lockUnknown",
-      "This record type has no register of its own to count, so it cannot be confirmed empty from here.",
     ),
     records: t("eo.types.workflow.lockRecords", {
       count: records ?? 0,
       defaultValue: `This record type and the types beneath it hold ${records ?? 0} records. A workflow cannot be changed while any exist.`,
     }),
+  };
+
+  const cautionMessage: Record<Exclude<Caution, null>, string> = {
+    unreadable: t(
+      "eo.types.workflow.cautionUnreadable",
+      "Some record counts could not be read, so this record type cannot be confirmed empty from here. You can still save: the server counts the whole subtree as an administrator and will refuse the change, giving its reason, if any records exist.",
+    ),
+    unknown: t(
+      "eo.types.workflow.cautionUnknown",
+      "This record type has no register of its own to count, so it cannot be confirmed empty from here. You can still save: the server counts the whole subtree as an administrator and will refuse the change, giving its reason, if any records exist.",
+    ),
+    narrowed: t(
+      "eo.types.workflow.cautionNarrowed",
+      "Your count of records is taken from your own view of the registers and may be lower than what the server holds, so this record type cannot be confirmed empty from here. You can still save: the server counts the whole subtree as an administrator and will refuse the change, giving its reason, if any records exist.",
+    ),
   };
 
   const dirty = choice !== currentId;
@@ -375,6 +392,17 @@ export const EoWorkflowTab: React.FC<{
           >
             <Lock className="w-4 h-4 shrink-0 mt-0.5" />
             {lockMessage[lock]}
+          </p>
+        )}
+
+        {caution !== null && (
+          <p
+            data-testid="eo-workflow-caution"
+            data-caution={caution}
+            className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
+          >
+            <Info className="w-4 h-4 shrink-0 mt-0.5" />
+            {cautionMessage[caution]}
           </p>
         )}
 

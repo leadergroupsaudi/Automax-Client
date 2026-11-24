@@ -59,13 +59,19 @@ const isTab = (v: string | null): v is DesignerTab =>
   v === "attributes" || v === "fields" || v === "links" || v === "workflow";
 
 /**
- * The record-type designer's shell: one type, three tabs.
+ * The record-type designer's shell: one type, four tabs.
  *
  * Task F1 builds the shell and the facts every tab needs — the type, its own
  * field definitions (which the by-id read carries and the list read does
- * not), and whether it holds records. F2 fills Attributes, F3 Fields, F4
- * Links, and F5 adds the destructive-edit confirmation that the record count
- * below is the trigger for.
+ * not), and whether it holds records. F2 fills Fields, F3 Links, F4 Workflow,
+ * and F5 adds the destructive-edit confirmation that the record count below
+ * is the trigger for.
+ *
+ * ATTRIBUTES IS A PLACEHOLDER AND IS NOT THE DEFAULT. No attribute editor is
+ * in this plan's scope, so opening a type on it landed every administrator on
+ * "not built yet" before they saw anything the designer does do. The designer
+ * opens on Fields; the tab stays, saying plainly what can and cannot be
+ * changed and where.
  *
  * The tab lives in the query string so a tab is linkable and survives a
  * reload, which the field editor in particular will want.
@@ -78,7 +84,7 @@ export const EoTypeDesignerPage: React.FC = () => {
 
   const tab: DesignerTab = isTab(searchParams.get("tab"))
     ? (searchParams.get("tab") as DesignerTab)
-    : "attributes";
+    : "fields";
 
   const typeQuery = useEoType(id);
   const recordType = typeQuery.data?.data;
@@ -273,15 +279,18 @@ export const EoTypeDesignerPage: React.FC = () => {
         </nav>
       </div>
 
-      {/* Panels. F2–F4 replace each placeholder with the editor for that tab;
-          the shell owns the type, the record count and the tab state they
-          read. */}
+      {/* Panels. F2–F4 own Fields, Links and Workflow; the shell owns the
+          type, the record count and the tab state they read. Attributes has
+          no editor in this plan and says so. */}
       <div className="rounded-xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/80 p-6">
         {tab === "attributes" && (
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p
+            data-testid="eo-attributes-placeholder"
+            className="text-sm text-slate-500 dark:text-slate-400"
+          >
             {t(
               "eo.types.tabs.attributesPending",
-              "The attribute editor is not built yet.",
+              "There is no attribute editor yet. A record type's key, name, parent and reference pattern are set when it is created and cannot be changed here. Its fields, its links and its workflow are on the other three tabs.",
             )}
           </p>
         )}

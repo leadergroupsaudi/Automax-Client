@@ -219,18 +219,18 @@ export const EoFieldsTab: React.FC<EoFieldsTabProps> = ({
   /**
    * A state-based requirement needs states to name, and there are two
    * different reasons there might be none. They are reported separately
-   * because only one of them is anybody's mistake: a type with no workflow is
-   * the designer's own gap (a type created on this screen gets no workflow
-   * and there is no attributes editor to set one — Task F1's carry-forward),
-   * while a workflow whose states this user may not read is a permission the
-   * EO module does not imply.
+   * because only one of them is anybody's mistake: a type with no workflow
+   * simply has not been given one yet, and the Workflow tab is where that is
+   * done (a type created on this screen starts with none), while a workflow
+   * whose states this user may not read is a permission the EO module does
+   * not imply.
    */
   const statesAvailable = !!recordType.workflow_id && states.length > 0;
   let statesUnavailableReason: string | undefined;
   if (!recordType.workflow_id) {
     statesUnavailableReason = t(
       "eo.types.field.noWorkflow",
-      "This record type has no workflow, so it has no states to require a field at. A type created in this designer has none until one is set, which no screen can do yet.",
+      "This record type has no workflow, so it has no states to require a field at. A type created in this designer has none until one is set on the Workflow tab.",
     );
   } else if (statesQuery.isLoading) {
     statesUnavailableReason = t(

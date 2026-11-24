@@ -68,15 +68,13 @@ export const eoTypeApi = {
   },
 
   /**
-   * Soft-delete. The server REFUSES with 409 while the type holds records,
-   * and also while any other type names it as `parent_type_id` — a
-   * soft-deleted parent is invisible to the ancestor walk and would break
-   * every descendant's create, update and transition.
+   * NO `remove`. `DELETE /admin/eo-record-types/:id` exists, but no screen in
+   * this designer deletes a record type: the route soft-deletes the type
+   * alone and leaves its three per-type permissions and their six role grants
+   * behind, and `permissions.code` carries no `deleted_at` predicate, so the
+   * key can never be reused. That is a platform defect with its own owning
+   * task; binding it here before it is fixed only makes it reachable.
    */
-  remove: async (id: string): Promise<ApiResponse<unknown>> => {
-    const res = await apiClient.delete(`/admin/eo-record-types/${id}`);
-    return res.data;
-  },
 };
 
 /**

@@ -46,7 +46,14 @@ export const EoRefusalBanner: React.FC<{
           <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">
             {refusal.message}
           </p>
-          {refusal.destructive && (
+          {/* THE HINT AND THE BUTTON SHARE ONE CONDITION, deliberately. The
+              hint promises "the change can be made with an explicit
+              confirmation"; the button is that route. On a surface with no
+              `onConfirm` — the workflow tab, which never overrides the guard
+              rail — the hint alone would assert a way through that the screen
+              does not offer. A refusal with no confirmation route explains
+              itself and stops there. */}
+          {refusal.destructive && onConfirm && (
             <p className="mt-2 text-xs text-amber-700 dark:text-amber-400">
               {t(
                 "eo.types.field.refusedHint",

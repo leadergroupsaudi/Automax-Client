@@ -1,15 +1,12 @@
 import { useCallback, useMemo } from "react";
-import { useTranslation } from "react-i18next";
 import {
   useQuery,
   useQueries,
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { eoLinkTypeApi, eoTypeApi, eoTypeFieldApi } from "../api/eoTypes";
 import { eoRecordApi, eoRecordTypeApi } from "../api/eoRecords";
-import { eoRefusalMessage } from "../lib/eoFields";
 import { workflowApi } from "../api/admin";
 import { eoKeys } from "./useEoRecords";
 import usePermissions from "./usePermissions";
@@ -204,6 +201,14 @@ export function useEoTypeRecordCounts(types: EoRecordType[]) {
    * The register answered about this caller's own view, so every count may be
    * lower than what the server holds. True for everyone but a super admin —
    * no query has to fail for it, and none will.
+   *
+   * ⚠ IT IS A PROPERTY OF THE CALLER, NOT AN EVENT: for any given session it
+   * never changes. So it may describe a count and must NEVER gate an action.
+   * Wired to a disabled control it is a gate that, once shut, never opens —
+   * which is exactly what happened to the workflow association tab, where it
+   * locked the one persona the tab was built for out of every type they
+   * create, records or none. Say the number may be understated; let the
+   * server, which counts the whole subtree with `IsAdmin`, refuse.
    */
   const isNarrowed = !isSuperAdmin;
   /** A count query failed, so those types have no count at all. */
@@ -261,8 +266,13 @@ const useInvalidateCatalogue = () => {
  * record form has the same deviation: a 400 is
  * `{errors:{field: message}, error:"<headline>"}` and the form needs that map
  * to put each message under its own control. The page handles the rejection
- * in its `mutateAsync` catch and toasts the headline there. The DELETE is the
- * exception — it has no per-field surface, so it toasts here.
+ * in its `mutateAsync` catch and toasts the headline there.
+ *
+ * There is no type DELETE hook. No screen in this designer deletes a record
+ * type, and deleting one through the API orphans its three per-type
+ * permissions and their six role grants with nothing to clean them up, so the
+ * key can never be reused — a platform defect with its own owning task. A
+ * hook nothing calls would only make that reachable by accident.
  */
 export function useCreateEoType() {
   const invalidate = useInvalidateCatalogue();
@@ -282,28 +292,6 @@ export function useUpdateEoType() {
     // nothing the first did not, and reads as a guarantee the first does not
     // provide.
     onSuccess: invalidate,
-  });
-}
-
-export function useDeleteEoType() {
-  const { t } = useTranslation();
-  const invalidate = useInvalidateCatalogue();
-  return useMutation({
-    mutationFn: (id: string) => eoTypeApi.remove(id),
-    onSuccess: () => {
-      invalidate();
-      toast.success(t("eo.types.deleted", "Record type deleted"));
-    },
-    onError: (error: unknown) => {
-      // The 409 names WHY — records, or a type that still calls this one its
-      // parent — and that sentence is the whole value of the refusal.
-      toast.error(
-        eoRefusalMessage(
-          error,
-          t("eo.types.deleteFailed", "Could not delete that record type"),
-        ),
-      );
-    },
   });
 }
 
