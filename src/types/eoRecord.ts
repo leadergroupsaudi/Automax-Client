@@ -240,3 +240,64 @@ export interface EoDocumentaStatus {
   /** The server's own words, shown verbatim — it names the setting. */
   message?: string;
 }
+
+// ── the type designer (admin) ───────────────────────────────────────────────
+
+/** `reference_mode`, as handlers.eoValidateTypeShape allow-lists it. */
+export type EoReferenceMode = "" | "own" | "parent";
+
+/**
+ * GET /admin/eo-record-types/:id. The by-id read is the ONLY type read that
+ * carries field definitions: the LIST route returns none at all (handler
+ * List serves models.EORecordType rows straight from the repository, Get sets
+ * t.Fields first). Written as its own type so a caller cannot read `fields`
+ * off a list row and silently get `undefined`.
+ */
+export interface EoRecordTypeDetail extends EoRecordType {
+  fields?: EoFieldDefinition[];
+}
+
+/**
+ * The body POST / and PUT /admin/eo-record-types/:id bind
+ * (handlers.eoRecordTypeRequest).
+ *
+ * PUT REPLACES the attribute set — an omitted key is read as an empty value,
+ * not as "leave it alone" — so every edit sends the whole shape. The two
+ * exceptions are deliberate on the server and mirrored here:
+ *
+ *  - `capabilities` omitted or empty leaves the stored column alone, which is
+ *    load-bearing for the pilot seed's "never configured" marker. The
+ *    designer does not edit capabilities, so it never sends the key.
+ *  - `confirm_destructive` is not an attribute of the type. It authorises ONE
+ *    §7.14-refused change and is recorded in the audit log. Task F5 fills it;
+ *    F1 never sends one, so an edit this screen refuses to confirm is refused
+ *    by the server rather than waved through.
+ */
+export interface EoRecordTypeRequest {
+  key: string;
+  name: string;
+  name_ar?: string;
+  icon?: string;
+  parent_type_id?: string | null;
+  is_abstract: boolean;
+  reference_prefix?: string;
+  reference_mode?: EoReferenceMode;
+  reference_pattern?: string;
+  workflow_id?: string | null;
+  is_active?: boolean;
+  confirm_destructive?: EoDestructiveConfirmation;
+}
+
+/**
+ * models.EODestructiveConfirmation — §7.14's other half. Declared here so F5
+ * has the shape to fill and so EoRecordTypeRequest can name it; F1 sends none.
+ */
+export interface EoDestructiveConfirmation {
+  /** The key of the type the operator authorised the change on. */
+  type_key: string;
+  /** One of models.EODestructiveChanges — a wire contract, stored verbatim. */
+  change: string;
+  field_key?: string;
+  /** The rule the operator states for the records the edit leaves behind. */
+  reason?: string;
+}

@@ -324,6 +324,16 @@ const GoalsPage = lazy(() =>
 );
 
 // Executive Office (EO) record platform
+const EoTypesPage = lazy(() =>
+  import("./pages/admin/EoTypesPage").then((m) => ({
+    default: m.EoTypesPage,
+  })),
+);
+const EoTypeDesignerPage = lazy(() =>
+  import("./pages/admin/EoTypeDesignerPage").then((m) => ({
+    default: m.EoTypeDesignerPage,
+  })),
+);
 const EoRecordsPage = lazy(() =>
   import("./pages/eo/EoRecordsPage").then((m) => ({
     default: m.EoRecordsPage,
@@ -861,6 +871,31 @@ function App() {
                         path="/admin/templates/:id"
                         element={<TemplateFormPage />}
                       />
+
+                      {/* The EO record-type designer. Gated on
+                          eo:types:manage — the WRITE permission, which is
+                          what the designer exists to exercise. The catalogue
+                          READS are eo:view (Plan 3 widened them so the record
+                          forms render for a plain EO user), so this gate is
+                          strictly narrower than the API's and no page-level
+                          permission check is repeated inside the pages: one
+                          that could never be false is not a guard. */}
+                      <Route
+                        element={
+                          <PermissionRoute
+                            requiredPermissions={[PERMISSIONS.EO_TYPES_MANAGE]}
+                          />
+                        }
+                      >
+                        <Route
+                          path="/admin/eo-record-types"
+                          element={<EoTypesPage />}
+                        />
+                        <Route
+                          path="/admin/eo-record-types/:id"
+                          element={<EoTypeDesignerPage />}
+                        />
+                      </Route>
                     </Route>
                   </Route>
 

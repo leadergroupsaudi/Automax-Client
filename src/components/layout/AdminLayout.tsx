@@ -35,6 +35,7 @@ import {
   Webhook,
   BellRing,
   Globe2,
+  FileStack,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/authStore";
 import usePermissions from "@/hooks/usePermissions";
@@ -174,6 +175,17 @@ const sidebarSectionsConfig: SidebarSection[] = [
         labelKey: "admin.license",
         path: "/admin/license",
         permission: PERMISSIONS.LICENSE_VIEW,
+      },
+      // The Executive Office record-type designer. Gated on the WRITE
+      // permission (the catalogue reads are eo:view, which nearly everyone in
+      // EO holds) and on the eo_platform licence feature, the same pair the
+      // backend puts on /admin/eo-record-types.
+      {
+        icon: FileStack,
+        labelKey: "eo.types.navLabel",
+        path: "/admin/eo-record-types",
+        permission: PERMISSIONS.EO_TYPES_MANAGE,
+        licenseFeature: "eo_platform",
       },
     ],
   },

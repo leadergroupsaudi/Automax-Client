@@ -6115,12 +6115,14 @@
       "unknownType": "That record type does not exist.",
       "errors": {
         "required": "{{field}} is required"
-      }
+      },
+      "forbidden": "You cannot create records of this type"
     },
     "edit": {
       "title": "Edit record",
       "submit": "Save changes",
-      "success": "Record updated"
+      "success": "Record updated",
+      "forbidden": "You cannot edit records of this type"
     },
     "detail": {
       "move": "Move",
@@ -6157,6 +6159,72 @@
       "description": "Track directives, memos and executive records"
     },
     "noTypeAccess": "This register is not available to you",
-    "noTypeAccessHint": "You hold access to the Executive Office, but not to this record type. Ask an administrator to grant it."
+    "noTypeAccessHint": "You hold access to the Executive Office, but not to this record type. Ask an administrator to grant it.",
+    "types": {
+      "navLabel": "EO record types",
+      "title": "EO record types",
+      "subtitle": "Define the registers the Executive Office keeps, and the fields each one carries.",
+      "new": "New record type",
+      "newHint": "The type appears in the Executive Office at once — no restart. Its fields are added next, in the designer.",
+      "create": "Create record type",
+      "created": "Record type created",
+      "createFailed": "Could not create that record type",
+      "deleted": "Record type deleted",
+      "deleteFailed": "Could not delete that record type",
+      "failedToLoad": "Could not load the record types",
+      "notFound": "That record type does not exist.",
+      "empty": "No record types are configured",
+      "emptyHint": "Create one to open its first register.",
+      "abstract": "Abstract",
+      "concrete": "Register",
+      "inactive": "Inactive",
+      "open": "Open designer",
+      "recordsUnknown": "—",
+      "holdsRecordsHint": "This type or a type beneath it holds records, so some changes need confirmation.",
+      "holdsRecords": "This record type and the types beneath it hold {{count}} records. Removing a field, changing its kind, making it required, re-keying, re-parenting or changing the reference will be refused unless it is confirmed.",
+      "countsPartial": "Record counts are shown from your own view of the registers and may be lower than what the server holds. The server, not this count, decides whether an edit is refused.",
+      "inheritsFrom": "Inherits from {{parent}}",
+      "noParent2": "Inherits from nothing",
+      "ownFieldCount": "{{count}} own fields",
+      "table": {
+        "key": "Key",
+        "name": "Name",
+        "kind": "Kind",
+        "pattern": "Reference pattern",
+        "fields": "Own fields",
+        "records": "Records"
+      },
+      "fields": {
+        "key": "Key",
+        "keyHint": "Used in the register URL and in the per-type permission codes. It cannot be changed once records exist.",
+        "name": "Name",
+        "nameAr": "Name (Arabic)",
+        "parent": "Inherits from",
+        "noParent": "Nothing",
+        "isAbstract": "Abstract — holds fields for other types to inherit, and keeps no register of its own",
+        "referenceMode": "Reference mode",
+        "referencePrefix": "Reference prefix",
+        "referencePattern": "Reference pattern",
+        "referencePatternHint": "YYYY is the year and a run of N is the sequence, as in MEM-YYYY-NNNN."
+      },
+      "referenceMode": {
+        "own": "Its own sequence",
+        "parent": "Derived from the parent record"
+      },
+      "errors": {
+        "keyRequired": "Key is required",
+        "nameRequired": "Name is required",
+        "patternRequired": "A concrete record type needs a reference pattern",
+        "prefixRequired": "A reference prefix is required unless the reference comes from the parent record"
+      },
+      "tabs": {
+        "attributes": "Attributes",
+        "fields": "Fields",
+        "links": "Links",
+        "attributesPending": "The attribute editor is not built yet.",
+        "fieldsPending": "This type declares {{count}} fields of its own. The field editor is not built yet.",
+        "linksPending": "The link-type editor is not built yet."
+      }
+    }
   }
 }
