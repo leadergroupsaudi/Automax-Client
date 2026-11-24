@@ -423,9 +423,17 @@ export function useUploadEoRecordFile() {
   });
 }
 
-/** Blob types a preview may RENDER. Everything else is handed over as bytes. */
+/**
+ * Blob types a preview may RENDER. Everything else is handed over as bytes.
+ *
+ * application/pdf is deliberately NOT here. Chromium will not run its PDF
+ * viewer inside a sandboxed frame (verified headful: sandbox="", and every
+ * sandbox token set that omits allow-same-origin, gives a blocked-plugin
+ * placeholder), and allow-same-origin is categorically unavailable because a
+ * blob: URL carries this application's origin. A PDF is therefore saved, not
+ * previewed: a safe download beats a preview that renders blank.
+ */
 export const EO_PREVIEWABLE_TYPES = new Set([
-  "application/pdf",
   "image/png",
   "image/jpeg",
   "image/gif",

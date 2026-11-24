@@ -1190,7 +1190,6 @@ const startsWith = (b: Uint8Array, sig: number[], at = 0) =>
 /** The type the leading bytes actually are, for allowlisted kinds; else "". */
 async function sniffPreviewType(blob: Blob): Promise<string> {
   const b = new Uint8Array(await blob.slice(0, 16).arrayBuffer());
-  if (startsWith(b, [0x25, 0x50, 0x44, 0x46, 0x2d])) return "application/pdf";
   if (startsWith(b, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
     return "image/png";
   if (startsWith(b, [0xff, 0xd8, 0xff])) return "image/jpeg";
