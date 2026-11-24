@@ -672,13 +672,29 @@ export const EoLinksTab: React.FC<EoLinksTabProps> = ({
 
   const rules = (lt: EoLinkType) => {
     const out: string[] = [];
-    if (lt.derive_deadline_from_parent)
+    if (lt.derive_deadline_from_parent) {
+      // The server sets due = parent's due minus the offset
+      // (services.DeriveDeadlineFromParent), so a positive offset is EARLIER
+      // and a negative one LATER — the same direction the editor's hint says.
+      const offset = lt.deadline_offset_days ?? 0;
+      const days = Math.abs(offset);
       out.push(
-        t("eo.types.link.ruleDeadline", {
-          days: lt.deadline_offset_days,
-          defaultValue: `Deadline: parent's, ${lt.deadline_offset_days} days earlier`,
-        }),
+        offset === 0
+          ? t(
+              "eo.types.link.ruleDeadlineSame",
+              "Deadline: the same as the parent's",
+            )
+          : offset > 0
+            ? t("eo.types.link.ruleDeadlineEarlier", {
+                days,
+                defaultValue: `Deadline: parent's, ${days} days earlier`,
+              })
+            : t("eo.types.link.ruleDeadlineLater", {
+                days,
+                defaultValue: `Deadline: parent's, ${days} days later`,
+              }),
       );
+    }
     if (lt.blocks_parent_closure)
       out.push(
         t(
