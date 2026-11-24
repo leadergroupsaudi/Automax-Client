@@ -51,10 +51,20 @@ const BASE_ARGS: Record<string, string[]> = {
 /** Keys whose empty `from`/`to` means "unset", worded here as "none". */
 const OPTIONAL_ID_KEYS = new Set(["workflow", "parent_type"]);
 
-/** Whether a `message_key` is one of the §7.14 refusals'. */
+/**
+ * Whether a `message_key` is one of the §7.14 refusals'.
+ *
+ * `Object.hasOwn`, NOT `in`: `in` walks the prototype chain, so
+ * `eo_destructive_constructor` and `eo_destructive_toString` would both read
+ * as §7.14 refusals and earn the records claim and the confirm route. No
+ * server emits such a key, which is the only reason this was unreachable
+ * rather than a hole.
+ */
 export function isEoDestructiveKey(key: string | undefined): boolean {
   return (
-    !!key && key.startsWith(PREFIX) && key.slice(PREFIX.length) in BASE_ARGS
+    !!key &&
+    key.startsWith(PREFIX) &&
+    Object.hasOwn(BASE_ARGS, key.slice(PREFIX.length))
   );
 }
 
