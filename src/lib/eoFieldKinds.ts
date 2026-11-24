@@ -1,7 +1,9 @@
+import { isReadOnlyField } from "./eoFields";
 import type {
   EoFieldConfig,
   EoFieldKind,
   EoFieldDefRequest,
+  EoProvenance,
   EoRecordType,
 } from "../types/eoRecord";
 
@@ -103,17 +105,14 @@ export const eoKindConfigShape = (kind: string): EoKindConfigShape => {
 };
 
 /**
- * Kinds `EoFieldInput` has a case for. Everything else falls through its
- * `default:` arm and is rendered as a PLAIN TEXT BOX
+ * The kinds `EoFieldInput` has a `case` for. Everything else falls through its
+ * `default:` arm and is rendered as a PLAIN `<input type="text">`
  * (components/eo/EoFieldInput.tsx:483-493).
  *
- * The designer says so, because the alternative is an administrator
- * configuring an `multi_user_ack` field — agreed / reservation per user — and
- * getting a text input on every form with no indication that the kind did
- * nothing. It is a warning and not a refusal: the kind is valid, the value
- * stores, and the renderer is the part that is missing.
+ * `text` is in the list because it has a case of its own; the point of the
+ * set is which kinds the switch NAMES.
  */
-const RENDERED_KINDS = new Set<string>([
+const EO_INPUT_KINDS = new Set<string>([
   "text",
   "long_text",
   "number",
@@ -130,14 +129,42 @@ const RENDERED_KINDS = new Set<string>([
   "file",
   "multi_file",
   "link",
-  // Read-only kinds: never an input, but EoFieldValue prints them properly.
-  "auto_number",
-  "workflow_state",
-  "user_date",
 ]);
 
-export const eoKindHasRenderer = (kind: string): boolean =>
-  RENDERED_KINDS.has(kind);
+/**
+ * Whether a field will be shown to a person as a bare text box because
+ * nothing has been built to render its kind.
+ *
+ * THE SIGNAL IS THE FIELD, NOT THE KIND, and the first version of this got
+ * that wrong. It carried `user_date` in a list of "read-only kinds: never an
+ * input" — but `isReadOnlyField` forces read-only for `auto_number`,
+ * `workflow_state`, `auto`/`derived` provenance and the engine-owned keys,
+ * and NOT for `user_date`. So the pilot's own `eo_task.verified_by` —
+ * `user_date`, provenance `user`, spec §7.3's approval/signature primitive —
+ * reaches `EoFieldInput`, finds no case, and renders as free text, while the
+ * designer said "this kind needs no further configuration". The verifying
+ * officer types "Ahmed 12/3" where a {user, date} pair is expected.
+ *
+ * A read-only field never reaches `EoFieldInput` at all; `EoFieldValue`
+ * prints it, and it has a `user_date` case. So the question is asked in two
+ * steps, in the order the record form asks them.
+ */
+export const eoFieldRendersAsPlainText = (field: {
+  kind: string;
+  provenance?: string;
+  key?: string;
+}): boolean => {
+  if (!field.kind) return false;
+  if (
+    isReadOnlyField({
+      kind: field.kind as EoFieldKind,
+      provenance: (field.provenance ?? "user") as EoProvenance,
+      key: field.key ?? "",
+    })
+  )
+    return false;
+  return !EO_INPUT_KINDS.has(field.kind);
+};
 
 /** The four values handlers.eoValidateFieldShape allow-lists for provenance. */
 export const EO_PROVENANCES = ["user", "auto", "derived", "system"] as const;
@@ -167,6 +194,23 @@ export interface EoFieldDraft {
   kind: EoFieldKind | "";
   /** Structured, for dropdown / multi_select. */
   options: { value: string; label: string; label_ar: string }[];
+  /**
+   * Where a dropdown's choices come from. Spec §7.3 allows a static list OR
+   * one of five option SOURCES, and the pilot uses one: Decision Record's
+   * `keywords` ships
+   * `{"option_source":"lookup_category","lookup_category_code":"eo_subject_taxonomy"}`
+   * because the client's subject taxonomy exists in no document here and the
+   * options of a seeded dropdown are what every record is filed under
+   * (seed_eo_pilot.go:2245-2258).
+   *
+   * It is a MODE and not two independently editable keys because declaring
+   * both is itself a defect — `seed_eo_pilot_test.go:1852`, "which one
+   * governs is then whatever the client reads first" — so the structured
+   * editor can only ever write one of them.
+   */
+  option_mode: "list" | "source";
+  option_source: string;
+  lookup_category_code: string;
   /** Structured, for link / multi_link. "" means "any record type". */
   target_type_key: string;
   /**
@@ -196,6 +240,9 @@ export const emptyEoFieldDraft = (sortOrder: number): EoFieldDraft => ({
   label_ar: "",
   kind: "",
   options: [],
+  option_mode: "list",
+  option_source: "",
+  lookup_category_code: "",
   target_type_key: "",
   config_rest: "",
   provenance: "user",
@@ -248,14 +295,26 @@ export const eoFieldDraftFrom = (field: {
   const config = { ...(field.config ?? {}) } as Record<string, unknown>;
   const shape = eoKindConfigShape(field.kind);
   const options = shape === "options" ? asOptionList(config.options) : [];
+  const source =
+    shape === "options" && typeof config.option_source === "string"
+      ? config.option_source
+      : "";
+  const lookupCode =
+    shape === "options" && typeof config.lookup_category_code === "string"
+      ? config.lookup_category_code
+      : "";
   const target =
     shape === "target" && typeof config.target_type_key === "string"
       ? config.target_type_key
       : "";
-  // Strip only the key this kind's structured editor owns. A `target_type_key`
-  // left on a dropdown stays visible in the JSON section rather than being
-  // silently dropped on save.
-  if (shape === "options") delete config.options;
+  // Strip only the keys this kind's structured editor owns. A
+  // `target_type_key` left on a dropdown stays visible in the JSON section
+  // rather than being silently dropped on save.
+  if (shape === "options") {
+    delete config.options;
+    delete config.option_source;
+    delete config.lookup_category_code;
+  }
   if (shape === "target") delete config.target_type_key;
 
   const recompute = field.recompute_on;
@@ -265,6 +324,12 @@ export const eoFieldDraftFrom = (field: {
     label_ar: field.label_ar ?? "",
     kind: field.kind,
     options,
+    // A stored option_source is what the field IS; opening it in list mode
+    // would show an empty option table and then refuse to save a field that
+    // is correctly configured.
+    option_mode: source ? "source" : "list",
+    option_source: source,
+    lookup_category_code: lookupCode,
     target_type_key: target,
     config_rest:
       Object.keys(config).length > 0 ? JSON.stringify(config, null, 2) : "",
@@ -319,16 +384,20 @@ const parseJsonArray = (text: string): Parsed<unknown[]> => {
 };
 
 /**
- * The draft's `config`, as it will be sent: the free-form section with the
- * structured keys merged over it.
+ * The draft's `config`, as it will be sent: the free-form section with
+ * whichever structured key the current mode owns written over it.
  *
- * VALIDATION RUNS OVER THIS, not over the structured editor's state, which is
- * the whole reason it is a function of its own. The structured dropdown
- * editor cannot produce an option with a blank value — so a per-option check
- * keyed on it could never fire, and would be one more guard that reasons
- * correctly about a signal it is not wired to. Keyed on the merged result it
- * fires for exactly the input that reaches the server: a `config` typed into
- * the JSON section.
+ * WHAT VALIDATION CAN AND CANNOT SEE THROUGH IT, stated precisely, because
+ * the first version of this file claimed more than it did. A key the
+ * structured editor OWNS in the current mode is written here unconditionally,
+ * so an `options` array typed into the raw box while the editor is in list
+ * mode is discarded and the per-option checks only ever see structured rows.
+ * What the merged object DOES carry from the raw box is every key the current
+ * mode does not own — `option_source` while in list mode, `options` while in
+ * source mode, `target_type_key` on a link — and those are exactly the keys
+ * the checks below cannot otherwise reach. A key the editor owns is checked
+ * because it is written here; a key it does not own is checked because it
+ * survives from the raw box.
  */
 export const eoDraftConfig = (draft: EoFieldDraft): EoFieldConfig | null => {
   const rest = parseJsonObject(draft.config_rest);
@@ -336,13 +405,24 @@ export const eoDraftConfig = (draft: EoFieldDraft): EoFieldConfig | null => {
   const out: Record<string, unknown> = { ...rest.value };
   switch (eoKindConfigShape(draft.kind)) {
     case "options":
-      // The structured editor owns the key outright, so a stale `options`
-      // left in the JSON section cannot shadow what is on screen.
-      out.options = draft.options.map((o) => ({
-        value: o.value.trim(),
-        label: o.label.trim(),
-        ...(o.label_ar.trim() ? { label_ar: o.label_ar.trim() } : {}),
-      }));
+      // ONE MODE WRITES ONE KEY, and neither deletes the other's. Deleting
+      // would make "both a list and a source" unreachable from this form, and
+      // it is reachable: the raw box can carry the key the mode does not own.
+      // That state is a defect the backend's own seed test names
+      // (seed_eo_pilot_test.go:1852), so it has to be refusable rather than
+      // quietly cleaned up.
+      if (draft.option_mode === "source") {
+        if (draft.option_source.trim())
+          out.option_source = draft.option_source.trim();
+        if (draft.lookup_category_code.trim())
+          out.lookup_category_code = draft.lookup_category_code.trim();
+      } else {
+        out.options = draft.options.map((o) => ({
+          value: o.value.trim(),
+          label: o.label.trim(),
+          ...(o.label_ar.trim() ? { label_ar: o.label_ar.trim() } : {}),
+        }));
+      }
       break;
     case "target":
       // The picker owns the key when it HAS one. When it is on "any record
@@ -438,11 +518,60 @@ export const validateEoFieldDraft = (
     switch (eoKindConfigShape(draft.kind)) {
       case "options": {
         const options = Array.isArray(config.options) ? config.options : [];
-        if (options.length === 0) {
+        const source =
+          typeof config.option_source === "string"
+            ? config.option_source.trim()
+            : "";
+        // ── a static list OR an option source, never neither and never both
+        //
+        // SPEC §7.3 ALLOWS SIX: a static list, or one of five sources
+        // (LookupCategory values, org units, users by role, workflow states,
+        // a query over records of a type). The pilot uses one of them —
+        // Decision Record's `keywords` is seeded with
+        // `option_source: lookup_category` because the client's subject
+        // taxonomy exists in no document here (seed_eo_pilot.go:2245-2258).
+        //
+        // Demanding `options` outright refused that field OUTRIGHT: saving it
+        // with nothing changed was refused client-side, so no label, Arabic
+        // label or help-text edit could be made to it at all, and the only
+        // way through the form was to invent the client's taxonomy as a
+        // static list — producing the both-at-once state immediately below,
+        // which the backend's own seed test calls a defect. The same
+        // reasoning that keeps a `link` with no target saveable applies here
+        // and was not applied; this is that correction.
+        //
+        // The three rules are the seed test's three
+        // (seed_eo_pilot_test.go:1849-1856).
+        if (options.length === 0 && !source) {
           errs.config_options = t(
             "eo.types.field.errors.optionsRequired",
-            "A dropdown needs at least one option — without one, nothing can be chosen",
+            "A dropdown needs either at least one option or an option source — with neither, nothing can be chosen",
           );
+          break;
+        }
+        if (options.length > 0 && source) {
+          errs.config_options = t(
+            "eo.types.field.errors.optionsAndSource",
+            "This field declares both a static option list and an option source. Which one governs is then whatever reads it first — keep one.",
+          );
+          break;
+        }
+        if (source) {
+          // The only source whose resolution this repository spells out. The
+          // other four of §7.3's five have no agreed spelling yet, so they
+          // are accepted as written rather than refused against a list this
+          // file would have invented.
+          if (
+            source === "lookup_category" &&
+            !(typeof config.lookup_category_code === "string"
+              ? config.lookup_category_code.trim()
+              : "")
+          ) {
+            errs.config_options = t(
+              "eo.types.field.errors.lookupCodeRequired",
+              "A lookup-category source needs the category code that names the list, or nothing can resolve the options",
+            );
+          }
           break;
         }
         const seen = new Set<string>();
@@ -478,15 +607,30 @@ export const validateEoFieldDraft = (
       case "target": {
         const target = config.target_type_key;
         if (target !== undefined) {
-          if (typeof target !== "string" || !target.trim()) {
+          const key = typeof target === "string" ? target.trim() : "";
+          const named = ctx.types.find((x) => x.key === key);
+          if (!key) {
             errs.config_target = t(
               "eo.types.field.errors.targetInvalid",
               "The target record type must be a record type key, or left as any type",
             );
-          } else if (!ctx.types.some((x) => x.key === target.trim())) {
+          } else if (!named) {
             errs.config_target = t(
               "eo.types.field.errors.targetUnknown",
               "No record type has that key",
+            );
+          } else if (named.is_abstract) {
+            // An abstract type holds no records OF ITS OWN — the save
+            // pipeline refuses to create one — so EoRecordPicker filtering on
+            // it returns an empty register on every record form. The picker
+            // offers concrete types only, so this is reachable solely through
+            // the raw configuration box; before this check an abstract key
+            // fell in the gap between "offered" and "unknown", passed
+            // validation, and went out on the wire while the picker read
+            // "Any record type".
+            errs.config_target = t(
+              "eo.types.field.errors.targetAbstract",
+              "An abstract record type holds no records of its own, so a link to it can never find anything to point at",
             );
           }
         }
@@ -550,7 +694,15 @@ export const eoFieldDraftWarnings = (
   t: (key: string, fallback: string) => string,
 ): string[] => {
   const out: string[] = [];
-  if (draft.kind && isEoFieldKind(draft.kind) && !eoKindHasRenderer(draft.kind))
+  if (
+    draft.kind &&
+    isEoFieldKind(draft.kind) &&
+    eoFieldRendersAsPlainText({
+      kind: draft.kind,
+      provenance: draft.provenance,
+      key: draft.key.trim(),
+    })
+  )
     out.push(
       t(
         "eo.types.field.warnings.noRenderer",
@@ -594,8 +746,12 @@ export const eoFieldDraftToRequest = (
       draft.required_mode === "conditional" ? draft.required_rule.trim() : "",
     required_at_state_ids:
       draft.required_mode === "at_state" ? draft.required_at_state_ids : [],
-    formula: draft.formula.trim(),
-    recompute_on: recompute.value,
+    // THE SAME CLEARING, for the same reason. A field flipped off `derived`
+    // keeps no formula and no dependencies: services.RecomputeDerived only
+    // looks at derived fields, so a formula left behind runs on nothing while
+    // reading, to the next person to open the field, as live configuration.
+    formula: draft.provenance === "derived" ? draft.formula.trim() : "",
+    recompute_on: draft.provenance === "derived" ? recompute.value : [],
     is_indexed: draft.is_indexed,
     is_locked_after_state_id: draft.is_locked_after_state_id || null,
     sort_order: Number.isFinite(draft.sort_order) ? draft.sort_order : 0,

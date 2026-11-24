@@ -109,8 +109,18 @@ export function resolveEffectiveFields(
   return out;
 }
 
-/** A field the engine fills; never render it as an input. */
-export function isReadOnlyField(field: EoFieldDefinition): boolean {
+/**
+ * A field the engine fills; never render it as an input.
+ *
+ * It takes the three attributes it reads rather than a whole definition, so
+ * the DESIGNER can ask the same question of a draft that is not a stored
+ * definition yet. The rule has to be shared and not restated: whether a field
+ * reaches `EoFieldInput` at all is decided here, and the designer's "this
+ * kind has no form control" warning is only true for fields that do.
+ */
+export function isReadOnlyField(
+  field: Pick<EoFieldDefinition, "kind" | "provenance" | "key">,
+): boolean {
   return (
     field.provenance === "auto" ||
     field.provenance === "derived" ||
@@ -418,9 +428,37 @@ export function eoDocumentaDisabledMessage(error: unknown): string | null {
  * here is what the operator must be shown before they may override it, and
  * the change identifier it refuses is the one their confirmation has to name.
  */
-export function eoDestructiveRefusal(error: unknown): string | null {
+export interface EoServerRefusal {
+  /** The server's own sentence, shown verbatim. */
+  message: string;
+  /**
+   * True when the sentence is recognisably the §7.14 guard rail's, and
+   * therefore when it is honest to tell the operator that this type holds
+   * records and that a confirmation is what overrides the refusal.
+   */
+  destructive: boolean;
+}
+
+export function eoServerRefusal(error: unknown): EoServerRefusal | null {
   if (eoErrorStatus(error) !== 400) return null;
   if (Object.keys(eoFieldErrorMap(error)).length > 0) return null;
   const message = eoErrorMessage(error);
-  return message || null;
+  if (!message) return null;
+  // Every refusal models.eoDestructiveChanges builds says so in the sentence
+  // — "removing field %q is destructive while records exist", "changing kind
+  // … is destructive while records exist", and the seven others. The word is
+  // the only thing those nine have in common besides the shape, and the
+  // shape alone is what this used to key on.
+  //
+  // KEYING ON THE SHAPE ALONE WAS THE WRONG WAY ROUND. It was true that
+  // nothing else on these routes answers 400-without-a-map today; it was not
+  // true that nothing ever would. A refusal that is map-less for some other
+  // reason — a malformed confirmation, which is exactly what Task F5 will
+  // start sending — would have been rendered under a heading asserting that
+  // this type holds records, a claim the server never made, with the toast
+  // that would have said otherwise suppressed behind the same test.
+  //
+  // So the sentence is ALWAYS surfaced, and only the explanation is gated. A
+  // rewording of the refusals costs the explanation, not the message.
+  return { message, destructive: /\bdestructive\b/i.test(message) };
 }

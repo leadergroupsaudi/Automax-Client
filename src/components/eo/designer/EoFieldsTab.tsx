@@ -28,14 +28,15 @@ import {
   useEoTypeOwnFields,
   useUpdateEoField,
 } from "../../../hooks/useEoTypes";
-import { eoDestructiveRefusal, eoRefusalMessage } from "../../../lib/eoFields";
+import { eoRefusalMessage, eoServerRefusal } from "../../../lib/eoFields";
 import {
   emptyEoFieldDraft,
   eoFieldDraftFrom,
-  eoKindHasRenderer,
+  eoFieldRendersAsPlainText,
 } from "../../../lib/eoFieldKinds";
 import type { EoFieldDraft } from "../../../lib/eoFieldKinds";
 import { EoFieldEditor } from "./EoFieldEditor";
+import { EoRefusalBanner } from "./EoRefusalBanner";
 import type {
   EoFieldDefinition,
   EoFieldDefRequest,
@@ -113,10 +114,24 @@ const useConfigProblem = () => {
   return useCallback(
     (field: EoFieldDefinition): string | null => {
       if (field.kind === "dropdown" || field.kind === "multi_select") {
-        if ((field.config?.options?.length ?? 0) === 0)
+        // A static list OR one of spec §7.3's five option sources. The
+        // pilot's `eo_decision_record.keywords` has a source and no list, and
+        // it is correctly configured; reading "no options" off it was the
+        // check that locked it out of the designer entirely.
+        const options = field.config?.options?.length ?? 0;
+        const source =
+          typeof field.config?.option_source === "string"
+            ? field.config.option_source.trim()
+            : "";
+        if (options === 0 && !source)
           return t(
             "eo.types.field.problems.noOptions",
-            "No options — nothing can be chosen",
+            "Neither options nor an option source — nothing can be chosen",
+          );
+        if (options > 0 && source)
+          return t(
+            "eo.types.field.problems.optionsAndSource",
+            "Both a static option list and an option source — which one governs is whatever reads it first",
           );
       }
       if (field.provenance === "derived" && !field.formula?.trim())
@@ -279,7 +294,11 @@ export const EoFieldsTab: React.FC<EoFieldsTabProps> = ({
       // refusal has no attribute to sit under and is passed back whole, so
       // the dialog stays open with the server's sentence on it.
       setSaveError(error);
-      if (!eoDestructiveRefusal(error)) {
+      // The banner already carries the server's sentence; a toast repeating
+      // it would be the same words twice. Keyed on "a banner was shown", not
+      // on "it was destructive", so a map-less 400 of any other kind still
+      // reaches the operator.
+      if (!eoServerRefusal(error)) {
         toast.error(
           eoRefusalMessage(
             error,
@@ -306,7 +325,7 @@ export const EoFieldsTab: React.FC<EoFieldsTabProps> = ({
     }
   };
 
-  const deleteRefusal = eoDestructiveRefusal(deleteError);
+  const deleteRefusal = eoServerRefusal(deleteError);
 
   return (
     <div className="space-y-8">
@@ -422,7 +441,7 @@ export const EoFieldsTab: React.FC<EoFieldsTabProps> = ({
                         <span className="text-sm text-slate-700 dark:text-slate-300">
                           {t(`eo.kind.${field.kind}`, field.kind)}
                         </span>
-                        {!eoKindHasRenderer(field.kind) && (
+                        {eoFieldRendersAsPlainText(field) && (
                           <div className="mt-1">
                             <Badge tone="amber">
                               {t("eo.types.field.plainText", "Plain text box")}
@@ -663,31 +682,10 @@ export const EoFieldsTab: React.FC<EoFieldsTabProps> = ({
             )}
           </p>
           {deleteRefusal ? (
-            <div
-              data-testid="eo-field-delete-refusal"
-              className="rounded-lg border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/20 p-4"
-            >
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
-                <div>
-                  <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-                    {t(
-                      "eo.types.field.refusedTitle",
-                      "The server refused this change",
-                    )}
-                  </h4>
-                  <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">
-                    {deleteRefusal}
-                  </p>
-                  <p className="mt-2 text-xs text-amber-700 dark:text-amber-400">
-                    {t(
-                      "eo.types.field.refusedHint",
-                      "This record type, or a type beneath it, holds records. The change can be made with an explicit confirmation and a stated rule for the records it leaves behind — that flow is not built yet.",
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <EoRefusalBanner
+              refusal={deleteRefusal}
+              testId="eo-field-delete-refusal"
+            />
           ) : deleteError ? (
             <div className="rounded-lg border border-red-300 dark:border-red-700/60 bg-red-50 dark:bg-red-900/20 px-4 py-3">
               <div className="flex items-start gap-3">

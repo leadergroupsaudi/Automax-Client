@@ -6267,7 +6267,7 @@
         "addOption": "Add option",
         "removeOption": "Remove option",
         "targetType": "Target record type",
-        "targetAny": "Any record type",
+        "targetAny": "Any record type — not narrowed",
         "targetHint": "Left as any type, the record picker searches every register and names each result's type. Narrowing it is a deliberate choice, not a requirement.",
         "showRawConfig": "Raw configuration (JSON)",
         "hideRawConfig": "Hide raw configuration",
@@ -6311,7 +6311,7 @@
           "kindRequired": "Kind is required",
           "kindInvalid": "Unknown field kind",
           "configJson": "Configuration must be a JSON object, for example {}",
-          "optionsRequired": "A dropdown needs at least one option — without one, nothing can be chosen",
+          "optionsRequired": "A dropdown needs either at least one option or an option source — with neither, nothing can be chosen",
           "optionValueRequired": "Every option needs a stored value",
           "optionLabelRequired": "Every option needs a label to show",
           "optionValueDuplicate": "Two options store the same value",
@@ -6321,19 +6321,30 @@
           "statesRequired": "Choose the states this field is required at. With none chosen it is never required anywhere.",
           "statesUnavailable": "This record type's workflow states could not be read, so a state-based requirement cannot be configured here.",
           "formulaRequired": "A derived field needs a formula — without one it computes nothing",
-          "recomputeJson": "Recompute-on must be a JSON array, for example []"
+          "recomputeJson": "Recompute-on must be a JSON array, for example []",
+          "optionsAndSource": "This field declares both a static option list and an option source. Which one governs is then whatever reads it first — keep one.",
+          "lookupCodeRequired": "A lookup-category source needs the category code that names the list, or nothing can resolve the options",
+          "targetAbstract": "An abstract record type holds no records of its own, so a link to it can never find anything to point at"
         },
         "warnings": {
           "noRenderer": "No form control has been built for this kind yet: record forms will show it as a plain text box.",
           "noRecomputeOn": "A derived field with no recompute-on dependencies can only use values on the record itself; a formula naming a child or an ancestor will not resolve."
         },
         "problems": {
-          "noOptions": "No options — nothing can be chosen",
+          "noOptions": "Neither options nor an option source — nothing can be chosen",
           "noFormula": "Derived, with no formula — it computes nothing",
           "noRule": "Conditional, with no rule — every record save of this type is refused",
-          "noStates": "Required at states, with no states — it is never required anywhere"
+          "noStates": "Required at states, with no states — it is never required anywhere",
+          "optionsAndSource": "Both a static option list and an option source — which one governs is whatever reads it first"
         },
-        "targetUnknownOption": "{{key}} — no record type has this key"
+        "targetUnknownOption": "{{key}} — no record type has this key",
+        "optionMode": "Choices come from",
+        "optionModeList": "A list defined here",
+        "optionModeSource": "A source resolved at render time",
+        "optionSource": "Option source",
+        "optionSourceHint": "Spec §7.3 allows a lookup category, org units, users by role, workflow states, or a query over records of a type. Only lookup_category has an agreed spelling today.",
+        "lookupCategoryCode": "Lookup category code",
+        "targetAbstractOption": "{{key}} — abstract, holds no records"
       }
     },
     "kind": {

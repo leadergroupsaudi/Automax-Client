@@ -334,3 +334,135 @@ pre-existing errors and nothing else (`e2e/fixtures.ts`,
 `src/hooks/useSavedViews.ts:88`). `npx prettier --check` passes on every file
 touched. `package-lock.json` was left **unstaged and unmodified**; staging was
 by explicit path throughout.
+
+---
+
+## 11. Fix round 1
+
+All five items addressed. Nothing in the "do not fix" list was touched, and
+the missing workflow on designer-created types was left to F4.
+
+### 1 🔴 — the options demand locked a correctly configured field out
+
+The reviewer is right, and the mistake is exactly the one §3 of this report
+congratulates itself on avoiding one kind over. Spec §7.3 allows **a static
+list or one of five option sources**, and the pilot uses one: Decision
+Record's `keywords` ships
+`{"option_source":"lookup_category","lookup_category_code":"eo_subject_taxonomy"}`
+because the client's subject taxonomy exists in no document in the repository
+(`seed_eo_pilot.go:2245-2258`). Demanding `options` refused that field
+outright — not a label fix, not an Arabic label, not help text — and the only
+way through the form was to invent the taxonomy as a static list, producing
+the both-at-once state the backend's own seed test calls a defect
+(`seed_eo_pilot_test.go:1852`).
+
+The editor now has a **mode**: *a list defined here* or *a source resolved at
+render time*. A mode writes one key and neither deletes the other's, so the
+both-at-once state stays reachable — from the raw box — and refusable, rather
+than being quietly cleaned up. The three rules are the seed test's three
+(`:1849-1856`): neither is refused, both is refused, and `lookup_category`
+without a `lookup_category_code` is refused. The list's "unconfigured" flag
+reads the same way.
+
+**A mode and not two free keys** because the editor must not be *able* to
+produce the defect; the raw box can, and that is what the check is for.
+
+### 2 🟠 — the warning is now keyed on what renders, not on the kind
+
+`RENDERED_KINDS` listed `user_date` under "read-only kinds", but
+`isReadOnlyField` forces read-only for `auto_number`, `workflow_state`,
+`auto`/`derived` provenance and the engine-owned keys — **not** `user_date`.
+So `eo_task.verified_by` (`user_date`, provenance `user`, §7.3's
+approval/signature primitive) reaches `EoFieldInput`, finds no case, and
+renders as free text, while the designer said nothing was missing.
+
+`eoKindHasRenderer(kind)` is replaced by
+`eoFieldRendersAsPlainText({kind, provenance, key})`, which asks the record
+form's two questions in the record form's order: is it read-only (then
+`EoFieldValue` prints it, and that has a `user_date` case), and if not, does
+`EoFieldInput` name the kind. `isReadOnlyField` was widened to take the three
+attributes it reads so the rule is shared rather than restated.
+
+### 3 🟠 — an abstract target is refused and visible
+
+The target check resolved against the whole catalogue while the picker offered
+only concrete types, so an abstract key fell between "offered" and "unknown":
+it passed validation, went out on the wire, and the select read **"Any record
+type"**. Validation now refuses it by name, the picker's unresolvable-key
+option covers *both* cases (`eo_base — abstract, holds no records` /
+`<key> — no record type has this key`), and the first option now reads **"Any
+record type — not narrowed"** so a deliberate non-narrowing is distinguishable
+from a configuration the form could not show.
+
+### 4 🟠 — the refusal discriminator asserts only what the body carries
+
+`eoDestructiveRefusal` became `eoServerRefusal`, returning
+`{message, destructive}`. The **sentence is always shown**; only the
+explanation — *"this record type, or a type beneath it, holds records"* — is
+gated, on `/\bdestructive\b/i`, which every one of the nine refusals
+`models.eoDestructiveChanges` builds says in as many words. The toast
+suppression moved with it: it is now keyed on "a banner was shown", not on
+"it was destructive", so a map-less 400 of any other kind still reaches the
+operator. F5's malformed-confirmation 400 was the case named, and it is the
+case this makes safe. Both banners are now one component,
+`EoRefusalBanner`, so the editor and the removal dialog cannot drift and F5
+attaches once.
+
+### 5 🟡 — both
+
+(a) The merge comment claimed something the code did not do. It now states
+precisely what validation can and cannot see through `eoDraftConfig`: a key
+the current mode **owns** is written unconditionally, so an `options` array
+typed into the raw box in list mode is discarded and the per-option checks
+only ever see structured rows; what the merged object carries from the raw box
+is every key the mode does **not** own — `option_source` in list mode,
+`options` in source mode, `target_type_key` on a link — and those are exactly
+the keys the checks could not otherwise reach.
+
+(b) `formula` and `recompute_on` are now cleared when the provenance stops
+being `derived`, mirroring the rule and the states.
+
+### Re-verified in the browser
+
+`node .../scratchpad/f2r1.mjs` and `f2r1b.mjs`, live, no interception:
+
+| | |
+|---|---|
+| `r1-01-keywords-row.png` | `keywords` listed with **no** "unconfigured" flag |
+| `r1-02-keywords-option-source.png` | **the finding**: it opens in source mode, `lookup_category` / `eo_subject_taxonomy` |
+| `r1-03-keywords-saved-unchanged.png` | saving with nothing changed → `PUT … 200`, dialog closed. Diffed before/after: **`updated_at` only** — config byte-identical, `ar_untranslated` still true |
+| `r1-04-both-list-and-source-refused.png` | an `options` array typed into the raw box of a source-mode field → refused, 0 requests |
+| `r1-05-user-date-plain-text-badge.png` | `eo_task.verified_by` badged `Plain text box` |
+| `r1-06-user-date-warned-in-editor.png` | the same warning in the editor |
+| `r1-07-user-date-no-warning-when-read-only.png` | the warning **goes away** on provenance `auto`, because `EoFieldValue` then prints it — the two-step signal, both steps |
+| `r1-08-abstract-target-refused.png` | `{"target_type_key":"eo_base"}` typed in → refused, 0 requests |
+| `r1-12-stored-abstract-target-visible.png` | a **stored** abstract target: the picker reads `eo_base — abstract, holds no records`, not "Any record type", and the save is refused |
+| `r1-09-formula-cleared-off-derived.png` | a derived field flipped to "A person" and back: formula read back as `""` |
+| `r1-10-option-source-demands-code.png` | an empty source refused, then `lookup_category` without a code refused — both 0 requests |
+| `r1-11-option-source-field-created.png` | a source-backed `multi_select` created through the form → `POST … 201` |
+
+### Demo data
+
+Created: one record type `eo_f2r1_probe` (prefix `F2R1`), its three seeded
+permission rows, and three field definitions on it. **All removed.** One
+`PUT` landed on live seeded data — `eo_decision_record.keywords`, the save
+the Critical is about — and it changed `updated_at` and nothing else.
+
+Final counts, read back from the live server: **12 types, 179 permissions,
+48 records, 127 field definitions**, `eo_directive` at **14** own fields with
+`decision_reference` still kind `text`, and `keywords` config and
+`ar_untranslated` untouched.
+
+**One correction to round 0's cleanup claim.** `DELETE /admin/permissions/:id`
+is a SOFT delete: the listing drops to 179, but the CODE is not freed, and
+`POST /admin/eo-record-types` with the old key is refused —
+*"deleting a permission does not free its code, so clearing these needs direct
+database access"*. Round 0 reported the count restored, which is true; it did
+not report that `eo_f2_probe` is now an unusable key. This round used a new
+one rather than touching the database. It is F1's concern 2, one layer deeper.
+
+### Checks
+
+`npm run type-check` passes. `npm run lint` reports the same **two**
+pre-existing errors. `npx prettier --check` clean on every file touched.
+`package-lock.json` left unstaged and unmodified.

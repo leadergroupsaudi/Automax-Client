@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Info, Loader2, Plus, Trash2 } from "lucide-react";
+import { Info, Loader2, Plus, Trash2 } from "lucide-react";
 import {
   Modal,
   ModalBody,
@@ -10,7 +10,8 @@ import {
   ModalDescription,
 } from "../../ui/Modal";
 import { useLocalizedField } from "../../../hooks/useLocalizedField";
-import { eoDestructiveRefusal, eoFieldErrorMap } from "../../../lib/eoFields";
+import { eoFieldErrorMap, eoServerRefusal } from "../../../lib/eoFields";
+import { EoRefusalBanner } from "./EoRefusalBanner";
 import {
   EO_FIELD_KINDS,
   EO_PROVENANCES,
@@ -139,20 +140,37 @@ export const EoFieldEditor: React.FC<EoFieldEditorProps> = ({
 
   const configShape = eoKindConfigShape(draft.kind);
   const overriddenFrom = inheritedKeyOwners.get(draft.key.trim());
-  /** A stored target_type_key the catalogue cannot resolve, or "". */
-  const unknownTarget =
+  /**
+   * The types the picker offers: a link points at RECORDS, and an abstract
+   * type holds none of its own.
+   */
+  const targetable = useMemo(
+    () => types.filter((x) => !x.is_abstract),
+    [types],
+  );
+  /**
+   * A stored `target_type_key` the PICKER cannot show — unknown to the
+   * catalogue, or known and abstract. It gets an option of its own so that it
+   * is visible and refusable instead of falling into the gap between the two:
+   * before this, an abstract key passed validation and went out on the wire
+   * while the select read "Any record type".
+   */
+  const unresolvedTarget =
     configShape === "target" &&
     draft.target_type_key.trim() &&
-    !types.some((x) => x.key === draft.target_type_key.trim())
+    !targetable.some((x) => x.key === draft.target_type_key.trim())
       ? draft.target_type_key.trim()
       : "";
+  const unresolvedTargetIsAbstract = types.some(
+    (x) => x.key === unresolvedTarget && x.is_abstract,
+  );
   const translate = useMemo(
     () => (key: string, fallback: string) => t(key, fallback),
     [t],
   );
   const warnings = eoFieldDraftWarnings(draft, translate);
 
-  const refusal = eoDestructiveRefusal(saveError);
+  const refusal = eoServerRefusal(saveError);
 
   const setOption = (
     index: number,
@@ -228,35 +246,14 @@ export const EoFieldEditor: React.FC<EoFieldEditorProps> = ({
         </ModalHeader>
 
         <ModalBody className="space-y-5">
-          {/* The §7.14 refusal. It is NOT a field error — no attribute of the
-              field is wrong — so it sits above the form in full, and it is
-              where Task F5's confirmation attaches. */}
+          {/* Not a field error — no attribute of the field is wrong — so it
+              sits above the form in full. It is where Task F5's confirmation
+              attaches. */}
           {refusal && (
-            <div
-              data-testid="eo-field-destructive-refusal"
-              className="rounded-lg border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/20 p-4"
-            >
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
-                <div>
-                  <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-                    {t(
-                      "eo.types.field.refusedTitle",
-                      "The server refused this change",
-                    )}
-                  </h4>
-                  <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">
-                    {refusal}
-                  </p>
-                  <p className="mt-2 text-xs text-amber-700 dark:text-amber-400">
-                    {t(
-                      "eo.types.field.refusedHint",
-                      "This record type, or a type beneath it, holds records. The change can be made with an explicit confirmation and a stated rule for the records it leaves behind — that flow is not built yet.",
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <EoRefusalBanner
+              refusal={refusal}
+              testId="eo-field-destructive-refusal"
+            />
           )}
           {errors.submit && (
             <div className="rounded-lg border border-red-300 dark:border-red-700/60 bg-red-50 dark:bg-red-900/20 px-4 py-3">
@@ -369,86 +366,183 @@ export const EoFieldEditor: React.FC<EoFieldEditorProps> = ({
 
             {configShape === "options" && (
               <div data-testid="eo-field-options">
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                  {t(
-                    "eo.types.field.optionsHint",
-                    "The choices this field offers. The value is what is stored on the record; the label is what is shown.",
-                  )}
-                </p>
-                <div className="space-y-2">
-                  {draft.options.map((option, index) => (
-                    <div
-                      key={index}
-                      className="flex items-start gap-2 flex-wrap sm:flex-nowrap"
-                    >
-                      <input
-                        aria-label={t("eo.types.field.optionValue", "Value")}
-                        placeholder={t("eo.types.field.optionValue", "Value")}
-                        className={`${inputClass} font-mono sm:w-1/3`}
-                        value={option.value}
-                        onChange={(e) =>
-                          setOption(index, "value", e.target.value)
-                        }
-                      />
-                      <input
-                        aria-label={t("eo.types.field.optionLabel", "Label")}
-                        placeholder={t("eo.types.field.optionLabel", "Label")}
-                        className={`${inputClass} sm:w-1/3`}
-                        value={option.label}
-                        onChange={(e) =>
-                          setOption(index, "label", e.target.value)
-                        }
-                      />
-                      <input
-                        aria-label={t(
-                          "eo.types.field.optionLabelAr",
-                          "Label (Arabic)",
-                        )}
-                        placeholder={t(
-                          "eo.types.field.optionLabelAr",
-                          "Label (Arabic)",
-                        )}
-                        dir="rtl"
-                        className={`${inputClass} sm:w-1/3`}
-                        value={option.label_ar}
-                        onChange={(e) =>
-                          setOption(index, "label_ar", e.target.value)
-                        }
-                      />
-                      <button
-                        type="button"
-                        aria-label={t(
-                          "eo.types.field.removeOption",
-                          "Remove option",
-                        )}
-                        onClick={() =>
-                          set(
-                            "options",
-                            draft.options.filter((_, i) => i !== index),
-                          )
-                        }
-                        className="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  data-testid="eo-field-add-option"
-                  onClick={() =>
-                    set("options", [
-                      ...draft.options,
-                      { value: "", label: "", label_ar: "" },
-                    ])
+                {/* A static list or an option source, never both: spec §7.3
+                    allows either, and declaring both leaves which one governs
+                    up to whatever reads it first. A mode switch is what makes
+                    the structured editor unable to produce that state. */}
+                <label className={labelClass} htmlFor="eo-field-option-mode">
+                  {t("eo.types.field.optionMode", "Choices come from")}
+                </label>
+                <select
+                  id="eo-field-option-mode"
+                  className={`${inputClass} mb-3`}
+                  value={draft.option_mode}
+                  onChange={(e) =>
+                    set(
+                      "option_mode",
+                      e.target.value as EoFieldDraft["option_mode"],
+                    )
                   }
-                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors"
                 >
-                  <Plus className="w-4 h-4" />
-                  {t("eo.types.field.addOption", "Add option")}
-                </button>
-                <FieldError message={errors.config_options} />
+                  <option value="list">
+                    {t("eo.types.field.optionModeList", "A list defined here")}
+                  </option>
+                  <option value="source">
+                    {t(
+                      "eo.types.field.optionModeSource",
+                      "A source resolved at render time",
+                    )}
+                  </option>
+                </select>
+
+                {draft.option_mode === "source" ? (
+                  <div
+                    className="space-y-3"
+                    data-testid="eo-field-option-source"
+                  >
+                    <div>
+                      <label
+                        className={labelClass}
+                        htmlFor="eo-field-option-source"
+                      >
+                        {t("eo.types.field.optionSource", "Option source")}{" "}
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="eo-field-option-source"
+                        className={`${inputClass} font-mono`}
+                        dir="ltr"
+                        value={draft.option_source}
+                        onChange={(e) => set("option_source", e.target.value)}
+                      />
+                      <Hint>
+                        {t(
+                          "eo.types.field.optionSourceHint",
+                          "Spec §7.3 allows a lookup category, org units, users by role, workflow states, or a query over records of a type. Only lookup_category has an agreed spelling today.",
+                        )}
+                      </Hint>
+                    </div>
+                    {draft.option_source.trim() === "lookup_category" && (
+                      <div>
+                        <label
+                          className={labelClass}
+                          htmlFor="eo-field-lookup-code"
+                        >
+                          {t(
+                            "eo.types.field.lookupCategoryCode",
+                            "Lookup category code",
+                          )}{" "}
+                          <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="eo-field-lookup-code"
+                          className={`${inputClass} font-mono`}
+                          dir="ltr"
+                          value={draft.lookup_category_code}
+                          onChange={(e) =>
+                            set("lookup_category_code", e.target.value)
+                          }
+                        />
+                      </div>
+                    )}
+                    <FieldError message={errors.config_options} />
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                      {t(
+                        "eo.types.field.optionsHint",
+                        "The choices this field offers. The value is what is stored on the record; the label is what is shown.",
+                      )}
+                    </p>
+                    <div className="space-y-2">
+                      {draft.options.map((option, index) => (
+                        <div
+                          key={index}
+                          className="flex items-start gap-2 flex-wrap sm:flex-nowrap"
+                        >
+                          <input
+                            aria-label={t(
+                              "eo.types.field.optionValue",
+                              "Value",
+                            )}
+                            placeholder={t(
+                              "eo.types.field.optionValue",
+                              "Value",
+                            )}
+                            className={`${inputClass} font-mono sm:w-1/3`}
+                            value={option.value}
+                            onChange={(e) =>
+                              setOption(index, "value", e.target.value)
+                            }
+                          />
+                          <input
+                            aria-label={t(
+                              "eo.types.field.optionLabel",
+                              "Label",
+                            )}
+                            placeholder={t(
+                              "eo.types.field.optionLabel",
+                              "Label",
+                            )}
+                            className={`${inputClass} sm:w-1/3`}
+                            value={option.label}
+                            onChange={(e) =>
+                              setOption(index, "label", e.target.value)
+                            }
+                          />
+                          <input
+                            aria-label={t(
+                              "eo.types.field.optionLabelAr",
+                              "Label (Arabic)",
+                            )}
+                            placeholder={t(
+                              "eo.types.field.optionLabelAr",
+                              "Label (Arabic)",
+                            )}
+                            dir="rtl"
+                            className={`${inputClass} sm:w-1/3`}
+                            value={option.label_ar}
+                            onChange={(e) =>
+                              setOption(index, "label_ar", e.target.value)
+                            }
+                          />
+                          <button
+                            type="button"
+                            aria-label={t(
+                              "eo.types.field.removeOption",
+                              "Remove option",
+                            )}
+                            onClick={() =>
+                              set(
+                                "options",
+                                draft.options.filter((_, i) => i !== index),
+                              )
+                            }
+                            className="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      data-testid="eo-field-add-option"
+                      onClick={() =>
+                        set("options", [
+                          ...draft.options,
+                          { value: "", label: "", label_ar: "" },
+                        ])
+                      }
+                      className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      {t("eo.types.field.addOption", "Add option")}
+                    </button>
+                    <FieldError message={errors.config_options} />
+                  </>
+                )}
               </div>
             )}
 
@@ -464,33 +558,40 @@ export const EoFieldEditor: React.FC<EoFieldEditorProps> = ({
                   onChange={(e) => set("target_type_key", e.target.value)}
                 >
                   <option value="">
-                    {t("eo.types.field.targetAny", "Any record type")}
+                    {t(
+                      "eo.types.field.targetAny",
+                      "Any record type — not narrowed",
+                    )}
                   </option>
-                  {/* A stored target that names no type in the catalogue —
-                      after the type was deleted, or its key changed, both of
-                      which the designer allows. Without an option of its own
-                      the select would render blank and the next save would
-                      silently rewrite the field to "any type"; with one, it
-                      is visible and the form refuses it. */}
-                  {unknownTarget && (
-                    <option value={unknownTarget}>
-                      {t("eo.types.field.targetUnknownOption", {
-                        key: unknownTarget,
-                        defaultValue: `${unknownTarget} — no record type has this key`,
-                      })}
+                  {/* A stored target the picker cannot show: a type that was
+                      deleted or re-keyed, or an ABSTRACT one, which holds no
+                      records of its own and so can never be pointed at.
+                      Without an option of its own the select rendered blank
+                      and read as "Any record type", so neither case was
+                      distinguishable from a field nobody had narrowed — and
+                      the abstract one went out on the wire. */}
+                  {unresolvedTarget && (
+                    <option value={unresolvedTarget}>
+                      {unresolvedTargetIsAbstract
+                        ? t("eo.types.field.targetAbstractOption", {
+                            key: unresolvedTarget,
+                            defaultValue: `${unresolvedTarget} — abstract, holds no records`,
+                          })
+                        : t("eo.types.field.targetUnknownOption", {
+                            key: unresolvedTarget,
+                            defaultValue: `${unresolvedTarget} — no record type has this key`,
+                          })}
                     </option>
                   )}
-                  {types
-                    .filter((x) => !x.is_abstract)
-                    .map((x) => (
-                      <option key={x.id} value={x.key}>
-                        {localize(
-                          x as unknown as Record<string, unknown>,
-                          "name",
-                        ) || x.name}{" "}
-                        ({x.key})
-                      </option>
-                    ))}
+                  {targetable.map((x) => (
+                    <option key={x.id} value={x.key}>
+                      {localize(
+                        x as unknown as Record<string, unknown>,
+                        "name",
+                      ) || x.name}{" "}
+                      ({x.key})
+                    </option>
+                  ))}
                 </select>
                 <Hint>
                   {t(
