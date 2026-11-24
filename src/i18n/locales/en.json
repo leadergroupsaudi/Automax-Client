@@ -6444,6 +6444,46 @@
         "cautionNarrowed": "Your count of records is taken from your own view of the registers and may be lower than what the server holds, so this record type cannot be confirmed empty from here. You can still save: the server counts the whole subtree as an administrator and will refuse the change, giving its reason, if any records exist."
       },
       "countsPending": "Checking whether this record type holds records. Until that finishes, treat it as holding some.",
+      "refusal": {
+        "none": "none",
+        "listSeparator": ", ",
+        "target": {
+          "type": "the record type itself rather than one of its fields",
+          "field": "field “{{field}}”"
+        },
+        "change": {
+          "workflow": "the workflow",
+          "parent_type": "the parent type",
+          "key": "the key",
+          "abstract": "making the type abstract",
+          "reference_prefix": "the reference prefix",
+          "reference_pattern": "the reference pattern",
+          "reference_mode": "the reference mode",
+          "field_removed": "removing a field",
+          "field_kind": "changing a field's kind",
+          "field_required": "making a field required"
+        },
+        "base": {
+          "workflow": "Changing the workflow from {{from}} to {{to}} is destructive: every existing record's state belongs to the old workflow, and no transition runs from a state the new workflow does not contain",
+          "parent_type": "Changing the parent type from {{from}} to {{to}} is destructive: effective fields are resolved from the ancestor chain when records are read, so stored values can lose the definitions that give them meaning",
+          "key": "Changing the key “{{from}}” to “{{to}}” is destructive: the key identifies this type to the reference prefix it owns, to every formula that names it, and to its three per-type permission codes. Saving writes the codes for “{{to}}” and leaves the codes of “{{from}}” and every role grant on them behind, so a role holding them loses this register and renaming back is refused",
+          "key_abstract": "Changing the key “{{from}}” to “{{to}}” is destructive: the key identifies this type to the reference prefix it owns and to every formula that names it",
+          "abstract": "Making the record type “{{type}}” abstract is destructive: an abstract type holds no records of its own, and this one already has some",
+          "reference_prefix": "Changing the reference prefix “{{from}}” to “{{to}}” is destructive: existing references were issued under the old prefix",
+          "reference_pattern": "Changing the reference pattern “{{from}}” to “{{to}}” is destructive: the sequence counter is keyed on the pattern, so a new one restarts at 1 and re-issues references already in use",
+          "reference_mode": "Changing the reference mode “{{from}}” to “{{to}}” is destructive: existing references were issued under the old mode, and the new one derives or numbers them differently",
+          "field_removed": "Removing the field “{{field}}” is destructive while records exist",
+          "field_kind": "Changing the kind of the field “{{field}}” from “{{from}}” to “{{to}}” is destructive while records exist",
+          "field_required": "Making the field “{{field}}” required is destructive while records exist"
+        },
+        "detail": {
+          "wrong_type": "The confirmation supplied authorises a change to the record type “{{confirmed}}”, but this edit changes the record type “{{edit}}”, so it does not authorise it",
+          "wrong_field": "The confirmation supplied authorises a change to {{confirmed}}, but this edit changes {{edit}}, so it does not authorise it",
+          "wrong_change": "The confirmation supplied authorises {{confirmed}}, but this edit is {{edit}}, so it does not authorise it",
+          "multiple_one": "This edit makes {{count}} destructive change ({{changes}}), and a confirmation authorises only one: make them one at a time, each with its own confirmation",
+          "multiple_other": "This edit makes {{count}} destructive changes ({{changes}}), and a confirmation authorises only one: make them one at a time, each with its own confirmation"
+        }
+      },
       "destructive": {
         "title": "Confirm a destructive change",
         "onType": "On record type {{type}}",

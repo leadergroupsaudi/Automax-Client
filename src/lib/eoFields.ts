@@ -1,3 +1,4 @@
+import { isEoDestructiveKey } from "./eoRefusalText";
 import type {
   EoFieldDefinition,
   EoFieldDefRequest,
@@ -438,7 +439,23 @@ export interface EoServerRefusal {
    * records and that a confirmation is what overrides the refusal.
    */
   destructive: boolean;
+  /** `message_key`/`message_args`: the same refusal as data (Task B4). */
+  key?: string;
+  args?: Record<string, string>;
+  /** The optional second clause: a mismatched confirmation, or several changes. */
+  detailKey?: string;
+  detailArgs?: Record<string, string>;
 }
+
+const stringMap = (value: unknown): Record<string, string> | undefined => {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    return undefined;
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).filter(
+      (e): e is [string, string] => typeof e[1] === "string",
+    ),
+  );
+};
 
 export function eoServerRefusal(error: unknown): EoServerRefusal | null {
   if (eoErrorStatus(error) !== 400) return null;
@@ -461,7 +478,30 @@ export function eoServerRefusal(error: unknown): EoServerRefusal | null {
   //
   // So the sentence is ALWAYS surfaced, and only the explanation is gated. A
   // rewording of the refusals costs the explanation, not the message.
-  return { message, destructive: /\bdestructive\b/i.test(message) };
+  //
+  // THE DISCRIMINATOR IS NOW THE SERVER'S `message_key` where it sends one: a
+  // key in the §7.14 family is destructive, and ANY OTHER KEY (or a key this
+  // client does not know) is not, whatever its sentence says. Only a body with
+  // no key at all — an older server — falls back to the word, so the records
+  // claim is never made for a refusal that names a different reason.
+  const data = (error as { response?: { data?: Record<string, unknown> } })
+    ?.response?.data;
+  const key =
+    typeof data?.message_key === "string" ? data.message_key : undefined;
+  const detailKey =
+    typeof data?.message_detail_key === "string"
+      ? data.message_detail_key
+      : undefined;
+  return {
+    message,
+    destructive: key
+      ? isEoDestructiveKey(key)
+      : /\bdestructive\b/i.test(message),
+    key,
+    args: stringMap(data?.message_args),
+    detailKey,
+    detailArgs: stringMap(data?.message_detail_args),
+  };
 }
 
 /**

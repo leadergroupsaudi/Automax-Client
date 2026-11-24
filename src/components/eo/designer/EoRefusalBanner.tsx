@@ -2,6 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { AlertTriangle } from "lucide-react";
 import type { EoServerRefusal } from "../../../lib/eoFields";
+import { eoRefusalText } from "../../../lib/eoRefusalText";
 
 /**
  * A refusal the server answered with that is not about any one attribute of
@@ -30,7 +31,10 @@ export const EoRefusalBanner: React.FC<{
    */
   onConfirm?: () => void;
 }> = ({ refusal, testId, onConfirm }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // The reader's language where the server sent the refusal as data, and the
+  // server's own sentence whenever that cannot be rendered. Never blank.
+  const text = eoRefusalText(refusal, t, i18n) || refusal.message;
   return (
     <div
       data-testid={testId}
@@ -44,7 +48,7 @@ export const EoRefusalBanner: React.FC<{
             {t("eo.types.field.refusedTitle", "The server refused this change")}
           </h4>
           <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">
-            {refusal.message}
+            {text}
           </p>
           {/* THE HINT AND THE BUTTON SHARE ONE CONDITION, deliberately. The
               hint promises "the change can be made with an explicit
