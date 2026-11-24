@@ -1,4 +1,5 @@
 import apiClient from "./client";
+import { EO_PREVIEWABLE_TYPES, baseMimeType } from "../hooks/useEoRecords";
 import type { ApiResponse } from "../types";
 import type {
   MyKpiAccess,
@@ -1177,6 +1178,34 @@ export const kpiDashboardApi = {
   },
 };
 
+export interface EvidenceView {
+  previewable: boolean;
+  type: string;
+  blob: Blob;
+}
+
+const startsWith = (b: Uint8Array, sig: number[], at = 0) =>
+  sig.every((v, i) => b[at + i] === v);
+
+/** The type the leading bytes actually are, for allowlisted kinds; else "". */
+async function sniffPreviewType(blob: Blob): Promise<string> {
+  const b = new Uint8Array(await blob.slice(0, 16).arrayBuffer());
+  if (startsWith(b, [0x25, 0x50, 0x44, 0x46, 0x2d])) return "application/pdf";
+  if (startsWith(b, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+    return "image/png";
+  if (startsWith(b, [0xff, 0xd8, 0xff])) return "image/jpeg";
+  if (startsWith(b, [0x47, 0x49, 0x46, 0x38])) return "image/gif";
+  if (
+    startsWith(b, [0x52, 0x49, 0x46, 0x46]) &&
+    startsWith(b, [0x57, 0x45, 0x42, 0x50], 8)
+  )
+    return "image/webp";
+  // text/plain has no signature: accept it only when it does not look like markup.
+  const head = new TextDecoder().decode(b).trimStart();
+  if (!head.startsWith("<") && !b.includes(0)) return "text/plain";
+  return "";
+}
+
 export const kpiEngagementApi = {
   // Metrics
   listMetrics: async (
@@ -1304,15 +1333,32 @@ export const kpiEngagementApi = {
     link.remove();
     window.URL.revokeObjectURL(url);
   },
-  viewEvidence: async (evidenceId: string): Promise<void> => {
+  /**
+   * Fetches evidence for viewing and decides, from its BYTES, whether it may
+   * be rendered. It never opens a window: a `blob:` URL inherits this
+   * application's origin, so an uploaded .html/.svg opened that way ran as
+   * first-party script (stored XSS). The caller renders `previewable` results
+   * in a sandboxed frame (EoFilePreviewFrame, `sandbox=""`) and saves
+   * everything else. Same pattern as useEoFileActions.
+   */
+  fetchEvidenceForView: async (evidenceId: string): Promise<EvidenceView> => {
     const res = await apiClient.get(`/kpi/evidence/${evidenceId}/download`, {
       responseType: "blob",
     });
-    const contentType = res.headers["content-type"] || res.data.type;
-    const url = window.URL.createObjectURL(
-      new Blob([res.data], { type: contentType }),
-    );
-    window.open(url, "_blank", "noopener,noreferrer");
+    const raw = res.data as Blob;
+    const declared = baseMimeType(res.headers["content-type"] || raw.type);
+    const sniffed = await sniffPreviewType(raw);
+    // The declared type is attacker-influenced. Render only when it is on the
+    // allowlist AND the bytes agree with it.
+    const previewable =
+      EO_PREVIEWABLE_TYPES.has(declared) && sniffed === declared;
+    return {
+      previewable,
+      type: previewable ? declared : "application/octet-stream",
+      blob: new Blob([raw], {
+        type: previewable ? declared : "application/octet-stream",
+      }),
+    };
   },
 
   // Collaborators

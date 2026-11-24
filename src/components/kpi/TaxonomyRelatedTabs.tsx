@@ -413,7 +413,7 @@ export const RelatedCollaboratorsTable: React.FC<{
 export const RelatedEvidenceTable: React.FC<{
   evidence: KpiEngagementEvidence[];
   loading: boolean;
-  onView: (evidenceId: string) => void;
+  onView: (evidenceId: string, fileName?: string) => void;
   viewPending: boolean;
   onDownload: (args: { evidenceId: string; fileName: string }) => void;
   downloadPending: boolean;
@@ -515,7 +515,9 @@ export const RelatedEvidenceTable: React.FC<{
                         <div className="flex items-center gap-2">
                           {hasFile ? (
                             <button
-                              onClick={() => onView(e.id)}
+                              onClick={() =>
+                                onView(e.id, e.file_name ?? undefined)
+                              }
                               disabled={viewPending}
                               title={t("common.view")}
                               className="p-1.5 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:text-teal-400 dark:hover:bg-teal-900/20 transition-colors disabled:opacity-50"

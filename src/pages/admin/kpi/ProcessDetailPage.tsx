@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { EoFilePreviewFrame } from "@/components/eo/EoFileField";
 import { useParams, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -318,15 +319,25 @@ export const ProcessDetailPage: React.FC = () => {
       )}
 
       {activeTab === "evidence" && (
-        <RelatedEvidenceTable
-          entity="objective"
-          evidence={evidence}
-          loading={evidenceLoading}
-          onView={(evidenceId) => viewEvidence.mutate(evidenceId)}
-          viewPending={viewEvidence.isPending}
-          onDownload={(args) => downloadEvidence.mutate(args)}
-          downloadPending={downloadEvidence.isPending}
-        />
+        <>
+          <RelatedEvidenceTable
+            entity="objective"
+            evidence={evidence}
+            loading={evidenceLoading}
+            onView={(evidenceId, fileName) =>
+              viewEvidence.mutate({ evidenceId, fileName })
+            }
+            viewPending={viewEvidence.isPending}
+            onDownload={(args) => downloadEvidence.mutate(args)}
+            downloadPending={downloadEvidence.isPending}
+          />
+          {viewEvidence.preview && (
+            <EoFilePreviewFrame
+              preview={viewEvidence.preview}
+              onClose={viewEvidence.closePreview}
+            />
+          )}
+        </>
       )}
     </div>
   );

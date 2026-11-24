@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -15,6 +15,7 @@ import {
   kpiDocumentaApi,
 } from "../api/kpi";
 import apiClient from "../api/client";
+import type { EoFilePreviewState } from "./useEoRecords";
 import type {
   PillarRequest,
   StrategicKPIRequest,
@@ -2088,12 +2089,60 @@ export const useDownloadKpiEvidence = () => {
   });
 };
 
+/**
+ * View evidence. Previewable files (see kpiEngagementApi.fetchEvidenceForView)
+ * come back as `preview`, to be shown in <EoFilePreviewFrame> (sandboxed).
+ * Anything else is saved, never rendered.
+ */
 export const useViewKpiEvidence = () => {
-  return useMutation({
-    mutationFn: (evidenceId: string) =>
-      kpiEngagementApi.viewEvidence(evidenceId),
+  const { t } = useTranslation();
+  const [preview, setPreview] = useState<EoFilePreviewState | null>(null);
+
+  const closePreview = useCallback(
+    () =>
+      setPreview((prev) => {
+        if (prev) URL.revokeObjectURL(prev.url);
+        return null;
+      }),
+    [],
+  );
+
+  const mutation = useMutation({
+    mutationFn: async ({
+      evidenceId,
+      fileName,
+    }: {
+      evidenceId: string;
+      fileName?: string;
+    }) => {
+      const view = await kpiEngagementApi.fetchEvidenceForView(evidenceId);
+      const name = fileName || "evidence";
+      if (!view.previewable) {
+        const url = URL.createObjectURL(view.blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        toast.info(
+          t(
+            "eo.file.previewNotSupported",
+            "This kind of file cannot be previewed safely, so it was downloaded instead.",
+          ),
+        );
+        return;
+      }
+      setPreview((prev) => {
+        if (prev) URL.revokeObjectURL(prev.url);
+        return { url: URL.createObjectURL(view.blob), name, type: view.type };
+      });
+    },
     onError: (err) => toast.error(getApiError(err)),
   });
+
+  return { ...mutation, preview, closePreview };
 };
 
 // ─── KPI Engagement: Collaborators ────────────────────────────────────────

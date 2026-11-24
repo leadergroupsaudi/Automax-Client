@@ -424,7 +424,7 @@ export function useUploadEoRecordFile() {
 }
 
 /** Blob types a preview may RENDER. Everything else is handed over as bytes. */
-const EO_PREVIEWABLE_TYPES = new Set([
+export const EO_PREVIEWABLE_TYPES = new Set([
   "application/pdf",
   "image/png",
   "image/jpeg",
@@ -434,7 +434,7 @@ const EO_PREVIEWABLE_TYPES = new Set([
 ]);
 
 /** "text/html; charset=utf-8" → "text/html"; anything unparseable → "". */
-const baseMimeType = (type: string | undefined): string =>
+export const baseMimeType = (type: string | undefined): string =>
   (type ?? "").split(";")[0].trim().toLowerCase();
 
 /** What a preview is currently showing, as an object URL the frame loads. */
