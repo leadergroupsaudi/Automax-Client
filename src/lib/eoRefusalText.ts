@@ -100,6 +100,10 @@ function render(
       has(`eo.types.referenceMode.${v}`)
     ) {
       values[name] = iso(t(`eo.types.referenceMode.${v}`));
+    } else if (id === "field_kind" && name !== "field" && has(`eo.kind.${v}`)) {
+      // The designer's own kind labels (all 27 are translated). A kind with
+      // no label falls through to the raw identifier.
+      values[name] = t(`eo.kind.${v}`) as string;
     } else {
       values[name] = iso(v);
     }

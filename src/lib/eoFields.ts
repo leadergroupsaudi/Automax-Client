@@ -479,11 +479,11 @@ export function eoServerRefusal(error: unknown): EoServerRefusal | null {
   // So the sentence is ALWAYS surfaced, and only the explanation is gated. A
   // rewording of the refusals costs the explanation, not the message.
   //
-  // THE DISCRIMINATOR IS NOW THE SERVER'S `message_key` where it sends one: a
-  // key in the §7.14 family is destructive, and ANY OTHER KEY (or a key this
-  // client does not know) is not, whatever its sentence says. Only a body with
-  // no key at all — an older server — falls back to the word, so the records
-  // claim is never made for a refusal that names a different reason.
+  // THE DISCRIMINATOR IS THE SERVER'S `message_key`, and only it. Every §7.14
+  // refusal carries one (Task B4), so a body without a key, or with a key
+  // outside the §7.14 family, is NOT a guard-rail refusal whatever its
+  // sentence says: its sentence is shown, but the records claim and the
+  // confirm route are not offered.
   const data = (error as { response?: { data?: Record<string, unknown> } })
     ?.response?.data;
   const key =
@@ -494,9 +494,7 @@ export function eoServerRefusal(error: unknown): EoServerRefusal | null {
       : undefined;
   return {
     message,
-    destructive: key
-      ? isEoDestructiveKey(key)
-      : /\bdestructive\b/i.test(message),
+    destructive: isEoDestructiveKey(key),
     key,
     args: stringMap(data?.message_args),
     detailKey,
