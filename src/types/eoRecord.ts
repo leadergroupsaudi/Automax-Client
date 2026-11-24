@@ -21,26 +21,47 @@ import type { WorkflowState, WorkflowTransition } from "./index";
  *     `total` that GoalListResponse uses.
  */
 
+/**
+ * Every field kind the server accepts, read off models.EOFieldKinds
+ * (internal/models/eo_record_type.go) rather than off any prose list of
+ * them: there are TWENTY-SEVEN, and the summaries in the specs name
+ * eighteen. The eight this union was missing before the designer could
+ * create a field — `multi_user`, `time`, `email`, `phone`, `url`,
+ * `multi_link`, `multi_user_status`, `multi_user_ack` — are all accepted by
+ * handlers.eoValidateFieldShape, so a union that omitted them would have
+ * made the designer refuse kinds the platform supports while typing the
+ * ones it does not.
+ *
+ * Order follows the Go constant block so the two can be diffed by eye.
+ */
 export type EoFieldKind =
+  | "auto_number"
   | "text"
   | "long_text"
   | "dropdown"
   | "multi_select"
-  | "date"
-  | "date_time"
   | "number"
   | "percent"
   | "yes_no"
+  | "date"
+  | "date_time"
+  | "time"
+  | "file"
+  | "multi_file"
   | "user"
+  | "multi_user"
+  | "user_date"
   | "org_unit"
   | "multi_org_unit"
   | "external_body"
-  | "file"
-  | "multi_file"
-  | "auto_number"
+  | "email"
+  | "phone"
+  | "url"
   | "link"
+  | "multi_link"
   | "workflow_state"
-  | "user_date";
+  | "multi_user_status"
+  | "multi_user_ack";
 
 /** How the engine fills a field. `auto` and `derived` are never writable. */
 export type EoProvenance = "user" | "auto" | "derived" | "system" | "";
@@ -83,6 +104,14 @@ export interface EoFieldDefinition {
   required_rule?: string;
   required_at_state_ids?: string[] | null;
   formula?: string;
+  /**
+   * What makes a `derived` field recompute. services.RecomputeDerived parses
+   * it as a list of {type, field, scope, aggregates}; a derived field whose
+   * formula names a child aggregate but whose recompute_on is empty resolves
+   * nothing and is silently dropped from the result map, so the designer
+   * treats an empty one on a derived field as a warning.
+   */
+  recompute_on?: unknown[] | null;
   is_indexed?: boolean;
   is_locked_after_state_id?: string | null;
   sort_order: number;
@@ -300,4 +329,46 @@ export interface EoDestructiveConfirmation {
   field_key?: string;
   /** The rule the operator states for the records the edit leaves behind. */
   reason?: string;
+}
+
+/**
+ * The body POST /:id/fields and PUT /:id/fields/:field_id bind
+ * (handlers.eoFieldDefRequest).
+ *
+ * PUT REPLACES the attribute set, exactly as the type routes do, with three
+ * exceptions that live in handlers.eoFieldDefRequest.applyTo and are
+ * mirrored by every caller here:
+ *
+ *  - `config`, `required_at_state_ids` and `recompute_on` are applied only
+ *    when the request carries a NON-EMPTY value (`if len(r.Config) > 0`).
+ *    Sending `{}` or `[]` is non-empty JSON and DOES overwrite; omitting the
+ *    key leaves the stored column alone. So an editor that models only part
+ *    of a field's `config` must send the whole stored object back, or the
+ *    keys it does not model are destroyed on the first save.
+ *  - `ar_untranslated` is deliberately NOT in the request: it is write-only
+ *    on the sign-off route, and a designer save must never clear it
+ *    (handlers.TestFieldDefRequestCannotCarryTheUntranslatedMarker pins its
+ *    absence). It is therefore absent here too.
+ *  - `confirm_destructive` authorises ONE §7.14-refused change — removing a
+ *    field, changing its kind, or making it required while records exist.
+ *    Task F5 fills it; F2 sends none, so a refused edit stays refused.
+ */
+export interface EoFieldDefRequest {
+  key: string;
+  label: string;
+  label_ar?: string;
+  kind: EoFieldKind | "";
+  config?: EoFieldConfig;
+  provenance?: EoProvenance;
+  required_mode?: EoRequiredMode;
+  required_rule?: string;
+  required_at_state_ids?: string[];
+  formula?: string;
+  recompute_on?: unknown[];
+  is_indexed?: boolean;
+  is_locked_after_state_id?: string | null;
+  sort_order: number;
+  help_text?: string;
+  help_text_ar?: string;
+  confirm_destructive?: EoDestructiveConfirmation;
 }

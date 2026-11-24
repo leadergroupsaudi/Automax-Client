@@ -9,6 +9,7 @@ import {
 } from "../../hooks/useEoTypes";
 import { useLocalizedField } from "../../hooks/useLocalizedField";
 import { eoRefusalMessage } from "../../lib/eoFields";
+import { EoFieldsTab } from "../../components/eo/designer/EoFieldsTab";
 import type { EoRecordType } from "../../types/eoRecord";
 
 type DesignerTab = "attributes" | "fields" | "links";
@@ -254,12 +255,7 @@ export const EoTypeDesignerPage: React.FC = () => {
           </p>
         )}
         {tab === "fields" && (
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t("eo.types.tabs.fieldsPending", {
-              count: ownFields.length,
-              defaultValue: `This type declares ${ownFields.length} fields of its own. The field editor is not built yet.`,
-            })}
-          </p>
+          <EoFieldsTab recordType={recordType} types={allTypes} />
         )}
         {tab === "links" && (
           <p className="text-sm text-slate-500 dark:text-slate-400">

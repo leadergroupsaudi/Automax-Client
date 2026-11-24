@@ -1,6 +1,9 @@
 import apiClient from "./client";
 import type { ApiResponse } from "../types";
 import type {
+  EoDestructiveConfirmation,
+  EoFieldDefinition,
+  EoFieldDefRequest,
   EoRecordType,
   EoRecordTypeDetail,
   EoRecordTypeRequest,
@@ -70,6 +73,72 @@ export const eoTypeApi = {
    */
   remove: async (id: string): Promise<ApiResponse<unknown>> => {
     const res = await apiClient.delete(`/admin/eo-record-types/${id}`);
+    return res.data;
+  },
+};
+
+/**
+ * The three write routes over a type's OWN field definitions, all on
+ * `eo:types:manage`. The read is deliberately not duplicated here:
+ * `eoRecordTypeApi.listFields` in api/eoRecords.ts already serves it, and the
+ * designer shares that query key so a field added here reaches every open
+ * record form without a reload.
+ *
+ * TWO DIFFERENT REFUSALS COME BACK FROM THESE ROUTES, and a caller that
+ * reads only one of them loses the other:
+ *
+ *  - 400 `{success:false, errors:{attr: message}, error:"<headline>"}` —
+ *    handlers.eoValidateFieldShape found the attribute set malformed. The map
+ *    is authoritative and the headline is capped at three attributes.
+ *  - 400 `{success:false, error:"<sentence>"}` with NO map — the §7.14 guard
+ *    rail refused the edit because the type, or a type beneath it, holds
+ *    records. The sentence names the field and what about the change is
+ *    destructive, and it is the whole value of the refusal.
+ *
+ * See `eoDestructiveRefusal` in lib/eoFields.ts, which tells them apart by
+ * the shape of the body rather than by reading the sentence.
+ */
+export const eoTypeFieldApi = {
+  create: async (
+    typeId: string,
+    data: EoFieldDefRequest,
+  ): Promise<ApiResponse<EoFieldDefinition>> => {
+    const res = await apiClient.post(
+      `/admin/eo-record-types/${typeId}/fields`,
+      data,
+    );
+    return res.data;
+  },
+
+  /** PUT REPLACES the attribute set; send the whole shape. */
+  update: async (
+    typeId: string,
+    fieldId: string,
+    data: EoFieldDefRequest,
+  ): Promise<ApiResponse<EoFieldDefinition>> => {
+    const res = await apiClient.put(
+      `/admin/eo-record-types/${typeId}/fields/${fieldId}`,
+      data,
+    );
+    return res.data;
+  },
+
+  /**
+   * DELETE carries an OPTIONAL body — §7.14's confirmation has nowhere else
+   * to travel on a route with no attribute set. An absent body is the
+   * ordinary unconfirmed removal; a body that is PRESENT and unparseable is
+   * refused outright, so axios must not be handed `undefined` dressed up as
+   * a payload. Task F5 fills `confirm`; F2 never sends one.
+   */
+  remove: async (
+    typeId: string,
+    fieldId: string,
+    confirm?: EoDestructiveConfirmation,
+  ): Promise<ApiResponse<unknown>> => {
+    const res = await apiClient.delete(
+      `/admin/eo-record-types/${typeId}/fields/${fieldId}`,
+      confirm ? { data: { confirm_destructive: confirm } } : undefined,
+    );
     return res.data;
   },
 };

@@ -7,12 +7,18 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { eoTypeApi } from "../api/eoTypes";
+import { eoTypeApi, eoTypeFieldApi } from "../api/eoTypes";
 import { eoRecordApi, eoRecordTypeApi } from "../api/eoRecords";
 import { eoRefusalMessage } from "../lib/eoFields";
 import { eoKeys } from "./useEoRecords";
 import usePermissions from "./usePermissions";
-import type { EoRecordType, EoRecordTypeRequest } from "../types/eoRecord";
+import type {
+  EoDestructiveConfirmation,
+  EoFieldDefinition,
+  EoFieldDefRequest,
+  EoRecordType,
+  EoRecordTypeRequest,
+} from "../types/eoRecord";
 
 // ──────────────────────────────────────────────────
 // Query Keys
@@ -337,4 +343,180 @@ export function useEoTypeFieldCounts(types: EoRecordType[]) {
     fieldCount: (id: string) => counts.get(id),
     fieldCountFailed: (id: string) => failed.has(id),
   };
+}
+
+// ──────────────────────────────────────────────────
+// Field definitions
+// ──────────────────────────────────────────────────
+
+/**
+ * One type's OWN field definitions — what the Fields tab edits.
+ *
+ * Keyed on `eoKeys.typeFields(id)`, the SAME key the record module's
+ * effective-field merge fills, which is the point: a field added in the
+ * designer must reach an already-open record form, and it does because both
+ * read one cache that every field write invalidates.
+ *
+ * The by-id type read carries `fields` too, and it is deliberately not used
+ * as the tab's source: the designer writes fields one at a time and this is
+ * the read that each write invalidates, while the type read also carries the
+ * attribute set that Task F3 edits and would be refetched for no reason.
+ */
+export function useEoTypeOwnFields(typeId?: string) {
+  return useQuery({
+    queryKey: eoKeys.typeFields(typeId ?? ""),
+    queryFn: () => eoRecordTypeApi.listFields(typeId as string),
+    enabled: !!typeId,
+    staleTime: DESIGNER_STALE_MS,
+  });
+}
+
+/** A type's ancestor chain, nearest parent first. */
+export function eoAncestorTypes(
+  typeId: string | undefined,
+  types: EoRecordType[],
+): EoRecordType[] {
+  if (!typeId) return [];
+  const byId = new Map(types.map((x) => [x.id, x]));
+  const out: EoRecordType[] = [];
+  const seen = new Set<string>([typeId]);
+  let cur = byId.get(typeId);
+  while (cur?.parent_type_id && out.length < 32) {
+    const parent: EoRecordType | undefined = byId.get(cur.parent_type_id);
+    if (!parent || seen.has(parent.id)) break;
+    seen.add(parent.id);
+    out.push(parent);
+    cur = parent;
+  }
+  return out;
+}
+
+/** One inherited field, with the ancestor that declares it. */
+export interface EoInheritedField {
+  field: EoFieldDefinition;
+  owner: EoRecordType;
+}
+
+/**
+ * The fields this type INHERITS: every ancestor's own definitions, nearest
+ * ancestor last so the list reads base-type-first the way a record form does.
+ *
+ * THEY HAVE TO BE FETCHED PER ANCESTOR. Neither
+ * `GET /admin/eo-record-types/:id` nor `GET /:id/fields` resolves the
+ * ancestor chain — both answer about the type's OWN definitions only
+ * (handlers.ListFields calls eoOwnFields, and Get sets t.Fields from the same
+ * place) — so the merge is the client's to do, as
+ * services.ResolveEffectiveFields does it on the server.
+ *
+ * They are READ-ONLY on this screen and that is not a style choice: the three
+ * write routes are scoped to `:id/fields`, so an ancestor's definition is
+ * literally not addressable from a descendant's designer. The tab says where
+ * each one comes from and links to the type that owns it.
+ */
+export function useEoTypeInheritedFields(
+  typeId: string | undefined,
+  types: EoRecordType[],
+) {
+  const ancestors = useMemo(
+    () => eoAncestorTypes(typeId, types),
+    [typeId, types],
+  );
+
+  const results = useQueries({
+    queries: ancestors.map((a) => ({
+      queryKey: eoKeys.typeFields(a.id),
+      queryFn: () => eoRecordTypeApi.listFields(a.id),
+      staleTime: DESIGNER_STALE_MS,
+      retry: false,
+    })),
+  });
+
+  // useQueries hands back a fresh array each render; key the memo off the
+  // settle timestamps, as useEoEffectiveFields does.
+  const signature = results.map((r) => r.dataUpdatedAt).join(",");
+  const fields = useMemo<EoInheritedField[]>(() => {
+    const out: EoInheritedField[] = [];
+    // `ancestors` is nearest-parent-first; walk it backwards so the ROOT
+    // type's fields lead — the same order a record form shows them in.
+    for (let at = ancestors.length - 1; at >= 0; at -= 1) {
+      const owner = ancestors[at];
+      const defs = results[at]?.data?.data ?? [];
+      [...defs]
+        .sort((a, b) =>
+          a.sort_order !== b.sort_order
+            ? a.sort_order - b.sort_order
+            : a.key.localeCompare(b.key),
+        )
+        .forEach((field) => out.push({ field, owner }));
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ancestors, signature]);
+
+  return {
+    fields,
+    isLoading: results.some((r) => r.isLoading),
+    /** An ancestor's definitions could not be read, so some are MISSING. */
+    isUnreadable: results.some((r) => r.isError),
+  };
+}
+
+// ──────────────────────────────────────────────────
+// Field writes
+// ──────────────────────────────────────────────────
+
+/**
+ * NO `onError` TOAST on any of the three, including the delete.
+ *
+ * The type delete toasts because it has no form to put a message in. A field
+ * write does: a 400 is either the per-attribute map, which belongs under the
+ * controls that caused it, or the §7.14 refusal, which is a sentence the
+ * operator has to read in full before Task F5 can offer to override it.
+ * Flattening either into a toast that disappears after four seconds loses the
+ * one thing the refusal was for.
+ */
+export function useCreateEoField() {
+  const invalidate = useInvalidateCatalogue();
+  return useMutation({
+    mutationFn: ({
+      typeId,
+      data,
+    }: {
+      typeId: string;
+      data: EoFieldDefRequest;
+    }) => eoTypeFieldApi.create(typeId, data),
+    onSuccess: invalidate,
+  });
+}
+
+export function useUpdateEoField() {
+  const invalidate = useInvalidateCatalogue();
+  return useMutation({
+    mutationFn: ({
+      typeId,
+      fieldId,
+      data,
+    }: {
+      typeId: string;
+      fieldId: string;
+      data: EoFieldDefRequest;
+    }) => eoTypeFieldApi.update(typeId, fieldId, data),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeleteEoField() {
+  const invalidate = useInvalidateCatalogue();
+  return useMutation({
+    mutationFn: ({
+      typeId,
+      fieldId,
+      confirm,
+    }: {
+      typeId: string;
+      fieldId: string;
+      confirm?: EoDestructiveConfirmation;
+    }) => eoTypeFieldApi.remove(typeId, fieldId, confirm),
+    onSuccess: invalidate,
+  });
 }

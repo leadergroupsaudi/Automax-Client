@@ -394,3 +394,33 @@ export function eoDocumentaDisabledMessage(error: unknown): string | null {
     "";
   return text || null;
 }
+
+/**
+ * The §7.14 guard rail's refusal — "this edit is destructive while records
+ * exist" — as the server's own sentence, or null when the rejection is
+ * something else.
+ *
+ * WHY THE SHAPE AND NOT THE WORDS. The sentence is built in
+ * models.eoDestructiveChanges and varies by rule ("removing field %q is
+ * destructive while records exist", "changing kind of field %q from %q to
+ * %q…"), so matching on its text would be a guess that goes stale the first
+ * time a rule is reworded — and a guard keyed on a signal that stops arriving
+ * is the failure this programme keeps producing. The BODY tells them apart
+ * without reading them: every attribute-shape refusal on these routes goes
+ * through handlers.eoFieldErrors and therefore carries an `errors` MAP, while
+ * the guard rail answers through utils.ErrorResponse and carries only
+ * `error`. A 400 with a sentence and no map is the guard rail.
+ *
+ * The one other 400-without-a-map these routes can produce is a request body
+ * fiber could not parse, which this client cannot send.
+ *
+ * This is also where Task F5's confirmation attaches: the sentence returned
+ * here is what the operator must be shown before they may override it, and
+ * the change identifier it refuses is the one their confirmation has to name.
+ */
+export function eoDestructiveRefusal(error: unknown): string | null {
+  if (eoErrorStatus(error) !== 400) return null;
+  if (Object.keys(eoFieldErrorMap(error)).length > 0) return null;
+  const message = eoErrorMessage(error);
+  return message || null;
+}
