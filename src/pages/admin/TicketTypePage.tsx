@@ -9,6 +9,26 @@ import {
   Eye,
   Bookmark,
   PlusSquare,
+  Link as LinkIcon,
+  Circle,
+  ArrowLeftRight,
+  CheckCircle2,
+  Monitor,
+  Webhook,
+  Mail,
+  ShieldCheck,
+  Users,
+  KeyRound,
+  Table2,
+  Type,
+  Building2,
+  CalendarDays,
+  Paperclip,
+  ShieldAlert,
+  Pencil,
+  Lock,
+  EyeOff,
+  Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Modal } from "@/components/ui/Modal";
@@ -146,7 +166,7 @@ const TABS: { key: DialogTab; label: string; count?: number }[] = [
   { key: "general", label: "General" },
   { key: "fields", label: "Fields", count: 8 },
   { key: "linked-types", label: "Linked types" },
-  { key: "states-transitions", label: "States and transitions" },
+  { key: "states-transitions", label: "States and workflow" },
   { key: "sources", label: "Sources", count: 4 },
   { key: "permissions", label: "Permissions" },
 ];
@@ -319,11 +339,18 @@ const LINK_BEHAVIOURS: LinkBehaviour[] = [
   "Spawns into another subsystem",
 ];
 
+type LinkedTypeTagColor = "amber" | "emerald" | "violet";
+
+interface LinkedTypeTag {
+  label: string;
+  color: LinkedTypeTagColor;
+}
+
 interface LinkedTypeRow {
   id: string;
   name: string;
   universal?: boolean;
-  tags: string[];
+  tags: LinkedTypeTag[];
   cardinality: string;
   description?: string;
 }
@@ -332,25 +359,43 @@ const LINKED_TYPES: LinkedTypeRow[] = [
   {
     id: "execution-plan",
     name: "Execution Plan",
-    tags: ["Blocks parent closure", "Optional — only where a plan is needed"],
+    tags: [
+      { label: "Blocks parent closure", color: "amber" },
+      { label: "Optional — only where a plan is needed", color: "emerald" },
+    ],
     cardinality: "one per directive",
   },
   {
     id: "assignment",
     name: "Assignment",
-    tags: ["Blocks parent closure", "Deadline must fall before the parent's"],
+    tags: [
+      { label: "Blocks parent closure", color: "amber" },
+      { label: "Deadline must fall before the parent's", color: "emerald" },
+    ],
     cardinality: "many per directive",
   },
   {
     id: "task",
     name: "Task",
     universal: true,
-    tags: ["Blocks parent closure", "Accepts children from other subsystems"],
+    tags: [
+      { label: "Blocks parent closure", color: "amber" },
+      { label: "Accepts children from other subsystems", color: "violet" },
+    ],
     cardinality: "many, from any type",
     description:
       "An On-air Commitment in EO-MED and a Visitor Direction in EO-VIS both land here. A promise made on air and a directive given in a meeting are the same object once they become work.",
   },
 ];
+
+const LINKED_TAG_CLASS: Record<LinkedTypeTagColor, string> = {
+  amber:
+    "border border-amber-400/70 text-amber-700 dark:text-amber-300 bg-transparent",
+  emerald:
+    "border border-emerald-400/70 text-emerald-700 dark:text-emerald-300 bg-transparent",
+  violet:
+    "border border-violet-400/70 text-violet-700 dark:text-violet-300 bg-transparent",
+};
 
 type StateKind = "initial" | "normal" | "terminal";
 
@@ -518,6 +563,177 @@ const DIRECTIVE_TRANSITIONS: TransitionRow[] = [
   },
 ];
 
+interface SourceRow {
+  id: string;
+  name: string;
+  identifier: string;
+  subtitle: string;
+  icon: React.ElementType;
+  type: string;
+  typeColor: "emerald" | "sky" | "violet";
+  payloadSchema: string;
+  status: "Active" | "Inactive";
+}
+
+const DIRECTIVE_SOURCES: SourceRow[] = [
+  {
+    id: "src-dir-01",
+    name: "Executive Portal Direct Submission",
+    identifier: "SRC-DIR-01",
+    subtitle: "Web Console (EO Secretariat) · Dual-Factor",
+    icon: Monitor,
+    type: "Direct Console",
+    typeColor: "emerald",
+    payloadSchema: "EO-DIR-FORM-V4",
+    status: "Active",
+  },
+  {
+    id: "src-api-04",
+    name: "Cabinet Directive Automated Dispatch",
+    identifier: "SRC-API-04",
+    subtitle: "REST API / mTLS Webhook",
+    icon: Webhook,
+    type: "Automated Gateway",
+    typeColor: "sky",
+    payloadSchema: "EO-DIR-INGEST-JSON",
+    status: "Active",
+  },
+  {
+    id: "src-brg-12",
+    name: "Correspondence Escalation Bridge",
+    identifier: "SRC-BRG-12",
+    subtitle: "Incoming Correspondence (EO-COM)",
+    icon: Mail,
+    type: "Subsystem Bridge",
+    typeColor: "violet",
+    payloadSchema: "COM-TO-DIR-V2",
+    status: "Active",
+  },
+];
+
+const SOURCE_TYPE_CLASS: Record<"emerald" | "sky" | "violet", string> = {
+  emerald:
+    "border border-emerald-400/70 text-emerald-700 dark:text-emerald-300",
+  sky: "border border-sky-400/70 text-sky-700 dark:text-sky-300",
+  violet: "border border-violet-400/70 text-violet-700 dark:text-violet-300",
+};
+
+type PermissionLevel =
+  | "full_edit"
+  | "quorum_gated"
+  | "view_only"
+  | "locked"
+  | "redacted"
+  | "upload";
+
+interface PermissionFieldRow {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  admin: PermissionLevel;
+  eo: PermissionLevel;
+  execBody: PermissionLevel;
+  audience: PermissionLevel;
+}
+
+const PERMISSION_FIELDS: PermissionFieldRow[] = [
+  {
+    id: "subject",
+    label: "Subject & Objective",
+    icon: Type,
+    admin: "full_edit",
+    eo: "full_edit",
+    execBody: "view_only",
+    audience: "view_only",
+  },
+  {
+    id: "owning_body",
+    label: "Owning Body / Secretariat",
+    icon: Building2,
+    admin: "full_edit",
+    eo: "full_edit",
+    execBody: "locked",
+    audience: "view_only",
+  },
+  {
+    id: "target_due",
+    label: "Target Due Date",
+    icon: CalendarDays,
+    admin: "full_edit",
+    eo: "quorum_gated",
+    execBody: "view_only",
+    audience: "view_only",
+  },
+  {
+    id: "evidence",
+    label: "Evidence Dossier / Upload",
+    icon: Paperclip,
+    admin: "full_edit",
+    eo: "full_edit",
+    execBody: "upload",
+    audience: "redacted",
+  },
+  {
+    id: "security",
+    label: "Security Classification",
+    icon: ShieldAlert,
+    admin: "full_edit",
+    eo: "quorum_gated",
+    execBody: "locked",
+    audience: "redacted",
+  },
+];
+
+const PERMISSION_META: Record<
+  PermissionLevel,
+  { label: string; icon: React.ElementType; className: string }
+> = {
+  full_edit: {
+    label: "Full Edit",
+    icon: Pencil,
+    className:
+      "border border-emerald-400/70 text-emerald-700 dark:text-emerald-300 bg-emerald-500/5",
+  },
+  quorum_gated: {
+    label: "Quorum Gated",
+    icon: KeyRound,
+    className:
+      "border border-sky-400/70 text-sky-700 dark:text-sky-300 bg-sky-500/5",
+  },
+  view_only: {
+    label: "View Only",
+    icon: Eye,
+    className:
+      "border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] bg-transparent",
+  },
+  locked: {
+    label: "Locked",
+    icon: Lock,
+    className:
+      "border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.5)]",
+  },
+  redacted: {
+    label: "Redacted",
+    icon: EyeOff,
+    className:
+      "border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] bg-transparent",
+  },
+  upload: {
+    label: "Upload",
+    icon: Upload,
+    className:
+      "border border-emerald-400/70 text-emerald-700 dark:text-emerald-300 bg-emerald-500/5",
+  },
+};
+
+const PERMISSION_LEGEND: PermissionLevel[] = [
+  "full_edit",
+  "quorum_gated",
+  "view_only",
+  "locked",
+  "redacted",
+];
+
 const TicketTypePage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
@@ -540,6 +756,90 @@ const TicketTypePage: React.FC = () => {
   );
   const [showRecordDemo, setShowRecordDemo] = useState(false);
   const [isAddFieldOpen, setIsAddFieldOpen] = useState(false);
+  const [isLinkTypeOpen, setIsLinkTypeOpen] = useState(false);
+  const [linkTypeForm, setLinkTypeForm] = useState<{
+    ticketType: string;
+    behaviour: LinkBehaviour;
+  }>({
+    ticketType: "Task — universal",
+    behaviour: "Blocks parent closure",
+  });
+
+  const openLinkType = () => {
+    setLinkTypeForm({
+      ticketType: "Task — universal",
+      behaviour: "Blocks parent closure",
+    });
+    setIsLinkTypeOpen(true);
+  };
+
+  const [isAddStateOpen, setIsAddStateOpen] = useState(false);
+  const [addStateForm, setAddStateForm] = useState<{
+    name: string;
+    code: string;
+    type: StateKind;
+    sla: string;
+    viewableBy: string[];
+    editableBy: string[];
+  }>({
+    name: "",
+    code: "",
+    type: "normal",
+    sla: "",
+    viewableBy: ["Admin", "EO"],
+    editableBy: ["Admin", "EO"],
+  });
+
+  const [isAddTransitionOpen, setIsAddTransitionOpen] = useState(false);
+  const [addTransitionForm, setAddTransitionForm] = useState<{
+    name: string;
+    from: string;
+    to: string;
+    roles: string[];
+    requirements: string[];
+    actions: string[];
+  }>({
+    name: "",
+    from: "in_execution",
+    to: "verification",
+    roles: ["Admin", "EO", "Executing Body"],
+    requirements: ["Comment required", "Attachment / Evidence"],
+    actions: ["Send Email"],
+  });
+
+  const openAddState = () => {
+    setAddStateForm({
+      name: "",
+      code: "",
+      type: "normal",
+      sla: "",
+      viewableBy: ["Admin", "EO"],
+      editableBy: ["Admin", "EO"],
+    });
+    setIsAddStateOpen(true);
+  };
+
+  const openAddTransition = () => {
+    setAddTransitionForm({
+      name: "",
+      from: "in_execution",
+      to: "verification",
+      roles: ["Admin", "EO", "Executing Body"],
+      requirements: ["Comment required", "Attachment / Evidence"],
+      actions: ["Send Email"],
+    });
+    setIsAddTransitionOpen(true);
+  };
+
+  const toggleInList = (
+    list: string[],
+    value: string,
+    setter: (next: string[]) => void,
+  ) => {
+    setter(
+      list.includes(value) ? list.filter((v) => v !== value) : [...list, value],
+    );
+  };
   const [addFieldForm, setAddFieldForm] = useState<{
     label: string;
     handle: string;
@@ -1748,17 +2048,21 @@ const TicketTypePage: React.FC = () => {
             </div>
           ) : activeTab === "linked-types" ? (
             <div className="px-8 py-6 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 items-start">
-              <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-6">
-                <div className="flex items-start justify-between gap-4 mb-5">
+              <div className="space-y-5">
+                <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h3 className="text-base font-semibold text-[hsl(var(--foreground))]">
+                    <h3 className="text-xl font-bold text-[hsl(var(--foreground))]">
                       Linked ticket types
                     </h3>
                     <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
                       Types that hang off a Directive, and what each link does.
                     </p>
                   </div>
-                  <button className="px-4 py-2 rounded-lg bg-[#0e5a6f] hover:bg-[#0c4e60] text-white text-sm font-medium transition-colors">
+                  <button
+                    onClick={openLinkType}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-[#0e5a6f] to-cyan-600 hover:from-[#0c4e60] hover:to-cyan-700 text-white text-sm font-medium transition-colors shadow-sm"
+                  >
+                    <Plus className="w-4 h-4" />
                     Link a type
                   </button>
                 </div>
@@ -1771,15 +2075,15 @@ const TicketTypePage: React.FC = () => {
                         key={lt.id}
                         onClick={() => setSelectedLinkedTypeId(lt.id)}
                         className={cn(
-                          "w-full text-left px-5 py-4 rounded-xl border transition-colors",
+                          "w-full text-left px-5 py-4 rounded-xl border-2 transition-colors bg-[hsl(var(--card))]",
                           isSelected
-                            ? "border-[#0e5a6f] ring-1 ring-[#0e5a6f]/30 bg-sky-50/40 dark:bg-sky-900/10"
-                            : "border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:bg-[hsl(var(--muted)/0.4)]",
+                            ? "border-emerald-400 shadow-[0_0_0_1px_rgba(16,185,129,0.15)]"
+                            : "border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.3)]",
                         )}
                       >
-                        <div className="flex items-start justify-between gap-3 mb-2">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[15px] font-semibold text-[hsl(var(--foreground))]">
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="flex items-baseline gap-2 flex-wrap">
+                            <span className="text-base font-semibold text-[hsl(var(--foreground))]">
                               {lt.name}
                             </span>
                             {lt.universal && (
@@ -1792,23 +2096,21 @@ const TicketTypePage: React.FC = () => {
                             {lt.cardinality}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 flex-wrap mb-2">
-                          {lt.tags.map((tag, i) => (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {lt.tags.map((tag) => (
                             <span
-                              key={tag}
+                              key={tag.label}
                               className={cn(
                                 "px-2.5 py-0.5 rounded-full text-xs font-medium",
-                                i === 0
-                                  ? "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
-                                  : "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+                                LINKED_TAG_CLASS[tag.color],
                               )}
                             >
-                              {tag}
+                              {tag.label}
                             </span>
                           ))}
                         </div>
                         {lt.description && (
-                          <p className="text-sm text-[hsl(var(--muted-foreground))] mt-2 leading-relaxed">
+                          <p className="text-sm text-[hsl(var(--muted-foreground))] mt-3 leading-relaxed">
                             {lt.description}
                           </p>
                         )}
@@ -1817,31 +2119,31 @@ const TicketTypePage: React.FC = () => {
                   })}
                 </div>
 
-                <div className="mt-5 p-5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))]">
+                <div className="px-5 py-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]">
                   <p className="text-[11px] font-semibold tracking-wider text-[hsl(var(--muted-foreground))] uppercase mb-3">
                     What the tree looks like
                   </p>
                   <div className="font-mono text-sm leading-7 text-[hsl(var(--foreground))]">
                     <div>
-                      Directive{" "}
+                      <span className="font-semibold">Directive</span>{" "}
                       <span className="text-[hsl(var(--muted-foreground))]">
                         EO-DIR-2027-001
                       </span>
                     </div>
                     <div className="ps-5">
-                      └ Execution Plan{" "}
+                      └ <span className="font-semibold">Execution Plan</span>{" "}
                       <span className="text-[hsl(var(--muted-foreground))]">
                         blocks closure
                       </span>
                     </div>
                     <div className="ps-10">
-                      └ Assignment × 3{" "}
+                      └ <span className="font-semibold">Assignment × 3</span>{" "}
                       <span className="text-[hsl(var(--muted-foreground))]">
                         blocks closure · date inside the parent's
                       </span>
                     </div>
                     <div className="ps-14">
-                      └ Task × 7{" "}
+                      └ <span className="font-semibold">Task × 7</span>{" "}
                       <span className="text-[hsl(var(--muted-foreground))]">
                         blocks closure
                       </span>
@@ -1852,7 +2154,7 @@ const TicketTypePage: React.FC = () => {
 
               <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl overflow-hidden">
                 <div className="px-5 py-4 border-b border-[hsl(var(--border))]">
-                  <p className="text-sm font-semibold text-[hsl(var(--foreground))]">
+                  <p className="text-base font-semibold text-[hsl(var(--foreground))]">
                     Link settings
                   </p>
                   <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
@@ -1894,24 +2196,25 @@ const TicketTypePage: React.FC = () => {
                       Link behaviour
                     </label>
                     <div className="rounded-lg overflow-hidden border border-[hsl(var(--border))]">
-                      {LINK_BEHAVIOURS.map((b, i) => {
+                      <div className="w-full flex items-center justify-between px-3.5 py-2.5 text-sm font-semibold text-left bg-gradient-to-r from-[#0e5a6f] to-cyan-500 text-white">
+                        <span>{linkBehaviour}</span>
+                        <ChevronDown className="w-4 h-4 rotate-180" />
+                      </div>
+                      {LINK_BEHAVIOURS.map((b) => {
                         const isSelected = linkBehaviour === b;
                         return (
                           <button
                             key={b}
                             onClick={() => setLinkBehaviour(b)}
                             className={cn(
-                              "w-full flex items-center justify-between px-3.5 py-2.5 text-sm transition-colors text-left",
-                              i > 0 && "border-t border-[hsl(var(--border))]",
+                              "w-full flex items-center justify-between px-3.5 py-2.5 text-sm transition-colors text-left border-t border-[hsl(var(--border))]",
                               isSelected
-                                ? "bg-[#0e5a6f] text-white font-medium"
-                                : "bg-[hsl(var(--background))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.5)]",
+                                ? "bg-cyan-50 text-[#0e5a6f] font-semibold dark:bg-cyan-900/20 dark:text-cyan-300"
+                                : "bg-[hsl(var(--card))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.5)]",
                             )}
                           >
                             <span>{b}</span>
-                            {isSelected && (
-                              <ChevronDown className="w-4 h-4 rotate-180" />
-                            )}
+                            {isSelected && <Check className="w-4 h-4" />}
                           </button>
                         );
                       })}
@@ -1973,14 +2276,15 @@ const TicketTypePage: React.FC = () => {
                     under it is open. The gate appears on the States tab and
                     cannot be removed there.
                   </div>
-                </div>
-                <div className="px-5 py-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)] flex items-center gap-3">
-                  <button className="px-4 py-2 rounded-lg bg-[#0e5a6f] hover:bg-[#0c4e60] text-white text-sm font-medium">
-                    Save link
-                  </button>
-                  <button className="px-4 py-2 rounded-lg text-sm text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.5)]">
-                    Cancel
-                  </button>
+
+                  <div className="flex items-center gap-3 pt-1">
+                    <button className="flex-1 px-4 py-2.5 rounded-lg bg-gradient-to-r from-[#0e5a6f] to-cyan-500 hover:from-[#0c4e60] hover:to-cyan-600 text-white text-sm font-semibold transition-colors shadow-sm">
+                      Save link
+                    </button>
+                    <button className="px-4 py-2.5 rounded-lg border border-[hsl(var(--border))] text-sm font-medium text-[hsl(var(--foreground))] bg-[hsl(var(--background))] hover:bg-[hsl(var(--muted)/0.5)] transition-colors">
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1997,7 +2301,11 @@ const TicketTypePage: React.FC = () => {
                       own SLA and its own view and edit roles.
                     </p>
                   </div>
-                  <button className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] text-sm text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.4)]">
+                  <button
+                    onClick={openAddState}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-[#0e5a6f] to-cyan-500 hover:from-[#0c4e60] hover:to-cyan-600 text-white text-sm font-semibold transition-colors shadow-sm"
+                  >
+                    <Plus className="w-4 h-4" />
                     Add state
                   </button>
                 </div>
@@ -2082,7 +2390,11 @@ const TicketTypePage: React.FC = () => {
                       messages it sends.
                     </p>
                   </div>
-                  <button className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] text-sm text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.4)]">
+                  <button
+                    onClick={openAddTransition}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-[#0e5a6f] to-cyan-500 hover:from-[#0c4e60] hover:to-cyan-600 text-white text-sm font-semibold transition-colors shadow-sm"
+                  >
+                    <Plus className="w-4 h-4" />
                     Add transition
                   </button>
                 </div>
@@ -2176,6 +2488,260 @@ const TicketTypePage: React.FC = () => {
                   </button>{" "}
                   to see the shape.
                 </p>
+              </div>
+            </div>
+          ) : activeTab === "sources" ? (
+            <div className="px-8 py-6 space-y-5">
+              <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl px-5 py-3.5 flex items-center justify-between gap-6 flex-wrap">
+                <div className="flex items-center gap-6 flex-wrap text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="font-semibold text-[hsl(var(--foreground))]">
+                      {DIRECTIVE_SOURCES.length} Authorized Sources
+                    </span>
+                  </div>
+                  <span className="text-[hsl(var(--muted-foreground))]">•</span>
+                  <div className="flex items-center gap-2 text-[hsl(var(--foreground))]">
+                    <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                    Dual-Key Quorum Live
+                  </div>
+                  <span className="text-[hsl(var(--muted-foreground))]">•</span>
+                  <div className="text-[hsl(var(--muted-foreground))]">
+                    Default:{" "}
+                    <span className="font-mono text-[hsl(var(--foreground))]">
+                      ST-IN-401
+                    </span>
+                  </div>
+                  <span className="text-[hsl(var(--muted-foreground))]">•</span>
+                  <div className="text-[hsl(var(--muted-foreground))]">
+                    Latency:{" "}
+                    <span className="font-mono text-emerald-600 dark:text-emerald-400">
+                      14ms
+                    </span>
+                  </div>
+                </div>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-400/60 text-xs font-mono font-medium text-emerald-700 dark:text-emerald-300">
+                  Health: 99.98%
+                </span>
+              </div>
+
+              <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-[hsl(var(--muted)/0.4)] border-b border-[hsl(var(--border))]">
+                        {[
+                          "Source & Identifier",
+                          "Type & Channel",
+                          "Payload Schema",
+                          "Status",
+                          "Actions & Ingress",
+                        ].map((h) => (
+                          <th
+                            key={h}
+                            className="text-left font-medium text-xs uppercase tracking-wider text-[hsl(var(--muted-foreground))] px-5 py-3 font-mono"
+                          >
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[hsl(var(--border))] bg-[hsl(var(--card))]">
+                      {DIRECTIVE_SOURCES.map((s) => (
+                        <tr
+                          key={s.id}
+                          className="hover:bg-[hsl(var(--muted)/0.3)] transition-colors"
+                        >
+                          <td className="px-5 py-4">
+                            <div className="flex items-start gap-3">
+                              <div className="w-9 h-9 rounded-lg bg-[hsl(var(--muted)/0.6)] flex items-center justify-center shrink-0">
+                                <s.icon className="w-4.5 h-4.5 text-[hsl(var(--muted-foreground))]" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-semibold text-[hsl(var(--foreground))]">
+                                    {s.name}
+                                  </span>
+                                  <span className="px-2 py-0.5 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.5)] text-[hsl(var(--muted-foreground))] text-xs font-mono">
+                                    {s.identifier}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                                  {s.subtitle}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-5 py-4">
+                            <span
+                              className={cn(
+                                "inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium",
+                                SOURCE_TYPE_CLASS[s.typeColor],
+                              )}
+                            >
+                              {s.type}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 text-[hsl(var(--muted-foreground))] font-mono text-xs">
+                            {s.payloadSchema}
+                          </td>
+                          <td className="px-5 py-4">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border border-emerald-400/70 text-emerald-700 dark:text-emerald-300">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              {s.status}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4">
+                            <div className="flex items-center gap-2">
+                              <button className="px-3 py-1 rounded-md border border-[hsl(var(--border))] text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:bg-[hsl(var(--muted)/0.5)] transition-colors">
+                                Test
+                              </button>
+                              <button className="px-3 py-1 rounded-md border border-[hsl(var(--border))] text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:bg-[hsl(var(--muted)/0.5)] transition-colors">
+                                Config
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          ) : activeTab === "permissions" ? (
+            <div className="px-8 py-6 space-y-5">
+              <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl px-5 py-3.5 flex items-center gap-6 flex-wrap text-sm">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-emerald-500" />
+                  <span className="font-mono text-[hsl(var(--muted-foreground))] uppercase text-xs tracking-wider">
+                    Roles:
+                  </span>
+                  <span className="font-semibold text-[hsl(var(--foreground))]">
+                    4 Entities
+                  </span>
+                  <span className="font-mono text-xs text-[hsl(var(--muted-foreground))]">
+                    (EO, Admin, ExecBody, SecDir)
+                  </span>
+                </div>
+                <span className="text-[hsl(var(--muted-foreground))]">•</span>
+                <div className="flex items-center gap-2">
+                  <KeyRound className="w-4 h-4 text-emerald-500" />
+                  <span className="font-mono text-[hsl(var(--muted-foreground))] uppercase text-xs tracking-wider">
+                    Quorum Gate:
+                  </span>
+                  <span className="font-semibold text-[hsl(var(--foreground))]">
+                    2-Key Dual
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl overflow-hidden">
+                <div className="px-5 py-3.5 border-b border-[hsl(var(--border))] flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Table2 className="w-4 h-4 text-[#0e5a6f] dark:text-cyan-400" />
+                    <h3 className="text-base font-semibold text-[hsl(var(--foreground))]">
+                      Field-Level Edit Permissions by State
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-xs uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                      Target State:
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-emerald-400/70 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      In Execution (Active)
+                    </span>
+                    <button className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-[hsl(var(--border))] text-xs font-medium text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.5)] transition-colors">
+                      Switch State
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-[hsl(var(--muted)/0.4)] border-b border-[hsl(var(--border))]">
+                        <th className="text-left font-medium text-xs uppercase tracking-wider text-[hsl(var(--muted-foreground))] px-5 py-3 font-mono">
+                          Field Name
+                        </th>
+                        {[
+                          "Admin",
+                          "Executive Office",
+                          "Executing Body",
+                          "General Audience",
+                        ].map((h) => (
+                          <th
+                            key={h}
+                            className="text-center font-medium text-xs uppercase tracking-wider text-[hsl(var(--muted-foreground))] px-5 py-3 font-mono"
+                          >
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[hsl(var(--border))] bg-[hsl(var(--card))]">
+                      {PERMISSION_FIELDS.map((row) => (
+                        <tr
+                          key={row.id}
+                          className="hover:bg-[hsl(var(--muted)/0.3)] transition-colors"
+                        >
+                          <td className="px-5 py-3.5">
+                            <div className="flex items-center gap-2.5">
+                              <row.icon className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                              <span className="font-semibold text-[hsl(var(--foreground))]">
+                                {row.label}
+                              </span>
+                            </div>
+                          </td>
+                          {(
+                            ["admin", "eo", "execBody", "audience"] as const
+                          ).map((col) => {
+                            const level = row[col];
+                            const meta = PERMISSION_META[level];
+                            return (
+                              <td key={col} className="px-5 py-3.5 text-center">
+                                <span
+                                  className={cn(
+                                    "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium font-mono",
+                                    meta.className,
+                                  )}
+                                >
+                                  <meta.icon className="w-3 h-3" />
+                                  {meta.label}
+                                </span>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="px-5 py-3.5 border-t border-[hsl(var(--border))] flex items-center gap-5 flex-wrap font-mono text-xs">
+                  {PERMISSION_LEGEND.map((lvl) => {
+                    const meta = PERMISSION_META[lvl];
+                    return (
+                      <div
+                        key={lvl}
+                        className="inline-flex items-center gap-1.5 text-[hsl(var(--muted-foreground))]"
+                      >
+                        <meta.icon
+                          className={cn(
+                            "w-3 h-3",
+                            lvl === "full_edit"
+                              ? "text-emerald-500"
+                              : lvl === "quorum_gated"
+                                ? "text-sky-500"
+                                : "text-[hsl(var(--muted-foreground))]",
+                          )}
+                        />
+                        {meta.label}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           ) : (
@@ -2645,6 +3211,573 @@ const TicketTypePage: React.FC = () => {
           >
             <Bookmark className="w-4 h-4" />
             Add Field
+          </button>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={isLinkTypeOpen}
+        onClose={() => setIsLinkTypeOpen(false)}
+        size="md"
+        showCloseButton={false}
+      >
+        <div className="px-6 pt-5 pb-4 border-b border-[hsl(var(--border))] flex items-start justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <LinkIcon className="w-5 h-5 text-[#0e5a6f] dark:text-cyan-400" />
+            <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">
+              Link a Ticket Type
+            </h3>
+          </div>
+          <button
+            onClick={() => setIsLinkTypeOpen(false)}
+            className="p-1.5 -m-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] transition-colors"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <div className="px-6 py-5 space-y-5">
+          <div>
+            <label className="block text-sm font-semibold text-[hsl(var(--foreground))] mb-2">
+              Select Ticket Type
+            </label>
+            <div className="relative">
+              <select
+                value={linkTypeForm.ticketType}
+                onChange={(e) =>
+                  setLinkTypeForm((f) => ({ ...f, ticketType: e.target.value }))
+                }
+                className="w-full appearance-none px-4 py-2.5 pr-10 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[#0e5a6f]/20 focus:border-[#0e5a6f] transition-colors"
+              >
+                <option>Task — universal</option>
+                <option>Assignment — sub-type</option>
+                <option>Meeting — sub-type</option>
+                <option>Execution Plan — sub-type</option>
+                <option>Agenda Item — sub-type</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))] pointer-events-none" />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-[hsl(var(--foreground))] mb-2">
+              Link Behaviour
+            </label>
+            <div className="relative">
+              <select
+                value={linkTypeForm.behaviour}
+                onChange={(e) =>
+                  setLinkTypeForm((f) => ({
+                    ...f,
+                    behaviour: e.target.value as LinkBehaviour,
+                  }))
+                }
+                className="w-full appearance-none px-4 py-2.5 pr-10 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[#0e5a6f]/20 focus:border-[#0e5a6f] transition-colors"
+              >
+                {LINK_BEHAVIOURS.map((b) => (
+                  <option key={b} value={b}>
+                    {b}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))] pointer-events-none" />
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 py-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.25)] flex items-center justify-end gap-2">
+          <button
+            onClick={() => setIsLinkTypeOpen(false)}
+            className="px-4 py-2 rounded-lg text-sm font-medium text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.5)] transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              setLinkBehaviour(linkTypeForm.behaviour);
+              setLinkChildType(linkTypeForm.ticketType);
+              setIsLinkTypeOpen(false);
+            }}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-[#0e5a6f] to-cyan-500 hover:from-[#0c4e60] hover:to-cyan-600 text-white text-sm font-semibold transition-colors shadow-sm"
+          >
+            <LinkIcon className="w-4 h-4" />
+            Confirm &amp; Link
+          </button>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={isAddStateOpen}
+        onClose={() => setIsAddStateOpen(false)}
+        size="xl"
+        showCloseButton={false}
+      >
+        <div className="px-6 pt-5 pb-4 flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0e5a6f] to-cyan-500 flex items-center justify-center shadow-sm">
+              <Circle className="w-5 h-5 text-white" fill="currentColor" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">
+                Add New Workflow State
+              </h3>
+              <p className="text-sm text-[hsl(var(--muted-foreground))] mt-0.5">
+                Configure lifecycle stage, SLA duration, and role permissions.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsAddStateOpen(false)}
+            className="p-1.5 -m-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] transition-colors"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <div className="px-6 pb-6 space-y-5">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[11px] font-semibold tracking-wider text-[hsl(var(--muted-foreground))] uppercase mb-2">
+                State Name
+              </label>
+              <input
+                type="text"
+                value={addStateForm.name}
+                onChange={(e) =>
+                  setAddStateForm((f) => ({ ...f, name: e.target.value }))
+                }
+                placeholder="e.g. Under Review"
+                className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[#0e5a6f]/20 focus:border-[#0e5a6f] transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold tracking-wider text-[hsl(var(--muted-foreground))] uppercase mb-2">
+                State Code / Handle
+              </label>
+              <input
+                type="text"
+                value={addStateForm.code}
+                onChange={(e) =>
+                  setAddStateForm((f) => ({ ...f, code: e.target.value }))
+                }
+                placeholder="e.g. under_review"
+                className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm font-mono text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[#0e5a6f]/20 focus:border-[#0e5a6f] transition-colors"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[11px] font-semibold tracking-wider text-[hsl(var(--muted-foreground))] uppercase mb-2">
+                State Type
+              </label>
+              <div className="relative">
+                <select
+                  value={addStateForm.type}
+                  onChange={(e) =>
+                    setAddStateForm((f) => ({
+                      ...f,
+                      type: e.target.value as StateKind,
+                    }))
+                  }
+                  className="w-full appearance-none px-4 py-2.5 pr-10 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[#0e5a6f]/20 focus:border-[#0e5a6f] transition-colors"
+                >
+                  <option value="initial">Initial</option>
+                  <option value="normal">Normal</option>
+                  <option value="terminal">Terminal</option>
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))] pointer-events-none" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold tracking-wider text-[hsl(var(--muted-foreground))] uppercase mb-2">
+                SLA Duration
+              </label>
+              <input
+                type="text"
+                value={addStateForm.sla}
+                onChange={(e) =>
+                  setAddStateForm((f) => ({ ...f, sla: e.target.value }))
+                }
+                placeholder="e.g. 3 days or per due date"
+                className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[#0e5a6f]/20 focus:border-[#0e5a6f] transition-colors"
+              />
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[11px] font-semibold tracking-wider text-[hsl(var(--muted-foreground))] uppercase mb-2">
+              Viewable By
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {["Admin", "EO", "Executing Body", "Secretary", "All"].map(
+                (role) => {
+                  const checked = addStateForm.viewableBy.includes(role);
+                  return (
+                    <label
+                      key={role}
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors",
+                        checked
+                          ? "border-[#0e5a6f] bg-[#0e5a6f]/5"
+                          : "border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:bg-[hsl(var(--muted)/0.4)]",
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() =>
+                          toggleInList(addStateForm.viewableBy, role, (next) =>
+                            setAddStateForm((f) => ({
+                              ...f,
+                              viewableBy: next,
+                            })),
+                          )
+                        }
+                        className="w-4 h-4 accent-[#0e5a6f] cursor-pointer"
+                      />
+                      <span className="text-sm text-[hsl(var(--foreground))]">
+                        {role}
+                      </span>
+                    </label>
+                  );
+                },
+              )}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[11px] font-semibold tracking-wider text-[hsl(var(--muted-foreground))] uppercase mb-2">
+              Editable By
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {["Admin", "EO", "Executing Body"].map((role) => {
+                const checked = addStateForm.editableBy.includes(role);
+                return (
+                  <label
+                    key={role}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors",
+                      checked
+                        ? "border-[#0e5a6f] bg-[#0e5a6f]/5"
+                        : "border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:bg-[hsl(var(--muted)/0.4)]",
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() =>
+                        toggleInList(addStateForm.editableBy, role, (next) =>
+                          setAddStateForm((f) => ({
+                            ...f,
+                            editableBy: next,
+                          })),
+                        )
+                      }
+                      className="w-4 h-4 accent-[#0e5a6f] cursor-pointer"
+                    />
+                    <span className="text-sm text-[hsl(var(--foreground))]">
+                      {role}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 py-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.25)] flex items-center justify-end gap-2">
+          <button
+            onClick={() => setIsAddStateOpen(false)}
+            className="px-4 py-2 rounded-lg text-sm font-medium text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.5)] transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => setIsAddStateOpen(false)}
+            disabled={!addStateForm.name.trim()}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-[#0e5a6f] to-cyan-500 hover:from-[#0c4e60] hover:to-cyan-600 text-white text-sm font-semibold transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            Confirm State
+          </button>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={isAddTransitionOpen}
+        onClose={() => setIsAddTransitionOpen(false)}
+        size="xl"
+        showCloseButton={false}
+      >
+        <div className="px-6 pt-5 pb-4 flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center shadow-sm">
+              <ArrowLeftRight className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">
+                Add New Transition
+              </h3>
+              <p className="text-sm text-[hsl(var(--muted-foreground))] mt-0.5">
+                Define lifecycle step movement, requirements, and triggered
+                actions.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsAddTransitionOpen(false)}
+            className="p-1.5 -m-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] transition-colors"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <div className="px-6 pb-6 space-y-5">
+          <div>
+            <label className="block text-[11px] font-semibold tracking-wider text-[hsl(var(--muted-foreground))] uppercase mb-2">
+              Transition Name
+            </label>
+            <input
+              type="text"
+              value={addTransitionForm.name}
+              onChange={(e) =>
+                setAddTransitionForm((f) => ({ ...f, name: e.target.value }))
+              }
+              placeholder="e.g. Submit for verification or Request Revision"
+              className="w-full px-4 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[#0e5a6f]/20 focus:border-[#0e5a6f] transition-colors"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[11px] font-semibold tracking-wider text-[hsl(var(--muted-foreground))] uppercase mb-2">
+                From State
+              </label>
+              <div className="relative">
+                <select
+                  value={addTransitionForm.from}
+                  onChange={(e) =>
+                    setAddTransitionForm((f) => ({
+                      ...f,
+                      from: e.target.value,
+                    }))
+                  }
+                  className="w-full appearance-none px-4 py-2.5 pr-10 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[#0e5a6f]/20 focus:border-[#0e5a6f] transition-colors"
+                >
+                  {DIRECTIVE_STATES.map((s) => (
+                    <option key={s.id} value={s.code}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))] pointer-events-none" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold tracking-wider text-[hsl(var(--muted-foreground))] uppercase mb-2">
+                To State
+              </label>
+              <div className="relative">
+                <select
+                  value={addTransitionForm.to}
+                  onChange={(e) =>
+                    setAddTransitionForm((f) => ({
+                      ...f,
+                      to: e.target.value,
+                    }))
+                  }
+                  className="w-full appearance-none px-4 py-2.5 pr-10 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[#0e5a6f]/20 focus:border-[#0e5a6f] transition-colors"
+                >
+                  {DIRECTIVE_STATES.map((s) => (
+                    <option key={s.id} value={s.code}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))] pointer-events-none" />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[11px] font-semibold tracking-wider text-[hsl(var(--muted-foreground))] uppercase mb-2">
+              Allowed Roles
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {["Admin", "EO", "Executing Body"].map((role) => {
+                const checked = addTransitionForm.roles.includes(role);
+                return (
+                  <label
+                    key={role}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors",
+                      checked
+                        ? "border-[#0e5a6f] bg-[#0e5a6f]/5"
+                        : "border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:bg-[hsl(var(--muted)/0.4)]",
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() =>
+                        toggleInList(addTransitionForm.roles, role, (next) =>
+                          setAddTransitionForm((f) => ({ ...f, roles: next })),
+                        )
+                      }
+                      className="w-4 h-4 accent-[#0e5a6f] cursor-pointer"
+                    />
+                    <span className="text-sm text-[hsl(var(--foreground))]">
+                      {role}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[11px] font-semibold tracking-wider text-[hsl(var(--muted-foreground))] uppercase mb-2">
+              Requirements
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                "Comment required",
+                "Attachment / Evidence",
+                "Feedback Dossier",
+                "All linked tickets closed",
+              ].map((req) => {
+                const checked = addTransitionForm.requirements.includes(req);
+                return (
+                  <label
+                    key={req}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors",
+                      checked
+                        ? "border-[#0e5a6f] bg-[#0e5a6f]/5"
+                        : "border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:bg-[hsl(var(--muted)/0.4)]",
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() =>
+                        toggleInList(
+                          addTransitionForm.requirements,
+                          req,
+                          (next) =>
+                            setAddTransitionForm((f) => ({
+                              ...f,
+                              requirements: next,
+                            })),
+                        )
+                      }
+                      className="w-4 h-4 accent-[#0e5a6f] cursor-pointer"
+                    />
+                    <span className="text-sm text-[hsl(var(--foreground))]">
+                      {req}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[11px] font-semibold tracking-wider text-[hsl(var(--muted-foreground))] uppercase mb-2">
+              Triggered Actions
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {["Send Email", "Send SMS Alert", "Create Linked"].map(
+                (action) => {
+                  const checked = addTransitionForm.actions.includes(action);
+                  return (
+                    <label
+                      key={action}
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors",
+                        checked
+                          ? "border-[#0e5a6f] bg-[#0e5a6f]/5"
+                          : "border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:bg-[hsl(var(--muted)/0.4)]",
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() =>
+                          toggleInList(
+                            addTransitionForm.actions,
+                            action,
+                            (next) =>
+                              setAddTransitionForm((f) => ({
+                                ...f,
+                                actions: next,
+                              })),
+                          )
+                        }
+                        className="w-4 h-4 accent-[#0e5a6f] cursor-pointer"
+                      />
+                      <span className="text-sm text-[hsl(var(--foreground))]">
+                        {action}
+                      </span>
+                    </label>
+                  );
+                },
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 py-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.25)] flex items-center justify-end gap-2">
+          <button
+            onClick={() => setIsAddTransitionOpen(false)}
+            className="px-4 py-2 rounded-lg text-sm font-medium text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.5)] transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => setIsAddTransitionOpen(false)}
+            disabled={!addTransitionForm.name.trim()}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-[#0e5a6f] to-cyan-500 hover:from-[#0c4e60] hover:to-cyan-600 text-white text-sm font-semibold transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            Confirm Transition
           </button>
         </div>
       </Modal>
