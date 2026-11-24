@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Check, Minus } from "lucide-react";
 import { userApi, departmentApi } from "../../api/admin";
 import { useLocalizedField } from "../../hooks/useLocalizedField";
+import { useEoFieldOptions } from "../../hooks/useLookupValues";
 import { useEoRecord } from "../../hooks/useEoRecords";
 import { eoRecordLabel, toFileIdList } from "../../lib/eoFields";
 import { EoFileLinks } from "./EoFileField";
@@ -62,6 +63,8 @@ export const EoFieldValue: React.FC<EoFieldValueProps> = ({
 }) => {
   const { t } = useTranslation();
   const localize = useLocalizedField();
+  // A dropdown's labels come from its static list or its option source (§7.3).
+  const resolvedOptions = useEoFieldOptions(field);
 
   const needsUsers = field.kind === "user" || field.kind === "user_date";
   const needsDepartments =
@@ -164,14 +167,9 @@ export const EoFieldValue: React.FC<EoFieldValueProps> = ({
 
     case "dropdown":
     case "multi_select": {
-      const options = field.config?.options ?? [];
-      const labelFor = (v: unknown) => {
-        const opt = options.find((o) => o.value === String(v));
-        return opt
-          ? localize(opt as unknown as Record<string, unknown>, "label") ||
-              opt.value
-          : String(v);
-      };
+      const options = resolvedOptions.options;
+      const labelFor = (v: unknown) =>
+        options.find((o) => o.value === String(v))?.label ?? String(v);
       const list = Array.isArray(value) ? value : [value];
       return (
         <span className="flex flex-wrap gap-1">

@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Select } from "../ui/SelectInput";
 import { MultiSelect } from "../ui/MultiSelect";
@@ -9,6 +10,10 @@ import { EoRecordPicker } from "./EoRecordPicker";
 import { EoFileField } from "./EoFileField";
 import { userApi, departmentApi } from "../../api/admin";
 import { useLocalizedField } from "../../hooks/useLocalizedField";
+import {
+  useEoFieldOptions,
+  type EoResolvedOptions,
+} from "../../hooks/useLookupValues";
 import { isReadOnlyField, toFileIdList } from "../../lib/eoFields";
 import type { EoFieldDefinition } from "../../types/eoRecord";
 import type { Department, User } from "../../types";
@@ -35,6 +40,105 @@ interface EoFieldInputProps {
    */
   persistedValue?: unknown;
 }
+
+/**
+ * What to say under a dropdown whose choices are not simply there. Silence is
+ * the defect this exists to prevent: an empty picker that says nothing reads
+ * as "nothing to choose", never as "this field is misconfigured".
+ */
+const optionsNoticeText = (
+  t: TFunction,
+  r: EoResolvedOptions,
+  kind: string,
+): { text: string; tone: "info" | "problem" } | null => {
+  if (kind !== "dropdown" && kind !== "multi_select") return null;
+  const code = r.code;
+  switch (r.status) {
+    case "ready":
+      return r.conflict
+        ? {
+            tone: "problem",
+            text: t(
+              "eo.form.options.conflict",
+              "This field declares both a fixed option list and an option source. The fixed list is being used; ask an administrator to keep one.",
+            ),
+          }
+        : null;
+    case "loading":
+      return {
+        tone: "info",
+        text: t("eo.form.options.loading", "Loading the available choices…"),
+      };
+    case "missing":
+      return {
+        tone: "problem",
+        text: t(
+          "eo.form.options.missing",
+          'The list this field draws its choices from ("{{code}}") does not exist. Ask an administrator to create it or correct the field.',
+          { code },
+        ),
+      };
+    case "inactive":
+      return {
+        tone: "problem",
+        text: t(
+          "eo.form.options.inactive",
+          'The list this field draws its choices from ("{{code}}") is switched off. Ask an administrator to activate it.',
+          { code },
+        ),
+      };
+    case "empty":
+      return {
+        tone: "problem",
+        text: t(
+          "eo.form.options.empty",
+          'The list this field draws its choices from ("{{code}}") exists but has no active values yet. Ask an administrator to add some.',
+          { code },
+        ),
+      };
+    case "unverified":
+      return {
+        tone: "problem",
+        text: t(
+          "eo.form.options.unverified",
+          'No choices were returned for the list "{{code}}". It may not exist or may have no values; ask an administrator to check it.',
+          { code },
+        ),
+      };
+    case "error":
+      return {
+        tone: "problem",
+        text: t(
+          "eo.form.options.error",
+          "The choices for this field could not be loaded. Try again shortly.",
+        ),
+      };
+    case "noCode":
+      return {
+        tone: "problem",
+        text: t(
+          "eo.form.options.noCode",
+          "This field is set to draw its choices from a list but names no list. Ask an administrator to correct it.",
+        ),
+      };
+    case "unsupported":
+      return {
+        tone: "problem",
+        text: t(
+          "eo.form.options.unsupported",
+          "This field draws its choices from a source the form cannot read yet.",
+        ),
+      };
+    case "noOptions":
+      return {
+        tone: "problem",
+        text: t(
+          "eo.form.options.noOptions",
+          "This field has no choices configured. Ask an administrator to add some.",
+        ),
+      };
+  }
+};
 
 /**
  * Token-based control styling (bg-[hsl(var(--…))]) rather than hard-coded
@@ -164,14 +268,13 @@ export const EoFieldInput: React.FC<EoFieldInputProps> = ({
     [departmentsQuery.data, localize],
   );
 
-  const dropdownOptions = useMemo(
-    () =>
-      (field.config?.options ?? []).map((o) => ({
-        value: o.value,
-        label:
-          localize(o as unknown as Record<string, unknown>, "label") || o.value,
-      })),
-    [field.config, localize],
+  const resolved = useEoFieldOptions(field);
+  const dropdownOptions = resolved.options;
+  const optionsLoading = resolved.status === "loading";
+  const optionsNotice = optionsNoticeText(
+    t as unknown as TFn,
+    resolved,
+    field.kind,
   );
 
   const set = (v: unknown) => onChange(field.key, v);
@@ -188,6 +291,14 @@ export const EoFieldInput: React.FC<EoFieldInputProps> = ({
 
   const Footer = (
     <>
+      {optionsNotice && (
+        <p
+          role="status"
+          className={`mt-1 text-xs ${optionsNotice.tone === "problem" ? "text-amber-700 dark:text-amber-400" : "text-[hsl(var(--muted-foreground))]"}`}
+        >
+          {optionsNotice.text}
+        </p>
+      )}
       {help && (
         <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">
           {help}
@@ -328,9 +439,21 @@ export const EoFieldInput: React.FC<EoFieldInputProps> = ({
             disabled={disabled}
             searchable={dropdownOptions.length > 8}
             clearable={!required}
-            placeholder={t("eo.form.selectPlaceholder", "Select…")}
+            placeholder={
+              optionsLoading
+                ? t("common.loading", "Loading…")
+                : t("eo.form.selectPlaceholder", "Select…")
+            }
             error={error}
           />
+          {optionsNotice && (
+            <p
+              role="status"
+              className={`mt-1 text-xs ${optionsNotice.tone === "problem" ? "text-amber-700 dark:text-amber-400" : "text-[hsl(var(--muted-foreground))]"}`}
+            >
+              {optionsNotice.text}
+            </p>
+          )}
           {help && (
             <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">
               {help}
@@ -347,9 +470,13 @@ export const EoFieldInput: React.FC<EoFieldInputProps> = ({
             options={dropdownOptions}
             value={asStringArray(value)}
             onChange={set}
-            disabled={disabled}
+            disabled={disabled || optionsLoading}
             searchable
-            placeholder={t("eo.form.selectPlaceholder", "Select…")}
+            placeholder={
+              optionsLoading
+                ? t("common.loading", "Loading…")
+                : t("eo.form.selectPlaceholder", "Select…")
+            }
           />
           {Footer}
         </div>

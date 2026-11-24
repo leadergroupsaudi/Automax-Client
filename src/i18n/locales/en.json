@@ -6068,6 +6068,18 @@
     "form": {
       "systemManaged": "Set automatically by the system",
       "selectPlaceholder": "Select…",
+      "options": {
+          "loading": "Loading the available choices…",
+          "conflict": "This field declares both a fixed option list and an option source. The fixed list is being used; ask an administrator to keep one.",
+          "missing": "The list this field draws its choices from (\"{{code}}\") does not exist. Ask an administrator to create it or correct the field.",
+          "inactive": "The list this field draws its choices from (\"{{code}}\") is switched off. Ask an administrator to activate it.",
+          "empty": "The list this field draws its choices from (\"{{code}}\") exists but has no active values yet. Ask an administrator to add some.",
+          "unverified": "No choices were returned for the list \"{{code}}\". It may not exist or may have no values; ask an administrator to check it.",
+          "error": "The choices for this field could not be loaded. Try again shortly.",
+          "noCode": "This field is set to draw its choices from a list but names no list. Ask an administrator to correct it.",
+          "unsupported": "This field draws its choices from a source the form cannot read yet.",
+          "noOptions": "This field has no choices configured. Ask an administrator to add some."
+        },
       "selectUser": "Select a user",
       "selectOrgUnit": "Select an organisational unit",
       "selectOrgUnits": "Select organisational units",
