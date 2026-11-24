@@ -20,7 +20,7 @@ import { useLocalizedField } from "../../hooks/useLocalizedField";
 import { EoRecordFilters } from "../../components/eo/EoRecordFilters";
 import { EoStateBadge } from "../../components/eo/EoStateBadge";
 import { EoFieldValue } from "../../components/eo/EoFieldValue";
-import { registerColumnFields } from "../../lib/eoFields";
+import { flattenRecordValues, registerColumnFields } from "../../lib/eoFields";
 import type { EoRecord, EoRecordFilter } from "../../types/eoRecord";
 
 const PRIORITY_CLASSES: Record<string, string> = {
@@ -347,6 +347,17 @@ export const EoRecordsPage: React.FC = () => {
                 <tbody>
                   {records.map((rec) => {
                     const rt = typeById.get(rec.record_type_id);
+                    // The extra columns read from the FLATTENED field space,
+                    // not from `rec.values`. The 17 fields every type inherits
+                    // from eo_base are real COLUMNS on the record
+                    // (json:"sensitivity", json:"source", …) and are not keys
+                    // in the jsonb bag, and because ancestor fields sort first
+                    // those two are the first two extra columns on EVERY type
+                    // — so reading `values` alone made every register's extra
+                    // columns blank on every row. flattenRecordValues is the
+                    // same merge the detail page and the edit form use
+                    // (services.eoFlattenStored).
+                    const flat = flattenRecordValues(rec);
                     return (
                       <tr
                         key={rec.id}
@@ -408,7 +419,7 @@ export const EoRecordsPage: React.FC = () => {
                           <td key={f.key} className="px-6 py-4">
                             <EoFieldValue
                               field={f}
-                              value={rec.values?.[f.key]}
+                              value={flat[f.key]}
                               compact
                             />
                           </td>

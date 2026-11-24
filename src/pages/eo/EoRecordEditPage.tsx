@@ -9,6 +9,7 @@ import {
   useUpdateEoRecord,
 } from "../../hooks/useEoRecords";
 import { useLocalizedField } from "../../hooks/useLocalizedField";
+import { usePermissions } from "../../hooks/usePermissions";
 import { EoRecordForm } from "../../components/eo/EoRecordForm";
 import type { EoValues } from "../../types/eoRecord";
 
@@ -17,6 +18,7 @@ export const EoRecordEditPage: React.FC = () => {
   const navigate = useNavigate();
   const { typeKey, id } = useParams<{ typeKey: string; id: string }>();
   const localize = useLocalizedField();
+  const { canEoRecordType } = usePermissions();
 
   const recordQuery = useEoRecord(id ?? "");
   const record = recordQuery.data?.data;
@@ -63,6 +65,35 @@ export const EoRecordEditPage: React.FC = () => {
           <p className="text-sm text-red-800 dark:text-red-300">
             {t("eo.detail.notFound", "Record not found")}
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  /**
+   * The PAGE-LEVEL per-type guard. The route is gated on `eo:view` alone
+   * (PermissionRoute in App.tsx), which every EO user holds, so without this
+   * the page rendered a full edit form for a type the caller holds no
+   * `eo:<key>:update` code on — and the server answered 403 only after it
+   * had been filled in. It is reached after the catalogue has settled and
+   * `recordType` is a fact, so `canEoRecordType` is answering about a real
+   * key and not about `undefined`.
+   */
+  if (!canEoRecordType(recordType.key, "update")) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div className="rounded-xl border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/20 p-6">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            <div>
+              <h3 className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                {t("eo.edit.forbidden", "You cannot edit records of this type")}
+              </h3>
+              <p className="mt-1 text-sm text-amber-700 dark:text-amber-400">
+                {t("eo.noTypeAccessHint")}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     );
