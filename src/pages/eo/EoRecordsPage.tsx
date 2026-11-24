@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Link, useParams, useLocation } from "react-router-dom";
+import { Link, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   Plus,
@@ -189,6 +189,53 @@ export const EoRecordsPage: React.FC = () => {
     return `/eo/${rt?.key ?? "records"}/${rec.id}`;
   };
 
+  const navigate = useNavigate();
+  const clickTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  React.useEffect(
+    () => () => {
+      if (clickTimer.current) clearTimeout(clickTimer.current);
+    },
+    [],
+  );
+
+  // Whole-row activation. The reference <Link> stays the real anchor (URL on
+  // hover, middle-click, new tab); the row is the larger target. Clicks that
+  // originate inside any interactive child, or that end a text selection, are
+  // left alone so neither double-navigation nor un-copyable subjects occur.
+  const INTERACTIVE =
+    "a,button,input,select,textarea,label,summary,[role=button],[role=link],[role=menuitem],[contenteditable=true]";
+  const openRow = (e: React.MouseEvent<HTMLTableRowElement>, rec: EoRecord) => {
+    const target = e.target as HTMLElement;
+    if (target.closest(INTERACTIVE)) return;
+    if (e.button !== 0) return;
+    if (window.getSelection()?.toString()) return;
+    if (e.ctrlKey || e.metaKey) {
+      window.open(detailPath(rec), "_blank", "noopener");
+      return;
+    }
+    // A double-click selects a word; its first click has no selection yet, so
+    // hold the navigation briefly and drop it if a second click arrives.
+    if (e.detail > 1) {
+      if (clickTimer.current) clearTimeout(clickTimer.current);
+      clickTimer.current = null;
+      return;
+    }
+    const path = detailPath(rec);
+    if (clickTimer.current) clearTimeout(clickTimer.current);
+    clickTimer.current = setTimeout(() => {
+      clickTimer.current = null;
+      if (!window.getSelection()?.toString()) navigate(path);
+    }, 250);
+  };
+  const rowKeyDown = (
+    e: React.KeyboardEvent<HTMLTableRowElement>,
+    rec: EoRecord,
+  ) => {
+    if (e.target !== e.currentTarget || e.key !== "Enter") return;
+    e.preventDefault();
+    navigate(detailPath(rec));
+  };
+
   const subjectOf = (rec: EoRecord) =>
     localize(rec as unknown as Record<string, unknown>, "subject") ||
     rec.subject_en ||
@@ -361,11 +408,15 @@ export const EoRecordsPage: React.FC = () => {
                     return (
                       <tr
                         key={rec.id}
-                        className="border-b border-slate-100 dark:border-slate-700/30 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                        tabIndex={0}
+                        onClick={(e) => openRow(e, rec)}
+                        onKeyDown={(e) => rowKeyDown(e, rec)}
+                        className="cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-500 border-b border-slate-100 dark:border-slate-700/30 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                       >
                         <td className="px-6 py-4">
                           <Link
                             to={detailPath(rec)}
+                            tabIndex={-1}
                             className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline tabular-nums"
                           >
                             {rec.reference || rec.id.slice(0, 8)}
