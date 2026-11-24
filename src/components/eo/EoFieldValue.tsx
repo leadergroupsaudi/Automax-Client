@@ -64,7 +64,12 @@ export const EoFieldValue: React.FC<EoFieldValueProps> = ({
   const { t } = useTranslation();
   const localize = useLocalizedField();
   // A dropdown's labels come from its static list or its option source (§7.3).
-  const resolvedOptions = useEoFieldOptions(field);
+  const resolvedOptions = useEoFieldOptions(
+    field,
+    (Array.isArray(value) ? value : [value])
+      .filter((v) => v !== null && v !== undefined && v !== "")
+      .map(String),
+  );
 
   const needsUsers = field.kind === "user" || field.kind === "user_date";
   const needsDepartments =
@@ -168,19 +173,51 @@ export const EoFieldValue: React.FC<EoFieldValueProps> = ({
     case "dropdown":
     case "multi_select": {
       const options = resolvedOptions.options;
-      const labelFor = (v: unknown) =>
-        options.find((o) => o.value === String(v))?.label ?? String(v);
-      const list = Array.isArray(value) ? value : [value];
+      const list = (Array.isArray(value) ? value : [value]).filter(
+        (v) => v !== null && v !== undefined && v !== "",
+      );
+      // While a source is still being fetched a slug would pass for a label.
+      if (resolvedOptions.status === "loading") {
+        return (
+          <span
+            className="flex flex-wrap gap-1"
+            role="status"
+            aria-label={t("common.loading", "Loading…")}
+          >
+            {list.map((v, i) => (
+              <span
+                key={`${String(v)}-${i}`}
+                className="inline-block h-5 w-16 rounded-full bg-[hsl(var(--muted))] animate-pulse"
+              />
+            ))}
+          </span>
+        );
+      }
       return (
         <span className="flex flex-wrap gap-1">
-          {list.map((v, i) => (
-            <span
-              key={`${String(v)}-${i}`}
-              className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[hsl(var(--muted))] text-[hsl(var(--foreground))]"
-            >
-              {labelFor(v)}
-            </span>
-          ))}
+          {list.map((v, i) => {
+            const opt = options.find((o) => o.value === String(v));
+            return (
+              <span
+                key={`${String(v)}-${i}`}
+                title={
+                  opt?.unrecognised
+                    ? t(
+                        "eo.form.options.unrecognisedHint",
+                        "This code is not in the current list of choices (it may have been deactivated or removed).",
+                      )
+                    : undefined
+                }
+                className={
+                  opt?.unrecognised
+                    ? "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border border-dashed border-amber-500 text-amber-700 dark:text-amber-400 italic"
+                    : "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[hsl(var(--muted))] text-[hsl(var(--foreground))]"
+                }
+              >
+                {opt?.label ?? String(v)}
+              </span>
+            );
+          })}
         </span>
       );
     }

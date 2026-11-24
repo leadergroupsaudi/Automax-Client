@@ -268,7 +268,14 @@ export const EoFieldInput: React.FC<EoFieldInputProps> = ({
     [departmentsQuery.data, localize],
   );
 
-  const resolved = useEoFieldOptions(field);
+  const resolved = useEoFieldOptions(
+    field,
+    field.kind === "multi_select"
+      ? asStringArray(value)
+      : asString(value)
+        ? [asString(value)]
+        : [],
+  );
   const dropdownOptions = resolved.options;
   const optionsLoading = resolved.status === "loading";
   const optionsNotice = optionsNoticeText(

@@ -1,5 +1,7 @@
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
+import { usePermissions } from "./usePermissions";
 import { lookupApi } from "../api/admin";
 import { useLocalizedField } from "./useLocalizedField";
 import type { EoFieldDefinition } from "../types/eoRecord";
@@ -28,14 +30,20 @@ export const useLookupValues = (code: string | null | undefined) => {
 };
 
 /** Only asked once a code has resolved to nothing, and only works with `lookups:view`. */
-const useLookupCategoryProbe = (code: string, enabled: boolean) =>
-  useQuery({
+const useLookupCategoryProbe = (code: string, enabled: boolean) => {
+  // The category list is behind `lookups:view`. A caller without it would be
+  // refused, and that refusal is already decided: do not send the request.
+  const { hasPermission } = usePermissions();
+  const allowed = hasPermission("lookups:view");
+  const q = useQuery({
     queryKey: ["lookups", "categories", "eo-probe"],
     queryFn: async () => (await lookupApi.listCategories()).data,
-    enabled: enabled && code !== "",
+    enabled: enabled && allowed && code !== "",
     staleTime: 60 * 1000,
     retry: false,
   });
+  return { ...q, allowed };
+};
 
 /**
  * Where a dropdown / multi_select's choices stand.
@@ -65,7 +73,7 @@ export type EoOptionsStatus =
   | "noOptions";
 
 export interface EoResolvedOptions {
-  options: { value: string; label: string }[];
+  options: { value: string; label: string; unrecognised?: boolean }[];
   status: EoOptionsStatus;
   /** The category code, for messages. */
   code: string;
@@ -80,7 +88,7 @@ export interface EoResolvedOptions {
  * agreed spelling. When both are declared the static list governs and
  * `conflict` is set so the form can say so.
  */
-export const useEoFieldOptions = (
+export const useResolvedOptions = (
   field: EoFieldDefinition,
 ): EoResolvedOptions => {
   const localize = useLocalizedField();
@@ -138,7 +146,8 @@ export const useEoFieldOptions = (
     return { ...base, options: lookupOptions, status: "ready" };
 
   // Nothing came back. Ask the category list, if this user may.
-  if (probe.isLoading) return { ...base, options: [], status: "loading" };
+  if (probe.allowed && probe.isLoading)
+    return { ...base, options: [], status: "loading" };
   if (!probe.isSuccess) return { ...base, options: [], status: "unverified" };
   const cat = ((probe.data ?? []) as LookupCategory[]).find(
     (c) => c.code.toUpperCase() === code.toUpperCase(),
@@ -146,4 +155,39 @@ export const useEoFieldOptions = (
   if (!cat) return { ...base, options: [], status: "missing" };
   if (!cat.is_active) return { ...base, options: [], status: "inactive" };
   return { ...base, options: [], status: "empty" };
+};
+
+/**
+ * `useResolvedOptions` plus the values the record ALREADY HOLDS that the
+ * options do not know — a deactivated or deleted code, or any code while the
+ * source is missing. They are appended flagged `unrecognised`, so a form can
+ * show them (and let the officer remove them) and a detail view can say so,
+ * instead of either hiding them or passing a slug off as a label. While the
+ * options are still loading nothing is appended: the caller shows "loading".
+ */
+export const useEoFieldOptions = (
+  field: EoFieldDefinition,
+  selected: string[] = [],
+): EoResolvedOptions => {
+  const { t } = useTranslation();
+  const r = useResolvedOptions(field);
+  return useMemo(() => {
+    if (r.status === "loading" || selected.length === 0) return r;
+    const known = new Set(r.options.map((o) => o.value));
+    const extra = selected
+      .filter((v) => v !== "" && !known.has(v))
+      .map((v) => ({
+        value: v,
+        label: t(
+          "eo.form.options.unrecognisedValue",
+          "{{value}} (unrecognised)",
+          {
+            value: v,
+          },
+        ),
+        unrecognised: true,
+      }));
+    return extra.length ? { ...r, options: [...r.options, ...extra] } : r;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [r, selected.join("\u0000"), t]);
 };

@@ -6078,7 +6078,9 @@
           "error": "The choices for this field could not be loaded. Try again shortly.",
           "noCode": "This field is set to draw its choices from a list but names no list. Ask an administrator to correct it.",
           "unsupported": "This field draws its choices from a source the form cannot read yet.",
-          "noOptions": "This field has no choices configured. Ask an administrator to add some."
+          "noOptions": "This field has no choices configured. Ask an administrator to add some.",
+          "unrecognisedValue": "{{value}} (unrecognised)",
+          "unrecognisedHint": "This code is not in the current list of choices (it may have been deactivated or removed)."
         },
       "selectUser": "Select a user",
       "selectOrgUnit": "Select an organisational unit",
