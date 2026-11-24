@@ -6428,7 +6428,8 @@
         "lockNarrowed": "Your count of records is taken from your own view of the registers and may be lower than what the server holds, so this record type cannot be confirmed empty from here. The server decides; a super administrator can confirm.",
         "lockUnknown": "This record type has no register of its own to count, so it cannot be confirmed empty from here.",
         "lockRecords": "This record type and the types beneath it hold {{count}} records. A workflow cannot be changed while any exist."
-      }
+      },
+      "countsPending": "Checking whether this record type holds records. Until that finishes, treat it as holding some."
     },
     "kind": {
       "auto_number": "Auto number",

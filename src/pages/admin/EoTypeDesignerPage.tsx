@@ -90,7 +90,7 @@ export const EoTypeDesignerPage: React.FC = () => {
     () => listQuery.data?.data ?? [],
     [listQuery.data],
   );
-  const { recordCount, isNarrowed, isUnreadable } =
+  const { recordCount, isNarrowed, isUnreadable, isPending } =
     useEoTypeRecordCounts(allTypes);
   const records = recordCount(id);
 
@@ -196,7 +196,23 @@ export const EoTypeDesignerPage: React.FC = () => {
       {/* Whether the type holds records, which is what §7.14 keys every
           guard rail off. Shown here because it changes what F2 and F5 may
           offer, and because an administrator should know before they edit. */}
-      {records !== undefined && records > 0 && (
+      {/* A number is stated only from a SETTLED, readable count: `recordCount`
+          sums what has landed, so part-landed it reads 7 where the truth is
+          48. Same vocabulary as the workflow tab's gate (pending, unreadable). */}
+      {isPending && (
+        <div
+          data-testid="eo-counts-pending"
+          className="rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/60 px-4 py-3"
+        >
+          <p className="text-sm text-slate-700 dark:text-slate-300">
+            {t(
+              "eo.types.countsPending",
+              "Checking whether this record type holds records. Until that finishes, treat it as holding some.",
+            )}
+          </p>
+        </div>
+      )}
+      {!isPending && !isUnreadable && records !== undefined && records > 0 && (
         <div className="rounded-xl border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/20 px-4 py-3">
           <p className="text-sm text-amber-800 dark:text-amber-300">
             {t("eo.types.holdsRecords", {
