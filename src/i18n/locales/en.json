@@ -6447,7 +6447,8 @@
           "kind": "Nothing is rewritten. Values already saved keep the form they were stored in, and may not read correctly as the new kind.",
           "required": "Records that exist are not changed. Any without a value do not meet the new requirement, and may be refused when next saved or moved."
         },
-        "multiple": "This edit makes {{count}} destructive changes, and a confirmation authorises only one. The server will refuse it. Go back and make them one at a time.",
+        "multiple_one": "This edit makes {{count}} destructive change, and a confirmation authorises only one. The server will refuse it. Go back and make them one at a time.",
+        "multiple_other": "This edit makes {{count}} destructive changes, and a confirmation authorises only one. The server will refuse it. Go back and make them one at a time.",
         "reasonLabel": "What will be done about the records this leaves behind",
         "reasonHint": "Required. It is recorded in the action log under your name, next to this change.",
         "reasonRequired": "State the rule: this change cannot be confirmed without it.",

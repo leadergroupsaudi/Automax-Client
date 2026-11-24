@@ -744,8 +744,13 @@ export const eoFieldDraftToRequest = (
     // behind for the next person to read as live.
     required_rule:
       draft.required_mode === "conditional" ? draft.required_rule.trim() : "",
-    required_at_state_ids:
-      draft.required_mode === "at_state" ? draft.required_at_state_ids : [],
+    // NOT CLEARED when the mode does not use them, unlike the rule above. A
+    // rule is authored text a person can retype; these are opaque state ids
+    // nobody can rebuild from memory, and the server stores them happily
+    // beside any mode. Relaxing a field to `never` must not destroy the only
+    // surviving record of what it used to require, or restoring it (Task F5's
+    // confirmed path) has no target. Only `at_state` reads them.
+    required_at_state_ids: draft.required_at_state_ids,
     // THE SAME CLEARING, for the same reason. A field flipped off `derived`
     // keeps no formula and no dependencies: services.RecomputeDerived only
     // looks at derived fields, so a formula left behind runs on nothing while
