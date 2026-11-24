@@ -6221,7 +6221,8 @@
         "fields": "Fields",
         "links": "Links",
         "attributesPending": "The attribute editor is not built yet.",
-        "linksPending": "The link-type editor is not built yet."
+        "linksPending": "The link-type editor is not built yet.",
+        "workflow": "Workflow"
       },
       "countsNarrowed": "Record counts are taken from your own view of the registers and may be lower than what the server holds. The server, not this count, decides whether an edit is refused.",
       "countsUnreadable": "Some record counts could not be read and are shown as —. Treat a missing count as unknown, not as zero.",
@@ -6403,6 +6404,30 @@
         "ruleBlocksTransition": "Open children block the parent's \"{{key}}\" transition",
         "ruleDeadlineEarlier": "Deadline: parent's, {{days}} days earlier",
         "ruleDeadlineLater": "Deadline: parent's, {{days}} days later"
+      },
+      "workflow": {
+        "title": "Workflow",
+        "hint": "The lifecycle every record of this type moves through. Fields can require a value from a given state, or lock after one, only when the type has a workflow.",
+        "none": "This record type has no workflow. Its records have no states, and no field can require a value at a state or lock after one.",
+        "loading": "Loading the workflow…",
+        "loadFailed": "The workflow could not be read. Reading it needs the workflows view permission.",
+        "counts": "{{states}} states, {{transitions}} transitions",
+        "openDesigner": "Edit states and transitions in the workflow designer",
+        "designerNoAccess": "States and transitions are edited in the workflow designer, which needs the workflows view permission.",
+        "associate": "Associated workflow",
+        "consequence": "Changing the workflow strands every existing record: each record's state belongs to the old workflow, so no transition would run from it and no route would put it back. For that reason the workflow can be set only while this record type, and every type beneath it, holds no records.",
+        "listFailed": "The list of workflows could not be read. It needs the workflows view permission.",
+        "select": "Workflow",
+        "noneOption": "No workflow",
+        "save": "Save workflow",
+        "saved": "Workflow association saved",
+        "saveFailed": "Could not change the workflow of this record type",
+        "lockPermission": "Associating a workflow needs the permission to manage record types.",
+        "lockPending": "Checking whether this record type holds records…",
+        "lockUnreadable": "Some record counts could not be read, so this record type cannot be confirmed empty. Treat that as not empty.",
+        "lockNarrowed": "Your count of records is taken from your own view of the registers and may be lower than what the server holds, so this record type cannot be confirmed empty from here. The server decides; a super administrator can confirm.",
+        "lockUnknown": "This record type has no register of its own to count, so it cannot be confirmed empty from here.",
+        "lockRecords": "This record type and the types beneath it hold {{count}} records. A workflow cannot be changed while any exist."
       }
     },
     "kind": {

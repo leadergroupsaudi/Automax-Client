@@ -37,6 +37,13 @@ interface WorkflowCanvasProps {
   onTransitionDelete: (transitionId: string) => void;
   onTransitionConfigure: (transition: WorkflowTransition) => void;
   onLayoutSave?: (layout: string) => void;
+  /**
+   * Draw the lifecycle and nothing else: no toolbar, no edit/delete/configure
+   * buttons in the selection panel, no dragging, no connecting, no
+   * double-click-to-edit. The callbacks are still required by the type, but a
+   * read-only canvas never calls them, so a caller may pass no-ops.
+   */
+  readOnly?: boolean;
 }
 
 const nodeTypes = {
@@ -69,6 +76,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
   onTransitionEdit,
   onTransitionConfigure,
   onLayoutSave,
+  readOnly = false,
 }) => {
   const { t } = useTranslation();
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
@@ -154,6 +162,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
   // Handle new connections (creating transitions)
   const onConnect = useCallback(
     (connection: Connection) => {
+      if (readOnly) return;
       if (
         connection.source &&
         connection.target &&
@@ -170,7 +179,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         }
       }
     },
-    [transitions, onTransitionAdd],
+    [transitions, onTransitionAdd, readOnly],
   );
 
   // Handle node position changes
@@ -221,23 +230,25 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
   // Handle node double-click for editing
   const onNodeDoubleClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
+      if (readOnly) return;
       const state = states.find((s) => s.id === node.id);
       if (state) {
         onStateEdit(state);
       }
     },
-    [states, onStateEdit],
+    [states, onStateEdit, readOnly],
   );
 
   // Handle edge double-click for editing
   const onEdgeDoubleClick = useCallback(
     (_: React.MouseEvent, edge: Edge) => {
+      if (readOnly) return;
       const transition = transitions.find((t) => t.id === edge.id);
       if (transition) {
         onTransitionEdit(transition);
       }
     },
-    [transitions, onTransitionEdit],
+    [transitions, onTransitionEdit, readOnly],
   );
 
   // Save current layout
@@ -317,6 +328,9 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         fitViewOptions={{ padding: 0.2 }}
         snapToGrid
         snapGrid={[15, 15]}
+        nodesDraggable={!readOnly}
+        nodesConnectable={!readOnly}
+        edgesReconnectable={!readOnly}
         deleteKeyCode={null}
       >
         <Background color="#e2e8f0" gap={20} />
@@ -331,31 +345,33 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         />
 
         {/* Toolbar Panel */}
-        <Panel position="top-left" className="flex items-center gap-2">
-          <Button
-            size="sm"
-            onClick={onStateAdd}
-            leftIcon={<Plus className="w-4 h-4" />}
-          >
-            {t("workflows.addState")}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={autoArrange}
-            leftIcon={<RotateCcw className="w-4 h-4" />}
-          >
-            {t("workflows.autoArrange")}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={saveLayout}
-            leftIcon={<Save className="w-4 h-4" />}
-          >
-            {t("workflows.saveLayout")}
-          </Button>
-        </Panel>
+        {!readOnly && (
+          <Panel position="top-left" className="flex items-center gap-2">
+            <Button
+              size="sm"
+              onClick={onStateAdd}
+              leftIcon={<Plus className="w-4 h-4" />}
+            >
+              {t("workflows.addState")}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={autoArrange}
+              leftIcon={<RotateCcw className="w-4 h-4" />}
+            >
+              {t("workflows.autoArrange")}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={saveLayout}
+              leftIcon={<Save className="w-4 h-4" />}
+            >
+              {t("workflows.saveLayout")}
+            </Button>
+          </Panel>
+        )}
 
         {/* Selection Panel */}
         {(selectedState || selectedTransition) && (
@@ -391,24 +407,26 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
                         {selectedState.sla_unit || "hours"}
                       </p>
                     )}
-                    <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => onStateEdit(selectedState)}
-                        className="flex-1"
-                      >
-                        {t("common.edit")}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => onStateDelete(selectedState.id)}
-                        className="flex-1"
-                      >
-                        {t("common.delete")}
-                      </Button>
-                    </div>
+                    {!readOnly && (
+                      <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onStateEdit(selectedState)}
+                          className="flex-1"
+                        >
+                          {t("common.edit")}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => onStateDelete(selectedState.id)}
+                          className="flex-1"
+                        >
+                          {t("common.delete")}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -482,26 +500,28 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
                         </span>
                       )}
                     </div>
-                    <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => onTransitionEdit(selectedTransition)}
-                        className="flex-1"
-                      >
-                        {t("common.edit")}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() =>
-                          onTransitionConfigure(selectedTransition)
-                        }
-                        className="flex-1"
-                      >
-                        {t("workflows.configure")}
-                      </Button>
-                    </div>
+                    {!readOnly && (
+                      <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onTransitionEdit(selectedTransition)}
+                          className="flex-1"
+                        >
+                          {t("common.edit")}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() =>
+                            onTransitionConfigure(selectedTransition)
+                          }
+                          className="flex-1"
+                        >
+                          {t("workflows.configure")}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -510,12 +530,14 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         )}
 
         {/* Help Panel */}
-        <Panel position="bottom-left">
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-slate-500 border border-slate-200">
-            <span className="font-medium">{t("workflows.tips")}</span>
-            {t("workflows.doubleClickToEditDragBetweenNodes")}
-          </div>
-        </Panel>
+        {!readOnly && (
+          <Panel position="bottom-left">
+            <div className="bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-slate-500 border border-slate-200">
+              <span className="font-medium">{t("workflows.tips")}</span>
+              {t("workflows.doubleClickToEditDragBetweenNodes")}
+            </div>
+          </Panel>
+        )}
       </ReactFlow>
     </div>
   );

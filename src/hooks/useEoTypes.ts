@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { eoLinkTypeApi, eoTypeApi, eoTypeFieldApi } from "../api/eoTypes";
 import { eoRecordApi, eoRecordTypeApi } from "../api/eoRecords";
 import { eoRefusalMessage } from "../lib/eoFields";
+import { workflowApi } from "../api/admin";
 import { eoKeys } from "./useEoRecords";
 import usePermissions from "./usePermissions";
 import type {
@@ -49,6 +50,9 @@ export const eoTypeKeys = {
   recordCount: (typeId: string) =>
     [...eoTypeKeys.recordCounts(), typeId] as const,
   linkTypes: () => [...eoTypeKeys.all, "link-types"] as const,
+  workflows: () => [...eoTypeKeys.all, "workflows"] as const,
+  workflowGraph: (workflowId: string) =>
+    [...eoTypeKeys.workflows(), "graph", workflowId] as const,
 };
 
 /**
@@ -204,6 +208,13 @@ export function useEoTypeRecordCounts(types: EoRecordType[]) {
   const isNarrowed = !isSuperAdmin;
   /** A count query failed, so those types have no count at all. */
   const isUnreadable = results.some((r) => r.isError);
+  /**
+   * A count query has not answered yet. `recordCount` SUMS WHAT IT HAS: a
+   * subtree whose first query has landed and whose second has not reads as a
+   * smaller number than it will, and as 0 when the answered ones are empty.
+   * A guard that enables on "0" must also require this to be false.
+   */
+  const isPending = results.some((r) => r.isPending);
 
   const recordCount = useCallback(
     (typeId?: string): number | undefined => {
@@ -221,7 +232,7 @@ export function useEoTypeRecordCounts(types: EoRecordType[]) {
     [ownCounts, types],
   );
 
-  return { recordCount, isNarrowed, isUnreadable };
+  return { recordCount, isNarrowed, isUnreadable, isPending };
 }
 
 // ──────────────────────────────────────────────────
@@ -562,5 +573,52 @@ export function useDeleteEoLinkType() {
   return useMutation({
     mutationFn: (id: string) => eoLinkTypeApi.remove(id),
     onSuccess: invalidate,
+  });
+}
+
+// ──────────────────────────────────────────────────
+// The workflow tab
+// ──────────────────────────────────────────────────
+
+/**
+ * Every workflow, for the association picker and for naming the current one.
+ *
+ * The workflows module's read: `workflows:view` and the `workflows` licence
+ * feature, neither of which `eo:types:manage` implies. It is allowed to fail
+ * (`retry: false`) and the tab says so rather than showing an empty picker,
+ * which would read as "there are no workflows". The client filters to the
+ * `eo` record type; the API's own `record_type` filter is not relied on.
+ */
+export function useEoWorkflows() {
+  return useQuery({
+    queryKey: eoTypeKeys.workflows(),
+    queryFn: () => workflowApi.list(false),
+    staleTime: DESIGNER_STALE_MS,
+    retry: false,
+  });
+}
+
+/**
+ * One workflow's states and transitions, for the read-only canvas. Two reads
+ * under one key, so a failure of either is one failure — a canvas drawn from
+ * states without its transitions would show a lifecycle with no way through
+ * it, which is a false picture and worse than none.
+ */
+export function useEoWorkflowGraph(workflowId?: string | null) {
+  return useQuery({
+    queryKey: eoTypeKeys.workflowGraph(workflowId ?? ""),
+    queryFn: async () => {
+      const [states, transitions] = await Promise.all([
+        workflowApi.listStates(workflowId as string),
+        workflowApi.listTransitions(workflowId as string),
+      ]);
+      return {
+        states: states.data ?? [],
+        transitions: transitions.data ?? [],
+      };
+    },
+    enabled: !!workflowId,
+    staleTime: DESIGNER_STALE_MS,
+    retry: false,
   });
 }

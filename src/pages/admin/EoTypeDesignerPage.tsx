@@ -1,7 +1,14 @@
 import React, { useMemo } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { AlertCircle, ArrowLeft, Database, Link2, Sliders } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Database,
+  Link2,
+  Sliders,
+  Workflow,
+} from "lucide-react";
 import {
   useEoType,
   useEoTypeList,
@@ -11,9 +18,10 @@ import { useLocalizedField } from "../../hooks/useLocalizedField";
 import { eoRefusalMessage } from "../../lib/eoFields";
 import { EoFieldsTab } from "../../components/eo/designer/EoFieldsTab";
 import { EoLinksTab } from "../../components/eo/designer/EoLinksTab";
+import { EoWorkflowTab } from "../../components/eo/designer/EoWorkflowTab";
 import type { EoRecordType } from "../../types/eoRecord";
 
-type DesignerTab = "attributes" | "fields" | "links";
+type DesignerTab = "attributes" | "fields" | "links" | "workflow";
 
 const TABS: {
   id: DesignerTab;
@@ -39,10 +47,16 @@ const TABS: {
     fallback: "Links",
     icon: Link2,
   },
+  {
+    id: "workflow",
+    labelKey: "eo.types.tabs.workflow",
+    fallback: "Workflow",
+    icon: Workflow,
+  },
 ];
 
 const isTab = (v: string | null): v is DesignerTab =>
-  v === "attributes" || v === "fields" || v === "links";
+  v === "attributes" || v === "fields" || v === "links" || v === "workflow";
 
 /**
  * The record-type designer's shell: one type, three tabs.
@@ -260,6 +274,9 @@ export const EoTypeDesignerPage: React.FC = () => {
         )}
         {tab === "links" && (
           <EoLinksTab recordType={recordType} types={allTypes} />
+        )}
+        {tab === "workflow" && (
+          <EoWorkflowTab recordType={recordType} types={allTypes} />
         )}
       </div>
     </div>
