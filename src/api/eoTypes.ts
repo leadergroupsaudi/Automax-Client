@@ -4,6 +4,8 @@ import type {
   EoDestructiveConfirmation,
   EoFieldDefinition,
   EoFieldDefRequest,
+  EoLinkType,
+  EoLinkTypeRequest,
   EoRecordType,
   EoRecordTypeDetail,
   EoRecordTypeRequest,
@@ -138,6 +140,50 @@ export const eoTypeFieldApi = {
     const res = await apiClient.delete(
       `/admin/eo-record-types/${typeId}/fields/${fieldId}`,
       confirm ? { data: { confirm_destructive: confirm } } : undefined,
+    );
+    return res.data;
+  },
+};
+
+/**
+ * The four link-type routes. Reads are `eo:view`; the three writes are
+ * `eo:types:manage`, and a caller without it is answered 403 (never 401).
+ *
+ * WHAT THE SERVER DOES AND DOES NOT REFUSE (handlers.eoValidateLinkTypeShape):
+ * 400 `{errors:{key|label|cardinality: message}}` for a missing key or label,
+ * an unknown cardinality, or a key that already exists on create. It does NOT
+ * look at `source_type_ids` / `target_type_ids` at all — an empty list, an
+ * unknown id and a type that cannot hold the link are all stored, and the
+ * link is then merely unusable (services.eoTypeAllowed permits nothing for an
+ * empty list). The pairing is therefore checked in the editor, and a message
+ * under those two controls is the CLIENT's, not the server's.
+ */
+export const eoLinkTypeApi = {
+  list: async (): Promise<ApiResponse<EoLinkType[]>> => {
+    const res = await apiClient.get("/admin/eo-record-types/link-types");
+    return res.data;
+  },
+
+  create: async (data: EoLinkTypeRequest): Promise<ApiResponse<EoLinkType>> => {
+    const res = await apiClient.post("/admin/eo-record-types/link-types", data);
+    return res.data;
+  },
+
+  /** PUT replaces the attribute set; send the whole shape. */
+  update: async (
+    id: string,
+    data: EoLinkTypeRequest,
+  ): Promise<ApiResponse<EoLinkType>> => {
+    const res = await apiClient.put(
+      `/admin/eo-record-types/link-types/${id}`,
+      data,
+    );
+    return res.data;
+  },
+
+  remove: async (id: string): Promise<ApiResponse<unknown>> => {
+    const res = await apiClient.delete(
+      `/admin/eo-record-types/link-types/${id}`,
     );
     return res.data;
   },

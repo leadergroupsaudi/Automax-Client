@@ -372,3 +372,41 @@ export interface EoFieldDefRequest {
   help_text_ar?: string;
   confirm_destructive?: EoDestructiveConfirmation;
 }
+
+/**
+ * A link type as the API returns it (models.EOLinkType, spec §7.6).
+ *
+ * `source_type_ids` / `target_type_ids` are JSONB the server stores verbatim
+ * and does NOT validate on a link-type write: an array of type ids, an array
+ * containing the literal "any", or the bare string "any". `eoLinkEndpoints`
+ * (lib/eoLinks.ts) is the one reader that normalises them.
+ */
+export interface EoLinkType {
+  id: string;
+  key: string;
+  label: string;
+  label_ar?: string;
+  source_type_ids: string[] | string | null;
+  target_type_ids: string[] | string | null;
+  cardinality: string;
+  derive_deadline_from_parent: boolean;
+  deadline_offset_days: number;
+  blocks_parent_closure: boolean;
+  blocks_parent_transition_key: string;
+  cascade_sensitivity: boolean;
+}
+
+/** PUT replaces the attribute set, so create and update share one shape. */
+export interface EoLinkTypeRequest {
+  key: string;
+  label: string;
+  label_ar: string;
+  source_type_ids: string[];
+  target_type_ids: string[];
+  cardinality: string;
+  derive_deadline_from_parent: boolean;
+  deadline_offset_days: number;
+  blocks_parent_closure: boolean;
+  blocks_parent_transition_key: string;
+  cascade_sensitivity: boolean;
+}

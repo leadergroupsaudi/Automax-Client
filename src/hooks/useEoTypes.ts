@@ -7,7 +7,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { eoTypeApi, eoTypeFieldApi } from "../api/eoTypes";
+import { eoLinkTypeApi, eoTypeApi, eoTypeFieldApi } from "../api/eoTypes";
 import { eoRecordApi, eoRecordTypeApi } from "../api/eoRecords";
 import { eoRefusalMessage } from "../lib/eoFields";
 import { eoKeys } from "./useEoRecords";
@@ -16,6 +16,7 @@ import type {
   EoDestructiveConfirmation,
   EoFieldDefinition,
   EoFieldDefRequest,
+  EoLinkTypeRequest,
   EoRecordType,
   EoRecordTypeRequest,
 } from "../types/eoRecord";
@@ -47,6 +48,7 @@ export const eoTypeKeys = {
   recordCounts: () => [...eoTypeKeys.all, "record-count"] as const,
   recordCount: (typeId: string) =>
     [...eoTypeKeys.recordCounts(), typeId] as const,
+  linkTypes: () => [...eoTypeKeys.all, "link-types"] as const,
 };
 
 /**
@@ -517,6 +519,48 @@ export function useDeleteEoField() {
       fieldId: string;
       confirm?: EoDestructiveConfirmation;
     }) => eoTypeFieldApi.remove(typeId, fieldId, confirm),
+    onSuccess: invalidate,
+  });
+}
+
+// ──────────────────────────────────────────────────
+// Link types
+// ──────────────────────────────────────────────────
+
+export function useEoLinkTypes() {
+  return useQuery({
+    queryKey: eoTypeKeys.linkTypes(),
+    queryFn: () => eoLinkTypeApi.list(),
+    staleTime: DESIGNER_STALE_MS,
+  });
+}
+
+/**
+ * Link-type writes invalidate the whole designer namespace (link types sit
+ * under `eoTypeKeys.all`) and the record module's, which reads link types to
+ * validate and render links.
+ */
+export function useCreateEoLinkType() {
+  const invalidate = useInvalidateCatalogue();
+  return useMutation({
+    mutationFn: (data: EoLinkTypeRequest) => eoLinkTypeApi.create(data),
+    onSuccess: invalidate,
+  });
+}
+
+export function useUpdateEoLinkType() {
+  const invalidate = useInvalidateCatalogue();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: EoLinkTypeRequest }) =>
+      eoLinkTypeApi.update(id, data),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeleteEoLinkType() {
+  const invalidate = useInvalidateCatalogue();
+  return useMutation({
+    mutationFn: (id: string) => eoLinkTypeApi.remove(id),
     onSuccess: invalidate,
   });
 }
