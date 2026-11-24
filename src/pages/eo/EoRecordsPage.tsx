@@ -190,13 +190,6 @@ export const EoRecordsPage: React.FC = () => {
   };
 
   const navigate = useNavigate();
-  const clickTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  React.useEffect(
-    () => () => {
-      if (clickTimer.current) clearTimeout(clickTimer.current);
-    },
-    [],
-  );
 
   // Whole-row activation. The reference <Link> stays the real anchor (URL on
   // hover, middle-click, new tab); the row is the larger target. Clicks that
@@ -213,19 +206,7 @@ export const EoRecordsPage: React.FC = () => {
       window.open(detailPath(rec), "_blank", "noopener");
       return;
     }
-    // A double-click selects a word; its first click has no selection yet, so
-    // hold the navigation briefly and drop it if a second click arrives.
-    if (e.detail > 1) {
-      if (clickTimer.current) clearTimeout(clickTimer.current);
-      clickTimer.current = null;
-      return;
-    }
-    const path = detailPath(rec);
-    if (clickTimer.current) clearTimeout(clickTimer.current);
-    clickTimer.current = setTimeout(() => {
-      clickTimer.current = null;
-      if (!window.getSelection()?.toString()) navigate(path);
-    }, 250);
+    navigate(detailPath(rec));
   };
   const rowKeyDown = (
     e: React.KeyboardEvent<HTMLTableRowElement>,
