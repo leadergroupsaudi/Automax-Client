@@ -83,8 +83,9 @@ export const EoTypesPage: React.FC = () => {
     );
   }, [types]);
 
-  const { fieldCount } = useEoTypeFieldCounts(types);
-  const { recordCount, isPartial } = useEoTypeRecordCounts(types);
+  const { fieldCount, fieldCountFailed } = useEoTypeFieldCounts(types);
+  const { recordCount, isNarrowed, isUnreadable } =
+    useEoTypeRecordCounts(types);
 
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState<EoRecordTypeRequest>(emptyForm);
@@ -236,12 +237,26 @@ export const EoTypesPage: React.FC = () => {
         </button>
       </div>
 
-      {isPartial && (
+      {/* Two different failures of the count, said separately. `isNarrowed`
+          is true for every caller who is not a super admin and needs no query
+          to fail — which is the whole point, because the restricted designer
+          it warns is answered 200 with a filtered zero, never an error. */}
+      {isNarrowed && (
         <div className="rounded-xl border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/20 px-4 py-3">
           <p className="text-sm text-amber-800 dark:text-amber-300">
             {t(
-              "eo.types.countsPartial",
-              "Record counts are shown from your own view of the registers and may be lower than what the server holds. The server, not this count, decides whether an edit is refused.",
+              "eo.types.countsNarrowed",
+              "Record counts are taken from your own view of the registers and may be lower than what the server holds. The server, not this count, decides whether an edit is refused.",
+            )}
+          </p>
+        </div>
+      )}
+      {isUnreadable && (
+        <div className="rounded-xl border border-red-300 dark:border-red-700/60 bg-red-50 dark:bg-red-900/20 px-4 py-3">
+          <p className="text-sm text-red-800 dark:text-red-300">
+            {t(
+              "eo.types.countsUnreadable",
+              "Some record counts could not be read and are shown as —. Treat a missing count as unknown, not as zero.",
             )}
           </p>
         </div>
@@ -332,11 +347,21 @@ export const EoTypesPage: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-sm tabular-nums text-slate-700 dark:text-slate-300">
-                          {fields ?? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin inline" />
-                          )}
-                        </span>
+                        {/* Three states, not two: a count, a REFUSAL, and a
+                            wait. Rendering the spinner for everything that
+                            is not a number left it turning for ever on a
+                            failed /:id/fields, once per row. */}
+                        {fields !== undefined ? (
+                          <span className="text-sm tabular-nums text-slate-700 dark:text-slate-300">
+                            {fields}
+                          </span>
+                        ) : fieldCountFailed(rt.id) ? (
+                          <span className="text-sm text-slate-400 dark:text-slate-500">
+                            {t("eo.types.recordsUnknown", "—")}
+                          </span>
+                        ) : (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin inline text-slate-400 dark:text-slate-500" />
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         {records === undefined ? (

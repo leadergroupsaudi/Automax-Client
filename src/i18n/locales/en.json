@@ -6182,7 +6182,6 @@
       "recordsUnknown": "—",
       "holdsRecordsHint": "This type or a type beneath it holds records, so some changes need confirmation.",
       "holdsRecords": "This record type and the types beneath it hold {{count}} records. Removing a field, changing its kind, making it required, re-keying, re-parenting or changing the reference will be refused unless it is confirmed.",
-      "countsPartial": "Record counts are shown from your own view of the registers and may be lower than what the server holds. The server, not this count, decides whether an edit is refused.",
       "inheritsFrom": "Inherits from {{parent}}",
       "noParent2": "Inherits from nothing",
       "ownFieldCount": "{{count}} own fields",
@@ -6224,7 +6223,9 @@
         "attributesPending": "The attribute editor is not built yet.",
         "fieldsPending": "This type declares {{count}} fields of its own. The field editor is not built yet.",
         "linksPending": "The link-type editor is not built yet."
-      }
+      },
+      "countsNarrowed": "Record counts are taken from your own view of the registers and may be lower than what the server holds. The server, not this count, decides whether an edit is refused.",
+      "countsUnreadable": "Some record counts could not be read and are shown as —. Treat a missing count as unknown, not as zero."
     }
   }
 }

@@ -74,7 +74,8 @@ export const EoTypeDesignerPage: React.FC = () => {
     () => listQuery.data?.data ?? [],
     [listQuery.data],
   );
-  const { recordCount, isPartial } = useEoTypeRecordCounts(allTypes);
+  const { recordCount, isNarrowed, isUnreadable } =
+    useEoTypeRecordCounts(allTypes);
   const records = recordCount(id);
 
   const parent = useMemo(
@@ -189,12 +190,27 @@ export const EoTypeDesignerPage: React.FC = () => {
           </p>
         </div>
       )}
-      {isPartial && (
-        <div className="rounded-xl border border-slate-300 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/60 px-4 py-3">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+      {/* NOT gated on `records > 0`. A restricted designer is exactly the
+          caller whose count reads 0 while the server holds records, so
+          hiding this behind a non-zero count would withhold it from the only
+          person who needs it — and the destructive-edit flow (F5) would then
+          be entered with no warning on the screen at all. */}
+      {isNarrowed && (
+        <div className="rounded-xl border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/20 px-4 py-3">
+          <p className="text-sm text-amber-800 dark:text-amber-300">
             {t(
-              "eo.types.countsPartial",
-              "Record counts are shown from your own view of the registers and may be lower than what the server holds. The server, not this count, decides whether an edit is refused.",
+              "eo.types.countsNarrowed",
+              "Record counts are taken from your own view of the registers and may be lower than what the server holds. The server, not this count, decides whether an edit is refused.",
+            )}
+          </p>
+        </div>
+      )}
+      {isUnreadable && (
+        <div className="rounded-xl border border-red-300 dark:border-red-700/60 bg-red-50 dark:bg-red-900/20 px-4 py-3">
+          <p className="text-sm text-red-800 dark:text-red-300">
+            {t(
+              "eo.types.countsUnreadable",
+              "Some record counts could not be read and are shown as —. Treat a missing count as unknown, not as zero.",
             )}
           </p>
         </div>

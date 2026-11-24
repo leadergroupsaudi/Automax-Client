@@ -211,3 +211,68 @@ node .../scratchpad/f1extra.mjs   # the edit guard, dark mode  (intercepts /user
 node .../scratchpad/f1ar.mjs      # Arabic / RTL
 ```
 `f1e2e.mjs` creates a record type; delete it afterwards.
+
+---
+
+## 9. Fix round 1
+
+All five items addressed. Nothing in the "do not fix" list was touched.
+
+### 1 🟠 — the advisory caveat now fires in the case it names
+
+The reviewer is right, and the backend says so in as many words:
+`eo_record_handler.go` RegisterRoutes — *"the three list routes carry no
+per-type middleware because a 403 is the wrong answer for a register: they
+are filtered instead"*. A restricted designer gets `200` and
+`total_items: 0`, never an error, so `isPartial = results.some(isError)` was
+false for precisely the caller the hook's own comment warns about — and with
+the designer's other banner gated on `records > 0`, also false, the page said
+nothing at all. That is this programme's signature defect, in the one place
+that was *documenting* the hazard.
+
+`useEoTypeRecordCounts` now returns two separate signals, because a narrowed
+count and a missing count are different facts:
+
+- `isNarrowed = !isSuperAdmin` — who is asking, not whether a query failed.
+  No query has to fail, and none will.
+- `isUnreadable = results.some(isError)` — a count is *absent*, not low.
+
+`eo.types.countsPartial` is gone, replaced by `countsNarrowed` ("may be lower
+than what the server holds") and `countsUnreadable` ("could not be read …
+treat a missing count as unknown, not as zero"), both bundles. On the
+designer the narrowed banner is **not** gated on `records > 0`: the caller
+whose count reads 0 is exactly the one who needs it before F5's flow.
+
+### 2 🟡 — the Own-fields spinner ends
+
+`useEoTypeFieldCounts` gets `retry: false` and a `fieldCountFailed(id)`
+companion — the half its sibling already had. The cell is now three states:
+a number, `—` on refusal, a spinner only while in flight.
+
+### 3, 4, 5 🟡 — three one-liners
+
+`isLoading` dropped from both hooks' returns (no caller). `useUpdateEoType`
+no longer re-invalidates `eoTypeKeys.detail(id)` after `eoTypeKeys.all`, its
+own prefix. The `retry: false` comment now describes zero retries.
+
+### Re-verified in the browser
+
+`node .../scratchpad/f1r1.mjs`, four scenarios, screenshots `r1-01`…`r1-05`:
+
+| | |
+|---|---|
+| `r1-01-superadmin-designer.png` | super admin — neither banner, "hold 48 records" unchanged |
+| `r1-02-restricted-list.png` | restricted designer, every register filtered to 0 — the narrowed banner renders |
+| `r1-03-restricted-designer-eo_base.png` | **the finding**: `eo_base`, count 0, no holds-records banner — and the narrowed warning now on screen |
+| `r1-04-field-count-failed.png` | `/:id/fields` → 500: 0 spinners after 8s, `—` in all 12 Own-fields cells |
+| `r1-05-counts-unreadable.png` | `/eo-records` → 500: the red "could not be read" banner, not "may be lower" |
+
+Live except one thing, as before: `POST /auth/login` and `GET /users/me` are
+rewritten to make the signed-in user a non-super-admin, since the demo
+database holds one user and they are exempt from the narrowing under test.
+Scenario B additionally serves the register's *own* filtered answer
+(`200`, `total_items: 0`) rather than an error, which is the shape the fix is
+about. **No demo data was created or removed in this round.**
+
+`npm run type-check` passes; `npm run lint` still exactly the two pre-existing
+errors; prettier clean.

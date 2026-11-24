@@ -11,6 +11,7 @@ import { eoTypeApi } from "../api/eoTypes";
 import { eoRecordApi, eoRecordTypeApi } from "../api/eoRecords";
 import { eoRefusalMessage } from "../lib/eoFields";
 import { eoKeys } from "./useEoRecords";
+import usePermissions from "./usePermissions";
 import type { EoRecordType, EoRecordTypeRequest } from "../types/eoRecord";
 
 // ──────────────────────────────────────────────────
@@ -142,11 +143,27 @@ export function eoDescendantIds(
  * for anyone who is not a super admin. A designer who holds `eo:types:manage`
  * but no per-type view codes sees 0 where the server sees records, so a
  * reading of 0 may NOT be used to permit a destructive edit — only the
- * server's refusal decides that (Task F5). It is shown so an administrator
- * knows what they are about to touch, and `isPartial` says when it may be
- * understated.
+ * server's refusal decides that (Task F5).
+ *
+ * THE TWO WAYS A COUNT CAN BE WRONG ARE DIFFERENT THINGS, and are reported
+ * separately because only one of them is reachable in the case the warning
+ * above is about:
+ *
+ *  - `isNarrowed` — the caller is not a super admin, so the register answered
+ *    about THEIR view. The three list routes carry NO per-type middleware
+ *    (backend eo_record_handler.go RegisterRoutes: "a 403 is the wrong answer
+ *    for a register: they are filtered instead"), so a restricted designer
+ *    gets 200 and `total_items: 0`, not an error. Deriving the warning from a
+ *    failed query therefore could never fire for the very caller it names —
+ *    they would open an abstract type in the destructive-edit flow, see no
+ *    warning at all, and confirm believing nothing sits beneath it. The
+ *    condition is "who is asking", not "did a query fail".
+ *  - `isUnreadable` — a count query actually failed, so the count is not
+ *    understated but MISSING, and `recordCount` returns undefined for the
+ *    types it covered.
  */
 export function useEoTypeRecordCounts(types: EoRecordType[]) {
+  const { isSuperAdmin } = usePermissions();
   const concrete = useMemo(() => types.filter((t) => !t.is_abstract), [types]);
 
   const results = useQueries({
@@ -155,8 +172,9 @@ export function useEoTypeRecordCounts(types: EoRecordType[]) {
       queryFn: () =>
         eoRecordApi.list({ record_type_id: [t.id], page: 1, limit: 1 }),
       staleTime: DESIGNER_STALE_MS,
-      // A register the caller cannot read answers 403 rather than 0; one
-      // retry is the client default and a second is no more informative.
+      // No retries. A register failure here is not worth a second round trip
+      // across every type at once, and the screen says "could not be read"
+      // rather than waiting.
       retry: false,
     })),
   });
@@ -170,9 +188,14 @@ export function useEoTypeRecordCounts(types: EoRecordType[]) {
     return map;
   }, [concrete, results]);
 
-  const isLoading = results.some((r) => r.isLoading);
-  /** At least one register refused or failed, so a 0 may be an unknown. */
-  const isPartial = results.some((r) => r.isError);
+  /**
+   * The register answered about this caller's own view, so every count may be
+   * lower than what the server holds. True for everyone but a super admin —
+   * no query has to fail for it, and none will.
+   */
+  const isNarrowed = !isSuperAdmin;
+  /** A count query failed, so those types have no count at all. */
+  const isUnreadable = results.some((r) => r.isError);
 
   const recordCount = useCallback(
     (typeId?: string): number | undefined => {
@@ -190,7 +213,7 @@ export function useEoTypeRecordCounts(types: EoRecordType[]) {
     [ownCounts, types],
   );
 
-  return { recordCount, isLoading, isPartial };
+  return { recordCount, isNarrowed, isUnreadable };
 }
 
 // ──────────────────────────────────────────────────
@@ -231,17 +254,15 @@ export function useCreateEoType() {
 }
 
 export function useUpdateEoType() {
-  const queryClient = useQueryClient();
   const invalidate = useInvalidateCatalogue();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: EoRecordTypeRequest }) =>
       eoTypeApi.update(id, data),
-    onSuccess: (_result, variables) => {
-      invalidate();
-      queryClient.invalidateQueries({
-        queryKey: eoTypeKeys.detail(variables.id),
-      });
-    },
+    // `invalidate` already covers eoTypeKeys.all, which is a PREFIX of
+    // eoTypeKeys.detail(id): a second call naming the detail key invalidates
+    // nothing the first did not, and reads as a guarantee the first does not
+    // provide.
+    onSuccess: invalidate,
   });
 }
 
@@ -275,6 +296,13 @@ export function useDeleteEoType() {
  * It reuses `eoKeys.typeFields(id)`, the key the record module's
  * effective-field merge already fills, so the list page and every record form
  * share one cache rather than fetching the same definitions twice.
+ *
+ * A FAILED COUNT IS REPORTED, NOT LEFT PENDING. `fieldCount` returns
+ * undefined both while a query is in flight and after it has failed, and the
+ * cell that renders it cannot tell the two apart — so a failing
+ * /:id/fields left a spinner turning forever, once per type. `fieldCountFailed`
+ * is the second half the sibling count hook already had, and `retry: false`
+ * stops the wait being three times longer than it needs to be.
  */
 export function useEoTypeFieldCounts(types: EoRecordType[]) {
   const results = useQueries({
@@ -282,19 +310,31 @@ export function useEoTypeFieldCounts(types: EoRecordType[]) {
       queryKey: eoKeys.typeFields(t.id),
       queryFn: () => eoRecordTypeApi.listFields(t.id),
       staleTime: DESIGNER_STALE_MS,
+      retry: false,
     })),
   });
 
   const counts = useMemo(() => {
     const map = new Map<string, number>();
     types.forEach((t, i) => {
+      // The server normalises nil to [], so an empty array is a real answer
+      // of zero and only a non-array is a missing one.
       const defs = results[i]?.data?.data;
       if (Array.isArray(defs)) map.set(t.id, defs.length);
     });
     return map;
   }, [types, results]);
 
-  const isLoading = results.some((r) => r.isLoading);
+  const failed = useMemo(() => {
+    const set = new Set<string>();
+    types.forEach((t, i) => {
+      if (results[i]?.isError) set.add(t.id);
+    });
+    return set;
+  }, [types, results]);
 
-  return { fieldCount: (id: string) => counts.get(id), isLoading };
+  return {
+    fieldCount: (id: string) => counts.get(id),
+    fieldCountFailed: (id: string) => failed.has(id),
+  };
 }
