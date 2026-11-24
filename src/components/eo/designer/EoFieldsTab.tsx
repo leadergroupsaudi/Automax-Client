@@ -28,7 +28,12 @@ import {
   useEoTypeOwnFields,
   useUpdateEoField,
 } from "../../../hooks/useEoTypes";
-import { eoRefusalMessage, eoServerRefusal } from "../../../lib/eoFields";
+import {
+  eoFieldDestructiveChanges,
+  eoRefusalMessage,
+  eoServerRefusal,
+  type EoFieldDestructiveChange,
+} from "../../../lib/eoFields";
 import {
   emptyEoFieldDraft,
   eoFieldDraftFrom,
@@ -37,7 +42,9 @@ import {
 import type { EoFieldDraft } from "../../../lib/eoFieldKinds";
 import { EoFieldEditor } from "./EoFieldEditor";
 import { EoRefusalBanner } from "./EoRefusalBanner";
+import { EoDestructiveDialog } from "./EoDestructiveDialog";
 import type {
+  EoDestructiveConfirmation,
   EoFieldDefinition,
   EoFieldDefRequest,
   EoRecordType,
@@ -261,6 +268,24 @@ export const EoFieldsTab: React.FC<EoFieldsTabProps> = ({
   const [deleting, setDeleting] = useState<EoFieldDefinition | null>(null);
   const [deleteError, setDeleteError] = useState<unknown>(null);
 
+  // The confirmation under way, if any. It is one of two shapes because the
+  // two destructive routes differ: an edit (PUT) carries the confirmation in
+  // its attribute set, so the request is kept to be re-sent; a removal
+  // (DELETE) carries it in an optional body and needs nothing kept.
+  const [lastRequest, setLastRequest] = useState<EoFieldDefRequest | null>(
+    null,
+  );
+  const [confirming, setConfirming] = useState<{
+    via: "edit" | "delete";
+    changes: EoFieldDestructiveChange[];
+  } | null>(null);
+  const [confirmError, setConfirmError] = useState<unknown>(null);
+
+  const closeConfirmation = () => {
+    setConfirming(null);
+    setConfirmError(null);
+  };
+
   const nextSortOrder =
     own.reduce((max, f) => Math.max(max, f.sort_order), 0) + 1;
 
@@ -274,8 +299,18 @@ export const EoFieldsTab: React.FC<EoFieldsTabProps> = ({
     setEditing({ draft: eoFieldDraftFrom(field), fieldId: field.id });
   };
 
+  // What a confirmation would have to name for the edit currently refused. An
+  // edit that is not of a stored field (an addition) has none.
+  const editChanges = (): EoFieldDestructiveChange[] => {
+    const stored = own.find((f) => f.id === editing?.fieldId);
+    return stored && lastRequest
+      ? eoFieldDestructiveChanges(stored, lastRequest)
+      : [];
+  };
+
   const handleSubmit = async (data: EoFieldDefRequest) => {
     setSaveError(null);
+    setLastRequest(data);
     try {
       if (editing?.fieldId) {
         await updateField.mutateAsync({
@@ -326,6 +361,35 @@ export const EoFieldsTab: React.FC<EoFieldsTabProps> = ({
   };
 
   const deleteRefusal = eoServerRefusal(deleteError);
+
+  const handleConfirm = async (confirmation: EoDestructiveConfirmation) => {
+    if (!confirming) return;
+    setConfirmError(null);
+    try {
+      if (confirming.via === "delete" && deleting) {
+        await deleteField.mutateAsync({
+          typeId: recordType.id,
+          fieldId: deleting.id,
+          confirm: confirmation,
+        });
+        toast.success(t("eo.types.field.deleted", "Field removed"));
+        setDeleting(null);
+        setDeleteError(null);
+      } else if (editing?.fieldId && lastRequest) {
+        await updateField.mutateAsync({
+          typeId: recordType.id,
+          fieldId: editing.fieldId,
+          data: { ...lastRequest, confirm_destructive: confirmation },
+        });
+        toast.success(t("eo.types.field.saved", "Field saved"));
+        setEditing(null);
+        setSaveError(null);
+      }
+      closeConfirmation();
+    } catch (error) {
+      setConfirmError(error);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -635,7 +699,7 @@ export const EoFieldsTab: React.FC<EoFieldsTabProps> = ({
 
       {editing && (
         <EoFieldEditor
-          isOpen
+          isOpen={!confirming}
           onClose={() => {
             setEditing(null);
             setSaveError(null);
@@ -652,6 +716,14 @@ export const EoFieldsTab: React.FC<EoFieldsTabProps> = ({
           statesAvailable={statesAvailable}
           statesUnavailableReason={statesUnavailableReason}
           onSubmit={handleSubmit}
+          onConfirmDestructive={
+            editChanges().length > 0
+              ? () => {
+                  setConfirmError(null);
+                  setConfirming({ via: "edit", changes: editChanges() });
+                }
+              : undefined
+          }
           isSaving={createField.isPending || updateField.isPending}
           saveError={saveError}
         />
@@ -661,7 +733,7 @@ export const EoFieldsTab: React.FC<EoFieldsTabProps> = ({
           that is where the operator is when it arrives and where Task F5's
           "confirm it anyway, and state the rule" step attaches. */}
       <Modal
-        isOpen={!!deleting}
+        isOpen={!!deleting && !confirming}
         onClose={() => {
           setDeleting(null);
           setDeleteError(null);
@@ -678,13 +750,22 @@ export const EoFieldsTab: React.FC<EoFieldsTabProps> = ({
           <p className="text-sm text-slate-600 dark:text-slate-300">
             {t(
               "eo.types.field.removeHint",
-              "Records already saved keep whatever they stored under this key, and nothing will know what it means. The server refuses the removal outright while this type, or any type beneath it, holds records.",
+              "Records already saved keep whatever they stored under this key, and nothing will know what it means. While this type, or any type beneath it, holds records the server refuses the removal unless you confirm it and state the rule for those records.",
             )}
           </p>
           {deleteRefusal ? (
             <EoRefusalBanner
               refusal={deleteRefusal}
               testId="eo-field-delete-refusal"
+              onConfirm={() => {
+                setConfirmError(null);
+                setConfirming({
+                  via: "delete",
+                  changes: [
+                    { change: "field_removed", fieldKey: deleting?.key ?? "" },
+                  ],
+                });
+              }}
             />
           ) : deleteError ? (
             <div className="rounded-lg border border-red-300 dark:border-red-700/60 bg-red-50 dark:bg-red-900/20 px-4 py-3">
@@ -728,6 +809,19 @@ export const EoFieldsTab: React.FC<EoFieldsTabProps> = ({
           </button>
         </ModalFooter>
       </Modal>
+
+      {confirming && (
+        <EoDestructiveDialog
+          isOpen
+          typeKey={recordType.key}
+          change={confirming.changes[0]}
+          changeCount={confirming.changes.length}
+          isSaving={updateField.isPending || deleteField.isPending}
+          error={confirmError}
+          onConfirm={handleConfirm}
+          onCancel={closeConfirmation}
+        />
+      )}
     </div>
   );
 };

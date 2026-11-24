@@ -23,7 +23,13 @@ import type { EoServerRefusal } from "../../../lib/eoFields";
 export const EoRefusalBanner: React.FC<{
   refusal: EoServerRefusal;
   testId: string;
-}> = ({ refusal, testId }) => {
+  /**
+   * Opens Task F5's confirmation. Offered only by a surface that can build
+   * the confirmation (it knows the field and the change); a refusal with no
+   * such surface just explains itself.
+   */
+  onConfirm?: () => void;
+}> = ({ refusal, testId, onConfirm }) => {
   const { t } = useTranslation();
   return (
     <div
@@ -44,9 +50,22 @@ export const EoRefusalBanner: React.FC<{
             <p className="mt-2 text-xs text-amber-700 dark:text-amber-400">
               {t(
                 "eo.types.field.refusedHint",
-                "This record type, or a type beneath it, holds records. The change can be made with an explicit confirmation and a stated rule for the records it leaves behind — that flow is not built yet.",
+                "This record type, or a type beneath it, holds records. The change can be made with an explicit confirmation and a stated rule for the records it leaves behind.",
               )}
             </p>
+          )}
+          {refusal.destructive && onConfirm && (
+            <button
+              type="button"
+              onClick={onConfirm}
+              data-testid={`${testId}-confirm`}
+              className="mt-3 px-3 py-1.5 rounded-lg text-sm font-medium border border-amber-400 dark:border-amber-600 text-amber-900 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
+            >
+              {t(
+                "eo.types.destructive.open",
+                "Confirm this change and state the rule…",
+              )}
+            </button>
           )}
         </div>
       </div>

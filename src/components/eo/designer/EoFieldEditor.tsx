@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Info, Loader2, Plus, Trash2 } from "lucide-react";
 import {
@@ -72,6 +72,11 @@ export interface EoFieldEditorProps {
   statesUnavailableReason?: string;
   // eslint-disable-next-line no-unused-vars
   onSubmit: (data: EoFieldDefRequest) => Promise<void>;
+  /**
+   * Opens the confirmation for the refusal the banner is showing. Absent when
+   * the edit makes no change a confirmation can name.
+   */
+  onConfirmDestructive?: () => void;
   isSaving: boolean;
   /** The rejection of the last submit, if it was rejected. */
   saveError: unknown;
@@ -107,6 +112,7 @@ export const EoFieldEditor: React.FC<EoFieldEditorProps> = ({
   statesAvailable,
   statesUnavailableReason,
   onSubmit,
+  onConfirmDestructive,
   isSaving,
   saveError,
 }) => {
@@ -116,9 +122,17 @@ export const EoFieldEditor: React.FC<EoFieldEditorProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // A fresh open is a fresh draft; the modal is not unmounted between rows.
+  // A fresh draft is a fresh form; the modal is not unmounted between rows.
+  //
+  // KEYED ON THE DRAFT THE CALLER HANDED OVER, NOT ON `isOpen`. Task F5 closes
+  // this modal while the confirmation dialog is up and reopens it on cancel,
+  // and resetting on every open threw away what the operator had typed — the
+  // edit they were about to confirm. A new row is a new draft object, so a
+  // genuinely fresh open still resets.
+  const seenDraft = useRef<EoFieldDraft | null>(null);
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || seenDraft.current === initialDraft) return;
+    seenDraft.current = initialDraft;
     setDraft(initialDraft);
     setErrors({});
     setShowAdvanced(false);
@@ -253,6 +267,7 @@ export const EoFieldEditor: React.FC<EoFieldEditorProps> = ({
             <EoRefusalBanner
               refusal={refusal}
               testId="eo-field-destructive-refusal"
+              onConfirm={onConfirmDestructive}
             />
           )}
           {errors.submit && (

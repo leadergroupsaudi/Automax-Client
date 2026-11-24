@@ -6246,11 +6246,11 @@
         "saveFailed": "Could not save that field",
         "remove": "Remove field",
         "removeTitle": "Remove this field?",
-        "removeHint": "Records already saved keep whatever they stored under this key, and nothing will know what it means. The server refuses the removal outright while this type, or any type beneath it, holds records.",
+        "removeHint": "Records already saved keep whatever they stored under this key, and nothing will know what it means. While this type, or any type beneath it, holds records the server refuses the removal unless you confirm it and state the rule for those records.",
         "deleted": "Field removed",
         "deleteFailed": "Could not remove that field",
         "refusedTitle": "The server refused this change",
-        "refusedHint": "This record type, or a type beneath it, holds records. The change can be made with an explicit confirmation and a stated rule for the records it leaves behind — that flow is not built yet.",
+        "refusedHint": "This record type, or a type beneath it, holds records. The change can be made with an explicit confirmation and a stated rule for the records it leaves behind.",
         "onType": "On record type {{key}}",
         "key": "Key",
         "kind": "Kind",
@@ -6429,7 +6429,33 @@
         "lockUnknown": "This record type has no register of its own to count, so it cannot be confirmed empty from here.",
         "lockRecords": "This record type and the types beneath it hold {{count}} records. A workflow cannot be changed while any exist."
       },
-      "countsPending": "Checking whether this record type holds records. Until that finishes, treat it as holding some."
+      "countsPending": "Checking whether this record type holds records. Until that finishes, treat it as holding some.",
+      "destructive": {
+        "title": "Confirm a destructive change",
+        "onType": "On record type {{type}}",
+        "whatLabel": "What will happen",
+        "consequenceLabel": "Consequence",
+        "what": {
+          "removed": "Remove the definition of field {{field}} from {{type}}.",
+          "rename": "Rename field {{field}} to {{newKey}} on {{type}}. Fields are matched by key, so the server treats this as removing {{field}}.",
+          "kind": "Change the kind of field {{field}} on {{type}} from {{from}} to {{to}}.",
+          "required": "Make field {{field}} on {{type}}, which is optional today, required ({{to}})."
+        },
+        "consequence": {
+          "removed": "Nothing is deleted. Values already saved under {{field}} stay stored in each record, so a mistaken removal can be recovered; until then nothing will display, validate or derive from them.",
+          "rename": "Nothing is deleted. Values already saved under {{field}} stay stored in each record, so a mistaken rename can be recovered; until then nothing will display, validate or derive from them, and {{newKey}} starts empty.",
+          "kind": "Nothing is rewritten. Values already saved keep the form they were stored in, and may not read correctly as the new kind.",
+          "required": "Records that exist are not changed. Any without a value do not meet the new requirement, and may be refused when next saved or moved."
+        },
+        "multiple": "This edit makes {{count}} destructive changes, and a confirmation authorises only one. The server will refuse it. Go back and make them one at a time.",
+        "reasonLabel": "What will be done about the records this leaves behind",
+        "reasonHint": "Required. It is recorded in the action log under your name, next to this change.",
+        "reasonRequired": "State the rule: this change cannot be confirmed without it.",
+        "reasonTooLong": "The rule can be at most {{max}} characters.",
+        "failed": "Could not apply the confirmed change",
+        "confirm": "Confirm and apply this change",
+        "open": "Confirm this change and state the rule…"
+      }
     },
     "kind": {
       "auto_number": "Auto number",

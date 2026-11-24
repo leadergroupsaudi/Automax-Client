@@ -1,5 +1,6 @@
 import type {
   EoFieldDefinition,
+  EoFieldDefRequest,
   EoFieldKind,
   EoRecord,
   EoRecordType,
@@ -461,4 +462,67 @@ export function eoServerRefusal(error: unknown): EoServerRefusal | null {
   // So the sentence is ALWAYS surfaced, and only the explanation is gated. A
   // rewording of the refusals costs the explanation, not the message.
   return { message, destructive: /\bdestructive\b/i.test(message) };
+}
+
+/**
+ * One destructive change a field edit makes, in the vocabulary of
+ * models.EODestructiveChanges — the identifier a confirmation has to name.
+ */
+export interface EoFieldDestructiveChange {
+  /** `field_removed`, `field_kind` or `field_required`. */
+  change: "field_removed" | "field_kind" | "field_required";
+  /** The STORED key: the server names the field by what it is called now. */
+  fieldKey: string;
+  /** field_removed by a key rename: the key the field is being given. */
+  renamedTo?: string;
+  from?: string;
+  to?: string;
+}
+
+/**
+ * The destructive changes a PUT of `request` over `stored` makes, in the order
+ * models.eoDestructiveChanges finds them — which is the order the server
+ * refuses in, so the first is the one a confirmation must name.
+ *
+ * It mirrors the three field-level rules because the refusal is a sentence
+ * and a confirmation needs the identifier: reading it back out of the
+ * sentence would key the override on wording. If this ever disagrees with the
+ * server the confirmation is refused with the server's own mismatch sentence,
+ * which the dialog shows — it cannot authorise anything the server did not.
+ *
+ * A KEY RENAME IS `field_removed`. Fields are matched by key, so the old key
+ * is gone from the edited set and the server judges it exactly as a removal.
+ * A removed field has no kind or requiredness left to change, so it is the
+ * only change reported for it (the server `continue`s the same way).
+ */
+export function eoFieldDestructiveChanges(
+  stored: EoFieldDefinition,
+  request: EoFieldDefRequest,
+): EoFieldDestructiveChange[] {
+  const newKey = request.key.trim();
+  if (newKey !== stored.key) {
+    return [
+      { change: "field_removed", fieldKey: stored.key, renamedTo: newKey },
+    ];
+  }
+  const out: EoFieldDestructiveChange[] = [];
+  if (request.kind && request.kind !== stored.kind) {
+    out.push({
+      change: "field_kind",
+      fieldKey: stored.key,
+      from: stored.kind,
+      to: request.kind,
+    });
+  }
+  const neverBefore = !stored.required_mode || stored.required_mode === "never";
+  const neverAfter =
+    !request.required_mode || request.required_mode === "never";
+  if (neverBefore && !neverAfter) {
+    out.push({
+      change: "field_required",
+      fieldKey: stored.key,
+      to: request.required_mode,
+    });
+  }
+  return out;
 }
