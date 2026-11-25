@@ -6191,8 +6191,8 @@
       "blockedByRefs_other": "Waiting on {{references}}. This step can run once those records are closed.",
       "blockedByHidden_one": "Waiting on one record you do not have access to. A colleague who can see it has to close it first.",
       "blockedByHidden_other": "Waiting on {{count}} records you do not have access to. A colleague who can see them has to close them first.",
-      "blockedByBoth_one": "Waiting on {{references}}, and on one further record you do not have access to.",
-      "blockedByBoth_other": "Waiting on {{references}}, and on {{count}} further records you do not have access to.",
+      "blockedByBoth_one": "Waiting on {{references}}, and on one further record you do not have access to. This step can run once all of them are closed — a colleague who can see that record has to close it.",
+      "blockedByBoth_other": "Waiting on {{references}}, and on {{count}} further records you do not have access to. This step can run once all of them are closed — a colleague who can see those records has to close them.",
       "blockedUnknown": "This step is blocked right now.",
       "refusedHeading": "The record did not move"
     },

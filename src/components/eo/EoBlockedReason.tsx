@@ -76,10 +76,12 @@ export const EoBlockedReason: React.FC<EoBlockedReasonProps> = ({
       sentence = t("eo.transition.blockedByBoth", {
         count: reason.count,
         references: eoBlockReferenceText(reason.references),
+        // The officer in the most complicated of the four situations was the
+        // only one left without a next action; both halves now carry one.
         defaultValue:
-          "Waiting on {{references}}, and on {{count}} further records you do not have access to.",
+          "Waiting on {{references}}, and on {{count}} further records you do not have access to. This step can run once all of them are closed — a colleague who can see those records has to close them.",
         defaultValue_one:
-          "Waiting on {{references}}, and on one further record you do not have access to.",
+          "Waiting on {{references}}, and on one further record you do not have access to. This step can run once all of them are closed — a colleague who can see that record has to close it.",
       });
       break;
     default:

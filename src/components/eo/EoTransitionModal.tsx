@@ -396,16 +396,37 @@ export const EoTransitionModal: React.FC<EoTransitionModalProps> = ({
 
         {/* Content */}
         <div className="p-6 space-y-5">
+          {/*
+            THE REFUSAL OUTLIVES WHATEVER THE REFETCH RETURNS.
+
+            It is rendered here, outside the branch below, because that branch
+            keys on `transitions.length` while the refusal invalidates the
+            transitions query. Should that re-read come back empty — a
+            concurrent state change, a read that fails — the modal would
+            otherwise replace the officer's own refusal with the amber
+            "nothing is available" panel, and they would never learn why the
+            move they just attempted was rejected. The answer to the action
+            the officer just took is the one thing here that must survive a
+            re-read.
+          */}
+          {refusedBlock && (
+            <EoBlockedReason block={refusedBlock} tone="alert" />
+          )}
+
           {transitions.length === 0 ? (
-            <div className="flex items-center gap-3 p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-              <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-              <p className="text-sm text-amber-700 dark:text-amber-300">
-                {t(
-                  "eo.transition.noTransitions",
-                  "No transitions are available from this state.",
-                )}
-              </p>
-            </div>
+            // ...and for the same reason the "nothing is available" panel is
+            // suppressed while a refusal is on screen: it would contradict it.
+            !refusedBlock && (
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                <p className="text-sm text-amber-700 dark:text-amber-300">
+                  {t(
+                    "eo.transition.noTransitions",
+                    "No transitions are available from this state.",
+                  )}
+                </p>
+              </div>
+            )
           ) : (
             <>
               {/* The server's one-line summary of a field refusal. A headline
@@ -421,13 +442,6 @@ export const EoTransitionModal: React.FC<EoTransitionModalProps> = ({
                     {headline}
                   </p>
                 </div>
-              )}
-
-              {/* The server's refusal of the move just attempted: offered
-                  when this modal opened, blocked by the time it was
-                  confirmed. Its own channel, above the controls. */}
-              {refusedBlock && (
-                <EoBlockedReason block={refusedBlock} tone="alert" />
               )}
 
               {runnable.length > 0 && (
