@@ -48,6 +48,8 @@ export interface EoReferralBranch {
 
 export interface EoReferralSummary {
   total: number;
+  /** Every branch, as the snapshot recorded it (answered = snapshot value). */
+  branches: EoReferralBranch[];
   outstanding: EoReferralBranch[];
 }
 
@@ -95,8 +97,11 @@ export function summariseReferralTree(raw: unknown): EoReferralSummary | null {
       );
     }
   }
+  const all = [...branches];
+  for (const b of open.values()) if (!all.includes(b)) all.push(b);
   return {
-    total: Math.max(branches.length, open.size),
+    total: all.length,
+    branches: all,
     outstanding: Array.from(open.values()),
   };
 }

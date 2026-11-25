@@ -223,6 +223,7 @@ export const EoRecordDetailPage: React.FC = () => {
         <EoRecordFacts
           record={record}
           state={record.state_id ? stateMap.get(record.state_id) : undefined}
+          stateMap={stateMap}
           typeById={typeById}
         />
       </div>

@@ -14,6 +14,7 @@ import { eoRecordApi } from "../../api/eoRecords";
 import { eoKeys } from "../../hooks/useEoRecords";
 import {
   eoDaysOverdue,
+  isEoRecordClosed,
   summariseReferralTree,
   type EoReferralBranch,
 } from "../../lib/eoHeader";
@@ -27,6 +28,7 @@ import type { User as UserT } from "../../types";
 interface EoRecordFactsProps {
   record: EoRecord;
   state?: EoWorkflowState;
+  stateMap: Map<string, EoWorkflowState>;
   typeById: Map<string, EoRecordType>;
 }
 
@@ -102,6 +104,7 @@ const BranchChip: React.FC<{
 export const EoRecordFacts: React.FC<EoRecordFactsProps> = ({
   record,
   state,
+  stateMap,
   typeById,
 }) => {
   const { t, i18n } = useTranslation();
@@ -124,15 +127,35 @@ export const EoRecordFacts: React.FC<EoRecordFactsProps> = ({
 
   const daysOverdue = eoDaysOverdue(record, state);
 
-  const summary = summariseReferralTree(record.values?.referral_tree);
+  const snapshot = summariseReferralTree(record.values?.referral_tree);
+  // The tree is a snapshot taken when the LETTER was last saved or moved; a
+  // branch answering afterwards does not refresh it. So every branch is read
+  // and its own state decides whether it is open. The snapshot is used only
+  // for a branch that could not be read, and that is said on screen.
   const probes = useQueries({
-    queries: (summary?.outstanding ?? []).map((b) => ({
+    queries: (snapshot?.branches ?? []).map((b) => ({
       queryKey: eoKeys.detail(b.id),
       queryFn: () => eoRecordApi.getById(b.id),
       enabled: !!b.id,
       retry: false,
     })),
   });
+  const live = (snapshot?.branches ?? []).map((b, i) => {
+    const rec = probes[i]?.data?.data;
+    const pending = !!b.id && !!probes[i]?.isLoading;
+    const answered = rec
+      ? isEoRecordClosed(
+          rec,
+          rec.state_id ? stateMap.get(rec.state_id) : undefined,
+        )
+      : b.answered;
+    return { b, rec, pending, answered, fromSnapshot: !rec && !pending };
+  });
+  const summary = snapshot && {
+    total: live.length,
+    outstanding: live.filter((x) => !x.answered),
+    usedSnapshot: live.some((x) => x.fromSnapshot),
+  };
 
   return (
     <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700/40 flex flex-wrap gap-x-8 gap-y-3 text-sm">
@@ -227,18 +250,26 @@ export const EoRecordFacts: React.FC<EoRecordFactsProps> = ({
                 })}
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {summary.outstanding.map((b, i) => (
+                {summary.outstanding.map((x, i) => (
                   <BranchChip
-                    key={b.id || b.reference || i}
-                    branch={b}
+                    key={x.b.id || x.b.reference || i}
+                    branch={x.b}
                     typeById={typeById}
-                    probe={{
-                      loading: !!b.id && !!probes[i]?.isLoading,
-                      record: probes[i]?.data?.data,
-                    }}
+                    probe={{ loading: x.pending, record: x.rec }}
                   />
                 ))}
               </div>
+            </div>
+          )}
+          {summary.usedSnapshot && summary.total > 0 && (
+            <div
+              data-testid="eo-referral-snapshot"
+              className="mt-1 text-xs italic text-slate-500 dark:text-slate-400"
+            >
+              {t(
+                "eo.header.snapshotNote",
+                "Some referrals could not be read; their status is as of the letter's last save.",
+              )}
             </div>
           )}
         </div>

@@ -6152,6 +6152,7 @@
       "allAnswered_other": "All {{count}} referrals answered",
       "outstanding_one": "{{count}} of {{total}} referrals still outstanding",
       "outstanding_other": "{{count}} of {{total}} referrals still outstanding",
+      "snapshotNote": "Some referrals could not be read; their status is as of the letter's last save.",
       "branchUnnamed": "Referral",
       "branchRestricted": "This referral is held by another body; you cannot open it.",
       "branchRestrictedShort": "restricted"
