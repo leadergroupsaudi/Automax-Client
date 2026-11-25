@@ -21,6 +21,7 @@ import { usePermissions } from "../../hooks/usePermissions";
 import { useLocalizedField } from "../../hooks/useLocalizedField";
 import { EoFieldValue } from "../../components/eo/EoFieldValue";
 import { EoStateBadge } from "../../components/eo/EoStateBadge";
+import { EoRecordFacts } from "../../components/eo/EoRecordFacts";
 import { EoTransitionModal } from "../../components/eo/EoTransitionModal";
 import { flattenRecordValues } from "../../lib/eoFields";
 
@@ -219,6 +220,11 @@ export const EoRecordDetailPage: React.FC = () => {
             )}
           </div>
         </div>
+        <EoRecordFacts
+          record={record}
+          state={record.state_id ? stateMap.get(record.state_id) : undefined}
+          typeById={typeById}
+        />
       </div>
 
       {/* Tabs */}

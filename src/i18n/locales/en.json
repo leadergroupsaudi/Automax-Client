@@ -6138,6 +6138,24 @@
       "success": "Record updated",
       "forbidden": "You cannot edit records of this type"
     },
+    "header": {
+      "assignee": "Assigned to",
+      "unassigned": "Unassigned",
+      "assigneeUnresolved": "Assigned",
+      "due": "Due",
+      "noDue": "No due date",
+      "overdueBy_one": "Overdue by {{count}} day",
+      "overdueBy_other": "Overdue by {{count}} days",
+      "referrals": "Referrals",
+      "noBranches": "No referrals",
+      "allAnswered_one": "All {{count}} referral answered",
+      "allAnswered_other": "All {{count}} referrals answered",
+      "outstanding_one": "{{count}} of {{total}} referrals still outstanding",
+      "outstanding_other": "{{count}} of {{total}} referrals still outstanding",
+      "branchUnnamed": "Referral",
+      "branchRestricted": "This referral is held by another body; you cannot open it.",
+      "branchRestrictedShort": "restricted"
+    },
     "detail": {
       "move": "Move",
       "notFound": "Record not found",

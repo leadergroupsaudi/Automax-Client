@@ -30,7 +30,20 @@ export const EoStateBadge: React.FC<EoStateBadgeProps> = ({ state }) => {
 
   // The workflow designer stores a hex colour per state; tint from it so the
   // badge stays legible in both themes without a per-state Tailwind class.
-  const colour = state.color || "#6366f1";
+  // Every seeded state carries the same designer default (#6366f1), so the
+  // colour cannot tell "just arrived" from "finished". The state's TYPE can:
+  // it is the one attribute every workflow is required to set. A colour the
+  // designer chose on purpose (anything but the default) still wins.
+  const DESIGNER_DEFAULT = "#6366f1";
+  const byType: Record<string, string> = {
+    initial: "#0284c7",
+    normal: "#d97706",
+    terminal: "#059669",
+  };
+  const colour =
+    state.color && state.color.toLowerCase() !== DESIGNER_DEFAULT
+      ? state.color
+      : (byType[state.state_type] ?? DESIGNER_DEFAULT);
 
   return (
     <span
