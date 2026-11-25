@@ -6173,6 +6173,8 @@
       "noMoves": "No step is available from this state.",
       "history": {
         "empty": "Nothing has been recorded against this record yet.",
+        "pastTheEnd": "This page is past the end of the history. The record's entries are on the earlier pages.",
+        "firstPage": "Go to the first page",
         "failed": "The history could not be loaded",
         "failedHint": "This is a problem reaching the server \u2014 it does not mean nothing has happened to this record.",
         "failedStale": "What is shown below was read earlier and may be out of date.",

@@ -52,6 +52,28 @@ export const EoRecordHistory: React.FC<EoRecordHistoryProps> = ({
   const entries = query.data?.data ?? [];
   const pages = Math.max(1, query.data?.total_pages ?? 1);
 
+  /**
+   * ────────────────────────────────────────────────────────────────────────
+   * "THIS PAGE IS EMPTY" IS NOT "THIS RECORD HAS NO HISTORY"
+   * ────────────────────────────────────────────────────────────────────────
+   * The empty sentence is keyed on the SERVER'S TOTAL, never on the length of
+   * the array on screen. A successful read can return an empty array with a
+   * non-zero total: eoClampPaging clamps `page` to >= 1 and never to
+   * `total_pages`, so a page past the end answers 200 with
+   * `{data: [], total_items: 5, total_pages: 1}` (verified against the live
+   * route at ?page=9). Keyed on `entries.length` this panel printed "Nothing
+   * has been recorded against this record yet." next to a tab badge reading 5
+   * — the same lie as the error state's, through a second door, and with the
+   * pager inside the non-empty branch there was no control left to escape by.
+   *
+   * So: `total === 0` is an empty trail. An empty page with a non-zero total
+   * is a position, it says so, and it carries its own way back.
+   */
+  const total = query.data?.total_items;
+  const trailIsEmpty = total === 0;
+  const pastTheEnd =
+    entries.length === 0 && typeof total === "number" && total > 0;
+
   if (query.isLoading) {
     return (
       <div className="flex items-center justify-center py-10">
@@ -113,18 +135,41 @@ export const EoRecordHistory: React.FC<EoRecordHistoryProps> = ({
         </div>
       )}
 
-      {entries.length === 0 ? (
-        // Only ever reached on a SUCCESSFUL read that returned nothing: an
-        // empty trail is `{data: [], total_items: 0}`, never a 404.
-        !query.isError && (
-          <p className="text-sm text-slate-600 dark:text-slate-300 py-6 text-center">
+      {trailIsEmpty && !query.isError && (
+        // Only ever reached on a SUCCESSFUL read whose TOTAL is zero: an empty
+        // trail is `{data: [], total_items: 0}`, never a 404.
+        <p className="text-sm text-slate-600 dark:text-slate-300 py-6 text-center">
+          {t(
+            "eo.detail.history.empty",
+            "Nothing has been recorded against this record yet.",
+          )}
+        </p>
+      )}
+
+      {pastTheEnd && !query.isError && (
+        // A position, not a verdict on the record — and a way back out of it.
+        <div className="py-6 text-center">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
             {t(
-              "eo.detail.history.empty",
-              "Nothing has been recorded against this record yet.",
+              "eo.detail.history.pastTheEnd",
+              "This page is past the end of the history. The record's entries are on the earlier pages.",
             )}
           </p>
-        )
-      ) : (
+          <button
+            type="button"
+            onClick={() => onPageChange(1)}
+            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-500 dark:border-slate-400 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+          >
+            <ChevronLeft
+              className="w-4 h-4 rtl:-rotate-180"
+              aria-hidden="true"
+            />
+            {t("eo.detail.history.firstPage", "Go to the first page")}
+          </button>
+        </div>
+      )}
+
+      {entries.length > 0 && (
         <>
           <ol className="divide-y divide-slate-100 dark:divide-slate-700/40">
             {entries.map((row) => {

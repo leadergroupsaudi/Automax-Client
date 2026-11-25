@@ -41,6 +41,26 @@ export const EoRecordDetailPage: React.FC = () => {
   const [childrenPage, setChildrenPage] = useState(1);
   const [historyPage, setHistoryPage] = useState(1);
 
+  /**
+   * A PAGE NUMBER BELONGS TO THE RECORD IT WAS CHOSEN ON.
+   *
+   * This route element is reused between records — App.tsx renders it with no
+   * `key`, so following a child navigates without remounting — and
+   * `historyPage` is component state. Carried onto the next record it asks for
+   * a page that record may not have, and the server answers such a request 200
+   * with an empty array (it clamps `page` to >= 1, never to `total_pages`).
+   * Reset during render, which is React's own way of adjusting state to a
+   * changed input: no effect, and no paint with the wrong page in flight.
+   *
+   * The panel ALSO handles an empty page with a non-zero total, because this
+   * reset is not the only way to arrive at one.
+   */
+  const [pagedRecordId, setPagedRecordId] = useState(id);
+  if (pagedRecordId !== id) {
+    setPagedRecordId(id);
+    setHistoryPage(1);
+  }
+
   const recordQuery = useEoRecord(id ?? "");
   const record = recordQuery.data?.data;
 

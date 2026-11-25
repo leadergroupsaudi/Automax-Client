@@ -41,6 +41,12 @@ interface Discovered {
   richest: HistoryFixture;
   /** A record that has a trail AND a step its reader can actually take. */
   movable?: HistoryFixture;
+  /**
+   * A parent whose trail pages at three a page, and one of its children whose
+   * trail does NOT — the pair that carries a page number from a record that
+   * has it onto a record that does not.
+   */
+  nested?: { parent: HistoryFixture; child: HistoryFixture };
 }
 
 async function token(request: APIRequestContext): Promise<string> {
@@ -88,6 +94,7 @@ async function discoverFresh(request: APIRequestContext): Promise<Discovered> {
 
   let best: HistoryFixture | null = null;
   let movable: HistoryFixture | undefined;
+  let nested: Discovered["nested"];
   for (const record of records) {
     const typeKey = keyById.get(record.record_type_id);
     if (!typeKey) continue;
@@ -127,13 +134,50 @@ async function discoverFresh(request: APIRequestContext): Promise<Discovered> {
       const offered: { blocked?: boolean }[] = (await trRes.json()).data ?? [];
       if (offered.some((tr) => tr.blocked !== true)) movable = fixture;
     }
+
+    // The navigation tests need a parent with more than one page at three a
+    // page and a child with only one — so that the parent's page 2 means
+    // nothing on the child.
+    if (!nested && total > 3) {
+      const kidsRes = await request.get(
+        `${API}/eo-records/${record.id}/children?limit=20`,
+        { headers },
+      );
+      expect(kidsRes.ok()).toBeTruthy();
+      const kids: { id: string; reference: string; record_type_id: string }[] =
+        (await kidsRes.json()).data ?? [];
+      for (const kid of kids) {
+        const kidKey = keyById.get(kid.record_type_id);
+        if (!kidKey) continue;
+        const kidRes = await request.get(
+          `${API}/eo-records/${kid.id}/history?limit=20`,
+          { headers },
+        );
+        expect(kidRes.ok()).toBeTruthy();
+        const kidBody = await kidRes.json();
+        const kidTotal: number = kidBody.total_items ?? 0;
+        if (kidTotal > 0 && kidTotal <= 3) {
+          nested = {
+            parent: fixture,
+            child: {
+              id: kid.id,
+              typeKey: kidKey,
+              reference: kid.reference,
+              rows: kidBody.data ?? [],
+              total: kidTotal,
+            },
+          };
+          break;
+        }
+      }
+    }
   }
 
   expect(
     best && best.total > 1,
     "no record in this register has a history trail — the tab has nothing to show",
   ).toBeTruthy();
-  return { richest: best as HistoryFixture, movable };
+  return { richest: best as HistoryFixture, movable, nested };
 }
 
 /** The app in Arabic, set the way the language switcher sets it. */
@@ -523,6 +567,244 @@ test.describe("EO record detail — the history tab", () => {
         message: "the move did not invalidate this record's history",
       })
       .toBeGreaterThan(before);
+
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+  });
+
+  test("a page past the end is a position, not an empty record", async ({
+    page,
+    request,
+    loginAs,
+  }) => {
+    // THE SERVER'S OWN BYTES. eoClampPaging clamps `page` to >= 1 and never to
+    // `total_pages`, so a page past the end is a SUCCESSFUL read returning an
+    // empty array with the real total: ?page=9 on this record answers 200
+    // `{data: [], total_items: 5, total_pages: 1}`. Only the outgoing page
+    // number is rewritten here, and only on the first read, so that pressing
+    // the way out fetches page 1 for real.
+    //
+    // THIS IS THE CASE THAT TELLS THE TWO GUARDS APART. Keyed on
+    // `entries.length === 0`, the panel printed "Nothing has been recorded
+    // against this record yet." beside a tab badge reading 5, with the pager
+    // inside the non-empty branch and so no control left to escape by. The
+    // empty-trail test cannot catch that: it serves total_items 0, which both
+    // guards answer the same way.
+    const { richest: fixture } = await discover(request);
+    expect(fixture.total).toBeGreaterThan(3);
+
+    // limit -> 3 so a seeded trail pages at all; page 2 -> 9 so the second
+    // page really is past the end. Both are outgoing request parameters: every
+    // byte rendered, including the empty page's total, is the server's.
+    await page.route("**/api/v1/eo-records/*/history*", (route) => {
+      const url = new URL(route.request().url());
+      url.searchParams.set("limit", "3");
+      if (url.searchParams.get("page") === "2")
+        url.searchParams.set("page", "9");
+      return route.continue({ url: url.toString() });
+    });
+
+    await loginAs("admin");
+    await page.goto(`/eo/${fixture.typeKey}/${fixture.id}`);
+    await historyTab(page).click();
+    await expect(panel(page).locator("ol > li")).toHaveCount(3);
+
+    await page.getByRole("button", { name: /^Next$/ }).click();
+
+    // THE DEAD-END STATE HAS TO BE ON SCREEN BEFORE ANYTHING IS ASSERTED
+    // ABSENT. The pager's page number is local state and the previous page's
+    // rows are held while the next read is in flight, so an "is the empty
+    // sentence absent?" check fired immediately after Next passes while the
+    // panel is still showing page 1 — whatever the component does. This
+    // mutation (the guard reverted to `entries.length === 0`) survived the
+    // first draft of this test for exactly that reason. The notice is waited
+    // for first; the wrong guard renders the empty sentence BESIDE it.
+    await expect(panel(page)).toContainText(
+      "This page is past the end of the history",
+    );
+    await expect(
+      page.getByText("Nothing has been recorded against this record yet."),
+    ).toHaveCount(0);
+    // And the badge still knows the trail is not empty.
+    await expect(historyTab(page).locator("span")).toHaveText(
+      String(fixture.total),
+    );
+
+    // The pager lives inside the non-empty branch, so this button is the only
+    // way out of the dead end — and it works.
+    const out = page.getByRole("button", { name: /^Go to the first page$/ });
+    await expect(out).toBeVisible();
+    await out.click();
+    await expect(panel(page).locator("ol > li")).toHaveCount(3);
+    await expect(panel(page)).not.toContainText("past the end");
+
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+  });
+
+  test("a page number chosen on one record does not follow the officer to another", async ({
+    page,
+    request,
+    loginAs,
+  }) => {
+    // Driven navigation, server bytes throughout; only the page SIZE is
+    // rewritten, so that a seeded trail pages at all (the real size is 20 and
+    // the longest trail is well short of it).
+    //
+    // The route element is reused between records — App.tsx renders it with no
+    // `key` — so `historyPage` survives a child link. On a child whose trail
+    // fits on one page, the carried page 2 is a request the server answers
+    // with an empty array and the child's real total.
+    const { nested } = await discover(request);
+    expect(
+      nested,
+      "no parent with a multi-page trail has a child with a single-page one",
+    ).toBeDefined();
+    const { parent, child } = nested!;
+
+    await page.route("**/api/v1/eo-records/*/history*", (route) => {
+      const url = new URL(route.request().url());
+      url.searchParams.set("limit", "3");
+      return route.continue({ url: url.toString() });
+    });
+
+    await loginAs("admin");
+    await page.goto(`/eo/${parent.typeKey}/${parent.id}`);
+    await historyTab(page).click();
+    await expect(panel(page)).toContainText("Page 1 of");
+    await page.getByRole("button", { name: /^Next$/ }).click();
+    await expect(panel(page)).toContainText("Page 2 of");
+
+    // Follow a child, the way an officer does.
+    await page.getByRole("button", { name: /^Children/ }).click();
+    await page.getByRole("link", { name: child.reference }).click();
+    await page.waitForURL(`**/${child.id}`);
+    await historyTab(page).click();
+
+    // The child's own trail, from its first page.
+    await expect(panel(page).locator("ol > li")).toHaveCount(child.total);
+    await expect(panel(page)).not.toContainText("past the end");
+    await expect(
+      page.getByText("Nothing has been recorded against this record yet."),
+    ).toHaveCount(0);
+
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+  });
+
+  test("one record's trail never renders under another record's header", async ({
+    page,
+    request,
+    loginAs,
+  }) => {
+    // `keepPreviousData` is per-observer, not per-key: when the id changes
+    // under a mounted page it hands back the PREVIOUS RECORD's rows, and its
+    // total, unmarked. A misattributed child list is untidy; a misattributed
+    // audit row is a statutory register saying something untrue.
+    //
+    // Only the child's LATENCY is simulated — the staleness itself is real and
+    // happens at full speed too; the delay is what makes the window
+    // observable rather than a race.
+    const { nested } = await discover(request);
+    expect(nested).toBeDefined();
+    const { parent, child } = nested!;
+
+    await page.route("**/api/v1/eo-records/*/history*", async (route) => {
+      if (route.request().url().includes(child.id)) {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
+      return route.continue();
+    });
+
+    await loginAs("admin");
+    await page.goto(`/eo/${parent.typeKey}/${parent.id}`);
+    await historyTab(page).click();
+    await expect(panel(page).locator("ol > li")).toHaveCount(
+      Math.min(parent.total, 20),
+    );
+    await expect(historyTab(page).locator("span")).toHaveText(
+      String(parent.total),
+    );
+
+    await page.getByRole("button", { name: /^Children/ }).click();
+    await page.getByRole("link", { name: child.reference }).click();
+    await page.waitForURL(`**/${child.id}`);
+
+    // While the child's read is in flight the parent's total is NOT on the
+    // child's tab...
+    await expect(historyTab(page).locator("span")).toHaveCount(0);
+    await historyTab(page).click();
+    // ...and the parent's rows are not under the child's header.
+    await expect(panel(page).locator("ol")).toHaveCount(0);
+
+    // Then the child's own trail arrives.
+    await expect(panel(page).locator("ol > li")).toHaveCount(child.total, {
+      timeout: 10000,
+    });
+    await expect(historyTab(page).locator("span")).toHaveText(
+      String(child.total),
+    );
+
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+  });
+
+  test("a failure on top of rows keeps the rows and says they may be stale", async ({
+    page,
+    request,
+    loginAs,
+  }) => {
+    // The other half of the error state, and the one the first round left
+    // unverified: a read that fails when a trail is ALREADY on screen must not
+    // replace it with a panel, and must not tell the officer this might be an
+    // empty record when it is demonstrably not.
+    //
+    // The refetch is provoked the way it happens in service — a move
+    // invalidates the trail — with the POST intercepted so the demo database
+    // is not written to.
+    const { movable } = await discover(request);
+    expect(movable).toBeDefined();
+    const fixture = movable as HistoryFixture;
+
+    await loginAs("admin");
+    await page.goto(`/eo/${fixture.typeKey}/${fixture.id}`);
+    await historyTab(page).click();
+    const rows = panel(page).locator("ol > li");
+    await expect(rows).toHaveCount(fixture.rows.length);
+
+    // From here the trail cannot be re-read.
+    await page.route("**/api/v1/eo-records/*/history*", (route) =>
+      route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ success: false, error: "boom" }),
+      }),
+    );
+    await page.route("**/api/v1/eo-records/*/transition", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ success: true, data: {} }),
+      }),
+    );
+
+    await page.getByRole("button", { name: /^Move/ }).first().click();
+    await page.locator("div.grid > button").first().click();
+    await page
+      .locator("#eo-transition-comment")
+      .fill("e2e: the write is intercepted; nothing is stored");
+    await Promise.all([
+      page.waitForResponse(
+        (r) =>
+          r.url().includes("/transition") && r.request().method() === "POST",
+      ),
+      page.getByRole("button", { name: /confirm/i }).click(),
+    ]);
+
+    const alert = panel(page).locator('[role="alert"]');
+    await expect(alert).toBeVisible();
+    await expect(alert).toContainText("may be out of date");
+    // NOT the no-data wording: the officer can see rows, and telling them this
+    // might mean nothing has happened would contradict what is on the screen.
+    await expect(alert).not.toContainText("problem reaching the server");
+    // The trail they were reading is still there.
+    await expect(rows).toHaveCount(fixture.rows.length);
 
     await page.unrouteAll({ behavior: "ignoreErrors" });
   });
