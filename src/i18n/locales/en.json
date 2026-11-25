@@ -6165,10 +6165,26 @@
       "noChildren": "This record has no children.",
       "tabs": {
         "details": "Details",
-        "children": "Children"
+        "children": "Children",
+        "history": "History"
       },
       "childrenPageOf": "Page {{current}} of {{total}}",
-      "noMoves": "No step is available from this state."
+      "historyPageOf": "Page {{current}} of {{total}}",
+      "noMoves": "No step is available from this state.",
+      "history": {
+        "empty": "Nothing has been recorded against this record yet.",
+        "failed": "The history could not be loaded",
+        "failedHint": "This is a problem reaching the server \u2014 it does not mean nothing has happened to this record.",
+        "failedStale": "What is shown below was read earlier and may be out of date.",
+        "bySystem": "Automatic action",
+        "byRemovedUser": "A user who is no longer in the system",
+        "byUnknown": "Actor not recorded",
+        "automatic": "automatic",
+        "created": "Record created in {{state}}",
+        "left": "Left {{state}}",
+        "noted": "Details updated",
+        "toState": "to"
+      }
     },
     "transition": {
       "title": "Move record",

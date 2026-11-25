@@ -215,6 +215,68 @@ export interface EoRecordListResponse {
   total_pages: number;
 }
 
+/**
+ * One row of a record's audit trail, as GET /eo-records/:id/history serves it:
+ * the stored row unchanged, plus the display names its three ids stand for.
+ *
+ * THE NAMES COME WITH THE ROW because nothing on this client can resolve them
+ * — there is no route that turns a user id into a name — and a trail reading
+ * "user 3f2a… moved 9b1c… → 7d4e…" is unreadable to the officer it is for.
+ *
+ * THERE IS DELIBERATELY NO `performed_by_name_ar`. models.User carries
+ * first/middle/last and a username and no Arabic name column, so the actor is
+ * named in English in both locales; a backend test pins the key as ABSENT.
+ * Do not add one here, and do not write a fallback that implies one exists.
+ *
+ * Three fields are legitimately empty on a whole row, and each means something
+ * the reader must be told rather than shown as a gap — see lib/eoHistory.ts:
+ *
+ *  - `performed_by_name: ""` — a system action (no person to name), or a user
+ *    row that has been purged. `is_system_action` and `performed_by_id` tell
+ *    the two apart.
+ *  - `from_state_id: null` with no from-state name — a create row. It is an
+ *    ORIGIN, not a broken arrow.
+ *  - both state ids null — an edit or a note, which changed values rather than
+ *    state.
+ */
+export interface EoRecordHistoryEntry {
+  id: string;
+  record_id: string;
+  record_type_id: string;
+  /** null for a change that was not a configured transition. */
+  transition_id: string | null;
+  /** null on a create row, and on a values-only edit. */
+  from_state_id: string | null;
+  to_state_id: string | null;
+  /** null for a system action. Set but unresolvable for a purged user. */
+  performed_by_id: string | null;
+  comment: string;
+  old_values: EoValues | null;
+  new_values: EoValues | null;
+  is_system_action: boolean;
+  created_at: string;
+  /** "" when the actor cannot be named. NEVER a placeholder sentence. */
+  performed_by_name: string;
+  from_state_name: string;
+  from_state_name_ar: string;
+  to_state_name: string;
+  to_state_name_ar: string;
+}
+
+/**
+ * The history envelope — `total_items`/`total_pages`, exactly the register's
+ * and the children tab's, served by the same paginated response helper with
+ * the same default and the same maximum limit of 100.
+ */
+export interface EoRecordHistoryResponse {
+  success: boolean;
+  data: EoRecordHistoryEntry[];
+  page: number;
+  limit: number;
+  total_items: number;
+  total_pages: number;
+}
+
 export interface EoRecordCreateRequest {
   record_type_id: string;
   parent_record_id?: string;

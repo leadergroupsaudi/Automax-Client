@@ -7,6 +7,7 @@ import type {
   EoFileUploadResult,
   EoRecordFilter,
   EoRecordListResponse,
+  EoRecordHistoryResponse,
   EoRecordCreateRequest,
   EoRecordUpdateRequest,
   EoTransitionRequest,
@@ -148,6 +149,28 @@ export const eoRecordApi = {
     const query = params.toString();
     const res = await apiClient.get(
       `/eo-records/${id}/children${query ? `?${query}` : ""}`,
+    );
+    return res.data;
+  },
+
+  /**
+   * The record's audit trail — PAGINATED, the same envelope and the same
+   * clamping as the register and the children tab (the handler shares
+   * eoClampPaging and PaginatedSuccessResponse, so the default limit and the
+   * maximum of 100 are the register's).
+   *
+   * Rows arrive NEWEST FIRST with a stable tiebreak, because a create writes
+   * several rows sharing one timestamp. Nothing here re-sorts them: a
+   * client-side sort would undo that tiebreak and make paging drop rows.
+   */
+  getHistory: async (
+    id: string,
+    filter: Pick<EoRecordFilter, "page" | "limit"> = {},
+  ): Promise<EoRecordHistoryResponse> => {
+    const params = buildEoFilterParams(filter);
+    const query = params.toString();
+    const res = await apiClient.get(
+      `/eo-records/${id}/history${query ? `?${query}` : ""}`,
     );
     return res.data;
   },

@@ -54,6 +54,11 @@ export const eoKeys = {
   childrenOf: (id: string) => [...eoKeys.all, "children", id] as const,
   children: (id: string, page: number) =>
     [...eoKeys.childrenOf(id), page] as const,
+  // historyOf is the PREFIX of every history page, so one invalidation
+  // reaches page 7 of a trail as well as page 1 — see useExecuteEoTransition.
+  historyOf: (id: string) => [...eoKeys.all, "history", id] as const,
+  history: (id: string, page: number) =>
+    [...eoKeys.historyOf(id), page] as const,
   documenta: () => [...eoKeys.all, "documenta-status"] as const,
 };
 
@@ -330,6 +335,11 @@ export function useUpdateEoRecord() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: eoKeys.lists() });
       queryClient.invalidateQueries({ queryKey: eoKeys.detail(variables.id) });
+      // An update journals a row of its own (the values diff, under the
+      // change reason), so the trail on screen is stale the moment it saves.
+      queryClient.invalidateQueries({
+        queryKey: eoKeys.historyOf(variables.id),
+      });
     },
   });
 }
@@ -348,6 +358,12 @@ export function useExecuteEoTransition() {
       // Every page of the children tab, not just the one on screen.
       queryClient.invalidateQueries({
         queryKey: eoKeys.childrenOf(variables.id),
+      });
+      // And every page of the history tab: the move JUST WROTE a row there.
+      // Without this the trail an officer is looking at silently omits the
+      // step they have this second taken.
+      queryClient.invalidateQueries({
+        queryKey: eoKeys.historyOf(variables.id),
       });
     },
     // NO onError toast. A transition refusal is usually

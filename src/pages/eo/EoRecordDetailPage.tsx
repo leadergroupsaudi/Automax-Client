@@ -17,16 +17,18 @@ import {
   useEoChildren,
   useEoStateMap,
 } from "../../hooks/useEoRecords";
+import { useEoHistory } from "../../hooks/useEoHistory";
 import { usePermissions } from "../../hooks/usePermissions";
 import { useLocalizedField } from "../../hooks/useLocalizedField";
 import { EoFieldValue } from "../../components/eo/EoFieldValue";
 import { EoStateBadge } from "../../components/eo/EoStateBadge";
 import { EoRecordFacts } from "../../components/eo/EoRecordFacts";
+import { EoRecordHistory } from "../../components/eo/EoRecordHistory";
 import { EoTransitionModal } from "../../components/eo/EoTransitionModal";
 import { flattenRecordValues } from "../../lib/eoFields";
 import { eoIsBlocked } from "../../lib/eoBlocking";
 
-type TabKey = "details" | "children";
+type TabKey = "details" | "children" | "history";
 
 export const EoRecordDetailPage: React.FC = () => {
   const { t } = useTranslation();
@@ -37,6 +39,7 @@ export const EoRecordDetailPage: React.FC = () => {
   const [tab, setTab] = useState<TabKey>("details");
   const [showTransitions, setShowTransitions] = useState(false);
   const [childrenPage, setChildrenPage] = useState(1);
+  const [historyPage, setHistoryPage] = useState(1);
 
   const recordQuery = useEoRecord(id ?? "");
   const record = recordQuery.data?.data;
@@ -55,6 +58,10 @@ export const EoRecordDetailPage: React.FC = () => {
   const { fields } = useEoEffectiveFields(record?.record_type_id);
   const transitionsQuery = useEoTransitions(id ?? "");
   const childrenQuery = useEoChildren(id ?? "", childrenPage);
+  // Read whether or not the tab is open, the way the children read is: the
+  // tab's badge is the server's `total_items`, and a count nothing has
+  // fetched is a count the page cannot substantiate.
+  const historyQuery = useEoHistory(id ?? "", historyPage);
 
   const workflowIds = useMemo(
     () =>
@@ -106,6 +113,15 @@ export const EoRecordDetailPage: React.FC = () => {
   const children = childrenQuery.data?.data ?? [];
   const childrenTotal = childrenQuery.data?.total_items;
   const childrenPages = Math.max(1, childrenQuery.data?.total_pages ?? 1);
+
+  /**
+   * The history badge, on the same terms as the children badge: the server's
+   * own total, omitted rather than guessed when the read has not produced one
+   * — which is also what keeps a FAILED read from advertising "0 entries", a
+   * number that would say "nothing has happened" in the one case where the
+   * page does not know.
+   */
+  const historyTotal = historyQuery.data?.total_items;
 
   // One field space across the columns and the `values` bag.
   const values = useMemo(
@@ -320,9 +336,28 @@ export const EoRecordDetailPage: React.FC = () => {
               </span>
             )}
           </button>
+          <button
+            onClick={() => setTab("history")}
+            className={tabClass("history")}
+          >
+            {t("eo.detail.tabs.history", "History")}
+            {typeof historyTotal === "number" && historyTotal > 0 && (
+              <span className="ms-2 inline-flex items-center px-1.5 rounded-full bg-slate-500/10 text-xs tabular-nums">
+                {historyTotal}
+              </span>
+            )}
+          </button>
         </div>
 
-        {tab === "details" ? (
+        {tab === "history" ? (
+          <div className="p-6">
+            <EoRecordHistory
+              query={historyQuery}
+              page={historyPage}
+              onPageChange={setHistoryPage}
+            />
+          </div>
+        ) : tab === "details" ? (
           <div className="p-6">
             <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
               {displayFields.map((field) => (
