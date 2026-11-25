@@ -40,9 +40,14 @@ const API = "http://localhost:8080/api/v1";
  * account is hardcoded here: a working login for a live account does not
  * belong in a tracked file, however local the database.
  *
- * Supply it instead:
+ * Supply it instead, to the project these three live in — they are tagged
+ * out of the default run (see EO_RESTRICTED below):
  *
- *     EO_RESTRICTED_EMAIL=... EO_RESTRICTED_PASSWORD=... npm run test:e2e
+ *     EO_RESTRICTED_EMAIL=... EO_RESTRICTED_PASSWORD=... \
+ *       npm run test:e2e:restricted
+ *
+ * The same recipe, kept where someone looking for it will find it, is in
+ * `e2e/README.md`; this copy is for whoever is already reading the spec.
  *
  * WHAT THE ACCOUNT HAS TO BE. The suite will tell you if it is wrong — the
  * discovery assertions name what they wanted — but provisioning it correctly
@@ -67,6 +72,19 @@ const API = "http://localhost:8080/api/v1";
  * deactivated, which is why this recipe is here rather than a name: provision
  * your own against whichever register currently carries a blocked step.
  */
+/**
+ * The Playwright tag that carries these three out of the default run.
+ *
+ * They fail rather than skip when the fixture account is absent — a skip
+ * reports green and would hide the one case §7.11 exists for — so the failure
+ * is kept and moved: `playwright.config.ts` excludes this tag from the
+ * `chromium` project and gives it the `eo-restricted` project, which is asked
+ * for by name (`npm run test:e2e:restricted`). The default run is therefore
+ * green out of the box and the §7.11 run is loud when its fixture is missing.
+ * See `e2e/README.md` for how to provision the account.
+ */
+const EO_RESTRICTED = "@eo-restricted";
+
 const RESTRICTED_PROVISIONING = [
   "EO_RESTRICTED_EMAIL and EO_RESTRICTED_PASSWORD are not both set.",
   "These tests need a §7.11-restricted officer, because a blocker is only ever",
@@ -77,7 +95,8 @@ const RESTRICTED_PROVISIONING = [
   "    permanently zero);",
   "  * belongs to no body that owns a blocking child (no department will do);",
   "  * can see the record whose move is blocked.",
-  "Then run with EO_RESTRICTED_EMAIL=... EO_RESTRICTED_PASSWORD=... set.",
+  "Then: EO_RESTRICTED_EMAIL=... EO_RESTRICTED_PASSWORD=... npm run test:e2e:restricted",
+  "Full recipe: e2e/README.md.",
 ].join("\n");
 
 /**
@@ -343,42 +362,43 @@ test.describe("EO record detail — a move that cannot be made", () => {
     await expect(page.getByText(/move record|نقل السجل/i)).toHaveCount(0);
   });
 
-  test("a blocker the officer may not see is counted, never named", async ({
-    page,
-    request,
-  }) => {
-    // Driven as the restricted caller, for whom the server really does
-    // conceal one of the two blockers. Nothing here is injected: the hidden
-    // count is the server's own.
-    const restricted = restrictedAccount();
-    const { partlyConcealed: blocked } = await discover(request, restricted);
-    expect(
-      blocked,
-      "no blocked step shows this account both a named blocker and a concealed one — the §7.11 split is unreachable",
-    ).toBeDefined();
-    expect(blocked!.hiddenCount).toBeGreaterThan(0);
-    expect(blocked!.references.length).toBeGreaterThan(0);
+  test(
+    "a blocker the officer may not see is counted, never named",
+    { tag: EO_RESTRICTED },
+    async ({ page, request }) => {
+      // Driven as the restricted caller, for whom the server really does
+      // conceal one of the two blockers. Nothing here is injected: the hidden
+      // count is the server's own.
+      const restricted = restrictedAccount();
+      const { partlyConcealed: blocked } = await discover(request, restricted);
+      expect(
+        blocked,
+        "no blocked step shows this account both a named blocker and a concealed one — the §7.11 split is unreachable",
+      ).toBeDefined();
+      expect(blocked!.hiddenCount).toBeGreaterThan(0);
+      expect(blocked!.references.length).toBeGreaterThan(0);
 
-    await signIn(page, restricted);
-    await page.goto(`/eo/${blocked!.typeKey}/${blocked!.id}`);
-    await page.getByRole("button", { name: /move/i }).first().click();
+      await signIn(page, restricted);
+      await page.goto(`/eo/${blocked!.typeKey}/${blocked!.id}`);
+      await page.getByRole("button", { name: /move/i }).first().click();
 
-    const reason = page.locator("li", { hasText: /waiting on/i }).first();
-    await expect(reason).toBeVisible();
-    const text = await reason.innerText();
+      const reason = page.locator("li", { hasText: /waiting on/i }).first();
+      await expect(reason).toBeVisible();
+      const text = await reason.innerText();
 
-    // The visible blocker is named...
-    for (const reference of blocked!.references) {
-      expect(text).toContain(reference);
-    }
-    // ...the concealed one is counted and the officer is told what to do...
-    expect(text).toMatch(/do not have access to/i);
-    expect(text).toMatch(/colleague/i);
-    // ...and nothing identifies it. The register's own reference format is
-    // XXX-dddd-dddd; exactly as many of those appear as the officer may see.
-    const printed = text.match(/[A-Z]{2,4}-\d{4}-[\dA-Z-]+/g) ?? [];
-    expect(new Set(printed)).toEqual(new Set(blocked!.references));
-  });
+      // The visible blocker is named...
+      for (const reference of blocked!.references) {
+        expect(text).toContain(reference);
+      }
+      // ...the concealed one is counted and the officer is told what to do...
+      expect(text).toMatch(/do not have access to/i);
+      expect(text).toMatch(/colleague/i);
+      // ...and nothing identifies it. The register's own reference format is
+      // XXX-dddd-dddd; exactly as many of those appear as the officer may see.
+      const printed = text.match(/[A-Z]{2,4}-\d{4}-[\dA-Z-]+/g) ?? [];
+      expect(new Set(printed)).toEqual(new Set(blocked!.references));
+    },
+  );
 
   test("the Move badge counts the steps that can be run", async ({
     page,
@@ -410,151 +430,262 @@ test.describe("EO record detail — a move that cannot be made", () => {
     await expect(noBadge).toHaveText(/^\s*Move\s*$/);
   });
 
-  test("a move blocked after the page loaded shows the server's own refusal", async ({
+  test(
+    "a move blocked after the page loaded shows the server's own refusal",
+    { tag: EO_RESTRICTED },
+    async ({ page, request }) => {
+      // Driven on the partly-concealed step, so the refusal the officer reads
+      // carries the concealed count as well as the named blocker.
+      const restricted = restrictedAccount();
+      const { partlyConcealed: blocked } = await discover(request, restricted);
+      expect(blocked).toBeDefined();
+
+      // ONLY THE STALENESS IS SIMULATED, and it has to be: the UI no longer
+      // offers a blocked step, so the single way to reach the 409 is a page
+      // that loaded before the block existed. The FIRST transitions read is
+      // stripped of the three keys so the step is offered; every later read —
+      // including the refetch the refusal triggers — is the server's real,
+      // blocked answer, and the POST is never touched.
+      let first = true;
+      await page.route("**/api/v1/eo-records/*/transitions", async (route) => {
+        const res = await route.fetch();
+        const body = await res.json();
+        if (first) {
+          first = false;
+          for (const tr of body.data ?? []) {
+            delete tr.blocked;
+            delete tr.blocking_references;
+            delete tr.blocking_hidden_count;
+          }
+        }
+        await route.fulfill({ response: res, body: JSON.stringify(body) });
+      });
+
+      await signIn(page, restricted);
+      await page.goto(`/eo/${blocked!.typeKey}/${blocked!.id}`);
+      await page.getByRole("button", { name: /move/i }).first().click();
+      await page.locator("div.grid > button").first().click();
+      await page
+        .locator("#eo-transition-comment")
+        .fill("e2e: provoking the 409");
+
+      const [refusal] = await Promise.all([
+        page.waitForResponse(
+          (r) =>
+            r.url().includes("/transition") && r.request().method() === "POST",
+        ),
+        page.getByRole("button", { name: /confirm/i }).click(),
+      ]);
+
+      // The server's real refusal: 409, never 401 (which would log the officer
+      // out) and never 403.
+      expect(refusal.status()).toBe(409);
+      const body = await refusal.json();
+      expect(typeof body.error).toBe("string");
+      expect(body.error.length).toBeGreaterThan(0);
+
+      // The real bytes, through the real parser.
+      expect(
+        eoBlockedRefusal({
+          response: { status: refusal.status(), data: body },
+        }),
+      ).toEqual({
+        references: blocked!.references,
+        hiddenCount: blocked!.hiddenCount,
+      });
+
+      // And on screen, announced, in the same words the blocked list uses.
+      const alert = page.locator('[role="alert"]');
+      await expect(alert).toBeVisible();
+      await expect(alert).toContainText(/the record did not move/i);
+      await expect(alert).toContainText(blocked!.references[0]);
+
+      // The refetch moved the step out of the chooser and into the blocked list.
+      await expect(page.getByText(/not available yet/i)).toBeVisible();
+      await expect(page.getByRole("button", { name: /confirm/i })).toHaveCount(
+        0,
+      );
+
+      // The officer is still signed in: a 409 is not a session failure.
+      expect(page.url()).not.toContain("/login");
+
+      // The page keeps polling transitions; drop the handler before teardown so
+      // a request still in flight cannot fail the test after it has passed.
+      await page.unrouteAll({ behavior: "ignoreErrors" });
+    },
+  );
+
+  test(
+    "the refusal survives a refetch that comes back empty",
+    { tag: EO_RESTRICTED },
+    async ({ page, request }) => {
+      // The refusal invalidates the transitions query, and the modal body used
+      // to branch on `transitions.length`. If that re-read came back empty —
+      // a concurrent state change, a read that failed — the amber "nothing is
+      // available" panel replaced the officer's own refusal and they never
+      // learned why the move they just made was rejected. Narrow, but the
+      // refusal is the one thing that has to survive.
+      //
+      // The first read is stripped so the step is offered; every read after it
+      // answers with an EMPTY list, which is the case being pinned.
+      const restricted = restrictedAccount();
+      const { partlyConcealed: blocked } = await discover(request, restricted);
+      expect(blocked).toBeDefined();
+
+      let first = true;
+      await page.route("**/api/v1/eo-records/*/transitions", async (route) => {
+        const res = await route.fetch();
+        const body = await res.json();
+        if (first) {
+          first = false;
+          for (const tr of body.data ?? []) {
+            delete tr.blocked;
+            delete tr.blocking_references;
+            delete tr.blocking_hidden_count;
+          }
+        } else {
+          body.data = [];
+        }
+        await route.fulfill({ response: res, body: JSON.stringify(body) });
+      });
+
+      await signIn(page, restricted);
+      await page.goto(`/eo/${blocked!.typeKey}/${blocked!.id}`);
+      await page.getByRole("button", { name: /move/i }).first().click();
+      await page.locator("div.grid > button").first().click();
+      await page.locator("#eo-transition-comment").fill("e2e: empty refetch");
+      // THE EMPTY REFETCH HAS TO HAVE LANDED BEFORE ANYTHING IS ASSERTED.
+      // Without this wait the assertions run while the modal still holds the
+      // old, non-empty list, and both of them pass whatever the component does
+      // — which is how the first draft of this test survived the mutation that
+      // put the refusal back inside the branch.
+      const emptied = page.waitForResponse(
+        (r) =>
+          r.url().includes("/transitions") && r.request().method() === "GET",
+      );
+      await Promise.all([
+        page.waitForResponse(
+          (r) =>
+            r.url().includes("/transition") && r.request().method() === "POST",
+        ),
+        page.getByRole("button", { name: /confirm/i }).click(),
+      ]);
+      expect(await (await emptied).json()).toEqual(
+        expect.objectContaining({ data: [] }),
+      );
+      // The modal has no step left to offer...
+      await expect(page.getByRole("button", { name: /confirm/i })).toHaveCount(
+        0,
+      );
+
+      // ...and the refusal is still the thing on screen.
+      const alert = page.locator('[role="alert"]');
+      await expect(alert).toBeVisible();
+      await expect(alert).toContainText(/the record did not move/i);
+      // The panel that would have replaced it is not drawn.
+      await expect(page.getByText(/no transitions are available/i)).toHaveCount(
+        0,
+      );
+
+      await page.unrouteAll({ behavior: "ignoreErrors" });
+    },
+  );
+
+  test("a failed read of the steps is announced as a failure, not as an empty workflow", async ({
     page,
     request,
+    loginAs,
   }) => {
-    // Driven on the partly-concealed step, so the refusal the officer reads
-    // carries the concealed count as well as the named blocker.
-    const restricted = restrictedAccount();
-    const { partlyConcealed: blocked } = await discover(request, restricted);
-    expect(blocked).toBeDefined();
+    // THE DEFECT THIS TEST EXISTS FOR. The page gates its own "No step is
+    // available from this state." on the read having SUCCEEDED, with a
+    // comment saying why; the modal still branched on bare
+    // `transitions.length === 0`, so a failed read put "No transitions are
+    // available from this state." in front of the officer — a statement about
+    // the workflow where the only true statement was about the network.
+    //
+    // INTERCEPTED, because a live route cannot be made to fail to order. The
+    // record is a discovered one that really does offer steps, so the empty
+    // array under test comes from the failure and from nothing else.
+    const { allRunnable } = await discover(request);
+    expect(allRunnable, "no record offers a runnable step").toBeDefined();
 
-    // ONLY THE STALENESS IS SIMULATED, and it has to be: the UI no longer
-    // offers a blocked step, so the single way to reach the 409 is a page
-    // that loaded before the block existed. The FIRST transitions read is
-    // stripped of the three keys so the step is offered; every later read —
-    // including the refetch the refusal triggers — is the server's real,
-    // blocked answer, and the POST is never touched.
-    let first = true;
-    await page.route("**/api/v1/eo-records/*/transitions", async (route) => {
-      const res = await route.fetch();
-      const body = await res.json();
-      if (first) {
-        first = false;
-        for (const tr of body.data ?? []) {
-          delete tr.blocked;
-          delete tr.blocking_references;
-          delete tr.blocking_hidden_count;
-        }
-      }
-      await route.fulfill({ response: res, body: JSON.stringify(body) });
-    });
+    let failing = true;
+    await page.route("**/api/v1/eo-records/*/transitions", (route) =>
+      failing
+        ? route.fulfill({
+            status: 500,
+            contentType: "application/json",
+            body: JSON.stringify({ success: false, error: "boom" }),
+          })
+        : route.continue(),
+    );
 
-    await signIn(page, restricted);
-    await page.goto(`/eo/${blocked!.typeKey}/${blocked!.id}`);
-    await page.getByRole("button", { name: /move/i }).first().click();
-    await page.locator("div.grid > button").first().click();
-    await page.locator("#eo-transition-comment").fill("e2e: provoking the 409");
+    await loginAs("admin");
+    await page.goto(`/eo/${allRunnable!.typeKey}/${allRunnable!.id}`);
 
-    const [refusal] = await Promise.all([
-      page.waitForResponse(
-        (r) =>
-          r.url().includes("/transition") && r.request().method() === "POST",
-      ),
-      page.getByRole("button", { name: /confirm/i }).click(),
-    ]);
+    const move = page.getByRole("button", { name: /^Move/ }).first();
+    // The control is NOT marked unavailable: "no step exists" is not known.
+    await expect(move).not.toHaveAttribute("aria-disabled", "true");
+    await expect(page.locator("#eo-no-moves-reason")).toHaveCount(0);
+    await move.click();
 
-    // The server's real refusal: 409, never 401 (which would log the officer
-    // out) and never 403.
-    expect(refusal.status()).toBe(409);
-    const body = await refusal.json();
-    expect(typeof body.error).toBe("string");
-    expect(body.error.length).toBeGreaterThan(0);
-
-    // The real bytes, through the real parser.
-    expect(
-      eoBlockedRefusal({ response: { status: refusal.status(), data: body } }),
-    ).toEqual({
-      references: blocked!.references,
-      hiddenCount: blocked!.hiddenCount,
-    });
-
-    // And on screen, announced, in the same words the blocked list uses.
     const alert = page.locator('[role="alert"]');
     await expect(alert).toBeVisible();
-    await expect(alert).toContainText(/the record did not move/i);
-    await expect(alert).toContainText(blocked!.references[0]);
+    await expect(alert).toContainText(
+      "The available steps could not be loaded",
+    );
+    await expect(alert).toContainText("problem reaching the server");
+    // AND NOT THE WORKFLOW SENTENCE. A failure test that renders it would
+    // pass while the defect ships.
+    await expect(page.getByText(/no transitions are available/i)).toHaveCount(
+      0,
+    );
 
-    // The refetch moved the step out of the chooser and into the blocked list.
-    await expect(page.getByText(/not available yet/i)).toBeVisible();
-    await expect(page.getByRole("button", { name: /confirm/i })).toHaveCount(0);
+    // The retry is real: the next read succeeds and the steps appear.
+    failing = false;
+    const retry = page.getByRole("button", { name: /^Retry$/ });
+    await expect(retry).toBeVisible();
+    await retry.click();
 
-    // The officer is still signed in: a 409 is not a session failure.
-    expect(page.url()).not.toContain("/login");
+    await expect(page.locator("div.grid > button")).toHaveCount(
+      allRunnable!.count,
+    );
+    await expect(alert).toHaveCount(0);
 
-    // The page keeps polling transitions; drop the handler before teardown so
-    // a request still in flight cannot fail the test after it has passed.
     await page.unrouteAll({ behavior: "ignoreErrors" });
   });
 
-  test("the refusal survives a refetch that comes back empty", async ({
+  test("steps still on the wire are not reported as no steps at all", async ({
     page,
     request,
+    loginAs,
   }) => {
-    // The refusal invalidates the transitions query, and the modal body used
-    // to branch on `transitions.length`. If that re-read came back empty —
-    // a concurrent state change, a read that failed — the amber "nothing is
-    // available" panel replaced the officer's own refusal and they never
-    // learned why the move they just made was rejected. Narrow, but the
-    // refusal is the one thing that has to survive.
-    //
-    // The first read is stripped so the step is offered; every read after it
-    // answers with an EMPTY list, which is the case being pinned.
-    const restricted = restrictedAccount();
-    const { partlyConcealed: blocked } = await discover(request, restricted);
-    expect(blocked).toBeDefined();
+    // The same lie in the other direction, and reachable: the Move control
+    // can be pressed before the first transitions read has landed. Only the
+    // LATENCY is simulated — the window is real and happens at full speed
+    // too; the delay makes it observable rather than a race.
+    const { allRunnable } = await discover(request);
+    expect(allRunnable).toBeDefined();
 
-    let first = true;
     await page.route("**/api/v1/eo-records/*/transitions", async (route) => {
-      const res = await route.fetch();
-      const body = await res.json();
-      if (first) {
-        first = false;
-        for (const tr of body.data ?? []) {
-          delete tr.blocked;
-          delete tr.blocking_references;
-          delete tr.blocking_hidden_count;
-        }
-      } else {
-        body.data = [];
-      }
-      await route.fulfill({ response: res, body: JSON.stringify(body) });
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      return route.continue();
     });
 
-    await signIn(page, restricted);
-    await page.goto(`/eo/${blocked!.typeKey}/${blocked!.id}`);
-    await page.getByRole("button", { name: /move/i }).first().click();
-    await page.locator("div.grid > button").first().click();
-    await page.locator("#eo-transition-comment").fill("e2e: empty refetch");
-    // THE EMPTY REFETCH HAS TO HAVE LANDED BEFORE ANYTHING IS ASSERTED.
-    // Without this wait the assertions run while the modal still holds the
-    // old, non-empty list, and both of them pass whatever the component does
-    // — which is how the first draft of this test survived the mutation that
-    // put the refusal back inside the branch.
-    const emptied = page.waitForResponse(
-      (r) => r.url().includes("/transitions") && r.request().method() === "GET",
-    );
-    await Promise.all([
-      page.waitForResponse(
-        (r) =>
-          r.url().includes("/transition") && r.request().method() === "POST",
-      ),
-      page.getByRole("button", { name: /confirm/i }).click(),
-    ]);
-    expect(await (await emptied).json()).toEqual(
-      expect.objectContaining({ data: [] }),
-    );
-    // The modal has no step left to offer...
-    await expect(page.getByRole("button", { name: /confirm/i })).toHaveCount(0);
+    await loginAs("admin");
+    await page.goto(`/eo/${allRunnable!.typeKey}/${allRunnable!.id}`);
+    await page.getByRole("button", { name: /^Move/ }).first().click();
 
-    // ...and the refusal is still the thing on screen.
-    const alert = page.locator('[role="alert"]');
-    await expect(alert).toBeVisible();
-    await expect(alert).toContainText(/the record did not move/i);
-    // The panel that would have replaced it is not drawn.
+    // While the answer is in flight the modal says the read is running...
+    await expect(page.getByRole("status")).toBeVisible();
     await expect(page.getByText(/no transitions are available/i)).toHaveCount(
       0,
+    );
+
+    // ...and then the server's own steps arrive.
+    await expect(page.locator("div.grid > button")).toHaveCount(
+      allRunnable!.count,
+      { timeout: 10000 },
     );
 
     await page.unrouteAll({ behavior: "ignoreErrors" });

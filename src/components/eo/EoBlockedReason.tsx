@@ -9,8 +9,6 @@ import {
 
 interface EoBlockedReasonProps {
   block: EoBlock;
-  /** Set when a control elsewhere points at this text with aria-describedby. */
-  id?: string;
   /**
    * `inline` sits inside the list of steps; `alert` is the server's refusal of
    * a move just attempted and is announced.
@@ -34,6 +32,12 @@ interface EoBlockedReasonProps {
  * words — "Not available yet" beside the step, and this sentence — so nothing
  * here is conveyed by colour alone.
  *
+ * AND THERE IS NO `id` PROP, because there is nothing to point at it. A
+ * blocked step is a plain <li>, not a control: `aria-disabled` and
+ * `aria-describedby` belong on something focusable, and adding them to a
+ * non-control would announce an interactive element that is not there. The
+ * prop was declared and documented but never once passed, so it is gone.
+ *
  * ON THE WORDING. `blocking_references` names only the children this officer
  * may open; `blocking_hidden_count` counts the ones they may not. The hidden
  * ones are therefore described by HOW MANY and by nothing else: no type, no
@@ -44,7 +48,6 @@ interface EoBlockedReasonProps {
  */
 export const EoBlockedReason: React.FC<EoBlockedReasonProps> = ({
   block,
-  id,
   tone = "inline",
   className = "",
 }) => {
@@ -107,7 +110,7 @@ export const EoBlockedReason: React.FC<EoBlockedReasonProps> = ({
         aria-hidden="true"
         className="w-4 h-4 mt-0.5 flex-shrink-0 text-slate-700 dark:text-slate-300"
       />
-      <p id={id} className="text-sm text-slate-700 dark:text-slate-300">
+      <p className="text-sm text-slate-700 dark:text-slate-300">
         {alert && (
           <span className="block font-semibold text-slate-800 dark:text-slate-200">
             {t("eo.transition.refusedHeading", "The record did not move")}

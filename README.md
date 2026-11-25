@@ -146,6 +146,25 @@ npm run preview
 | `npm run build` | Build for production |
 | `npm run preview` | Preview production build |
 | `npm run lint` | Run ESLint |
+| `npm run type-check` | Type-check every project (`src`, `e2e`, `vite.config.ts`) without emitting |
+| `npm run test:e2e` | Playwright end-to-end suite (default project) |
+| `npm run test:e2e:restricted` | The §7.11 tests, which need a provisioned fixture account |
+
+## Testing
+
+End-to-end tests live in `e2e/` and are run by Playwright; there is no separate
+unit-test runner, so pure modules are pinned by browser-less contract specs in
+the same suite.
+
+`npm run test:e2e` is expected to pass on a clean checkout, given a dev server
+and a seeded backend on `http://localhost:8080`.
+
+`npm run test:e2e:restricted` runs the §7.11 confidentiality tests, which need
+a restricted officer account supplied through `EO_RESTRICTED_EMAIL` /
+`EO_RESTRICTED_PASSWORD`. No credentials are kept in the repository.
+
+**See [`e2e/README.md`](e2e/README.md)** for what the suite needs, how to
+provision that account, and the conventions the specs follow.
 
 ## Routing Structure
 

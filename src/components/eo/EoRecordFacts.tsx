@@ -51,6 +51,35 @@ const dateOnly = (iso: string, lang: string): string => {
  * name a record this officer cannot open, and a link to it would end in a
  * 403/404. Until the read succeeds — and for good if it fails — the branch is
  * plain text with a lock, so its existence is still shown.
+ *
+ * ────────────────────────────────────────────────────────────────────────────
+ * WHAT A NAMED CHIP DISCLOSES, AND WHY IT IS STILL NAMED
+ * ────────────────────────────────────────────────────────────────────────────
+ * A locked chip is not a blank: it prints a restricted branch's EXISTENCE, its
+ * REFERENCE and its OUTSTANDING STATUS to a reader entitled only to the parent
+ * letter. This component is the first place those references reach a screen,
+ * which is why the note sits here as well as on the server.
+ *
+ * THE DISCLOSURE IS PRE-EXISTING BACKEND BEHAVIOUR, not something this header
+ * introduces. `values.referral_tree` is written onto the letter by
+ * `internal/services/eo_capability_referral_tree.go:90-97`, which carries its
+ * own owner-decision note: the copy crosses the PER-TYPE gate as well as the
+ * body gate, so a caller holding the letter register but not
+ * `eo:eo_referral:view` reads the same branch ids, references and answered
+ * flags straight out of the record payload. Content is never copied and the
+ * ids answer 403/404 on every follow-up path, so it is metadata only. Blanking
+ * the chips here would hide the leak from the screen without closing it.
+ *
+ * IT IS WITH THE CLIENT FOR A DECISION (raised 2026-11-25, unanswered). Until
+ * the client answers, this behaviour is settled and deliberately unchanged.
+ *
+ * IF THE CLIENT ASKS FOR A MITIGATION, the consistent one is a COUNTED,
+ * UNNAMED chip — "{{count}} referrals you cannot open" — mirroring
+ * `EoBlockReason`'s `hidden` variant, which already says how many and nothing
+ * else about records a reader may not see. It would have to be driven by the
+ * server marking which branches the reader may name, not by this probe
+ * failing, because a probe that merely failed cannot tell "not allowed" from
+ * "could not be read". NOT IMPLEMENTED HERE, deliberately.
  */
 const BranchChip: React.FC<{
   branch: EoReferralBranch;
@@ -109,6 +138,39 @@ export const EoRecordFacts: React.FC<EoRecordFactsProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
 
+  /**
+   * ────────────────────────────────────────────────────────────────────────
+   * THE NAME IS READ FROM AN ADMIN ROUTE THIS PAGE'S OWN READER CANNOT CALL
+   * ────────────────────────────────────────────────────────────────────────
+   * `userApi.list` is GET /admin/users, which the server guards with
+   * `users:view`. NO EO ROLE HOLDS IT — not Executive Office, EO
+   * Administrator, Head of Office, Protocol, L1 Reviewer or Public Relations
+   * (measured against the live role table). So for the officer this page
+   * exists for the request 403s, and the name is simply unavailable here.
+   *
+   * THE PROPER FIX IS ON THE SERVER: carrying `assigned_user_name` on the EO
+   * record payload, exactly as `performed_by_name` is carried on a history
+   * row — asking an EO page to call an admin route to make a name readable is
+   * the wrong shape. That change is not in this wave.
+   *
+   * WHAT IS IN THIS WAVE IS THE HEADER NOT LYING ABOUT IT. "assigned to
+   * nobody" and "assigned to somebody whose name you may not read" are
+   * different facts, and this fell back to the bare label "Assigned" for the
+   * second, which reads as a rendering fault rather than as a statement. The
+   * three unresolved cases are told apart below.
+   *
+   * A REFUSAL IS AN ANSWER, NOT A FLAKE, so this read is not repeated:
+   * `retry: false` (it was already), `retryOnMount: false` so a remount does
+   * not re-ask, and a stale window so a re-render does not either.
+   *
+   * MEASURED CAVEAT: that discipline is this observer's own and does not
+   * govern the request. The key is shared with EoFieldValue and EoFieldInput,
+   * which set different options, and the last observer to set them wins — so
+   * the 403 is still retried and re-read on their account, and the counted
+   * drive of this (e2e/eo-record-header.spec.ts) can only assert that working
+   * the page adds no further reads. Reconciling the three is the shared-query
+   * -key options mismatch, which is a separate piece of work.
+   */
   const needsUser = !!record.assigned_user_id;
   const usersQuery = useQuery({
     // Same key EoFieldValue uses, so the two share one request.
@@ -116,6 +178,8 @@ export const EoRecordFacts: React.FC<EoRecordFactsProps> = ({
     queryFn: () => userApi.list(1, 200),
     enabled: needsUser,
     retry: false,
+    retryOnMount: false,
+    staleTime: 5 * 60 * 1000,
   });
   const assignee = useMemo(() => {
     const u = ((usersQuery.data?.data ?? []) as UserT[]).find(
@@ -163,16 +227,35 @@ export const EoRecordFacts: React.FC<EoRecordFactsProps> = ({
         <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
           {t("eo.header.assignee", "Assigned to")}
         </div>
-        <div className="flex items-center gap-1.5 text-slate-900 dark:text-white">
+        <div
+          data-testid="eo-assignee"
+          className="flex items-center gap-1.5 text-slate-900 dark:text-white"
+        >
           <User className="w-4 h-4 text-slate-400" aria-hidden="true" />
           {record.assigned_user_id ? (
             assignee ? (
               <bdi>{assignee}</bdi>
+            ) : usersQuery.isLoading ? (
+              <span className="text-slate-600 dark:text-slate-300">…</span>
+            ) : usersQuery.isError ? (
+              // The record IS assigned; the directory is what could not be
+              // read. Said in those words, because "Assigned" on its own
+              // looks like a value that failed to render.
+              <span className="text-slate-700 dark:text-slate-300">
+                {t(
+                  "eo.header.assigneeHidden",
+                  "Assigned — the name is not available to you",
+                )}
+              </span>
             ) : (
-              <span className="text-slate-600 dark:text-slate-300">
-                {usersQuery.isLoading
-                  ? "…"
-                  : t("eo.header.assigneeUnresolved", "Assigned")}
+              // The directory WAS read and this id is not in it: a user
+              // outside the first page of it, or one who has been removed.
+              // A different fact from the one above, and from "Unassigned".
+              <span className="text-slate-700 dark:text-slate-300">
+                {t(
+                  "eo.header.assigneeUnknown",
+                  "Assigned — this user is not in the directory",
+                )}
               </span>
             )
           ) : (
@@ -249,6 +332,14 @@ export const EoRecordFacts: React.FC<EoRecordFactsProps> = ({
                     "{{count}} of {{total}} referrals still outstanding",
                 })}
               </div>
+              {/*
+                EACH CHIP NAMES A BRANCH BY REFERENCE, including one this
+                reader may not open — see the note on BranchChip above. That
+                disclosure is the server's (`values.referral_tree`, written by
+                eo_capability_referral_tree.go:90-97) and is WITH THE CLIENT
+                FOR A DECISION; no behaviour is changed here, and the counted
+                unnamed chip described there is deliberately not implemented.
+              */}
               <div className="flex flex-wrap gap-1.5">
                 {summary.outstanding.map((x, i) => (
                   <BranchChip

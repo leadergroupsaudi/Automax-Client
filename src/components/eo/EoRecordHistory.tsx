@@ -68,11 +68,22 @@ export const EoRecordHistory: React.FC<EoRecordHistoryProps> = ({
    *
    * So: `total === 0` is an empty trail. An empty page with a non-zero total
    * is a position, it says so, and it carries its own way back.
+   *
+   * AND A SUCCESSFUL READ THAT CARRIES NEITHER ROWS NOR A TOTAL IS NEITHER.
+   * `trailIsEmpty` and `pastTheEnd` both need a NUMBER, and `entries.length >
+   * 0` is false, so an envelope without `total_items` — "an older server, or
+   * a shape that changes under us", the case this file's badge rule already
+   * contemplates — rendered NOTHING AT ALL: no sentence, no alert, no pager.
+   * A blank panel in a statutory register reads as an empty trail, which is
+   * the very lie the two guards above exist to prevent, told in silence. It
+   * is unreachable against this backend; it is closed anyway, because this is
+   * the one panel whose whole job is never to render a misleading nothing.
    */
   const total = query.data?.total_items;
   const trailIsEmpty = total === 0;
   const pastTheEnd =
     entries.length === 0 && typeof total === "number" && total > 0;
+  const unreadable = entries.length === 0 && typeof total !== "number";
 
   if (query.isLoading) {
     return (
@@ -166,6 +177,43 @@ export const EoRecordHistory: React.FC<EoRecordHistoryProps> = ({
             />
             {t("eo.detail.history.firstPage", "Go to the first page")}
           </button>
+        </div>
+      )}
+
+      {unreadable && !query.isError && (
+        // The read succeeded and said nothing this panel can interpret.
+        // Nothing about the record follows from it — so it must not borrow
+        // the empty sentence, and must not be a blank panel either.
+        <div
+          role="alert"
+          className="rounded-xl border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/20 p-4"
+        >
+          <div className="flex items-start gap-3">
+            <AlertCircle
+              className="w-5 h-5 mt-0.5 text-amber-700 dark:text-amber-400 flex-shrink-0"
+              aria-hidden="true"
+            />
+            <div className="min-w-0">
+              <p className="text-sm text-amber-900 dark:text-amber-200">
+                {t(
+                  "eo.detail.history.unreadable",
+                  "The server's answer could not be read, so this page cannot say what has happened to this record.",
+                )}
+              </p>
+              <button
+                type="button"
+                onClick={() => void query.refetch()}
+                disabled={query.isFetching}
+                className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-700 dark:border-amber-400 text-sm font-medium text-amber-900 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/40 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <RotateCw
+                  className={`w-4 h-4 ${query.isFetching ? "animate-spin" : ""}`}
+                  aria-hidden="true"
+                />
+                {t("common.retry", "Retry")}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

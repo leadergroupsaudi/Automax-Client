@@ -1345,7 +1345,16 @@ export const kpiEngagementApi = {
       responseType: "blob",
     });
     const raw = res.data as Blob;
-    const declared = baseMimeType(res.headers["content-type"] || raw.type);
+    // Axios types a response header as `string | number | boolean | string[] |
+    // AxiosHeaders`, because a header may legitimately arrive parsed. Only a
+    // STRING can be a media type here, and anything else is treated as absent
+    // rather than coerced: `String(headerValue)` on an array or an
+    // AxiosHeaders would manufacture a type the server never sent, and this
+    // value decides whether bytes are rendered or saved.
+    const servedType = res.headers["content-type"];
+    const declared = baseMimeType(
+      (typeof servedType === "string" ? servedType : undefined) || raw.type,
+    );
     const sniffed = await sniffPreviewType(raw);
     // The declared type is attacker-influenced. Render only when it is on the
     // allowlist AND the bytes agree with it.

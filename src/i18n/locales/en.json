@@ -6141,7 +6141,8 @@
     "header": {
       "assignee": "Assigned to",
       "unassigned": "Unassigned",
-      "assigneeUnresolved": "Assigned",
+      "assigneeHidden": "Assigned — the name is not available to you",
+      "assigneeUnknown": "Assigned — this user is not in the directory",
       "due": "Due",
       "noDue": "No due date",
       "overdueBy_one": "Overdue by {{count}} day",
@@ -6178,6 +6179,7 @@
         "failed": "The history could not be loaded",
         "failedHint": "This is a problem reaching the server \u2014 it does not mean nothing has happened to this record.",
         "failedStale": "What is shown below was read earlier and may be out of date.",
+        "unreadable": "The server's answer could not be read, so this page cannot say what has happened to this record.",
         "bySystem": "Automatic action",
         "byRemovedUser": "A user who is no longer in the system",
         "byUnknown": "Actor not recorded",
@@ -6186,6 +6188,14 @@
         "left": "Left {{state}}",
         "noted": "Details updated",
         "toState": "to"
+      },
+      "children": {
+        "pastTheEnd": "This page is past the end of the list. This record's children are on the earlier pages.",
+        "firstPage": "Go to the first page",
+        "failed": "The children could not be loaded",
+        "failedHint": "This is a problem reaching the server \u2014 it does not mean this record has no children.",
+        "failedStale": "What is shown below was read earlier and may be out of date.",
+        "unreadable": "The server's answer could not be read, so this page cannot say whether this record has children."
       }
     },
     "transition": {
@@ -6195,6 +6205,8 @@
       "commentOptional": "(optional)",
       "commentPlaceholder": "Why is the record moving?",
       "noTransitions": "No transitions are available from this state.",
+      "readFailed": "The available steps could not be loaded",
+      "readFailedHint": "This is a problem reaching the server — it does not mean this record has nowhere to go.",
       "processing": "Processing…",
       "submit": "Confirm",
       "success": "Record moved",

@@ -1,0 +1,46 @@
+{
+  /*
+   * THE SPECS WERE NEVER TYPE-CHECKED BY ANYTHING.
+   *
+   * `tsconfig.app.json` includes only `src`, `tsconfig.node.json` only
+   * `vite.config.ts`, and the root config is `files: []` plus references — so
+   * `e2e/` fell between them and neither `npm run build` nor `npm run
+   * type-check` ever looked at it. The specs import real modules out of `src`
+   * (`lib/eoBlocking`, `types/eoRecord`); a rename there could break them
+   * silently until somebody ran Playwright.
+   *
+   * `types: ["node"]` is for `process.env`, which is how the §7.11 fixture
+   * account is supplied. DOM is in `lib` because an `addInitScript` callback
+   * is browser code even though Playwright itself is not.
+   */
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.e2e.tsbuildinfo",
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "types": ["node"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Path aliases, so a spec may import the way src does */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["e2e", "playwright.config.ts"]
+}

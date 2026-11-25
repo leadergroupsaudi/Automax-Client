@@ -25,6 +25,7 @@ import type {
   EoRecordFilter,
   EoRecordSearchBody,
   EoRecordCreateRequest,
+  EoRecordListResponse,
   EoRecordUpdateRequest,
   EoRecordType,
   EoTransitionRequest,
@@ -293,9 +294,35 @@ export function useEoTransitions(id: string) {
  * of them under a badge that said "20" — a count the page could not
  * substantiate and a truncation nothing announced.
  *
- * keepPreviousData so paging the tab does not blank the table between pages.
+ * Previous data is kept so paging the tab does not blank the table between
+ * pages — but ONLY WHILE IT BELONGS TO THE SAME RECORD; see below.
  */
 export const EO_CHILDREN_PAGE_SIZE = 20;
+
+/**
+ * The same guard `useEoHistory` carries, for the same reason.
+ *
+ * `keepPreviousData` is per-OBSERVER, not per-key: it hands back whatever this
+ * hook last held, including the PREVIOUS RECORD's children when the id changes
+ * under a mounted page. The detail route is reused between records (App.tsx
+ * renders it with no `key`, so following a child link navigates without
+ * remounting), so a parent's rows — and its total, on the tab's badge — stood
+ * under the child's header for the length of a round trip, unmarked. In a
+ * statutory register, one record's rows under another record's header is a
+ * false statement about both.
+ *
+ * Children carry `parent_record_id` and the server sets it to the parent that
+ * was asked for (verified on the wire: GET /eo-records/:id/children returns
+ * rows whose `parent_record_id` equals `:id`), so the question is answerable
+ * from the data itself rather than from a remembered id. Same record, keep the
+ * placeholder; different record, or a previous page too empty to tell, drop it
+ * and let the spinner say the read is in flight.
+ */
+const sameChildrenPlaceholder =
+  (id: string) => (previous: EoRecordListResponse | undefined) =>
+    previous && previous.data[0]?.parent_record_id === id
+      ? previous
+      : undefined;
 
 export function useEoChildren(id: string, page = 1) {
   return useQuery({
@@ -303,7 +330,7 @@ export function useEoChildren(id: string, page = 1) {
     queryFn: () =>
       eoRecordApi.getChildren(id, { page, limit: EO_CHILDREN_PAGE_SIZE }),
     enabled: !!id,
-    placeholderData: keepPreviousData,
+    placeholderData: sameChildrenPlaceholder(id),
   });
 }
 

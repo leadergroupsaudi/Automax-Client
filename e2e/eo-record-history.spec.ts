@@ -808,4 +808,51 @@ test.describe("EO record detail — the history tab", () => {
 
     await page.unrouteAll({ behavior: "ignoreErrors" });
   });
+
+  test("a successful read the panel cannot interpret is not an empty trail", async ({
+    page,
+    request,
+    loginAs,
+  }) => {
+    // INTERCEPTED, and unreachable against this backend — which is the point.
+    // Both of this panel's guards need a NUMBER: `trailIsEmpty` keys on
+    // `total_items === 0` and `pastTheEnd` needs it greater than zero. An
+    // envelope without one, and with no rows — "an older server, or a shape
+    // that changes under us", which this panel's badge rule already
+    // contemplates — satisfied neither, and `entries.length > 0` was false,
+    // so the panel rendered NOTHING AT ALL: no sentence, no alert, no
+    // spinner, no pager. A blank panel in a statutory register reads as an
+    // empty trail. That is the same lie as the other two, told in silence.
+    const { richest: fixture } = await discover(request);
+    await page.route("**/api/v1/eo-records/*/history*", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ success: true, data: [] }),
+      }),
+    );
+
+    await loginAs("admin");
+    await page.goto(`/eo/${fixture.typeKey}/${fixture.id}`);
+    // No badge off an envelope with no total.
+    await expect(historyTab(page).locator("span")).toHaveCount(0);
+    await historyTab(page).click();
+
+    // The panel is not blank...
+    const alert = panel(page).locator('[role="alert"]');
+    await expect(alert).toBeVisible();
+    await expect(alert).toContainText("could not be read");
+    // ...and it does not borrow the empty sentence.
+    await expect(
+      page.getByText("Nothing has been recorded against this record yet.", {
+        exact: true,
+      }),
+    ).toHaveCount(0);
+    // Nor the past-the-end one: there is no total to be past the end of.
+    await expect(panel(page)).not.toContainText("past the end of the history");
+    // There is something to press.
+    await expect(page.getByRole("button", { name: /^Retry$/ })).toBeVisible();
+
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+  });
 });

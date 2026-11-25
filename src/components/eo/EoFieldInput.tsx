@@ -278,11 +278,7 @@ export const EoFieldInput: React.FC<EoFieldInputProps> = ({
   );
   const dropdownOptions = resolved.options;
   const optionsLoading = resolved.status === "loading";
-  const optionsNotice = optionsNoticeText(
-    t as unknown as TFn,
-    resolved,
-    field.kind,
-  );
+  const optionsNotice = optionsNoticeText(t, resolved, field.kind);
 
   const set = (v: unknown) => onChange(field.key, v);
 

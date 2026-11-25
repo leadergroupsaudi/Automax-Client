@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import type { UseQueryResult } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { X, ArrowRight, AlertCircle, Loader2 } from "lucide-react";
+import { X, ArrowRight, AlertCircle, Loader2, RotateCw } from "lucide-react";
 import { toast } from "sonner";
 import { eoKeys, useExecuteEoTransition } from "../../hooks/useEoRecords";
 import { useLocalizedField } from "../../hooks/useLocalizedField";
@@ -30,6 +31,23 @@ interface EoTransitionModalProps {
   recordId: string;
   recordName: string;
   transitions: EoAvailableTransition[];
+  /**
+   * The read that produced `transitions`, so an EMPTY ARRAY can be told from
+   * a FAILED READ.
+   *
+   * The page already gates its own "No step is available from this state."
+   * on `transitionsQuery.isSuccess`, because claiming no step exists while
+   * the answer is still on the wire is a lie in the other direction. The
+   * modal branched on bare `transitions.length === 0` and so made exactly
+   * that claim on BOTH a failed read and a read still in flight: a sentence
+   * about the workflow when the truth was about the network. `isLoading` is
+   * carried for the second of those — the Move control is pressable before
+   * the first answer lands.
+   */
+  transitionsQuery: Pick<
+    UseQueryResult<unknown, unknown>,
+    "isError" | "isLoading" | "isFetching" | "refetch"
+  >;
   /**
    * The record type's effective field definitions. A declared field change
    * names a field KEY; the definition is what says which control to draw.
@@ -87,6 +105,7 @@ export const EoTransitionModal: React.FC<EoTransitionModalProps> = ({
   recordId,
   recordName,
   transitions,
+  transitionsQuery,
   fields,
   editPath,
   isOpen,
@@ -416,7 +435,63 @@ export const EoTransitionModal: React.FC<EoTransitionModalProps> = ({
           {transitions.length === 0 ? (
             // ...and for the same reason the "nothing is available" panel is
             // suppressed while a refusal is on screen: it would contradict it.
-            !refusedBlock && (
+            !refusedBlock &&
+            // A FAILED READ IS NOT AN EMPTY WORKFLOW. "No transitions are
+            // available from this state." is a statement about the record;
+            // when the read failed, the only true statement is about the
+            // network. The page's own `noMoves` already makes this
+            // distinction (gated on isSuccess); the modal did not.
+            //
+            // NOR IS AN ANSWER STILL ON THE WIRE. The Move control is
+            // pressable before the first read lands, and the amber panel
+            // made the same claim then too.
+            (transitionsQuery.isLoading ? (
+              <div className="flex items-center justify-center py-10">
+                <div
+                  role="status"
+                  aria-label={t("common.loading", "Loading")}
+                  className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"
+                />
+              </div>
+            ) : transitionsQuery.isError ? (
+              <div
+                role="alert"
+                className="rounded-xl border border-red-300 dark:border-red-700/60 bg-red-50 dark:bg-red-900/20 p-4"
+              >
+                <div className="flex items-start gap-3">
+                  <AlertCircle
+                    className="w-5 h-5 mt-0.5 text-red-600 dark:text-red-400 flex-shrink-0"
+                    aria-hidden="true"
+                  />
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                      {t(
+                        "eo.transition.readFailed",
+                        "The available steps could not be loaded",
+                      )}
+                    </h3>
+                    <p className="mt-1 text-sm text-red-700 dark:text-red-200">
+                      {t(
+                        "eo.transition.readFailedHint",
+                        "This is a problem reaching the server — it does not mean this record has nowhere to go.",
+                      )}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => void transitionsQuery.refetch()}
+                      disabled={transitionsQuery.isFetching}
+                      className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-600 dark:border-red-400 text-sm font-medium text-red-800 dark:text-red-200 hover:bg-red-100 dark:hover:bg-red-900/40 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <RotateCw
+                        className={`w-4 h-4 ${transitionsQuery.isFetching ? "animate-spin" : ""}`}
+                        aria-hidden="true"
+                      />
+                      {t("common.retry", "Retry")}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
               <div className="flex items-center gap-3 p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
                 <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
                 <p className="text-sm text-amber-700 dark:text-amber-300">
@@ -426,7 +501,7 @@ export const EoTransitionModal: React.FC<EoTransitionModalProps> = ({
                   )}
                 </p>
               </div>
-            )
+            ))
           ) : (
             <>
               {/* The server's one-line summary of a field refusal. A headline
