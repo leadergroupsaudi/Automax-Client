@@ -24,6 +24,7 @@ import { EoStateBadge } from "../../components/eo/EoStateBadge";
 import { EoRecordFacts } from "../../components/eo/EoRecordFacts";
 import { EoTransitionModal } from "../../components/eo/EoTransitionModal";
 import { flattenRecordValues } from "../../lib/eoFields";
+import { eoIsBlocked } from "../../lib/eoBlocking";
 
 type TabKey = "details" | "children";
 
@@ -66,7 +67,31 @@ export const EoRecordDetailPage: React.FC = () => {
   );
   const stateMap = useEoStateMap(workflowIds);
 
-  const transitions = transitionsQuery.data?.data ?? [];
+  // Memoised because `?? []` is a fresh array every render, which would make
+  // every derived memo below it recompute on each one.
+  const transitions = useMemo(
+    () => transitionsQuery.data?.data ?? [],
+    [transitionsQuery.data],
+  );
+
+  /**
+   * How many of the offered steps can actually be run, and whether this
+   * record offers none at all.
+   *
+   * THE BADGE COUNTS THE RUNNABLE ONES. It used to count every offered step,
+   * so a record with one step that an open child blocks advertised "1" on a
+   * button that led to a move the server would refuse.
+   *
+   * `noMoves` is gated on the query having SUCCEEDED, not on the array being
+   * empty: an in-flight read also has no transitions, and telling an officer
+   * "no step is available" while the answer is still on the wire is the same
+   * class of lie in the other direction.
+   */
+  const runnableCount = useMemo(
+    () => transitions.filter((tr) => !eoIsBlocked(tr)).length,
+    [transitions],
+  );
+  const noMoves = transitionsQuery.isSuccess && transitions.length === 0;
 
   /**
    * The children tab is PAGINATED, server-side, twenty rows at a time.
@@ -194,29 +219,76 @@ export const EoRecordDetailPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {canTransition && (
-              <button
-                onClick={() => setShowTransitions(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+          <div className="flex flex-col items-stretch sm:items-end gap-1.5 flex-shrink-0">
+            <div className="flex items-center gap-2">
+              {/*
+                THE MOVE CONTROL TELLS THE TRUTH BEFORE IT IS PRESSED.
+
+                A record with no step at all out of its current state — 23 of
+                the 48 in the pilot register — used to carry the same primary
+                call to action as every other record, which opened a modal
+                that said "nothing". So when the read has come back empty the
+                control is muted and marked unavailable, and the reason sits
+                beside it as ordinary text.
+
+                IT IS `aria-disabled`, NOT `disabled`. A disabled button is
+                removed from the tab order, so a keyboard or screen-reader
+                user could never reach it to be told why — the officer most in
+                need of the explanation would be the one who could not get it.
+                This one stays focusable, announces itself as unavailable, and
+                is described by the sentence below it. Nothing opens, because
+                there is no handler to open it.
+              */}
+              {canTransition &&
+                (noMoves ? (
+                  <button
+                    type="button"
+                    aria-disabled="true"
+                    aria-describedby="eo-no-moves-reason"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border border-slate-500 dark:border-slate-500 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 cursor-not-allowed"
+                  >
+                    <GitBranch className="w-4 h-4" aria-hidden="true" />
+                    {t("eo.detail.move", "Move")}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowTransitions(true)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      runnableCount > 0
+                        ? "bg-blue-600 hover:bg-blue-700 text-white"
+                        : "border border-slate-500 dark:border-slate-500 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                    }`}
+                  >
+                    <GitBranch className="w-4 h-4" aria-hidden="true" />
+                    {t("eo.detail.move", "Move")}
+                    {runnableCount > 0 && (
+                      <span className="ms-1 inline-flex items-center px-1.5 rounded-full bg-white/20 text-xs tabular-nums">
+                        {runnableCount}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              {canUpdate && typeKey && (
+                <Link
+                  to={`/eo/${typeKey}/${record.id}/edit`}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors"
+                >
+                  <Pencil className="w-4 h-4" />
+                  {t("common.edit")}
+                </Link>
+              )}
+            </div>
+            {canTransition && noMoves && (
+              <p
+                id="eo-no-moves-reason"
+                className="text-xs text-slate-700 dark:text-slate-300 sm:text-end"
               >
-                <GitBranch className="w-4 h-4" />
-                {t("eo.detail.move", "Move")}
-                {transitions.length > 0 && (
-                  <span className="ms-1 inline-flex items-center px-1.5 rounded-full bg-white/20 text-xs tabular-nums">
-                    {transitions.length}
-                  </span>
+                {t(
+                  "eo.detail.noMoves",
+                  "No step is available from this state.",
                 )}
-              </button>
-            )}
-            {canUpdate && typeKey && (
-              <Link
-                to={`/eo/${typeKey}/${record.id}/edit`}
-                className="inline-flex items-center gap-1.5 px-3 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors"
-              >
-                <Pencil className="w-4 h-4" />
-                {t("common.edit")}
-              </Link>
+              </p>
             )}
           </div>
         </div>

@@ -6167,7 +6167,8 @@
         "details": "Details",
         "children": "Children"
       },
-      "childrenPageOf": "Page {{current}} of {{total}}"
+      "childrenPageOf": "Page {{current}} of {{total}}",
+      "noMoves": "No step is available from this state."
     },
     "transition": {
       "title": "Move record",
@@ -6184,7 +6185,16 @@
       "blockedByFields": "The record cannot move until these values are set:",
       "blockedByFieldsHint": "This step cannot accept them. Set them on the record first, then move it.",
       "goToEdit": "Open the edit form",
-      "failed": "The record could not be moved. Please try again."
+      "failed": "The record could not be moved. Please try again.",
+      "blockedHeading": "Not available yet",
+      "blockedByRefs_one": "Waiting on {{references}}. This step can run once that record is closed.",
+      "blockedByRefs_other": "Waiting on {{references}}. This step can run once those records are closed.",
+      "blockedByHidden_one": "Waiting on one record you do not have access to. A colleague who can see it has to close it first.",
+      "blockedByHidden_other": "Waiting on {{count}} records you do not have access to. A colleague who can see them has to close them first.",
+      "blockedByBoth_one": "Waiting on {{references}}, and on one further record you do not have access to.",
+      "blockedByBoth_other": "Waiting on {{references}}, and on {{count}} further records you do not have access to.",
+      "blockedUnknown": "This step is blocked right now.",
+      "refusedHeading": "The record did not move"
     },
     "dashboard": {
       "title": "Executive Office",

@@ -239,8 +239,29 @@ export interface EoTransitionRequest {
  * the service has ALREADY filtered to what this actor may run — there is no
  * `can_execute` wrapper as the goals module has. `requirements` is present
  * only when the workflow configures any.
+ *
+ * ── the blocked indicator (Task B1) ─────────────────────────────────────────
+ * A transition the actor MAY run but that an open child record forbids right
+ * now is still offered, carrying three extra keys. All three are Go
+ * `omitempty`, so **an absent key means false / empty / zero** and a
+ * transition that is not blocked carries NONE of them. They are optional here
+ * for that reason, and every consumer reads them through `lib/eoBlocking.ts`
+ * rather than trusting a shape.
+ *
+ * `blocking_references` names only the blocking children THIS caller may see;
+ * `blocking_hidden_count` counts the rest. §7.11 conceals a restricted
+ * record's existence, so a blocker the caller may not open is COUNTED and
+ * NEVER NAMED — the split is the confidentiality rule itself, not a
+ * convenience, and the copy built from it must not undo it.
  */
-export type EoAvailableTransition = WorkflowTransition;
+export interface EoAvailableTransition extends WorkflowTransition {
+  /** Absent means false: an open child record forbids this move right now. */
+  blocked?: boolean;
+  /** The blocking children this caller may open. Absent means none. */
+  blocking_references?: string[];
+  /** How many further blockers exist that this caller may NOT open. */
+  blocking_hidden_count?: number;
+}
 
 export type EoWorkflowState = WorkflowState;
 

@@ -1,15 +1,22 @@
 import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { X, ArrowRight, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useExecuteEoTransition } from "../../hooks/useEoRecords";
+import { eoKeys, useExecuteEoTransition } from "../../hooks/useEoRecords";
 import { useLocalizedField } from "../../hooks/useLocalizedField";
 import {
   eoErrorMessage,
   eoFieldErrorMap,
   eoRefusalMessage,
 } from "../../lib/eoFields";
+import {
+  eoBlockedRefusal,
+  eoTransitionBlock,
+  type EoBlock,
+} from "../../lib/eoBlocking";
+import { EoBlockedReason } from "./EoBlockedReason";
 import { EoFieldInput } from "./EoFieldInput";
 import type { TransitionFieldChange } from "../../types";
 import type {
@@ -112,11 +119,40 @@ export const EoTransitionModal: React.FC<EoTransitionModalProps> = ({
    * are looking at, above controls that may be scrolled out of view.
    */
   const [headline, setHeadline] = useState("");
+  /**
+   * The server's 409 for a move that was offered when the page loaded and is
+   * blocked now. Held in its own state, NOT merged into `headline`, so the
+   * field-error panel Plan 5 verified keeps its own channel and neither
+   * refusal can overwrite the other.
+   */
+  const [refusedBlock, setRefusedBlock] = useState<EoBlock | null>(null);
   const executeTransition = useExecuteEoTransition();
+  const queryClient = useQueryClient();
+
+  /**
+   * The steps that can be run now, and the steps that are offered but blocked
+   * by an open child. A blocked step is NOT filtered out: the officer is told
+   * it exists and why it cannot be made, which is the whole point — it is
+   * simply not a control.
+   */
+  const runnable = useMemo(
+    () => transitions.filter((tr) => eoTransitionBlock(tr) === null),
+    [transitions],
+  );
+  const blocked = useMemo(
+    () =>
+      transitions
+        .map((tr) => ({ tr, block: eoTransitionBlock(tr) }))
+        .filter(
+          (entry): entry is { tr: EoAvailableTransition; block: EoBlock } =>
+            entry.block !== null,
+        ),
+    [transitions],
+  );
 
   const selectedTransition = useMemo(
-    () => transitions.find((tr) => tr.id === selectedTransitionId) ?? null,
-    [transitions, selectedTransitionId],
+    () => runnable.find((tr) => tr.id === selectedTransitionId) ?? null,
+    [runnable, selectedTransitionId],
   );
 
   const fieldByKey = useMemo(
@@ -154,6 +190,7 @@ export const EoTransitionModal: React.FC<EoTransitionModalProps> = ({
     setFieldErrors({});
     setElsewhereErrors({});
     setHeadline("");
+    setRefusedBlock(null);
   };
 
   const handleClose = () => {
@@ -251,13 +288,36 @@ export const EoTransitionModal: React.FC<EoTransitionModalProps> = ({
           setFieldErrors(mine);
           setElsewhereErrors(theirs);
 
+          // A move that was offered when this modal opened can be blocked by
+          // the time it is confirmed — a child was reopened, or filed, in
+          // between. The server refuses with 409 and names the blockers it
+          // may name, so the refusal is shown in the modal in the SAME words
+          // the blocked list uses, and the offered list is refetched so the
+          // step moves down into it.
+          //
+          // This is read BESIDE the field map, not instead of it: a blocked
+          // 409 carries no `errors`, so the branch below is untouched and the
+          // panel Plan 5's reviews verified still owns every 400.
+          const nowBlocked = eoBlockedRefusal(error);
+          if (nowBlocked) {
+            setRefusedBlock(nowBlocked);
+            setSelectedTransitionId(null);
+            queryClient.invalidateQueries({
+              queryKey: eoKeys.transitions(recordId),
+            });
+          }
+
           if (Object.keys(serverFields).length > 0) {
             // A field refusal is answered IN the form, where the reader can
             // act on it, not in a toast that disappears. The server's one
             // line goes above the controls as a headline; the map it was
             // summarised from is already under them, in full.
             setHeadline(eoErrorMessage(error));
-          } else {
+          } else if (!nowBlocked) {
+            // A blocked 409 is already rendered in the modal, where it can be
+            // read and acted on; a toast on top of it would say the same
+            // thing twice and then take it away. Everything else still goes
+            // to the toast exactly as before.
             // No field map: a conflict, a 403, a 503, a network failure.
             // eoRefusalMessage reaches the generic sentence only when the
             // rejection said nothing at all.
@@ -363,37 +423,82 @@ export const EoTransitionModal: React.FC<EoTransitionModalProps> = ({
                 </div>
               )}
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-                  {t("eo.transition.chooseLabel", "Transition")}
-                </label>
-                <div
-                  className={`grid gap-3 ${transitions.length <= 2 ? "grid-cols-1" : "grid-cols-2"}`}
-                >
-                  {transitions.map((tr) => {
-                    const color = getTransitionColor(tr);
-                    const isSelected = selectedTransitionId === tr.id;
-                    return (
-                      <button
-                        key={tr.id}
-                        type="button"
-                        onClick={() => selectTransition(tr.id)}
-                        className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 text-sm font-medium transition-all ${
-                          isSelected
-                            ? colorClasses[color].selected
-                            : colorClasses[color].default
-                        }`}
-                      >
-                        <ArrowRight className="w-4 h-4 rtl:-rotate-180" />
-                        {localize(
-                          tr as unknown as Record<string, unknown>,
-                          "name",
-                        ) || tr.code}
-                      </button>
-                    );
-                  })}
+              {/* The server's refusal of the move just attempted: offered
+                  when this modal opened, blocked by the time it was
+                  confirmed. Its own channel, above the controls. */}
+              {refusedBlock && (
+                <EoBlockedReason block={refusedBlock} tone="alert" />
+              )}
+
+              {runnable.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                    {t("eo.transition.chooseLabel", "Transition")}
+                  </label>
+                  <div
+                    className={`grid gap-3 ${runnable.length <= 2 ? "grid-cols-1" : "grid-cols-2"}`}
+                  >
+                    {runnable.map((tr) => {
+                      const color = getTransitionColor(tr);
+                      const isSelected = selectedTransitionId === tr.id;
+                      return (
+                        <button
+                          key={tr.id}
+                          type="button"
+                          onClick={() => selectTransition(tr.id)}
+                          className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                            isSelected
+                              ? colorClasses[color].selected
+                              : colorClasses[color].default
+                          }`}
+                        >
+                          <ArrowRight className="w-4 h-4 rtl:-rotate-180" />
+                          {localize(
+                            tr as unknown as Record<string, unknown>,
+                            "name",
+                          ) || tr.code}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* The moves this record HAS but cannot make yet, each with the
+                  reason. They are listed rather than offered and rather than
+                  hidden: an officer who cannot see the step cannot find out
+                  why, and one who clicks a step that then fails learns the
+                  same thing more slowly and less kindly.
+
+                  THEY ARE NOT CONTROLS. A `disabled` button is not focusable,
+                  so a reason attached to one as a tooltip or a `title` never
+                  reaches a keyboard or screen-reader user; see
+                  EoBlockedReason. Here the reason is text on the page, in the
+                  accessibility tree, in document order after the step it
+                  belongs to. */}
+              {blocked.length > 0 && (
+                <div>
+                  <p className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                    {t("eo.transition.blockedHeading", "Not available yet")}
+                  </p>
+                  <ul className="space-y-3">
+                    {blocked.map(({ tr, block }) => (
+                      <li
+                        key={tr.id}
+                        className="rounded-lg border border-dashed border-slate-500 dark:border-slate-500 bg-slate-50 dark:bg-slate-900/40 p-3"
+                      >
+                        <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                          {localize(
+                            tr as unknown as Record<string, unknown>,
+                            "name",
+                          ) || tr.code}
+                        </p>
+                        <EoBlockedReason block={block} className="mt-1.5" />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {/* Comment */}
               {selectedTransition && (
@@ -528,7 +633,7 @@ export const EoTransitionModal: React.FC<EoTransitionModalProps> = ({
             >
               {t("common.cancel")}
             </button>
-            {transitions.length > 0 && (
+            {runnable.length > 0 && (
               <button
                 type="button"
                 onClick={handleSubmit}
