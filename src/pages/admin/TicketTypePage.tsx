@@ -1,4 +1,15 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import {
+  ticketTypeApi,
+  type TicketType as ApiTicketType,
+  type TicketTypeFieldDef,
+  type TicketTypeLevel,
+  type TicketTypeStatus,
+  type LinkBehaviourCode,
+  type LinkCardinality,
+} from "../../api/ticketTypes";
 import {
   Search,
   Plus,
@@ -48,86 +59,6 @@ interface TicketType {
   depth: number;
 }
 
-const TICKET_TYPES: TicketType[] = [
-  {
-    id: "directive",
-    name: "Directive",
-    code: "EO-DIR",
-    level: "Main",
-    reference: "EO-DIR-YYYY-NNN",
-    subTypes: 3,
-    status: "Live",
-    depth: 0,
-  },
-  {
-    id: "execution-plan",
-    name: "Execution Plan",
-    level: "Sub",
-    parent: "Directive",
-    reference: "EO-DIR-YYYY-NNN-P",
-    status: "Live",
-    depth: 1,
-  },
-  {
-    id: "assignment",
-    name: "Assignment",
-    level: "Sub",
-    parent: "Execution Plan",
-    reference: "EO-DIR-YYYY-NNN-A#",
-    status: "Live",
-    depth: 1,
-  },
-  {
-    id: "committee",
-    name: "Committee",
-    code: "EO-CMT",
-    level: "Main",
-    reference: "CMT-YYYY-NN",
-    subTypes: 2,
-    status: "Draft",
-    depth: 0,
-  },
-  {
-    id: "meeting",
-    name: "Meeting",
-    level: "Sub",
-    parent: "Committee",
-    reference: "CMT-YYYY-NN-M#",
-    subTypes: 2,
-    status: "Draft",
-    depth: 1,
-  },
-  {
-    id: "agenda-item",
-    name: "Agenda Item",
-    level: "Sub-sub",
-    parent: "Meeting",
-    reference: "CMT-YYYY-NN-M#-I#",
-    status: "Draft",
-    depth: 2,
-  },
-  {
-    id: "incoming-correspondence",
-    name: "Incoming Correspondence",
-    code: "EO-COM",
-    level: "Main",
-    reference: "IN-YYYY-NNNN",
-    subTypes: 2,
-    status: "Not started",
-    depth: 0,
-  },
-  {
-    id: "task",
-    name: "Task",
-    code: "All seven",
-    level: "Universal",
-    parent: "Any type",
-    reference: "TSK-YYYY-NNNNN",
-    status: "Live",
-    depth: 0,
-  },
-];
-
 const LEVEL_BADGE: Record<Level, string> = {
   Main: "bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300",
   Sub: "bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300",
@@ -144,13 +75,6 @@ const STATUS_BADGE: Record<Status, string> = {
 };
 
 type FilterKey = "all" | "main" | "sub" | "universal";
-
-const FILTERS: { key: FilterKey; label: string; count: number }[] = [
-  { key: "all", label: "All", count: 25 },
-  { key: "main", label: "Main", count: 7 },
-  { key: "sub", label: "Sub", count: 17 },
-  { key: "universal", label: "Universal", count: 1 },
-];
 
 type DialogTab =
   | "general"
@@ -172,23 +96,25 @@ const TABS: { key: DialogTab; label: string; count?: number }[] = [
 ];
 
 interface NewTicketForm {
+  code: string;
   nameEn: string;
   nameAr: string;
   handle: string;
   referencePattern: string;
   level: LevelOption;
-  parentType: string;
+  parentTypeId: string;
   subsystem: string;
 }
 
 const INITIAL_FORM: NewTicketForm = {
-  nameEn: "Execution Plan",
-  nameAr: "خطة التنفيذ",
-  handle: "execution_plan",
-  referencePattern: "EO-DIR-{YYYY}-{NNN}-P",
-  level: "Sub",
-  parentType: "Directive — EO-DIR",
-  subsystem: "EO-DIR — Directives",
+  code: "",
+  nameEn: "",
+  nameAr: "",
+  handle: "",
+  referencePattern: "",
+  level: "Main",
+  parentTypeId: "",
+  subsystem: "",
 };
 
 const LEVEL_OPTIONS: {
@@ -203,18 +129,6 @@ const LEVEL_OPTIONS: {
     title: "Universal",
     description: "Hangs off anything",
   },
-];
-
-const PARENT_TYPE_OPTIONS = [
-  "Directive — EO-DIR",
-  "Committee — EO-CMT",
-  "Incoming Correspondence — EO-COM",
-];
-
-const SUBSYSTEM_OPTIONS = [
-  "EO-DIR — Directives",
-  "EO-CMT — Committees",
-  "EO-COM — Correspondence",
 ];
 
 type FieldType =
@@ -239,6 +153,45 @@ const FIELD_TYPE_OPTIONS: FieldType[] = [
   "File",
   "Linked ticket type",
 ];
+
+const mapApiFieldType = (apiType: string): FieldType => {
+  const m: Record<string, FieldType> = {
+    text: "Text",
+    number: "Number",
+    date: "Date",
+    date_hijri_gregorian: "Date",
+    select: "Select",
+    checkbox: "Checkbox",
+    user: "User",
+    org_unit: "Org unit",
+    file: "File",
+    linked_ticket_type: "Linked ticket type",
+  };
+  return m[apiType] ?? "Text";
+};
+
+const mapFormFieldType = (uiType: FieldType): string => {
+  const m: Record<FieldType, string> = {
+    Text: "text",
+    Number: "number",
+    Date: "date",
+    Select: "select",
+    Checkbox: "checkbox",
+    User: "user",
+    "Org unit": "org_unit",
+    File: "file",
+    "Linked ticket type": "linked_ticket_type",
+  };
+  return m[uiType];
+};
+
+const mapFormLevel = (
+  uiLevel: "Main" | "Sub" | "Universal",
+): TicketTypeLevel => {
+  if (uiLevel === "Main") return "main";
+  if (uiLevel === "Universal") return "universal";
+  return "sub";
+};
 
 interface FieldRow {
   id: string;
@@ -339,6 +292,26 @@ const LINK_BEHAVIOURS: LinkBehaviour[] = [
   "Spawns into another subsystem",
 ];
 
+const LINK_BEHAVIOUR_TO_API: Record<LinkBehaviour, LinkBehaviourCode> = {
+  "Blocks parent closure": "blocks_parent_closure",
+  "Blocks an earlier step": "blocks_an_earlier_step",
+  "Closes the parent": "closes_the_parent",
+  "Deadline derived from the parent": "deadline_from_parent",
+  "Repeating cycle": "repeating_cycle",
+  "Fallback sibling": "fallback_sibling",
+  "Spawns into another subsystem": "spawns_into_another_subsystem",
+};
+
+const LINK_BEHAVIOUR_FROM_API: Record<LinkBehaviourCode, LinkBehaviour> = {
+  blocks_parent_closure: "Blocks parent closure",
+  blocks_an_earlier_step: "Blocks an earlier step",
+  closes_the_parent: "Closes the parent",
+  deadline_from_parent: "Deadline derived from the parent",
+  repeating_cycle: "Repeating cycle",
+  fallback_sibling: "Fallback sibling",
+  spawns_into_another_subsystem: "Spawns into another subsystem",
+};
+
 type LinkedTypeTagColor = "amber" | "emerald" | "violet";
 
 interface LinkedTypeTag {
@@ -354,39 +327,6 @@ interface LinkedTypeRow {
   cardinality: string;
   description?: string;
 }
-
-const LINKED_TYPES: LinkedTypeRow[] = [
-  {
-    id: "execution-plan",
-    name: "Execution Plan",
-    tags: [
-      { label: "Blocks parent closure", color: "amber" },
-      { label: "Optional — only where a plan is needed", color: "emerald" },
-    ],
-    cardinality: "one per directive",
-  },
-  {
-    id: "assignment",
-    name: "Assignment",
-    tags: [
-      { label: "Blocks parent closure", color: "amber" },
-      { label: "Deadline must fall before the parent's", color: "emerald" },
-    ],
-    cardinality: "many per directive",
-  },
-  {
-    id: "task",
-    name: "Task",
-    universal: true,
-    tags: [
-      { label: "Blocks parent closure", color: "amber" },
-      { label: "Accepts children from other subsystems", color: "violet" },
-    ],
-    cardinality: "many, from any type",
-    description:
-      "An On-air Commitment in EO-MED and a Visitor Direction in EO-VIS both land here. A promise made on air and a directive given in a meeting are the same object once they become work.",
-  },
-];
 
 const LINKED_TAG_CLASS: Record<LinkedTypeTagColor, string> = {
   amber:
@@ -888,41 +828,368 @@ const TicketTypePage: React.FC = () => {
     setIsAddFieldOpen(false);
   };
 
-  const rows = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return TICKET_TYPES.filter((t) => {
-      if (activeFilter === "main" && t.level !== "Main") return false;
-      if (activeFilter === "sub" && t.level !== "Sub" && t.level !== "Sub-sub")
-        return false;
-      if (activeFilter === "universal" && t.level !== "Universal") return false;
-      if (!q) return true;
-      return (
-        t.name.toLowerCase().includes(q) ||
-        t.reference.toLowerCase().includes(q) ||
-        (t.code?.toLowerCase().includes(q) ?? false) ||
-        (t.parent?.toLowerCase().includes(q) ?? false)
-      );
-    });
-  }, [search, activeFilter]);
+  const filterLevels: TicketTypeLevel[] =
+    activeFilter === "main"
+      ? ["main"]
+      : activeFilter === "sub"
+        ? ["sub", "sub_sub"]
+        : activeFilter === "universal"
+          ? ["universal"]
+          : [];
+
+  const {
+    data: ticketTypesResponse,
+    isLoading: isLoadingTicketTypes,
+    isError: isTicketTypesError,
+    error: ticketTypesError,
+  } = useQuery({
+    queryKey: ["ticket-types", { level: filterLevels, search: search.trim() }],
+    queryFn: () =>
+      ticketTypeApi.list({
+        level: filterLevels.length ? filterLevels : undefined,
+        search: search.trim() || undefined,
+      }),
+  });
+
+  const { data: allTicketTypesResponse } = useQuery({
+    queryKey: ["ticket-types", "all"],
+    queryFn: () => ticketTypeApi.list(),
+  });
+
+  const allTicketTypes = allTicketTypesResponse?.data ?? [];
+  const totalCount = allTicketTypes.length;
+  const mainCount = allTicketTypes.filter((t) => t.level === "main").length;
+  const subCount = allTicketTypes.filter(
+    (t) => t.level === "sub" || t.level === "sub_sub",
+  ).length;
+  const universalCount = allTicketTypes.filter(
+    (t) => t.level === "universal",
+  ).length;
+  const subsystemCount = new Set(
+    allTicketTypes.map((t) => t.subsystem).filter(Boolean),
+  ).size;
+
+  const LEVEL_DISPLAY: Record<TicketTypeLevel, Level> = {
+    main: "Main",
+    sub: "Sub",
+    sub_sub: "Sub-sub",
+    universal: "Universal",
+  };
+
+  const STATUS_DISPLAY: Record<TicketTypeStatus, Status> = {
+    live: "Live",
+    draft: "Draft",
+    not_started: "Not started",
+  };
+
+  const idToCode = new Map<string, string>(
+    (ticketTypesResponse?.data ?? []).map((t) => [t.id, t.code]),
+  );
+
+  const apiRows: TicketType[] = (ticketTypesResponse?.data ?? []).map(
+    (t: ApiTicketType) => ({
+      id: t.id,
+      name: t.name,
+      code: t.code ? `EO-${t.code}` : undefined,
+      level: LEVEL_DISPLAY[t.level],
+      parent: t.parent_type_name || undefined,
+      reference: t.reference_pattern,
+      subTypes: t.linked_count || undefined,
+      status: STATUS_DISPLAY[t.status],
+      depth: t.depth,
+    }),
+  );
+
+  const rows = apiRows;
+
+  const [editingCode, setEditingCode] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  const { data: editingDetailResponse, isFetching: isLoadingDetail } = useQuery(
+    {
+      queryKey: ["ticket-types", "detail", editingCode],
+      queryFn: () => ticketTypeApi.getByCode(editingCode!),
+      enabled: !!editingCode,
+    },
+  );
 
   const openDialog = () => {
+    setEditingCode(null);
     setForm(INITIAL_FORM);
+    setFields([]);
     setActiveTab("general");
     setIsDialogOpen(true);
   };
 
-  const closeDialog = () => setIsDialogOpen(false);
+  const openEditDialog = (code: string) => {
+    setEditingCode(code);
+    setActiveTab("general");
+    setIsDialogOpen(true);
+  };
+
+  const closeDialog = () => {
+    setIsDialogOpen(false);
+    setEditingCode(null);
+  };
+
+  const invalidateTicketTypes = () => {
+    queryClient.invalidateQueries({ queryKey: ["ticket-types"] });
+  };
+
+  // POST /ticket-types/
+  const createMutation = useMutation({
+    mutationFn: () => {
+      const apiLevel = mapFormLevel(form.level);
+      if (apiLevel === "sub" && !form.parentTypeId) {
+        return Promise.reject(
+          new Error("Pick a Parent type — a sub type needs a parent"),
+        );
+      }
+      if (!form.code.trim()) {
+        return Promise.reject(new Error("Code is required"));
+      }
+      if (!form.handle.trim()) {
+        return Promise.reject(new Error("Handle is required"));
+      }
+      if (!form.nameEn.trim()) {
+        return Promise.reject(new Error("Name (English) is required"));
+      }
+      if (!form.referencePattern.trim()) {
+        return Promise.reject(new Error("Reference pattern is required"));
+      }
+      if (!/\{N{2,}\}/.test(form.referencePattern)) {
+        return Promise.reject(
+          new Error(
+            "Reference pattern needs a counter such as {NNN}, or references would repeat",
+          ),
+        );
+      }
+      if (!form.subsystem.trim()) {
+        return Promise.reject(new Error("Subsystem is required"));
+      }
+      return ticketTypeApi.create({
+        code: form.code.trim().toUpperCase(),
+        handle: form.handle.trim(),
+        name: form.nameEn.trim(),
+        name_ar: form.nameAr.trim() || undefined,
+        level: apiLevel,
+        reference_pattern: form.referencePattern.trim(),
+        subsystem: form.subsystem.trim(),
+        parent_type_id: apiLevel === "sub" ? form.parentTypeId : undefined,
+      });
+    },
+    onSuccess: (res) => {
+      toast.success("Ticket type created");
+      invalidateTicketTypes();
+      const createdCode = res.data?.code;
+      if (createdCode) setEditingCode(createdCode);
+    },
+    onError: (err: unknown) => {
+      const apiErr = (err as { response?: { data?: { error?: string } } })
+        ?.response?.data?.error;
+      const msg =
+        apiErr ||
+        (err instanceof Error ? err.message : "Failed to create ticket type");
+      toast.error(msg);
+    },
+  });
+
+  // PUT /ticket-types/{code}
+  const updateMutation = useMutation({
+    mutationFn: () => {
+      if (!editingCode) throw new Error("No code to update");
+      return ticketTypeApi.update(editingCode, {
+        name: form.nameEn,
+        name_ar: form.nameAr || undefined,
+        handle: form.handle,
+        reference_pattern: form.referencePattern,
+        subsystem: form.subsystem || undefined,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Ticket type updated");
+      invalidateTicketTypes();
+    },
+    onError: (err: unknown) => {
+      const apiErr = (err as { response?: { data?: { error?: string } } })
+        ?.response?.data?.error;
+      const msg =
+        apiErr ||
+        (err instanceof Error ? err.message : "Failed to update ticket type");
+      toast.error(msg);
+    },
+  });
+
+  // PUT /ticket-types/{code}/fields — replaces full list
+  const setFieldsMutation = useMutation({
+    mutationFn: () => {
+      if (!editingCode) throw new Error("No code to update fields");
+      const payload: TicketTypeFieldDef[] = fields.map((f) => ({
+        label: f.label,
+        handle: f.handle,
+        type: mapFormFieldType(f.type) as TicketTypeFieldDef["type"],
+        required: f.required,
+        multi: f.multi === true,
+      }));
+      return ticketTypeApi.setFields(editingCode, { fields: payload });
+    },
+    onSuccess: () => {
+      toast.success("Fields saved");
+      invalidateTicketTypes();
+    },
+    onError: (err: unknown) => {
+      const apiErr = (err as { response?: { data?: { error?: string } } })
+        ?.response?.data?.error;
+      const msg =
+        apiErr ||
+        (err instanceof Error ? err.message : "Failed to save fields");
+      toast.error(msg);
+    },
+  });
+
+  // PUT /ticket-types/{code}/links
+  const setLinkMutation = useMutation({
+    mutationFn: (args: {
+      childCode: string;
+      cardinality: LinkCardinality;
+      behaviours: LinkBehaviourCode[];
+      note?: string;
+    }) => {
+      if (!editingCode) throw new Error("No code to link to");
+      return ticketTypeApi.setLink(editingCode, {
+        child_type_code: args.childCode,
+        cardinality: args.cardinality,
+        behaviours: args.behaviours,
+        note: args.note,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Link saved");
+      invalidateTicketTypes();
+    },
+    onError: (err: unknown) => {
+      const apiErr = (err as { response?: { data?: { error?: string } } })
+        ?.response?.data?.error;
+      const msg =
+        apiErr || (err instanceof Error ? err.message : "Failed to save link");
+      toast.error(msg);
+    },
+  });
+
+  // Populate form + fields when GET /ticket-types/{code} resolves.
+  useEffect(() => {
+    if (!editingCode) return;
+    const data = editingDetailResponse?.data;
+    if (!data) return;
+    const t = data.type;
+    const levelMap: Record<TicketTypeLevel, LevelOption> = {
+      main: "Main",
+      sub: "Sub",
+      sub_sub: "Sub",
+      universal: "Universal",
+    };
+    setForm({
+      code: t.code,
+      nameEn: t.name,
+      nameAr: t.name_ar || "",
+      handle: t.handle,
+      referencePattern: t.reference_pattern,
+      level: levelMap[t.level],
+      parentTypeId: t.parent_type_id ?? "",
+      subsystem: t.subsystem,
+    });
+    setFields(
+      (t.fields ?? []).map<FieldRow>((f, idx) => ({
+        id: `${f.handle}_${idx}`,
+        label: f.label,
+        handle: f.handle,
+        type: mapApiFieldType(f.type),
+        required: !!f.required,
+        multi: f.multi ?? null,
+      })),
+    );
+  }, [editingCode, editingDetailResponse, allTicketTypes]);
 
   const updateForm = <K extends keyof NewTicketForm>(
     key: K,
     value: NewTicketForm[K],
   ) => setForm((prev) => ({ ...prev, [key]: value }));
 
-  const nextReferencePreview = form.referencePattern
-    .replace("{YYYY}", "2027")
-    .replace("{NNN}", "001")
-    .replace("{NNNN}", "0001")
-    .replace("{NN}", "01");
+  // Linked types for the Linked types tab: build from the live API detail when
+  // we're editing a real type; fall back to the demo list otherwise.
+  const apiLinks = editingDetailResponse?.data?.links ?? [];
+
+  // Auto-select the first link when the detail response arrives, so the Link
+  // settings panel has something to show instead of stale defaults.
+  useEffect(() => {
+    if (apiLinks.length === 0) return;
+    const stillValid = apiLinks.some((l) => l.id === selectedLinkedTypeId);
+    if (!stillValid) {
+      setSelectedLinkedTypeId(apiLinks[0].id);
+    }
+  }, [apiLinks, selectedLinkedTypeId]);
+
+  // Sync the Link settings panel (Child type / How many / Link behaviour) to
+  // whichever link is currently selected. Without this, the panel always shows
+  // the hardcoded defaults even when the user picks a different link.
+  useEffect(() => {
+    const link = apiLinks.find((l) => l.id === selectedLinkedTypeId);
+    if (!link) return;
+    const child = link.child_type;
+    setLinkChildType(
+      child.level === "universal"
+        ? `${child.name} — universal`
+        : `${child.name} — sub-type`,
+    );
+    setLinkHowMany(link.cardinality === "one" ? "One" : "Many");
+    const firstBehaviour = link.behaviours[0];
+    if (firstBehaviour && LINK_BEHAVIOUR_FROM_API[firstBehaviour]) {
+      setLinkBehaviour(LINK_BEHAVIOUR_FROM_API[firstBehaviour]);
+    }
+  }, [selectedLinkedTypeId, apiLinks]);
+  const displayedLinkedTypes: LinkedTypeRow[] = apiLinks.map((link) => {
+    const child = link.child_type;
+    const tags: LinkedTypeTag[] = [
+      ...link.behaviours.map((b) => ({
+        label: LINK_BEHAVIOUR_FROM_API[b] ?? b,
+        color: "amber" as LinkedTypeTagColor,
+      })),
+      ...(link.optional
+        ? [
+            {
+              label: link.note || "Optional",
+              color: "emerald" as LinkedTypeTagColor,
+            },
+          ]
+        : link.note
+          ? [
+              {
+                label: link.note,
+                color: "emerald" as LinkedTypeTagColor,
+              },
+            ]
+          : []),
+    ];
+    return {
+      id: link.id,
+      name: child.name,
+      universal: child.level === "universal",
+      tags,
+      cardinality:
+        link.cardinality === "one"
+          ? `one per ${form.handle || "parent"}`
+          : child.level === "universal"
+            ? "many, from any type"
+            : `many per ${form.handle || "parent"}`,
+    };
+  });
+
+  const referencePatternHasCounter = /\{N{2,}\}/.test(form.referencePattern);
+  const nextReferencePreview = referencePatternHasCounter
+    ? form.referencePattern
+        .replace("{YYYY}", String(new Date().getFullYear()))
+        .replace(/\{N+\}/g, (m) => "1".padStart(m.length - 2, "0"))
+    : "—";
 
   return (
     <div className="p-6 space-y-5">
@@ -932,7 +1199,9 @@ const TicketTypePage: React.FC = () => {
             Ticket types
           </h1>
           <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
-            25 types across seven subsystems. 7 main, 17 sub, 1 universal.
+            {totalCount} {totalCount === 1 ? "type" : "types"} across{" "}
+            {subsystemCount} {subsystemCount === 1 ? "subsystem" : "subsystems"}
+            . {mainCount} main, {subCount} sub, {universalCount} universal.
           </p>
         </div>
 
@@ -958,7 +1227,14 @@ const TicketTypePage: React.FC = () => {
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        {FILTERS.map((f) => {
+        {(
+          [
+            { key: "all", label: "All", count: totalCount },
+            { key: "main", label: "Main", count: mainCount },
+            { key: "sub", label: "Sub", count: subCount },
+            { key: "universal", label: "Universal", count: universalCount },
+          ] as const
+        ).map((f) => {
           const isActive = activeFilter === f.key;
           return (
             <button
@@ -1009,82 +1285,123 @@ const TicketTypePage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[hsl(var(--border))]">
-              {rows.map((row) => (
-                <tr
-                  key={row.id}
-                  className="hover:bg-[hsl(var(--muted)/0.3)] transition-colors"
-                >
-                  <td className="px-6 py-4">
-                    <div
-                      className="flex items-center"
-                      style={{ paddingLeft: `${row.depth * 24}px` }}
-                    >
-                      {row.depth > 0 && (
-                        <span className="text-[hsl(var(--muted-foreground))] mr-2 select-none">
-                          └
-                        </span>
-                      )}
-                      <div>
-                        <div
-                          className={cn(
-                            "font-medium text-[hsl(var(--foreground))]",
-                            row.id === "directive" &&
-                              "text-[#0e5a6f] font-semibold",
-                          )}
-                        >
-                          {row.name}
-                        </div>
-                        {row.code && (
-                          <div className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                            {row.code}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={cn(
-                        "inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium",
-                        LEVEL_BADGE[row.level],
-                      )}
-                    >
-                      {row.level}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-[hsl(var(--foreground))]">
-                    {row.parent ?? (
-                      <span className="text-[hsl(var(--muted-foreground))]">
-                        —
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-[hsl(var(--muted-foreground))] font-mono text-xs">
-                    {row.reference}
-                  </td>
-                  <td className="px-6 py-4">
-                    {row.subTypes ? (
-                      <button className="text-[#0e5a6f] hover:underline font-medium">
-                        {row.subTypes} linked
-                      </button>
-                    ) : (
-                      <span className="text-[hsl(var(--muted-foreground))]">
-                        —
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={cn(
-                        "inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium",
-                        STATUS_BADGE[row.status],
-                      )}
-                    >
-                      {row.status}
-                    </span>
+              {isLoadingTicketTypes && (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-6 py-10 text-center text-sm text-[hsl(var(--muted-foreground))]"
+                  >
+                    Loading ticket types…
                   </td>
                 </tr>
-              ))}
+              )}
+              {isTicketTypesError && !isLoadingTicketTypes && (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-6 py-10 text-center text-sm text-rose-600"
+                  >
+                    Failed to load ticket types
+                    {ticketTypesError instanceof Error
+                      ? `: ${ticketTypesError.message}`
+                      : ""}
+                  </td>
+                </tr>
+              )}
+              {!isLoadingTicketTypes &&
+                !isTicketTypesError &&
+                rows.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-6 py-10 text-center text-sm text-[hsl(var(--muted-foreground))]"
+                    >
+                      No ticket types found.
+                    </td>
+                  </tr>
+                )}
+              {!isLoadingTicketTypes &&
+                !isTicketTypesError &&
+                rows.map((row) => (
+                  <tr
+                    key={row.id}
+                    onClick={() => {
+                      const code = idToCode.get(row.id);
+                      if (code) openEditDialog(code);
+                    }}
+                    className="hover:bg-[hsl(var(--muted)/0.3)] transition-colors cursor-pointer"
+                  >
+                    <td className="px-6 py-4">
+                      <div
+                        className="flex items-center"
+                        style={{ paddingLeft: `${row.depth * 24}px` }}
+                      >
+                        {row.depth > 0 && (
+                          <span className="text-[hsl(var(--muted-foreground))] mr-2 select-none">
+                            └
+                          </span>
+                        )}
+                        <div>
+                          <div
+                            className={cn(
+                              "font-medium text-[hsl(var(--foreground))]",
+                              row.id === "directive" &&
+                                "text-[#0e5a6f] font-semibold",
+                            )}
+                          >
+                            {row.name}
+                          </div>
+                          {row.code && (
+                            <div className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                              {row.code}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={cn(
+                          "inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium",
+                          LEVEL_BADGE[row.level],
+                        )}
+                      >
+                        {row.level}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-[hsl(var(--foreground))]">
+                      {row.parent ?? (
+                        <span className="text-[hsl(var(--muted-foreground))]">
+                          —
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-[hsl(var(--muted-foreground))] font-mono text-xs">
+                      {row.reference}
+                    </td>
+                    <td className="px-6 py-4">
+                      {row.subTypes ? (
+                        <button className="text-[#0e5a6f] hover:underline font-medium">
+                          {row.subTypes} linked
+                        </button>
+                      ) : (
+                        <span className="text-[hsl(var(--muted-foreground))]">
+                          —
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={cn(
+                          "inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium",
+                          STATUS_BADGE[row.status],
+                        )}
+                      >
+                        {row.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
@@ -1112,6 +1429,11 @@ const TicketTypePage: React.FC = () => {
                   Ticket types
                 </button>
                 <span className="text-[hsl(var(--muted-foreground))]">/</span>
+                {isLoadingDetail && (
+                  <span className="text-xs text-[hsl(var(--muted-foreground))] animate-pulse">
+                    Loading…
+                  </span>
+                )}
                 {transitionDetailId ? (
                   <>
                     <button
@@ -1208,9 +1530,35 @@ const TicketTypePage: React.FC = () => {
                 <Eye className="w-4 h-4" />
                 Simulate Roles
               </button>
-              <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0e5a6f] hover:bg-[#0c4e60] text-white text-sm font-medium transition-colors shadow-sm">
+              <button
+                disabled={
+                  createMutation.isPending ||
+                  updateMutation.isPending ||
+                  setFieldsMutation.isPending
+                }
+                onClick={() => {
+                  if (!editingCode) {
+                    createMutation.mutate();
+                  } else if (activeTab === "fields") {
+                    setFieldsMutation.mutate();
+                  } else {
+                    updateMutation.mutate();
+                  }
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0e5a6f] hover:bg-[#0c4e60] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors shadow-sm"
+              >
                 <Bookmark className="w-4 h-4" />
-                Create Directive
+                {editingCode
+                  ? activeTab === "fields"
+                    ? setFieldsMutation.isPending
+                      ? "Saving..."
+                      : "Save Fields"
+                    : updateMutation.isPending
+                      ? "Saving..."
+                      : "Save Changes"
+                  : createMutation.isPending
+                    ? "Creating..."
+                    : "Create Directive"}
               </button>
             </div>
           </div>
@@ -1647,21 +1995,41 @@ const TicketTypePage: React.FC = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">
-                        Handle
+                        Code <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={form.code}
+                        onChange={(e) =>
+                          updateForm("code", e.target.value.toUpperCase())
+                        }
+                        disabled={!!editingCode}
+                        placeholder="DIR"
+                        className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm font-mono text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] disabled:opacity-60"
+                      />
+                      <p className="mt-1.5 text-xs text-[hsl(var(--muted-foreground))]">
+                        Short identifier (e.g. DIR, CMT). Cannot change later.
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">
+                        Handle <span className="text-rose-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={form.handle}
                         onChange={(e) => updateForm("handle", e.target.value)}
+                        placeholder="directive"
                         className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm font-mono text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
                       />
                       <p className="mt-1.5 text-xs text-[hsl(var(--muted-foreground))]">
-                        Used in workflows and the API. Cannot change once live.
+                        snake_case. Used in workflows and the API.
                       </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">
-                        Reference pattern
+                        Reference pattern{" "}
+                        <span className="text-rose-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -1669,10 +2037,27 @@ const TicketTypePage: React.FC = () => {
                         onChange={(e) =>
                           updateForm("referencePattern", e.target.value)
                         }
-                        className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm font-mono text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
+                        placeholder="MED-{YYYY}-{NNN}"
+                        className={cn(
+                          "w-full px-3 py-2 bg-[hsl(var(--background))] border rounded-lg text-sm font-mono text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]",
+                          form.referencePattern && !referencePatternHasCounter
+                            ? "border-rose-400"
+                            : "border-[hsl(var(--border))]",
+                        )}
                       />
+                      {form.referencePattern && !referencePatternHasCounter && (
+                        <p className="mt-1.5 text-xs text-rose-600">
+                          Needs a counter such as{" "}
+                          <code className="font-mono">{"{NNN}"}</code>, or
+                          references would repeat
+                        </p>
+                      )}
                       <p className="mt-1.5 text-xs text-[hsl(var(--muted-foreground))]">
-                        Next reference: {nextReferencePreview}
+                        Tokens: <code className="font-mono">{"{YYYY}"}</code>,{" "}
+                        <code className="font-mono">{"{NNN}"}</code>,{" "}
+                        <code className="font-mono">{"{NNNN}"}</code>,{" "}
+                        <code className="font-mono">{"{NNNNN}"}</code>. Next
+                        reference: {nextReferencePreview}
                       </p>
                     </div>
                   </div>
@@ -1700,7 +2085,12 @@ const TicketTypePage: React.FC = () => {
                           <button
                             key={opt.value}
                             type="button"
-                            onClick={() => updateForm("level", opt.value)}
+                            onClick={() => {
+                              updateForm("level", opt.value);
+                              if (opt.value !== "Sub") {
+                                updateForm("parentTypeId", "");
+                              }
+                            }}
                             className={cn(
                               "flex items-start gap-3 text-left px-4 py-3 rounded-lg border transition-colors",
                               isSelected
@@ -1737,26 +2127,46 @@ const TicketTypePage: React.FC = () => {
                   <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
                       <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">
-                        Parent type
+                        Parent type{" "}
+                        {form.level === "Sub" && (
+                          <span className="text-rose-500">*</span>
+                        )}
                       </label>
                       <select
-                        value={form.parentType}
+                        value={form.parentTypeId}
                         onChange={(e) =>
-                          updateForm("parentType", e.target.value)
+                          updateForm("parentTypeId", e.target.value)
                         }
-                        disabled={form.level === "Main"}
+                        disabled={form.level !== "Sub"}
                         className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] disabled:opacity-50"
                       >
-                        {PARENT_TYPE_OPTIONS.map((opt) => (
-                          <option key={opt} value={opt}>
-                            {opt}
-                          </option>
-                        ))}
+                        <option value="">
+                          {form.level === "Sub"
+                            ? "Select a parent…"
+                            : "Not applicable"}
+                        </option>
+                        {allTicketTypes
+                          .filter(
+                            (t) =>
+                              t.level === "main" ||
+                              t.level === "sub" ||
+                              t.level === "sub_sub",
+                          )
+                          .map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name} — {t.code}
+                            </option>
+                          ))}
                       </select>
+                      {form.level === "Sub" && !form.parentTypeId && (
+                        <p className="text-xs text-rose-600 mt-1">
+                          Required for Sub types
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1.5">
-                        Subsystem
+                        Subsystem <span className="text-rose-500">*</span>
                       </label>
                       <select
                         value={form.subsystem}
@@ -1765,9 +2175,16 @@ const TicketTypePage: React.FC = () => {
                         }
                         className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))]"
                       >
-                        {SUBSYSTEM_OPTIONS.map((opt) => (
-                          <option key={opt} value={opt}>
-                            {opt}
+                        <option value="">Select a subsystem…</option>
+                        {Array.from(
+                          new Set(
+                            allTicketTypes
+                              .map((t) => t.subsystem)
+                              .filter(Boolean),
+                          ),
+                        ).map((sub) => (
+                          <option key={sub} value={sub}>
+                            {sub}
                           </option>
                         ))}
                       </select>
@@ -2068,7 +2485,26 @@ const TicketTypePage: React.FC = () => {
                 </div>
 
                 <div className="space-y-3">
-                  {LINKED_TYPES.map((lt) => {
+                  {!editingCode && (
+                    <div className="px-5 py-8 text-center text-sm text-[hsl(var(--muted-foreground))] rounded-xl border border-dashed border-[hsl(var(--border))]">
+                      Save the ticket type first (General tab → Create), then
+                      links can be added here.
+                    </div>
+                  )}
+                  {editingCode && isLoadingDetail && (
+                    <div className="px-5 py-8 text-center text-sm text-[hsl(var(--muted-foreground))] rounded-xl border border-dashed border-[hsl(var(--border))]">
+                      Loading linked types…
+                    </div>
+                  )}
+                  {editingCode &&
+                    !isLoadingDetail &&
+                    displayedLinkedTypes.length === 0 && (
+                      <div className="px-5 py-8 text-center text-sm text-[hsl(var(--muted-foreground))] rounded-xl border border-dashed border-[hsl(var(--border))]">
+                        No linked types yet. Use the panel on the right to add
+                        one.
+                      </div>
+                    )}
+                  {displayedLinkedTypes.map((lt) => {
                     const isSelected = selectedLinkedTypeId === lt.id;
                     return (
                       <button
@@ -2159,8 +2595,9 @@ const TicketTypePage: React.FC = () => {
                   </p>
                   <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
                     Directive →{" "}
-                    {LINKED_TYPES.find((l) => l.id === selectedLinkedTypeId)
-                      ?.name ?? ""}
+                    {displayedLinkedTypes.find(
+                      (l) => l.id === selectedLinkedTypeId,
+                    )?.name ?? ""}
                   </p>
                 </div>
                 <div className="px-5 py-4 space-y-4">
@@ -2278,8 +2715,38 @@ const TicketTypePage: React.FC = () => {
                   </div>
 
                   <div className="flex items-center gap-3 pt-1">
-                    <button className="flex-1 px-4 py-2.5 rounded-lg bg-gradient-to-r from-[#0e5a6f] to-cyan-500 hover:from-[#0c4e60] hover:to-cyan-600 text-white text-sm font-semibold transition-colors shadow-sm">
-                      Save link
+                    <button
+                      disabled={!editingCode || setLinkMutation.isPending}
+                      onClick={() => {
+                        // linkChildType format is like "Task — universal" or just "Task".
+                        const childLabel = linkChildType
+                          .split("—")[0]
+                          .trim()
+                          .toLowerCase();
+                        const child = allTicketTypes.find(
+                          (x) => x.name.toLowerCase() === childLabel,
+                        );
+                        if (!child) {
+                          toast.error("Pick a valid child type first");
+                          return;
+                        }
+                        setLinkMutation.mutate({
+                          childCode: child.code,
+                          cardinality:
+                            linkHowMany.toLowerCase() === "one"
+                              ? "one"
+                              : "many",
+                          behaviours: [LINK_BEHAVIOUR_TO_API[linkBehaviour]],
+                        });
+                      }}
+                      className="flex-1 px-4 py-2.5 rounded-lg bg-gradient-to-r from-[#0e5a6f] to-cyan-500 hover:from-[#0c4e60] hover:to-cyan-600 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors shadow-sm"
+                      title={
+                        editingCode
+                          ? "Save this link"
+                          : "Save the ticket type first before linking"
+                      }
+                    >
+                      {setLinkMutation.isPending ? "Saving..." : "Save link"}
                     </button>
                     <button className="px-4 py-2.5 rounded-lg border border-[hsl(var(--border))] text-sm font-medium text-[hsl(var(--foreground))] bg-[hsl(var(--background))] hover:bg-[hsl(var(--muted)/0.5)] transition-colors">
                       Cancel
