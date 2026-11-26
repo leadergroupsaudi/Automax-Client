@@ -1,9 +1,18 @@
 import React, { useMemo } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, AlertCircle } from "lucide-react";
+import { ArrowLeft, AlertCircle, Link2 } from "lucide-react";
 import { toast } from "sonner";
-import { useEoRecordTypes, useCreateEoRecord } from "../../hooks/useEoRecords";
+import {
+  useEoRecordTypes,
+  useCreateEoRecord,
+  useEoRecord,
+} from "../../hooks/useEoRecords";
 import { useLocalizedField } from "../../hooks/useLocalizedField";
 import { usePermissions } from "../../hooks/usePermissions";
 import { EoRecordForm } from "../../components/eo/EoRecordForm";
@@ -27,10 +36,47 @@ export const EoRecordCreatePage: React.FC = () => {
 
   const createRecord = useCreateEoRecord();
 
+  /**
+   * The parent this record is being created UNDER, carried in the query string
+   * by EoAddChildLink.
+   *
+   * BOTH OR NEITHER. The server refuses a `parent_record_id` that arrives with
+   * no `parent_link_type_key` — the link type is what carries the child rules
+   * (derived deadline, sensitivity cascade), so it will not infer one. A
+   * half-filled link in the URL is therefore treated as no link at all rather
+   * than sent to be rejected after the form has been filled in.
+   */
+  const [searchParams] = useSearchParams();
+  const parentId = searchParams.get("parent") ?? "";
+  const parentLinkKey = searchParams.get("link") ?? "";
+  const hasParent = !!parentId && !!parentLinkKey;
+
+  // Named, not just referenced: a bare uuid in the URL tells the user nothing
+  // about which record they are filing under. A failed read is not fatal here
+  // — the create still carries the id — so the banner falls back to the id.
+  const parentQuery = useEoRecord(hasParent ? parentId : "");
+  const parentRecord = parentQuery.data?.data;
+
+  // A record carries only its type ID, so the route back to it is resolved
+  // through the catalogue the page has already loaded.
+  const parentTypeKey = useMemo(
+    () =>
+      (typesQuery.data?.data ?? []).find(
+        (rt) => rt.id === parentRecord?.record_type_id,
+      )?.key,
+    [typesQuery.data, parentRecord],
+  );
+
   const handleSubmit = async (values: EoValues) => {
     if (!recordType) return;
     const res = await createRecord.mutateAsync({
       record_type_id: recordType.id,
+      ...(hasParent
+        ? {
+            parent_record_id: parentId,
+            parent_link_type_key: parentLinkKey,
+          }
+        : {}),
       values,
     });
     toast.success(t("eo.create.success", "Record created"));
@@ -124,12 +170,37 @@ export const EoRecordCreatePage: React.FC = () => {
         </p>
       </div>
 
+      {hasParent && (
+        <div className="rounded-xl border border-blue-300 dark:border-blue-700/60 bg-blue-50 dark:bg-blue-900/20 p-4">
+          <div className="flex items-start gap-3">
+            <Link2
+              className="w-5 h-5 mt-0.5 text-blue-600 dark:text-blue-400 flex-shrink-0"
+              aria-hidden="true"
+            />
+            <p className="text-sm text-blue-800 dark:text-blue-300">
+              {t("eo.create.underParent", {
+                reference: parentRecord?.reference || parentId,
+                defaultValue:
+                  "This record will be created under {{reference}}.",
+              })}
+            </p>
+          </div>
+        </div>
+      )}
+
       <EoRecordForm
         recordType={recordType}
         submitLabel={t("eo.create.submit", "Create record")}
         isSubmitting={createRecord.isPending}
         onSubmit={handleSubmit}
-        cancelTo={`/eo/${recordType.key}`}
+        cancelTo={
+          // Cancelling a child create returns to the record it was started
+          // from, not to the child type's register, which the user was never
+          // on and has no reason to land in.
+          hasParent && parentTypeKey
+            ? `/eo/${parentTypeKey}/${parentId}`
+            : `/eo/${recordType.key}`
+        }
       />
     </div>
   );

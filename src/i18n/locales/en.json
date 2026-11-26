@@ -6130,7 +6130,8 @@
       "errors": {
         "required": "{{field}} is required"
       },
-      "forbidden": "You cannot create records of this type"
+      "forbidden": "You cannot create records of this type",
+      "underParent": "This record will be created under {{reference}}."
     },
     "edit": {
       "title": "Edit record",
@@ -6163,6 +6164,15 @@
       "notFound": "Record not found",
       "notFoundHint": "It may have been removed, or you may not be allowed to see it.",
       "noFields": "This type defines no fields.",
+      "parent": {
+        "label": "Parent record",
+        "unreadable": "This record has a parent you are not allowed to open."
+      },
+      "addChild": {
+        "button": "Add child record",
+        "loading": "Loading link types\u2026",
+        "blocks": "Blocks this record from closing until it is closed"
+      },
       "noChildren": "This record has no children.",
       "tabs": {
         "details": "Details",

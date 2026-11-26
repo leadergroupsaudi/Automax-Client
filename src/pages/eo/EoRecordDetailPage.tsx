@@ -26,6 +26,8 @@ import { EoStateBadge } from "../../components/eo/EoStateBadge";
 import { EoRecordFacts } from "../../components/eo/EoRecordFacts";
 import { EoRecordHistory } from "../../components/eo/EoRecordHistory";
 import { EoTransitionModal } from "../../components/eo/EoTransitionModal";
+import { EoAddChildLink } from "../../components/eo/EoAddChildLink";
+import { EoParentLink } from "../../components/eo/EoParentLink";
 import { flattenRecordValues } from "../../lib/eoFields";
 import { eoIsBlocked } from "../../lib/eoBlocking";
 
@@ -420,6 +422,15 @@ export const EoRecordDetailPage: React.FC = () => {
         ) : tab === "details" ? (
           <div className="p-6">
             <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+              {/*
+                First in the grid, because where a record sits in the hierarchy
+                frames everything under it. Absent entirely on a root record —
+                an empty "Parent: none" row is noise on the three types that
+                can never have one.
+              */}
+              {record?.parent_record_id && (
+                <EoParentLink parentId={record.parent_record_id} />
+              )}
               {displayFields.map((field) => (
                 <div
                   key={field.key}
@@ -453,6 +464,20 @@ export const EoRecordDetailPage: React.FC = () => {
           // The id is the stable hook the driven spec scopes to, the way
           // #eo-history-panel is on the tab beside it.
           <div className="p-6" id="eo-children-panel">
+            {/*
+              Outside the loading branch on purpose: adding a child does not
+              depend on reading the existing ones, so a slow or FAILED children
+              read must not take the control away. That is the case where a
+              user most wants it.
+            */}
+            {record && (
+              <div className="flex justify-end mb-4">
+                <EoAddChildLink
+                  recordId={record.id}
+                  recordTypeId={record.record_type_id}
+                />
+              </div>
+            )}
             {childrenQuery.isLoading ? (
               <div className="flex items-center justify-center py-10">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />

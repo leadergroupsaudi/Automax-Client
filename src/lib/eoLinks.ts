@@ -72,3 +72,44 @@ export function eoLinkTypeRequestFrom(lt: EoLinkType): EoLinkTypeRequest {
     cascade_sensitivity: !!lt.cascade_sensitivity,
   };
 }
+
+/** One way a record may take a new child: the link type, and the type it creates. */
+export interface EoChildLinkOption {
+  linkType: EoLinkType;
+  /** The child record type this link type creates. Never "any". */
+  childTypeId: string;
+}
+
+/**
+ * The link types under which a record of `parentTypeId` may take a NEW child.
+ *
+ * DIRECTION IS THE WHOLE POINT, and it is not symmetric the way
+ * `eoLinkTouchesType` is. A parent link type reads one way only:
+ * `target_type_ids` names the PARENT types it accepts, `source_type_ids` names
+ * the single CHILD type it creates. `eo_execution_plan_parent` has
+ * source=[execution_plan], target=[directive] — offered on a Directive, never
+ * on an Execution Plan. Asking `eoLinkTouchesType` here would offer every link
+ * type on both of its ends and invite creates the server then refuses.
+ *
+ * An "any" TARGET is the universal parent — `eo_task_parent` hangs a Task off
+ * anything — so it is offered on every record. An "any" SOURCE is skipped: the
+ * create form must know which type it is building and "any" names none. A
+ * source list with several ids is skipped for the same reason; nothing in the
+ * pilot has one, and guessing which of them the user meant is not this
+ * function's call to make.
+ */
+export function eoChildLinkOptions(
+  linkTypes: EoLinkType[] | undefined,
+  parentTypeId: string | undefined,
+): EoChildLinkOption[] {
+  if (!linkTypes || !parentTypeId) return [];
+  const out: EoChildLinkOption[] = [];
+  for (const lt of linkTypes) {
+    const target = eoLinkEndpoints(lt.target_type_ids);
+    if (!target.any && !target.ids.includes(parentTypeId)) continue;
+    const source = eoLinkEndpoints(lt.source_type_ids);
+    if (source.ids.length !== 1) continue;
+    out.push({ linkType: lt, childTypeId: source.ids[0] });
+  }
+  return out;
+}
