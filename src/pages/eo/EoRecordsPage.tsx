@@ -304,7 +304,7 @@ export const EoRecordsPage: React.FC = () => {
             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
           >
             <Plus className="w-4 h-4" />
-            {t("eo.newRecord", "New record")}
+            {t("eo.newRecord", "Register Directive")}
           </Link>
         )}
       </div>
