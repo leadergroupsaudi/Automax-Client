@@ -25,6 +25,11 @@ dist-ssr
 
 .env
 
+# Service account / credential files — never commit
+*-firebase-adminsdk-*.json
+*-service-account*.json
+gcp-key*.json
+
 # Playwright (e2e run artefacts; see playwright.config.ts)
 /test-results/
 /playwright-report/

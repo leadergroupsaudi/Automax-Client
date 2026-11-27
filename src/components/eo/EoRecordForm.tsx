@@ -121,6 +121,29 @@ export const EoRecordForm: React.FC<EoRecordFormProps> = ({
         });
       }
     }
+
+    // Cross-field: due_date must be strictly after origin_date. Only fires on
+    // types that declare both (Directive, today). String compare is safe here
+    // because the date input emits ISO YYYY-MM-DD.
+    const hasOrigin = editable.some((f) => f.key === "origin_date");
+    const hasDue = editable.some((f) => f.key === "due_date");
+    if (hasOrigin && hasDue) {
+      const origin = form?.origin_date;
+      const due = form?.due_date;
+      if (
+        typeof origin === "string" &&
+        typeof due === "string" &&
+        origin &&
+        due &&
+        due <= origin
+      ) {
+        next.due_date = t(
+          "eo.create.errors.dueAfterOrigin",
+          "Due date must be after Origin date",
+        );
+      }
+    }
+
     return next;
   };
 
