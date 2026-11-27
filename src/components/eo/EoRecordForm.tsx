@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle, Loader2, Save } from "lucide-react";
@@ -29,6 +29,15 @@ interface EoRecordFormProps {
   // eslint-disable-next-line no-unused-vars
   onSubmit: (values: EoValues) => Promise<unknown>;
   cancelTo: string;
+  /**
+   * Fields a transition needs that only this form can supply, handed over by
+   * the Move record dialog. They open marked with the server's message, are
+   * required on this save, and the form scrolls to the first.
+   */
+  requiredForTransition?: {
+    transition: string;
+    fields: Record<string, string>;
+  };
 }
 
 /** Kinds that deserve the full row width. */
@@ -59,6 +68,7 @@ export const EoRecordForm: React.FC<EoRecordFormProps> = ({
   isSubmitting,
   onSubmit,
   cancelTo,
+  requiredForTransition,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -82,9 +92,44 @@ export const EoRecordForm: React.FC<EoRecordFormProps> = ({
   if (nextSeedKey && nextSeedKey !== seedKey) {
     setSeedKey(nextSeedKey);
     setForm(seedFormValues(fields, record));
+    // Seeded with the form, so they are on screen from the first frame.
+    setErrors({ ...(requiredForTransition?.fields ?? {}) });
   }
 
-  const editable = useMemo(() => writableFields(fields), [fields]);
+  /**
+   * The keys the transition needs. A field required only AT a later state
+   * (`at_state`) reads as optional in this state, so it is shown — and
+   * checked — as required here, where the actor came to fill it in.
+   */
+  const transitionKeys = useMemo(
+    () => new Set(Object.keys(requiredForTransition?.fields ?? {})),
+    [requiredForTransition],
+  );
+
+  const editable = useMemo(
+    () =>
+      writableFields(fields).map((f) =>
+        transitionKeys.has(f.key) && f.required_mode !== "always"
+          ? { ...f, required_mode: "always" as const }
+          : f,
+      ),
+    [fields, transitionKeys],
+  );
+
+  // Bring the first field the transition needs into view once it is drawn.
+  // No state is set here, so this is an effect in the plain sense.
+  const firstTransitionKey = useMemo(
+    () => editable.find((f) => transitionKeys.has(f.key))?.key,
+    [editable, transitionKeys],
+  );
+  useEffect(() => {
+    if (!firstTransitionKey || !form) return;
+    document
+      .getElementById(`eo-field-${firstTransitionKey}`)
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    // Once per arrival: re-running on every keystroke would yank the page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firstTransitionKey, form === null]);
 
   /**
    * What the server currently stores, as opposed to what the form holds. Only
@@ -217,6 +262,21 @@ export const EoRecordForm: React.FC<EoRecordFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {requiredForTransition && transitionKeys.size > 0 && (
+        <div className="rounded-xl border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/20 p-4">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-amber-800 dark:text-amber-300">
+              {t("eo.edit.requiredForTransition", {
+                transition: requiredForTransition.transition,
+                defaultValue:
+                  "Fill in the highlighted fields and save, then move the record again ({{transition}}).",
+              })}
+            </p>
+          </div>
+        </div>
+      )}
+
       {orphanErrors.length > 0 && (
         <div className="rounded-xl border border-red-300 dark:border-red-700/60 bg-red-50 dark:bg-red-900/20 p-4">
           <div className="flex items-start gap-3">
@@ -237,7 +297,17 @@ export const EoRecordForm: React.FC<EoRecordFormProps> = ({
           {editable.map((field: EoFieldDefinition) => (
             <div
               key={field.key}
-              className={WIDE_KINDS.has(field.kind) ? "md:col-span-2" : ""}
+              id={`eo-field-${field.key}`}
+              className={[
+                WIDE_KINDS.has(field.kind) ? "md:col-span-2" : "",
+                // A ring that stays until the field is filled, so the
+                // fields the transition needs stand out from the rest.
+                transitionKeys.has(field.key) && errors[field.key]
+                  ? "rounded-lg ring-2 ring-red-400 dark:ring-red-500/70 ring-offset-4 ring-offset-white dark:ring-offset-slate-800"
+                  : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
             >
               <EoFieldInput
                 field={field}
