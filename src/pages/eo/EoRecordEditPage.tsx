@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -11,7 +11,7 @@ import {
 import { useLocalizedField } from "../../hooks/useLocalizedField";
 import { usePermissions } from "../../hooks/usePermissions";
 import { EoRecordForm } from "../../components/eo/EoRecordForm";
-import type { EoValues } from "../../types/eoRecord";
+import type { EoMissingFieldsState, EoValues } from "../../types/eoRecord";
 
 export const EoRecordEditPage: React.FC = () => {
   const { t } = useTranslation();
@@ -19,6 +19,12 @@ export const EoRecordEditPage: React.FC = () => {
   const { typeKey, id } = useParams<{ typeKey: string; id: string }>();
   const localize = useLocalizedField();
   const { canEoRecordType } = usePermissions();
+  /**
+   * The fields a refused transition named, when the actor arrived through the
+   * Move record dialog's "Open the edit form". Absent on an ordinary edit.
+   */
+  const missing = (useLocation().state as EoMissingFieldsState | null)
+    ?.eoMissing;
 
   const recordQuery = useEoRecord(id ?? "");
   const record = recordQuery.data?.data;
@@ -134,6 +140,7 @@ export const EoRecordEditPage: React.FC = () => {
         isSubmitting={updateRecord.isPending}
         onSubmit={handleSubmit}
         cancelTo={detailPath}
+        requiredForTransition={missing}
       />
     </div>
   );

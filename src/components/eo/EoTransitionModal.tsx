@@ -23,6 +23,7 @@ import type { TransitionFieldChange } from "../../types";
 import type {
   EoAvailableTransition,
   EoFieldDefinition,
+  EoMissingFieldsState,
   EoTransitionRequest,
   EoValues,
 } from "../../types/eoRecord";
@@ -698,6 +699,25 @@ export const EoTransitionModal: React.FC<EoTransitionModalProps> = ({
                       {editPath && (
                         <Link
                           to={editPath}
+                          // The edit form opens with these fields already
+                          // marked, so the actor is not left to remember
+                          // which ones this banner named.
+                          state={
+                            {
+                              eoMissing: {
+                                transition: selectedTransition
+                                  ? localize(
+                                      selectedTransition as unknown as Record<
+                                        string,
+                                        unknown
+                                      >,
+                                      "name",
+                                    ) || selectedTransition.name
+                                  : "",
+                                fields: elsewhereErrors,
+                              },
+                            } satisfies EoMissingFieldsState
+                          }
                           onClick={handleClose}
                           className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-red-700 dark:text-red-300 hover:underline"
                         >

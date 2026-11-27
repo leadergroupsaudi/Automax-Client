@@ -493,3 +493,16 @@ export interface EoLinkTypeRequest {
   blocks_parent_transition_key: string;
   cascade_sensitivity: boolean;
 }
+
+/**
+ * Router state the Move record dialog hands the edit form when a transition
+ * was refused for values only the record itself can hold: the transition's
+ * name and field key -> the server's message. The form opens with those
+ * fields marked.
+ */
+export interface EoMissingFieldsState {
+  eoMissing: {
+    transition: string;
+    fields: Record<string, string>;
+  };
+}

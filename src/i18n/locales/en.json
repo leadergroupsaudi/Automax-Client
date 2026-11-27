@@ -6137,7 +6137,8 @@
       "title": "Edit record",
       "submit": "Save changes",
       "success": "Record updated",
-      "forbidden": "You cannot edit records of this type"
+      "forbidden": "You cannot edit records of this type",
+      "requiredForTransition": "Fill in the highlighted fields and save, then move the record again ({{transition}})."
     },
     "header": {
       "assignee": "Assigned to",
